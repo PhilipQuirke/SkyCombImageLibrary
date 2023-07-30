@@ -1,0 +1,136 @@
+﻿using SkyCombGround.CommonSpace;
+using SkyCombDrone.DroneModel;
+using System.Collections.Generic;
+
+
+// Models are used in-memory and to persist/load data to/from the datastore
+namespace SkyCombImage.ProcessModel
+{
+    public class ProcessBlockModel : TardisModel
+    {
+        // Unique identifier of the processing block. One-based.
+        public int BlockId { get { return TardisId; } }
+
+
+        // The calculated FlightStep info derived from FlightSection & Ground data. 
+        // Refer https://github.com/PhilipQuirke/SkyCombAnalystHelp/Drone.md
+        // and section "Drone Overall Accuracy".
+        // Due to sampling, a few successive blocks can share the same FlightStep.
+        public int FlightStepId { get; set; }
+
+
+        // Corresponding flight leg. One-based.
+        public int LegId { get; set; }
+        public string LegName { get { return LegIdToName(LegId); } }
+
+
+        // Approximate ground velocity in pixels per block
+        public VelocityF VelocityInPixelsPerBlock { get; set; }
+
+
+        // ------ Input Video Position Data -----
+        // Position in the input video in Frames, corresponding to this block. One-based. No offsets applied - straight from input video.
+        public int InputFrameId { get; set; }
+        // Position in the input video in milliseconds, corresponding to this block. No offsets applied - straight from input video.
+        public int InputFrameMs { get; set; }
+
+
+        // ------ Display Video Position Data (if any) -----
+        // Position in the display video in Frames, corresponding to this block. One-based. No offsets applied - straight from display video.
+        public int DisplayFrameId { get; set; }
+        // Position in the display  video in milliseconds, corresponding to this block. No offsets applied - straight from display video.
+        public int DisplayFrameMs { get; set; }
+
+
+        // Number of significant objects in the block. Only used by Flow process. 
+        public int NumSig { get; set; }
+
+
+        public ProcessBlockModel(ProcessScopeModel scope) : base(scope.CurrBlockId)
+        {
+            FlightStepId = UnknownValue;
+            LegId = scope.CurrRunLegId;
+            VelocityInPixelsPerBlock = null;
+            InputFrameId = scope.CurrInputFrameId;
+            InputFrameMs = scope.CurrInputFrameMs;
+            DisplayFrameId = scope.CurrDisplayFrameId;
+            DisplayFrameMs = scope.CurrDisplayFrameMs;
+            NumSig = 0;
+        }
+
+
+        // Constructor used when loading objects from the datastore
+        public ProcessBlockModel(int blockId, List<string> settings) : base(blockId)
+        {
+            if (settings != null)
+                LoadSettings(settings);
+            NumSig = 0;
+        }
+
+
+        public void AssertGood()
+        {
+            Assert(TimeMs == UnknownValue || TimeMs > 0, "AssertGood: Logic 1");
+            Assert(SumTimeMs == UnknownValue || SumTimeMs >= 0, "AssertGood: Logic 2");
+            Assert(LinealM == UnknownValue || LinealM >= 0, "AssertGood: Logic 3");
+            if (BlockId > 1)
+                Assert(SumLinealM == UnknownValue || SumLinealM > 0, "AssertGood: Logic 4");
+        }
+
+
+        // One-based settings index values. Must align with GetSettings procedure below     
+        public const int FlightStepIdSetting = FirstFreeSetting;
+        public const int LegIdSetting = FirstFreeSetting + 1;
+        public const int LegNameSetting = FirstFreeSetting + 2;
+        public const int VelXSetting = FirstFreeSetting + 3;
+        public const int VelYSetting = FirstFreeSetting + 4;
+        public const int InputFrameIdSetting = FirstFreeSetting + 5;
+        public const int InputFrameMsSetting = FirstFreeSetting + 6;
+        public const int DisplayFrameIdSetting = FirstFreeSetting + 7;
+        public const int DisplayFrameMsSetting = FirstFreeSetting + 8;
+        public const int DsmMSetting = FirstFreeSetting + 9;
+        public const int DemMSetting = FirstFreeSetting + 10;
+        public const int HasLegSetting = FirstFreeSetting + 11;
+
+
+        // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
+        public override DataPairList GetSettings()
+        {
+            var answer = base.GetSettings();
+            answer[0].Key = "Block";
+
+            answer.Add("Flight Step", FlightStepId);
+            answer.Add("Leg Id", (LegId == UnknownValue ? 0 : LegId));
+            answer.Add("Leg Name", LegName);
+            answer.Add("Vel Pxs.X", (VelocityInPixelsPerBlock == null ? 0 : VelocityInPixelsPerBlock.Value.X), PixelVelNdp);
+            answer.Add("Vel Pxs.Y", (VelocityInPixelsPerBlock == null ? 0 : VelocityInPixelsPerBlock.Value.Y), PixelVelNdp);
+            answer.Add("Input Frame Id", InputFrameId);
+            answer.Add("Input Frame Ms", InputFrameMs, MillisecondsNdp);
+            answer.Add("Display Frame Id", DisplayFrameId);
+            answer.Add("Display Frame Ms", DisplayFrameMs, MillisecondsNdp);
+
+            return answer;
+        }
+
+
+        // Load this object's settings from strings (loaded from a datastore)
+        // This function must align to the above GetSettings function.
+        public override void LoadSettings(List<string> settings)
+        {
+            base.LoadSettings(settings);
+
+            int i = FirstFreeSetting - 1;
+            FlightStepId = StringToInt(settings[i++]);
+            LegId = StringToNonNegInt(settings[i++]);
+            i++; // Skip LegName
+            VelocityInPixelsPerBlock = new(StringToFloat(settings[i++]), StringToFloat(settings[i++]));
+            InputFrameId = StringToNonNegInt(settings[i++]);
+            InputFrameMs = StringToNonNegInt(settings[i++]);
+            DisplayFrameId = StringToNonNegInt(settings[i++]);
+            DisplayFrameMs = StringToNonNegInt(settings[i++]);
+
+            if (LegId == 0)
+                LegId = UnknownValue;
+        }
+    };
+}
