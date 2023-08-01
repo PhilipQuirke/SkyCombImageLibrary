@@ -1,4 +1,6 @@
-﻿using SkyCombDrone.DroneLogic;
+﻿using Emgu.CV;
+using SkyCombDrone.DrawSpace;
+using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombDrone.PersistModel;
 using SkyCombImage.ProcessLogic;
@@ -65,6 +67,7 @@ namespace SkyCombImage.PersistModel
         // Add a graph of the drone & ground elevations 
         public void AddElevationsGraph()
         {
+            /*
             AddElevationsGraph(
                 0,
                 "BlocksElevations",
@@ -72,6 +75,25 @@ namespace SkyCombImage.PersistModel
                 Summary,
                 ProcessBlockModel.DsmMSetting,
                 ProcessBlockModel.DemMSetting);
+            */
+
+
+            (var _, var lastRow) = Data.PrepareChartArea(GraphTabName, "BlocksElevations", TardisTabName);
+            if ((lastRow > 0) && (MaxDatumId > 0) && (Summary != null))
+            {
+                var FirstGraphRow = 0;
+
+                // Generate a bitmap of the DSM land overlaid with the drone path 
+                var drawScope = new DroneDrawScope(Drone);
+                var drawAltitudes = new DrawAltitudeByLinealM(drawScope);
+
+                drawAltitudes.Initialise(new Size(1600, 300));
+                var pathBitmap = drawAltitudes.CurrImage().ToBitmap();
+
+                Data.SaveBitmap(pathBitmap, "BlocksElevations", FirstGraphRow, 0);
+
+                Data.SetTitleAndDataListColumn("Metrics", FirstGraphRow + 1, ChartWidth + 1, Summary.GetSettings_Altitude(), true, 1);
+            }
         }
 
 
