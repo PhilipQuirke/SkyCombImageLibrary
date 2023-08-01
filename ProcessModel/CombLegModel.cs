@@ -1,7 +1,6 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved. 
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
-using System.Collections.Generic;
 
 
 // Models are used in-memory and to persist/load data to/from the datastore
@@ -48,6 +47,11 @@ namespace SkyCombImage.ProcessModel
             if (settings != null)
                 LoadSettings(settings);
         }
+
+
+        // This class does not own any FlightSteps or FlightSections
+        public override int GetTardisMaxKey() { return 0; }
+        public override TardisModel? GetTardisModel(int index) { return null; }
 
 
         // One-based settings index values. Must align with GetSettings procedure below

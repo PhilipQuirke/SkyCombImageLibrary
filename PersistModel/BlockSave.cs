@@ -79,7 +79,7 @@ namespace SkyCombImage.PersistModel
 
 
             (var _, var lastRow) = Data.PrepareChartArea(GraphTabName, "BlocksElevations", TardisTabName);
-            if ((lastRow > 0) && (MaxDatumId > 0) && (Summary != null))
+            if ((lastRow > 0) && (MaxDatumId > 0) && (Summary != null) && (Summary.GetTardisMaxKey() > 1))
             {
                 var FirstGraphRow = 0;
 
