@@ -26,7 +26,7 @@ namespace SkyCombImage.DrawSpace
         public DrawScope DrawScope { get; }
 
 
-        public DrawCombFlightPath(DrawScope drawScope) : base(drawScope, false)
+        public DrawCombFlightPath(DrawScope drawScope) : base(drawScope, true)
         {
             DrawScope = drawScope;
         }
