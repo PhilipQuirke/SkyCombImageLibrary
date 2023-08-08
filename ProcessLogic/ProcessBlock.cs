@@ -51,6 +51,8 @@ namespace SkyCombImage.ProcessLogic
             FlightStep beforeStep;
             if ((prevBlock != null) && (prevBlock.FlightStep != null))
                 beforeStep = drone.FlightSteps.FlightStepAtOrBeforeFlightMs(prevBlock.FlightStep, blockMs);
+            else if (blockMs < drone.SectionIdToVideoMs(drone.FlightSteps.MinStepId))
+                beforeStep = null;
             else
                 beforeStep = drone.FlightSteps.RoughFlightStepBeforeFlightMs(blockMs);
             bool haveBeforeStep = (beforeStep != null);
