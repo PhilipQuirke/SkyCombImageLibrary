@@ -1,12 +1,7 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved. 
 using SkyCombImage.CategorySpace;
 using SkyCombGround.CommonSpace;
-using SkyCombDrone.DroneLogic;
-using SkyCombDrone.DroneModel;
-using SkyCombDrone.PersistModel;
 using SkyCombImage.ProcessModel;
-using System;
-using System.Collections.Generic;
 using System.Drawing;
 
 

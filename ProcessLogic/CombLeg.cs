@@ -3,8 +3,6 @@ using MathNet.Numerics.LinearRegression;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombImage.ProcessModel;
-using System;
-using System.Collections.Generic;
 
 
 namespace SkyCombImage.ProcessLogic

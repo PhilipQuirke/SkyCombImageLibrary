@@ -3,8 +3,6 @@ using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
-using System;
-using System.Collections.Generic;
 using System.Drawing;
 
 

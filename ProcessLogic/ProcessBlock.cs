@@ -3,15 +3,13 @@ using SkyCombGround.CommonSpace;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombImage.ProcessModel;
-using System;
-using System.Collections.Generic;
 
 
 namespace SkyCombImage.ProcessLogic
 {
     public class ProcessBlock : ProcessBlockModel
     {
-        public FlightStep FlightStep { get; set; } = null;
+        public FlightStep? FlightStep { get; set; } = null;
 
 
         public ProcessBlock(ProcessScope scope) : base(scope.PSM)

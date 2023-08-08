@@ -5,7 +5,6 @@ using SkyCombGround.GroundSpace;
 using SkyCombImage.ProcessModel;
 
 
-
 namespace SkyCombImage.ProcessLogic
 {
     // A class to hold all feature data and Block data associated with a video

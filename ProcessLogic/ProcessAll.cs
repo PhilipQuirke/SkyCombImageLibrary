@@ -2,7 +2,6 @@
 using SkyCombDrone.DroneLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
-using System.Collections.Generic;
 
 
 namespace SkyCombImage.ProcessLogic
