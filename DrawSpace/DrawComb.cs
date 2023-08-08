@@ -603,7 +603,7 @@ namespace SkyCombImage.DrawSpace
             {
                 Size = size;
 
-                var image = LightGrayImage(size);
+                var image = Draw.NewLightGrayImage(size);
 
                 if (DroneDrawScope.Drone == null)
                 {
