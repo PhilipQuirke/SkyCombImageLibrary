@@ -1,7 +1,8 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved. 
 using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
-using SkyCombGround.GroundSpace;
+using SkyCombGround.GroundModel;
+using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
 
 
