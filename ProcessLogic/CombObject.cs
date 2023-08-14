@@ -886,7 +886,7 @@ namespace SkyCombImage.ProcessLogic
             if ((LocationM != null) && (Model.GroundData != null))
             {
                 // pqr be less strict
-                var newDemM = Model.GroundData.DemGrid.GetElevationByDroneLocn(LocationM);
+                var newDemM = Model.GroundData.DemModel.GetElevationByDroneLocn(LocationM);
 
                 // In rare cases, can detect object just outside ground datum grid.
                 if (newDemM != UnknownValue)
