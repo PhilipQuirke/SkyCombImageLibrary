@@ -33,7 +33,7 @@ namespace SkyCombImage.ProcessModel
         // DRONE
         // StepId of current flight step
         public int CurrRunStepId { get; set; } = UnknownValue;
-        // LegId of current flight step
+        // LegId of current flight step (if any)
         public int CurrRunLegId { get; set; } = UnknownValue;
         public string CurrRunLegName { get { return LegIdToName(CurrRunLegId); } }
 

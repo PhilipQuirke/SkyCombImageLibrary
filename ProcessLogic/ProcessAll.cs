@@ -49,6 +49,10 @@ namespace SkyCombImage.ProcessLogic
         // A drone flight leg has finished &/or started. 
         public void ProcessLegStartAndEnd(int prevLegId, int currLegId, Drone drone)
         {
+            // We may not be using legs at all
+            if (!drone.UseFlightLegs)
+                return;
+
             if ((prevLegId > 0) && (prevLegId != currLegId))
                 ProcessLegEnd(prevLegId, drone);
 

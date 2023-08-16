@@ -33,18 +33,18 @@ namespace SkyCombImage.PersistModel
                 Data.FormatSummaryPage();
                 Data.SetLastUpdateDateTime(ProcessTabName);
 
-                // Save the Block data 
-                // Changing OnGroundAt or CameraDownDeg changes the Step data values like AltitudeM that are copied to block settings
-                AddBlockList(combProcess.Blocks);
-
-                // Add the Block charts
-                AddBlocks2Tab(summary);
-
-                var saveObjects = ((runConfig.Process.SaveObjectData != SaveObjectDataEnum.None) && (combProcess.CombObjs.CombObjList.Count > 0));
-                var saveAllObjects = (runConfig.Process.SaveObjectData == SaveObjectDataEnum.All);
-
                 if (fullSave)
                 {
+                    // Save the Block data 
+                    // Changing OnGroundAt or CameraDownDeg changes the Step data values like AltitudeM that are copied to block settings
+                    AddBlockList(combProcess.Blocks);
+
+                    // Add the Block charts
+                    AddBlocks2Tab(summary);
+
+                    var saveObjects = ((runConfig.Process.SaveObjectData != SaveObjectDataEnum.None) && (combProcess.CombObjs.CombObjList.Count > 0));
+                    var saveAllObjects = (runConfig.Process.SaveObjectData == SaveObjectDataEnum.All);
+
                     // Save the Pixel data 
                     if ((runConfig.Process.SavePixels != SavePixelsEnum.None) && (combProcess.CombFeatures.Count > 0))
                     {
@@ -93,27 +93,27 @@ namespace SkyCombImage.PersistModel
 
                     // Add the Object/Feature charts
                     SaveObject.SaveObjectGraphs(MaxDatumId);
+
+                    // Save the CombLeg data 
+                    if ((combProcess.CombLegs != null) && (combProcess.CombLegs.Count > 0))
+                    {
+                        Data.SelectOrAddWorksheet(Legs2TabName);
+                        int legRow = 0;
+                        foreach (var leg in combProcess.CombLegs)
+                            Data.SetDataListRowKeysAndValues(ref legRow, leg.Value.GetSettings());
+
+                        Data.SetColumnColor(CombLegModel.LegIdSetting, legRow, Color.Blue);
+                        Data.SetColumnColor(CombLegModel.LegNameSetting, legRow, Color.Blue);
+                        Data.SetColumnColor(CombLegModel.BestFixAltitudeMSetting, legRow, Color.Blue);
+
+                        Data.SetLastUpdateDateTime(Legs2TabName);
+                    }
+
+                    if (saveObjects)
+                        SaveObject.SavePopulation(combProcess);
                 }
 
-                // Save the CombLeg data 
-                if ((combProcess.CombLegs != null) && (combProcess.CombLegs.Count > 0))
-                {
-                    Data.SelectOrAddWorksheet(Legs2TabName);
-                    int legRow = 0;
-                    foreach (var leg in combProcess.CombLegs)
-                        Data.SetDataListRowKeysAndValues(ref legRow, leg.Value.GetSettings());
-
-                    Data.SetColumnColor(CombLegModel.LegIdSetting, legRow, Color.Blue);
-                    Data.SetColumnColor(CombLegModel.LegNameSetting, legRow, Color.Blue);
-                    Data.SetColumnColor(CombLegModel.BestFixAltitudeMSetting, legRow, Color.Blue);
-
-                    Data.SetLastUpdateDateTime(Legs2TabName);
-                }
-
-                if (saveObjects)
-                    SaveObject.SavePopulation(combProcess);
-
-                SaveAndClose();
+                Save();
             }
             catch (Exception ex)
             {

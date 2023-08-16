@@ -10,20 +10,20 @@ namespace SkyCombImage.ProcessLogic
     // A class to hold all feature data and Block data associated with a video
     public class CombProcessAll : ProcessAll
     {
-        // Ground (DEM and DSM) data under the drone flight path
-        public GroundData GroundData { get; set; } = null;
+        // Ground (DEM, DSM and Swathe) data under the drone flight path
+        public GroundData GroundData { get; set; }
 
         // List of Blocks (aka frames processed)  
-        public ProcessBlockList Blocks { get; set; } = null;
+        public ProcessBlockList Blocks { get; set; }
 
         // List of comb features found. Each feature is a cluster of hot pixels, with a bounding retangle
-        public CombFeatureList CombFeatures { get; set; } = null;
+        public CombFeatureList CombFeatures { get; set; }
 
         // List of comb objects found. Each is a logical object derived from overlapping features over successive frames. 
-        public CombObjs CombObjs { get; set; } = null;
+        public CombObjs CombObjs { get; set; }
 
         // List of CombLegs that analsyse CombObjects found in the leg to refine FlightLeg etc data.
-        public CombLegList CombLegs { get; set; } = null;
+        public CombLegList CombLegs { get; set; }
 
         // How many significant objects have been found in this leg?
         private int LegSignificantObjects { get; set; } = 0;
@@ -66,6 +66,10 @@ namespace SkyCombImage.ProcessLogic
 
         public override void ProcessLegStart(int legId, Drone drone)
         {
+            // We may not be using legs at all
+            if (!drone.UseFlightLegs)
+                return;
+
             // For "Comb" process robustness, we want to process each leg independently.
             // So at the start and end of each leg we stop tracking all objects.
             CombObjs.StopTracking();
@@ -83,6 +87,10 @@ namespace SkyCombImage.ProcessLogic
 
         public override void ProcessLegEnd(int legId, Drone drone)
         {
+            // We may not be using legs at all
+            if (!drone.UseFlightLegs)
+                return;
+
             // For "Comb" process robustness, we want to process each leg independently.
             // So at the start and end of each leg we stop tracking all objects.
             CombObjs.StopTracking();

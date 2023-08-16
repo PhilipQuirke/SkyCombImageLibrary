@@ -68,7 +68,7 @@ namespace SkyCombImage.PersistModel
                 SaveMasterCategories(categoryAll.MasterCategories);
                 SaveObjectCategories(categoryAll.ObjectCategories);
 
-                SaveAndClose();
+                Save();
             }
             catch (Exception ex)
             {

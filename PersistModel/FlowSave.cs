@@ -163,7 +163,7 @@ namespace SkyCombImage.PersistModel
                 Data.Worksheet.Drawings.Clear();
 
 
-                SaveAndClose();
+                Save();
             }
             catch (Exception ex)
             {

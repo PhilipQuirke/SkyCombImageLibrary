@@ -12,22 +12,22 @@ namespace SkyCombImage.ProcessLogic
     public class CombFeature : ProcessFeatureModel
     {
         // Static config data shared by all Comb features
-        public static ProcessConfigModel Config = null;
+        public static ProcessConfigModel? Config = null;
         // Static NextFeatureId shared by all Comb features
         public static int NextFeatureId = 0;
 
 
         // Parent process model
-        private CombProcessAll Model { get; } = null;
+        private CombProcessAll? Model { get; } = null;
 
         // A Comb feature is associated 1-1 with a Block
-        public ProcessBlock Block { get; set; } = null;
+        public ProcessBlock? Block { get; set; } = null;
 
         // Location of hot pixels in this feature.
-        public PixelHeatList Pixels { get; set; } = null;
+        public PixelHeatList? Pixels { get; set; } = null;
 
         // All the CombFeature specific attributes that are persisted to the DataStore
-        public CombFeatureModel CFM { get; set; } = null;
+        public CombFeatureModel CFM { get; set; }
 
 
         // During calculation we store in memory some values to aid debugging.
