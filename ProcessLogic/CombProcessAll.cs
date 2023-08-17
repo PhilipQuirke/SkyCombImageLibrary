@@ -66,38 +66,41 @@ namespace SkyCombImage.ProcessLogic
 
         public override void ProcessLegStart(int legId, Drone drone)
         {
-            // We may not be using legs at all
-            if (!drone.UseFlightLegs)
-                return;
+            if (drone.UseFlightLegs)
+            {
+                // For "Comb" process robustness, we want to process each leg independently.
+                // So at the start and end of each leg we stop tracking all objects.
+                CombObjs.StopTracking();
+                LegSignificantObjects = 0;
 
-            // For "Comb" process robustness, we want to process each leg independently.
-            // So at the start and end of each leg we stop tracking all objects.
-            CombObjs.StopTracking();
-            LegSignificantObjects = 0;
+                // If the FlightLeg has a FixAltitudeM value (from a previous processing run) then use it,
+                // else use the FixAltitudeM from the previous leg (if any) as a starting point.
+                if ((legId >= 2) &&
+                    (drone.FlightLegs.Legs[legId - 1].FixAltitudeM == 0))
+                    drone.FlightLegs.Legs[legId - 1].FixAltitudeM =
+                        drone.FlightLegs.Legs[legId - 2].FixAltitudeM;
+            }
+        }
 
-            // If the FlightLeg has a FixAltitudeM value (from a previous processing run) then use it,
-            // else use the FixAltitudeM from the previous leg (if any) as a starting point.
-            if (drone.HasFlightLegs &&
-                (legId >= 2) &&
-                (drone.FlightLegs.Legs[legId - 1].FixAltitudeM == 0))
-                drone.FlightLegs.Legs[legId - 1].FixAltitudeM =
-                    drone.FlightLegs.Legs[legId - 2].FixAltitudeM;
+
+        // Ensure each object has at least an "insignificant" name e.g. #16
+        public override void EnsureObjectsNamed(Drone drone)
+        {
+            foreach (var theObject in CombObjs.CombObjList)
+                if (theObject.Value.Name == "")
+                    theObject.Value.SetName();
         }
 
 
         public override void ProcessLegEnd(int legId, Drone drone)
         {
-            // We may not be using legs at all
-            if (!drone.UseFlightLegs)
-                return;
-
-            // For "Comb" process robustness, we want to process each leg independently.
-            // So at the start and end of each leg we stop tracking all objects.
-            CombObjs.StopTracking();
-
-            if (legId > 0)
+            if (drone.UseFlightLegs)
             {
-                if (drone.HasFlightSteps)
+                // For "Comb" process robustness, we want to process each leg independently.
+                // So at the start and end of each leg we stop tracking all objects.
+                CombObjs.StopTracking();
+
+                if (legId > 0)
                 {
                     // If we are lacking the current CombLeg then create it.
                     CombLeg combLeg;
@@ -110,12 +113,9 @@ namespace SkyCombImage.ProcessLogic
                         combLeg.AssertGood();
                     }
                 }
-
-                // Ensure each object has an "insignificant" name e.g. #16
-                foreach (var theObject in CombObjs.CombObjList)
-                    if (theObject.Value.Name == "")
-                        theObject.Value.SetName();
             }
+
+            EnsureObjectsNamed(drone);
         }
 
 
@@ -161,7 +161,7 @@ namespace SkyCombImage.ProcessLogic
         // Process the features found in the current block/frame, which is part of a leg,
         // by preference adding them to existing objects (created in previous blocks/frames),
         // else creating new objects to hold the features.
-        public void ProcessLegBlock(ProcessScope scope, CombFeatureList featuresInBlock)
+        public void ProcessBlockForObjects(ProcessScope scope, CombFeatureList featuresInBlock)
         {
             var currBlock = Blocks[^1];
             int blockID = currBlock.BlockId;
@@ -245,7 +245,7 @@ namespace SkyCombImage.ProcessLogic
 
         // Process the features found in the current block/frame, which is NOT in a leg.
         // We store the features so we can draw them on the video frame later.
-        public void ProcessNonLegBlock(CombFeatureList featuresInBlock)
+        public void ProcessBlockForFeatures(CombFeatureList featuresInBlock)
         {
             foreach (var feature in featuresInBlock)
             {

@@ -25,7 +25,7 @@ namespace SkyCombImage.ProcessLogic
         public CombFeature LastFeature() { return (Features.Count == 0 ? null : Features.Values[^1]); }
 
 
-
+        // Constructor used processing video 
         public CombObject(ProcessScope scope, CombProcessAll model, CombFeature initialFeature) : base(scope)
         {
             Model = model;
@@ -885,13 +885,12 @@ namespace SkyCombImage.ProcessLogic
         {
             if ((LocationM != null) && (Model.GroundData != null))
             {
-                // pqr be less strict
                 var newDemM = Model.GroundData.DemModel.GetElevationByDroneLocn(LocationM);
-
                 // In rare cases, can detect object just outside ground datum grid.
                 if (newDemM != UnknownValue)
                 {
-                    Assert(Math.Abs(newDemM - DemM) < 10, "Calculate_DemM_Pass2: Bad delta");
+                    // If flying high, the undulating land can cause big shifts in elevation
+                    Assert(Math.Abs(newDemM - DemM) < 50, "Calculate_DemM_Pass2: Bad delta");
 
                     DemM = newDemM;
                 }

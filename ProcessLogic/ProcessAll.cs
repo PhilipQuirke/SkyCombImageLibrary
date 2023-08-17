@@ -35,24 +35,20 @@ namespace SkyCombImage.ProcessLogic
 
 
         // A new drone flight leg has started.
-        public virtual void ProcessLegStart(int LegId, Drone drone)
-        {
-        }
+        public virtual void ProcessLegStart(int LegId, Drone drone) { }
 
 
         // A drone flight leg has finished. 
-        public virtual void ProcessLegEnd(int LegId, Drone drone)
-        {
-        }
+        public virtual void ProcessLegEnd(int LegId, Drone drone) { }
+
+
+        public virtual void EnsureObjectsNamed(Drone drone) { }
+
 
 
         // A drone flight leg has finished &/or started. 
         public void ProcessLegStartAndEnd(int prevLegId, int currLegId, Drone drone)
         {
-            // We may not be using legs at all
-            if (!drone.UseFlightLegs)
-                return;
-
             if ((prevLegId > 0) && (prevLegId != currLegId))
                 ProcessLegEnd(prevLegId, drone);
 
