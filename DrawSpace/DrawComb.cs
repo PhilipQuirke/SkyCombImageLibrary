@@ -9,6 +9,7 @@ using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using System.Drawing;
+using SkyCombDrone.DroneLogic;
 
 
 namespace SkyCombImage.DrawSpace
@@ -263,7 +264,8 @@ namespace SkyCombImage.DrawSpace
                     // Draw the leg name on the image (if any)
                     if (thermalImage && (process.Blocks[blockId - 1].LegId > 0))
                         Text(ref outputImg, "Leg " + process.Blocks[blockId - 1].LegName,
-                                new Point(10, 20), 1, DroneColors.ColorToBgr(DroneColors.LegNameColor), 2);
+                                new Point(10, 20), 1, DroneColors.ColorToBgr(DroneColors.LegNameColor), 
+                                process.Drone.InputVideo.FontScale);
 
                     foreach (var feature in process.CombFeatures)
                         if (feature.Value.CFM.BlockId == blockId)

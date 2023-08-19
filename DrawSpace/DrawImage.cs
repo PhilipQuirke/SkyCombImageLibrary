@@ -242,22 +242,24 @@ namespace SkyCombImage.DrawSpace
             RunProcessEnum runProcess, ProcessConfigModel processConfig, DrawImageConfig drawConfig,
             Image<Bgr, byte> imgInput)
         {
-            Image<Bgr, byte> image = null;
-            string notes = "";
-
             switch (runProcess)
             {
-                case RunProcessEnum.Distance: (image, notes) = DrawDistance(processConfig, imgInput); break;
-                case RunProcessEnum.Contour: (image, notes) = DrawContour(processConfig, drawConfig, imgInput); break;
-                case RunProcessEnum.GFTT: (image, notes) = DrawGftt(processConfig, drawConfig, imgInput); break;
-                case RunProcessEnum.Flow: image = imgInput.Clone(); break; // Do nothing. Flow is a video-specific process.  
-                case RunProcessEnum.Comb: image = imgInput.Clone(); break; // Do nothing. Comb is a video-specific process. 
-                case RunProcessEnum.Threshold: (image, notes) = DrawThreshold(processConfig, imgInput); break;
-                case RunProcessEnum.None: image = imgInput.Clone(); break; // Do nothing. Useful to creating a shorter video clip, or testing the "Save" functionality.
-                default: throw BaseConstants.ThrowException("Process.Image.DrawImage: Illegal ImageProcess value:" + runProcess);
-            }
+                case RunProcessEnum.Distance: 
+                    return DrawDistance(processConfig, imgInput);  
 
-            return (image, notes);
+                case RunProcessEnum.Contour: 
+                    return DrawContour(processConfig, drawConfig, imgInput);  
+
+                case RunProcessEnum.GFTT: 
+                    return DrawGftt(processConfig, drawConfig, imgInput);
+
+                case RunProcessEnum.Threshold: 
+                    return DrawThreshold(processConfig, imgInput);
+
+                default:
+                    // Do nothing
+                    return (imgInput.Clone(), "");  
+            }
         }
     }
 }
