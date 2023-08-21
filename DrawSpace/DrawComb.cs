@@ -66,10 +66,10 @@ namespace SkyCombImage.DrawSpace
 
                 if (HasPathGraphTransform() && (DrawScope.Process != null))
                 {
-                    var inObjectBgr = DroneColors.ColorToBgr(DroneColors.InScopeObjectColor);   // Red
-                    var outObjectBgr = DroneColors.ColorToBgr(DroneColors.OutScopeObjectColor); // Gray
-                    var realBgr = DroneColors.ColorToBgr(DroneColors.RealFeatureColor);         // Orange
-                    var unrealBgr = DroneColors.ColorToBgr(DroneColors.UnrealFeatureColor);     // Yellow
+                    var inObjectBgr = DroneColors.InScopeObjectBgr;   // Red
+                    var outObjectBgr = DroneColors.OutScopeObjectBgr; // Gray
+                    var realBgr = DroneColors.RealFeatureBgr;         // Orange
+                    var unrealBgr = DroneColors.UnrealFeatureBgr;     // Yellow
 
                     bool showAllFeatures = (ProcessObject.Config.SaveObjectData == SaveObjectDataEnum.All);
 
@@ -120,10 +120,10 @@ namespace SkyCombImage.DrawSpace
 
                 if (HasPathGraphTransform() && (process != null))
                 {
-                    var inObjectBgr = DroneColors.ColorToBgr(DroneColors.InScopeObjectColor);   // Red
-                    var outObjectBgr = DroneColors.ColorToBgr(DroneColors.OutScopeObjectColor); // Gray
-                    var realBgr = DroneColors.ColorToBgr(DroneColors.RealFeatureColor);         // Orange
-                    var unrealBgr = DroneColors.ColorToBgr(DroneColors.UnrealFeatureColor);     // Yellow
+                    var inObjectBgr = DroneColors.InScopeObjectBgr;   // Red
+                    var outObjectBgr = DroneColors.OutScopeObjectBgr; // Gray
+                    var realBgr = DroneColors.RealFeatureBgr;         // Orange
+                    var unrealBgr = DroneColors.UnrealFeatureBgr;     // Yellow
 
                     // Draw significant in-scope objects as red boxes with orange & yellow features
                     foreach (var thisObject in process.CombObjs.CombObjList)
@@ -431,10 +431,9 @@ namespace SkyCombImage.DrawSpace
                             int middleWidth = StepToWidth(avgLinealM);
                             int lastWidth = StepToWidth(avgLinealM + errLinealM);
 
-                            var theColor = DroneColors.OutScopeObjectColor;
+                            var theBgr = DroneColors.OutScopeObjectBgr;
                             if (thisObject.Value.InRunScope(DrawScope.ProcessScope))
-                                theColor = DroneColors.InScopeObjectColor;
-                            var theBgr = DroneColors.ColorToBgr(theColor);
+                                theBgr = DroneColors.InScopeObjectBgr;
 
                             DrawObject(ref image, theBgr,
                                 minHeight, avgHeight, maxHeight,
@@ -540,10 +539,9 @@ namespace SkyCombImage.DrawSpace
 
                             if ((firstFlightStep != null) && (lastFlightStep != null))
                             {
-                                var theColor = DroneColors.OutScopeObjectColor;
+                                var theBgr = DroneColors.OutScopeObjectBgr;
                                 if (thisObject.Value.InRunScope(DrawScope.ProcessScope))
-                                    theColor = DroneColors.InScopeObjectColor;
-                                var theBgr = DroneColors.ColorToBgr(theColor);
+                                    theBgr = DroneColors.InScopeObjectBgr;
 
                                 int firstWidth = StepToWidthBySection(firstFlightStep.FlightSection.TardisId);
                                 int lastWidth = StepToWidthBySection(lastFlightStep.FlightSection.TardisId);
@@ -643,9 +641,9 @@ namespace SkyCombImage.DrawSpace
             {
                 var image = base.CurrImage();
 
-                var inObjectBgr = DroneColors.ColorToBgr(DroneColors.InScopeObjectColor);   // Red
-                var realBgr = DroneColors.ColorToBgr(DroneColors.RealFeatureColor);         // Orange
-                var unrealBgr = DroneColors.ColorToBgr(DroneColors.UnrealFeatureColor);     // Yellow
+                var inObjectBgr = DroneColors.InScopeObjectBgr;   // Red
+                var realBgr = DroneColors.RealFeatureBgr;         // Orange
+                var unrealBgr = DroneColors.UnrealFeatureBgr;     // Yellow
 
                 var objHeightPxs = TrimHeight(RawDataToHeightPixels(thisObject.HeightM - MinVertRaw, VertRangeRaw, "DrawCombObjectHeight.AvgHt", false));
 
