@@ -265,8 +265,8 @@ namespace SkyCombImage.DrawSpace
                     if (thermalImage && (process.Blocks[blockId - 1].LegId > 0))
                     {
                         var video = process.Drone.InputVideo;
-                        int theY = (int)(video.ImageHeight * 95 / 100); // pixels
-                        int theX = (int)(video.ImageWidth * 90 / 100); // pixels
+                        int theY = (int)(video.ImageHeight * 98 / 100); // pixels
+                        int theX = (int)(video.ImageWidth * 92 / 100); // pixels
                         Text(ref outputImg, "Leg " + process.Blocks[blockId - 1].LegName,
                                 new Point(theX, theY), 1, DroneColors.LegNameBgr, video.FontScale);
                     }
