@@ -172,7 +172,7 @@ namespace SkyCombImage.ProcessLogic
             // Based on drone speed, drone height, camera down angle & video resolution.
             // Similar to the CalculateSettings_InputImageCenter code.
             VelocityInPixelsPerBlock = new();
-            if ((beforeStep != null) && (beforeStep.DemM != UnknownValue))
+            if ((beforeStep != null) && (beforeStep.DemM != UnknownValue) && (beforeStep.InputImageSizeM != null))
             {
                 // Fraction of image traversed per second
                 var imageFractionPerSec =

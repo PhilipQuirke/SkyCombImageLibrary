@@ -890,7 +890,7 @@ namespace SkyCombImage.ProcessLogic
                 if (newDemM != UnknownValue)
                 {
                     // If flying high, the undulating land can cause big shifts in elevation
-                    Assert(Math.Abs(newDemM - DemM) < 50, "Calculate_DemM_Pass2: Bad delta");
+                    // Assert(Math.Abs(newDemM - DemM) < 50, "Calculate_DemM_Pass2: Bad delta");
 
                     DemM = newDemM;
                 }

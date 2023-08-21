@@ -261,11 +261,15 @@ namespace SkyCombImage.DrawSpace
 
                 if (process != null)
                 {
-                    // Draw the leg name on the image (if any)
+                    // Draw the leg name on the image (if any) at bottom right
                     if (thermalImage && (process.Blocks[blockId - 1].LegId > 0))
+                    {
+                        var video = process.Drone.InputVideo;
+                        int theY = (int)(video.ImageHeight * 95 / 100); // pixels
+                        int theX = (int)(video.ImageWidth * 90 / 100); // pixels
                         Text(ref outputImg, "Leg " + process.Blocks[blockId - 1].LegName,
-                                new Point(10, 20), 1, DroneColors.ColorToBgr(DroneColors.LegNameColor), 
-                                process.Drone.InputVideo.FontScale);
+                                new Point(theX, theY), 1, DroneColors.LegNameBgr, video.FontScale);
+                    }
 
                     foreach (var feature in process.CombFeatures)
                         if (feature.Value.CFM.BlockId == blockId)
@@ -284,7 +288,7 @@ namespace SkyCombImage.DrawSpace
                 if (!thermalImage)
                 {
                     int thickness = 4;
-                    var color = DroneColors.ColorToBgr(DroneColors.ActiveDroneColor);
+                    var activeBgr = DroneColors.ActiveDroneBgr;
 
                     // We are transforming input (thermal) data to display on this display (optical) video.
                     // Show the portion of this video covered by the transformed input data.
@@ -294,11 +298,11 @@ namespace SkyCombImage.DrawSpace
                             (int)transform.YMargin,
                             (int)(outputImg.Width - 2 * transform.XMargin),
                             (int)(outputImg.Height - 2 * transform.YMargin)),
-                        color, thickness);
+                        activeBgr, thickness);
 
                     Cross(ref outputImg,
                         new Point(outputImg.Width / 2, outputImg.Height / 2),
-                        color, thickness, thickness * 4);
+                        activeBgr, thickness, thickness * 4);
                 }
             }
             catch (Exception ex)
