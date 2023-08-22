@@ -304,9 +304,6 @@ namespace SkyCombImage.ProcessLogic
         // Calculates DemM, LocationM, LocationErrM, HeightM, HeightErrM, AvgSumLinealM, etc.
         public void Calculate_RealObject_SimpleMemberData(bool initialCalc = true)
         {
-            // Calculate the object average speed, based on all features.
-            Calculate_AverageVelocityInPixelsPerBlock();
-
             // Calculate the drone SumLinealM distance corresponding to the centroid of the object
             Calculate_AvgSumLinealM();
 
@@ -411,16 +408,12 @@ namespace SkyCombImage.ProcessLogic
                     // theFeature is unreal - it is a persistance object
                     Features.AddFeature(theFeature);
 
-                    // Calculate the object average speed, based on all features.
-                    Calculate_AverageVelocityInPixelsPerBlock();
-
                     LastFeature().CFM.HeightM = HeightM;
                 }
 
 
                 // Copy these details to the feature to be saved in the DataStore.
                 // Useful for understanding the feature by feature progression of values that are refined over time.
-                LastFeature().CFM.ObjSpeedPxls = (COM.AverageVelocityinPixelsPerBlock != null ? COM.AverageVelocityinPixelsPerBlock.Speed() : 0);
                 LastFeature().Significant = Significant & (LastFeature().CFM.Type == CombFeatureTypeEnum.Real);
                 LastFeature().Attributes = Attributes;
                 if (Significant && !wasSignificant)
@@ -441,40 +434,6 @@ namespace SkyCombImage.ProcessLogic
             catch (Exception ex)
             {
                 throw ThrowException("CombObject.ClaimFeature", ex);
-            }
-        }
-
-
-        // Calculate the object average speed, based on all features.
-        private void Calculate_AverageVelocityInPixelsPerBlock()
-        {
-            COM.AverageVelocityinPixelsPerBlock = null;
-
-
-            var firstFeat = FirstFeature();
-            var lastFeat = LastFeature();
-
-            if ((ObjectId == 3) && (LastFeature().Block.BlockId >= 7))
-                firstFeat = FirstFeature();
-
-            if ((lastFeat == null) || (firstFeat == null) || (firstFeat == lastFeat))
-            {
-                // Use the block estimated ground speed in pixels per block
-                if (lastFeat != null)
-                    COM.AverageVelocityinPixelsPerBlock = lastFeat.Block.VelocityInPixelsPerBlock;
-            }
-            else
-            {
-                // We have multiple features. Use their difference in location.
-                var fromRect = firstFeat.CFM.PixelBox;
-                var toRect = lastFeat.CFM.PixelBox;
-                var distanceX = 1.0F * toRect.X + toRect.Width / 2.0F - fromRect.X - toRect.Width / 2.0F;
-                var distanceY = 1.0F * toRect.Y + toRect.Height / 2.0F - fromRect.Y - toRect.Height / 2.0F;
-
-                var numBlockSteps = lastFeat.CFM.BlockId - firstFeat.CFM.BlockId;
-                Assert(numBlockSteps > 0, "ModelCombObject.Calculate_AverageVelocityInPixelsPerBlock: Bad logic");
-
-                COM.AverageVelocityinPixelsPerBlock = new VelocityF(distanceX / numBlockSteps, distanceY / numBlockSteps);
             }
         }
 
@@ -902,25 +861,43 @@ namespace SkyCombImage.ProcessLogic
         // average velocity, where do we expect the object to be this block?
         public Rectangle ExpectedLocationThisBlock()
         {
-            var lastBox = LastFeature().CFM.PixelBox;
+            var firstFeat = FirstFeature();
+            var lastFeat = LastFeature();
 
-            var objVel = COM.AverageVelocityinPixelsPerBlock;
-            if (objVel == null)
-                return lastBox;
+            var firstBox = firstFeat.CFM.PixelBox;
+            var lastBox = lastFeat.CFM.PixelBox;
 
             int lastWidth = lastBox.Width;
             int lastHeight = lastBox.Height;
+
+            var numBlockSteps = lastFeat.CFM.BlockId - firstFeat.CFM.BlockId;
+            if (numBlockSteps == 0)
+                return new Rectangle(lastBox.X, lastBox.Y, lastWidth, lastHeight);
+
 
             // In DJI_0118 leg 3, Object 1 starts large but fades so that LastFeature().PixelBox is very small.
             // The expected location should use the maximum object size.
             int addWidth = Math.Max(0, COM.MaxRealPixelWidth - lastWidth);
             int addHeight = Math.Max(0, COM.MaxRealPixelHeight - lastHeight);
 
-            return new Rectangle(
-                (int)(lastBox.X + objVel.Value.X - addWidth / 2.0f),
-                (int)(lastBox.Y + objVel.Value.Y - addHeight / 2.0f),
+            // We have multiple features. Use their difference in location.
+            var distanceX = 1.0F * lastBox.X + lastBox.Width / 2.0F - firstBox.X - lastBox.Width / 2.0F;
+            var distanceY = 1.0F * lastBox.Y + lastBox.Height / 2.0F - firstBox.Y - lastBox.Height / 2.0F;
+
+            var avgVelinPixelsPerBlock = new VelocityF(distanceX / numBlockSteps, distanceY / numBlockSteps);
+
+            // Advance one average stride from the previous location.
+            var answer = new Rectangle(
+                (int)(lastBox.X + avgVelinPixelsPerBlock.Value.X - addWidth / 2.0f),
+                (int)(lastBox.Y + avgVelinPixelsPerBlock.Value.Y - addHeight / 2.0f),
                 lastWidth + addWidth,
                 lastHeight + addHeight);
+
+            if(lastFeat.CFM.Type == CombFeatureTypeEnum.Real)
+                // Search a few pixels wider than the real object itself.
+                answer.Inflate(4, 4);
+
+            return answer;
         }
 
 

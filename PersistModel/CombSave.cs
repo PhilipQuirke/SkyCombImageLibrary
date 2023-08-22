@@ -75,7 +75,6 @@ namespace SkyCombImage.PersistModel
                         Data.SetNumberColumnNdp(ProcessFeatureModel.NorthingMSetting, LocationNdp);
                         Data.SetNumberColumnNdp(ProcessFeatureModel.EastingMSetting, LocationNdp);
                         Data.SetNumberColumnNdp(ProcessFeatureModel.HeightMSetting, HeightNdp);
-                        Data.SetNumberColumnNdp(ProcessFeatureModel.ObjSpeedPxlsSetting, PixelVelNdp);
 
                         Data.SetColumnColor(ProcessFeatureModel.FeatureIdSetting, featureRow, Color.Blue);
                         Data.SetColumnColor(ProcessFeatureModel.ObjectIdSetting, featureRow, Color.Blue);

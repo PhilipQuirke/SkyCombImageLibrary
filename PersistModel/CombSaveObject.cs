@@ -35,10 +35,6 @@ namespace SkyCombImage.PersistModel
 
             Data.SetColumnWidth(ProcessObjectModel.AttributesSetting, 20);
 
-            Data.SetNumberColumnNdp(ProcessObjectModel.SpeedInPxPerBlockSetting, PixelVelNdp);
-            Data.SetNumberColumnNdp(ProcessObjectModel.XVelInPxPerBlockSetting, PixelVelNdp);
-            Data.SetNumberColumnNdp(ProcessObjectModel.YVelInPxPerBlockSetting, PixelVelNdp);
-
             Data.SetColumnColor(ProcessObjectModel.ObjectIdSetting, objectRow, Color.Blue);
             Data.SetColumnColor(ProcessObjectModel.NameSetting, objectRow, Color.Blue);
             Data.SetColumnColor(ProcessObjectModel.HeightMSetting, objectRow, Color.Blue);
@@ -59,6 +55,7 @@ namespace SkyCombImage.PersistModel
         // Add a speed graph for comb objects and features and ground speed
         public void AddCombGroundFeatureObjectSpeedGraph(int maxBlockId)
         {
+/* PQR
             const string ChartName = "GroundFeatureObjectSpeed";
             const string ChartTitle = "Ground, Feature & Object speed (in pixels / block)";
 
@@ -74,6 +71,7 @@ namespace SkyCombImage.PersistModel
                 Data.AddScatterSerie(chart, FeaturesTabName, "Feature", ProcessFeatureModel.ObjSpeedPxlsSetting, ProcessFeatureModel.BlockIdSetting, DroneColors.RealFeatureColor);
                 Data.AddScatterSerie(chart, Objects1TabName, "Objects", ProcessObjectModel.SpeedInPxPerBlockSetting, ProcessObjectModel.CenterBlockSetting, DroneColors.InScopeObjectColor, 6);
             }
+*/
         }
 
 

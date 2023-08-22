@@ -37,8 +37,6 @@ namespace SkyCombImage.ProcessModel
 
         // Draft height of the parent CombObject as calculated when processing this feature. 
         public float HeightM { get; set; }
-        // Draft speed of the parent CombObject as calculated when processing this feature. 
-        public double ObjSpeedPxls { get; set; }
 
 
         public CombFeatureModel(int blockId, CombFeatureTypeEnum type)
@@ -63,7 +61,6 @@ namespace SkyCombImage.ProcessModel
         {
             LocationM = null;
             HeightM = UnknownValue;
-            ObjSpeedPxls = UnknownValue;
         }
 
 
@@ -78,7 +75,6 @@ namespace SkyCombImage.ProcessModel
             settings.Add("Northing M", (LocationM != null ? LocationM.NorthingM : 0), LocationNdp);
             settings.Add("Easting M", (LocationM != null ? LocationM.EastingM : 0), LocationNdp);
             settings.Add("Height M", (HeightM == UnknownValue ? UnknownHeight : HeightM), HeightNdp);
-            settings.Add("Obj Speed Px", (ObjSpeedPxls == UnknownValue ? UnknownHeight : ObjSpeedPxls), PixelVelNdp); // For graphing
             settings.AddRectange("Box", PixelBox);
             settings.Add("Min Heat", MinHeat);
             settings.Add("Max Heat", MaxHeat);
@@ -96,10 +92,6 @@ namespace SkyCombImage.ProcessModel
             HeightM = StringToFloat(settings[ProcessFeatureModel.HeightMSetting - 1]);
             if (HeightM == UnknownHeight)
                 HeightM = UnknownValue;
-
-            ObjSpeedPxls = StringToDouble(settings[ProcessFeatureModel.ObjSpeedPxlsSetting - 1]);
-            if (ObjSpeedPxls == UnknownHeight)
-                ObjSpeedPxls = UnknownValue;
 
             PixelBox = new Rectangle(
                 StringToInt(settings[ProcessFeatureModel.PixelBoxXSetting - 1]),

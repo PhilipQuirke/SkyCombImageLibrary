@@ -49,17 +49,16 @@ namespace SkyCombImage.ProcessModel
         public const int NorthingMSetting = 8;
         public const int EastingMSetting = 9;
         public const int HeightMSetting = 10;
-        public const int ObjSpeedPxlsSetting = 11;
-        public const int PixelBoxXSetting = 12;
-        public const int PixelBoxYSetting = 13;
-        public const int PixelBoxWidthSetting = 14;
-        public const int PixelBoxHeightSetting = 15;
-        public const int MinHeatSetting = 16;
-        public const int MaxHeatSetting = 17;
-        public const int NumHotPixelsSetting = 18;
-        public const int DensityPercSetting = 19;
-        public const int PixelDensityGoodSetting = 20;
-        public const int LegIdSetting = 21;
+        public const int PixelBoxXSetting = 11;
+        public const int PixelBoxYSetting = 12;
+        public const int PixelBoxWidthSetting = 13;
+        public const int PixelBoxHeightSetting = 14;
+        public const int MinHeatSetting = 15;
+        public const int MaxHeatSetting = 16;
+        public const int NumHotPixelsSetting = 17;
+        public const int DensityPercSetting = 18;
+        public const int PixelDensityGoodSetting = 19;
+        public const int LegIdSetting = 20;
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.

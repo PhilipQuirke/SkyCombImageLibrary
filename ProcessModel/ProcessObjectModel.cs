@@ -147,18 +147,15 @@ namespace SkyCombImage.ProcessModel
         public const int CenterBlockSetting = 23;
         public const int LastRealBlockSetting = 24;
         public const int LastBlockSetting = 25;
-        public const int SpeedInPxPerBlockSetting = 26;
-        public const int XVelInPxPerBlockSetting = 27;
-        public const int YVelInPxPerBlockSetting = 28;
-        public const int MaxRealHotPixelsSetting = 29;
-        public const int MaxRealPixelWidthSetting = 30;
-        public const int MaxRealPixelHeightSetting = 31;
-        public const int FirstFwdDownDegSetting = 32;
-        public const int LastFwdDownDegSetting = 33;
-        public const int RangeFwdDownDegSetting = 34;
-        public const int NumRealFeaturesSetting = 35;
-        public const int RealDensityPxSetting = 36;
-        public const int LocnErrPerFeatCMSetting = 37;
+        public const int MaxRealHotPixelsSetting = 26;
+        public const int MaxRealPixelWidthSetting = 27;
+        public const int MaxRealPixelHeightSetting = 28;
+        public const int FirstFwdDownDegSetting = 29;
+        public const int LastFwdDownDegSetting = 30;
+        public const int RangeFwdDownDegSetting = 31;
+        public const int NumRealFeaturesSetting = 32;
+        public const int RealDensityPxSetting = 33;
+        public const int LocnErrPerFeatCMSetting = 34;
 
 
         public int UnknownHeight = -2;
