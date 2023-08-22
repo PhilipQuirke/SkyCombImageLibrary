@@ -175,8 +175,7 @@ namespace SkyCombImage.ProcessLogic
             if ((beforeStep != null) && (beforeStep.DemM != UnknownValue) && (beforeStep.InputImageSizeM != null))
             {
                 // Fraction of image traversed per second
-                var imageFractionPerSec =
-                    beforeStep.StepVelocityMps.Speed() / beforeStep.InputImageSizeM.Value.Y;
+                var imageFractionPerSec = beforeStep.SpeedMps / beforeStep.InputImageSizeM.Value.Y;
 
                 var imagePixelsPerSec = imageFractionPerSec * drone.InputVideo.ImageHeight;
 
