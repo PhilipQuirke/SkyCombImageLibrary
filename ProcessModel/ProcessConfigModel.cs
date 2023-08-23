@@ -70,7 +70,7 @@ namespace SkyCombImage.ProcessModel
         // To be highlighted, an object must have this many hot pixels per real step
         public int ObjectMinPixelsPerBlock { get; set; } = 5;
         // To be highlighted, an object must have this percentage of hot pixels inside bounding rectangle per step
-        public int ObjectMinDensityPerc { get; set; } = 40;
+        public int ObjectMinDensityPerc { get; set; } = 33;
 
 
         // Distance process:
