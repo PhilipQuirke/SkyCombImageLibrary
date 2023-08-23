@@ -166,49 +166,82 @@ namespace SkyCombImage.ProcessLogic
         {
             var currBlock = Blocks[^1];
             int blockID = currBlock.BlockId;
-            int debugBlockID = blockID;
 
-            // Debugging - Set breakpoint on assignment.
-            if (blockID == 14)
-                debugBlockID = -1;
 
-            // For each existing object, consider each frame feature (significant or not) found in this frame.
+            // We only want to consider objects that are still active.
+            // For long flights most objects will have become inactive seconds or minutes ago.
+            CombObjList inScopeObjects = new();
+            CombObjList availObjects = new();
             foreach (var theObject in CombObjs.CombObjList)
                 if ((theObject.Value.LastFeature() != null) &&
                     (theObject.Value.LastFeature().Block.BlockId == blockID - 1) &&
                     theObject.Value.VaguelySignificant())
                 {
-                    // Debugging - Set breakpoint on assignment.
-                    if ((theObject.Value.ObjectId == 1) && (blockID == 14))
-                        debugBlockID = -1;
+                    inScopeObjects.Add(theObject.Value.ObjectId, theObject.Value);
+                    availObjects.Add(theObject.Value.ObjectId, theObject.Value);
+                }
+            // Each feature can only be claimed once
+            CombFeatureList availFeatures = featuresInBlock.Clone();
 
+
+            // For each active object, consider each frame feature (significant or not)
+            // found in this frame to see if it overlaps.
+            // This priviledges objects with multiple real features,
+            // as they can more accurately estimate their expected location.
+            // We priviledge objects with a "real" last feature over objects with a "unreal" last feature.
+            for (int pass = 0; pass < 2; pass++)
+                foreach (var theObject in inScopeObjects)
+                {
+                    var lastFeat = theObject.Value.LastFeature();
+                    if((lastFeat.Block.BlockId == blockID - 1) &&
+                        (pass == 0 ? lastFeat.CFM.Type == CombFeatureTypeEnum.Real : lastFeat.CFM.Type != CombFeatureTypeEnum.Unreal))
+                    {
+                        // If one or more features overlaps the object's expected location,
+                        // claim ownership of the feature(s), and mark them as Significant.
+                        var expectedObjectLocation = theObject.Value.ExpectedLocationThisBlock();
+
+                        bool claimedFeatures = false;
+                        foreach (var feature in featuresInBlock)
+                            // Object will claim feature if the object remains viable after claiming feature
+                            if (theObject.Value.MaybeClaimFeature(feature.Value, expectedObjectLocation))
+                            {
+                                availFeatures.Remove(feature.Value.FeatureId);
+                                claimedFeatures = true;
+                            }
+                        if (claimedFeatures)
+                            availObjects.Remove(theObject.Value.ObjectId);
+                    }
+                }
+
+            // An active object with exactly one real feature can't estimate its expected location at all.
+            // An active object with two features has a lot of wobble in its expected movement/location.
+            // If the object is moving in the image quickly, the object location
+            // and feature location will not overlap. Instead the feature will (usually)
+            // be vertically below the object estimated location.
+            foreach (var theObject in availObjects)
+                if(theObject.Value.NumRealFeatures() <= 2)
+                {
                     // If one or more features overlaps the object's expected location,
                     // claim ownership of the feature(s), and mark them as Significant.
                     var expectedObjectLocation = theObject.Value.ExpectedLocationThisBlock();
-                    // We don't want a drone wobble to break the object feature sequence
-                    // So we inflate the expected location by 5 pixels in each direction.
-                    expectedObjectLocation.Inflate(5, 5);
 
-                    foreach (var feature in featuresInBlock)
-                        if (feature.Value.ObjectId == 0)
-                        {
-                            // Debugging - Set breakpoint on assignment.
-                            if (theObject.Value.ObjectId == 3)
-                                if (feature.Key == 95)
-                                    debugBlockID = -1;
+                    // Search higher in the image 
+                    expectedObjectLocation = new System.Drawing.Rectangle(
+                        expectedObjectLocation.X,
+                        expectedObjectLocation.Y + 20, // Higher
+                        expectedObjectLocation.Width,
+                        expectedObjectLocation.Height);
 
-                            if (feature.Value.Significant || theObject.Value.Significant)
-                                if (feature.Value.SignificantIntersection(expectedObjectLocation))
-                                    // Object will claim feature if the object remains viable after claiming feature
-                                    theObject.Value.ClaimFeature(feature.Value);
-                        }
+                    foreach (var feature in availFeatures)
+                        theObject.Value.MaybeClaimFeature(feature.Value, expectedObjectLocation);
                 }
+
 
             CombFeatures.AddFeatureList(featuresInBlock);
 
             // For each active object, where the above code did not find an 
             // overlapping feature in this Block, if it is worth continuing tracking...
-            foreach (var theObject in CombObjs.CombObjList)
+            foreach (var theObject in inScopeObjects)
                 if (theObject.Value.COM.BeingTracked &&
                    (theObject.Value.COM.LastRealFeatureIndex != UnknownValue) &&
                    (theObject.Value.LastRealFeature().Block.BlockId < blockID) &&
@@ -217,9 +250,10 @@ namespace SkyCombImage.ProcessLogic
                     // calculated from the object's last bounding rectangle and the average frame movement.
                     AddPersistFeature(theObject.Value);
 
+
             // All active features have passed the min pixels and min density tests, and are worth tracking.
             // For all unowned active features in this frame, create a new object to own the feature.
-            foreach (var feature in featuresInBlock)
+            foreach (var feature in availFeatures)
                 if (feature.Value.IsTracked && (feature.Value.ObjectId == 0))
                 {
                     CombObjs.Add(scope, feature.Value);
@@ -229,10 +263,11 @@ namespace SkyCombImage.ProcessLogic
                     }
                 }
 
+
             // Ensure each significant object in this leg has a "significant" name e.g. C5
             // Needs to be done ASAP so the "C5" name can be drawn on video frames.
             // Note: Some objects never become significant.
-            foreach (var theObject in CombObjs.CombObjList)
+            foreach (var theObject in inScopeObjects)
                 if ((theObject.Value.LegId > 0) &&
                    ((scope.CurrRunFlightStep == null) || (theObject.Value.LegId == scope.CurrRunFlightStep.LegId)) &&
                    (theObject.Value.Significant) &&

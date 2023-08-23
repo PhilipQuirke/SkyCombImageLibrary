@@ -438,18 +438,36 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Object will claim ownership of this feature extending the objects lifetime and improving its "Significant" score.
+        // In rare cases, object can claim multiple features from a single block (e.g. a tree branch bisects a heat spot into two features) 
+        // But only if the object reamins viable after claiming feature (e.g. doesn't get too big or density too low).
+        public bool MaybeClaimFeature(CombFeature feature, Rectangle expectedObjectLocation)
+        {
+            if (feature.ObjectId == 0) // Not claimed yet
+                if (feature.Significant || this.Significant)
+                    if (feature.SignificantIntersection(expectedObjectLocation))
+                        // Object will claim feature if the object remains viable after claiming feature
+                        return ClaimFeature(feature);
+
+            return false;
+        }
+
+
         // Calculate the drone SumLinealM distance corrsponding to the centroid of the object
         private void Calculate_AvgSumLinealM()
         {
-            if ((FirstFeature() != null) &&
-               (FirstFeature().Block != null) &&
-               (FirstFeature().Block.FlightStep != null) &&
-               (LastRealFeature() != null) &&
-               (LastRealFeature().Block != null) &&
-               (LastRealFeature().Block.FlightStep != null))
+            var firstFeat = FirstFeature();
+            var lastFeat = LastRealFeature();
+
+            if ((firstFeat != null) &&
+               (firstFeat.Block != null) &&
+               (firstFeat.Block.FlightStep != null) &&
+               (lastFeat != null) &&
+               (lastFeat.Block != null) &&
+               (lastFeat.Block.FlightStep != null))
             {
-                var firstSumLinealM = FirstFeature().Block.FlightStep.SumLinealM;
-                var lastSumLinealM = LastRealFeature().Block.FlightStep.SumLinealM;
+                var firstSumLinealM = firstFeat.Block.FlightStep.SumLinealM;
+                var lastSumLinealM = lastFeat.Block.FlightStep.SumLinealM;
                 if (firstSumLinealM == UnknownValue)
                     AvgSumLinealM = lastSumLinealM;
                 else if (lastSumLinealM != UnknownValue)
@@ -463,14 +481,16 @@ namespace SkyCombImage.ProcessLogic
         // This first estimate of DEM is under the drone, not under the object. (The object's DEM is refined later.)
         private void Calculate_DemM_UnderDrone()
         {
-            if (FirstFeature().Block.FlightStep != null)
+            var firstFeat = FirstFeature();
+            if (firstFeat.Block.FlightStep != null)
             {
-                DemM = FirstFeature().Block.FlightStep.DemM;
+                DemM = firstFeat.Block.FlightStep.DemM;
 
-                if ((LastRealFeature() != null) &&
-                    (LastRealFeature() != FirstFeature()) &&
-                    (LastRealFeature().Block.FlightStep != null))
-                    DemM = (DemM + LastRealFeature().Block.FlightStep.DemM) / 2.0f;
+                var lastFeat = LastRealFeature();
+                if ((lastFeat != null) &&
+                    (lastFeat != firstFeat) &&
+                    (lastFeat.Block.FlightStep != null))
+                    DemM = (DemM + lastFeat.Block.FlightStep.DemM) / 2.0f;
             }
         }
 
@@ -872,7 +892,7 @@ namespace SkyCombImage.ProcessLogic
             int lastWidth = lastBox.Width;
             int lastHeight = lastBox.Height;
 
-            var numBlockSteps = lastFeat.CFM.BlockId - firstFeat.CFM.BlockId;
+            var numBlockSteps = lastFeat.CFM.BlockId - firstFeat.CFM.BlockId + 1;
             if (numBlockSteps >= 2)
             {
                 // In DJI_0118 leg 3, Object 1 starts large but fades
@@ -884,28 +904,29 @@ namespace SkyCombImage.ProcessLogic
                 // We have multiple features. Use their difference in location.
                 var distanceX = 1.0F * lastBox.X + lastBox.Width / 2.0F - firstBox.X - lastBox.Width / 2.0F;
                 var distanceY = 1.0F * lastBox.Y + lastBox.Height / 2.0F - firstBox.Y - lastBox.Height / 2.0F;
-
-                var avgVelinPixelsPerBlock = new VelocityF(distanceX / numBlockSteps, distanceY / numBlockSteps);
+                var numMoves = numBlockSteps - 1;
 
                 // Advance one average stride from the previous location.
                 answer = new Rectangle(
-                    (int)(lastBox.X + avgVelinPixelsPerBlock.Value.X - addWidth / 2.0f),
-                    (int)(lastBox.Y + avgVelinPixelsPerBlock.Value.Y - addHeight / 2.0f),
+                    (int)(
+                    lastBox.X + distanceX / numMoves - addWidth / 2.0f),
+                    (int)(lastBox.Y + distanceY / numMoves - addHeight / 2.0f),
                     lastWidth + addWidth,
                     lastHeight + addHeight);
             }
             else
                 // With one feature we dont know the object's velocity across the image.
-                // Rely on image overlap and area inflation (below) 
+                // Rely on image overlap
                 answer = new Rectangle(
                     lastBox.X,
                     lastBox.Y,
                     lastWidth,
                     lastHeight);
 
-            if (lastFeat.CFM.Type == CombFeatureTypeEnum.Real)
-                // Search a few pixels wider than the real object itself.
-                answer.Inflate(4, 4);
+            if(lastFeat.CFM.Type == CombFeatureTypeEnum.Real)
+                // We don't want a drone wobble to break the object feature sequence
+                // So we inflate the expected location by 5 pixels in each direction.
+                answer.Inflate(5, 5);
 
             return answer;
         }
