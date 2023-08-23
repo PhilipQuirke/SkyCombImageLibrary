@@ -66,7 +66,7 @@ namespace SkyCombImage.ProcessModel
         // Minimum percentage difference between ground speed and object speed for object to be considered above ground.
         public int ObjectMinSpeedDiffPerc { get; set; } = 10;
         // Persist searching for an object (usign unreal features) for this many steps
-        public int ObjectMaxUnrealBlocks { get; set; } = 5;
+        public int ObjectMaxUnrealBlocks { get; set; } = 3;
         // To be highlighted, an object must have this many hot pixels per real step
         public int ObjectMinPixelsPerBlock { get; set; } = 5;
         // To be highlighted, an object must have this percentage of hot pixels inside bounding rectangle per step

@@ -100,7 +100,7 @@ namespace SkyCombImage.ProcessLogic
                     BestFixAltitudeM = 0;
                 else
                 {
-                    int maxTestAbsM = 5;
+                    int maxTestAbsM = 8;
                     // If the OnGroundAt setting was not available then test a wider range.
                     if (!drone.FlightSteps.HasOnGroundAtFix)
                         maxTestAbsM = 15;

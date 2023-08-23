@@ -64,6 +64,15 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Ensure each object has at least an "insignificant" name e.g. #16
+        public override void EnsureObjectsNamed(Drone drone)
+        {
+            foreach (var theObject in CombObjs.CombObjList)
+                if (theObject.Value.Name == "")
+                    theObject.Value.SetName();
+        }
+
+
         public override void ProcessLegStart(int legId, Drone drone)
         {
             if (drone.UseFlightLegs)
@@ -72,23 +81,15 @@ namespace SkyCombImage.ProcessLogic
                 // So at the start and end of each leg we stop tracking all objects.
                 CombObjs.StopTracking();
                 LegSignificantObjects = 0;
-
+/*
                 // If the FlightLeg has a FixAltitudeM value (from a previous processing run) then use it,
                 // else use the FixAltitudeM from the previous leg (if any) as a starting point.
                 if ((legId >= 2) &&
                     (drone.FlightLegs.Legs[legId - 1].FixAltitudeM == 0))
                     drone.FlightLegs.Legs[legId - 1].FixAltitudeM =
                         drone.FlightLegs.Legs[legId - 2].FixAltitudeM;
+*/
             }
-        }
-
-
-        // Ensure each object has at least an "insignificant" name e.g. #16
-        public override void EnsureObjectsNamed(Drone drone)
-        {
-            foreach (var theObject in CombObjs.CombObjList)
-                if (theObject.Value.Name == "")
-                    theObject.Value.SetName();
         }
 
 

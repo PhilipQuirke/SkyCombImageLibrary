@@ -651,7 +651,7 @@ namespace SkyCombImage.ProcessLogic
                 return;
 
             var lastStep = lastRealFeature.Block.FlightStep;
-            float droneDistanceDownM = lastStep.DistanceDown();
+            float droneDistanceDownM = lastStep.DistanceDown;
 
             // If drone is too low this method will not work.
             if (droneDistanceDownM < 5)
@@ -861,6 +861,8 @@ namespace SkyCombImage.ProcessLogic
         // average velocity, where do we expect the object to be this block?
         public Rectangle ExpectedLocationThisBlock()
         {
+            Rectangle answer;
+
             var firstFeat = FirstFeature();
             var lastFeat = LastFeature();
 
@@ -871,29 +873,37 @@ namespace SkyCombImage.ProcessLogic
             int lastHeight = lastBox.Height;
 
             var numBlockSteps = lastFeat.CFM.BlockId - firstFeat.CFM.BlockId;
-            if (numBlockSteps == 0)
-                return new Rectangle(lastBox.X, lastBox.Y, lastWidth, lastHeight);
+            if (numBlockSteps >= 2)
+            {
+                // In DJI_0118 leg 3, Object 1 starts large but fades
+                // so that LastFeature().PixelBox is very small.
+                // The expected location should use the maximum object size.
+                int addWidth = Math.Max(0, COM.MaxRealPixelWidth - lastWidth);
+                int addHeight = Math.Max(0, COM.MaxRealPixelHeight - lastHeight);
 
+                // We have multiple features. Use their difference in location.
+                var distanceX = 1.0F * lastBox.X + lastBox.Width / 2.0F - firstBox.X - lastBox.Width / 2.0F;
+                var distanceY = 1.0F * lastBox.Y + lastBox.Height / 2.0F - firstBox.Y - lastBox.Height / 2.0F;
 
-            // In DJI_0118 leg 3, Object 1 starts large but fades so that LastFeature().PixelBox is very small.
-            // The expected location should use the maximum object size.
-            int addWidth = Math.Max(0, COM.MaxRealPixelWidth - lastWidth);
-            int addHeight = Math.Max(0, COM.MaxRealPixelHeight - lastHeight);
+                var avgVelinPixelsPerBlock = new VelocityF(distanceX / numBlockSteps, distanceY / numBlockSteps);
 
-            // We have multiple features. Use their difference in location.
-            var distanceX = 1.0F * lastBox.X + lastBox.Width / 2.0F - firstBox.X - lastBox.Width / 2.0F;
-            var distanceY = 1.0F * lastBox.Y + lastBox.Height / 2.0F - firstBox.Y - lastBox.Height / 2.0F;
+                // Advance one average stride from the previous location.
+                answer = new Rectangle(
+                    (int)(lastBox.X + avgVelinPixelsPerBlock.Value.X - addWidth / 2.0f),
+                    (int)(lastBox.Y + avgVelinPixelsPerBlock.Value.Y - addHeight / 2.0f),
+                    lastWidth + addWidth,
+                    lastHeight + addHeight);
+            }
+            else
+                // With one feature we dont know the object's velocity across the image.
+                // Rely on image overlap and area inflation (below) 
+                answer = new Rectangle(
+                    lastBox.X,
+                    lastBox.Y,
+                    lastWidth,
+                    lastHeight);
 
-            var avgVelinPixelsPerBlock = new VelocityF(distanceX / numBlockSteps, distanceY / numBlockSteps);
-
-            // Advance one average stride from the previous location.
-            var answer = new Rectangle(
-                (int)(lastBox.X + avgVelinPixelsPerBlock.Value.X - addWidth / 2.0f),
-                (int)(lastBox.Y + avgVelinPixelsPerBlock.Value.Y - addHeight / 2.0f),
-                lastWidth + addWidth,
-                lastHeight + addHeight);
-
-            if(lastFeat.CFM.Type == CombFeatureTypeEnum.Real)
+            if (lastFeat.CFM.Type == CombFeatureTypeEnum.Real)
                 // Search a few pixels wider than the real object itself.
                 answer.Inflate(4, 4);
 
