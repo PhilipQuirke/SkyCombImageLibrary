@@ -421,9 +421,9 @@ namespace SkyCombImage.DrawSpace
                     foreach (var thisObject in process.CombObjs.CombObjList)
                         if (thisObject.Value.Significant)
                         {
-                            var avgHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.HeightM - MinVertRaw, VertRangeRaw, "DrawCombAltitudeByLinealM.AvgHt", false));
-                            var minHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.MinHeightM - MinVertRaw, VertRangeRaw, "DrawCombAltitudeByLinealM.MinHt", false));
-                            var maxHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.MaxHeightM - MinVertRaw, VertRangeRaw, "DrawCombAltitudeByLinealM.MaxHt", false));
+                            var avgHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.HeightM - MinVertRaw, VertRangeRaw));
+                            var minHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.MinHeightM - MinVertRaw, VertRangeRaw));
+                            var maxHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.MaxHeightM - MinVertRaw, VertRangeRaw));
 
                             var avgLinealM = thisObject.Value.AvgSumLinealM;
                             var errLinealM = thisObject.Value.LocationErrM;
@@ -527,9 +527,9 @@ namespace SkyCombImage.DrawSpace
                     foreach (var thisObject in process.CombObjs.CombObjList)
                         if (thisObject.Value.Significant)
                         {
-                            var avgHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.HeightM - MinVertRaw, VertRangeRaw, "DrawCombAltitudeByTime.AvgHt", false));
-                            var minHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.MinHeightM - MinVertRaw, VertRangeRaw, "DrawCombAltitudeByTime.MinHt", false));
-                            var maxHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.MaxHeightM - MinVertRaw, VertRangeRaw, "DrawCombAltitudeByTime.MaxHt", false));
+                            var avgHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.HeightM - MinVertRaw, VertRangeRaw));
+                            var minHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.MinHeightM - MinVertRaw, VertRangeRaw));
+                            var maxHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.MaxHeightM - MinVertRaw, VertRangeRaw));
 
                             var firstFlightMs = (int)(thisObject.Value.RunFromVideoS * 1000);
                             var lastFlightMs = (int)(thisObject.Value.RunToVideoS * 1000);
@@ -645,7 +645,7 @@ namespace SkyCombImage.DrawSpace
                 var realBgr = DroneColors.RealFeatureBgr;         // Orange
                 var unrealBgr = DroneColors.UnrealFeatureBgr;     // Yellow
 
-                var objHeightPxs = TrimHeight(RawDataToHeightPixels(thisObject.HeightM - MinVertRaw, VertRangeRaw, "DrawCombObjectHeight.AvgHt", false));
+                var objHeightPxs = TrimHeight(RawDataToHeightPixels(thisObject.HeightM - MinVertRaw, VertRangeRaw));
 
                 var firstMs = DroneDrawScope.FirstDrawMs;
                 var lastMs = DroneDrawScope.LastDrawMs;
@@ -663,7 +663,7 @@ namespace SkyCombImage.DrawSpace
                         (thisFeature.Value.CFM.BlockId <= DroneDrawScope.MaxFeatureBlockIdToDraw))
                     {
                         var theBgr = (thisFeature.Value.CFM.Type == CombFeatureTypeEnum.Real ? realBgr : unrealBgr);
-                        var thisHeightPxs = TrimHeight(RawDataToHeightPixels(thisFeature.Value.CFM.HeightM - MinVertRaw, VertRangeRaw, "DrawCombObjectHeight.AvgHt", false));
+                        var thisHeightPxs = TrimHeight(RawDataToHeightPixels(thisFeature.Value.CFM.HeightM - MinVertRaw, VertRangeRaw));
                         var thisWidthPxs = StepToWidth(thisFeature.Value.Block.SumTimeMs, firstMs);
 
                         Draw.Cross(ref image,

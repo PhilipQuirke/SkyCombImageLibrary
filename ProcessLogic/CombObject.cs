@@ -658,6 +658,7 @@ namespace SkyCombImage.ProcessLogic
             if ((firstRealFeature == null) ||
                 (lastRealFeature == null) ||
                 (firstRealFeature.FeatureId == lastRealFeature.FeatureId) || // Need at multiple real distinct features
+                (lastRealFeature.Block == null) ||
                 (lastRealFeature.Block.FlightStep == null))
                 return;
 
