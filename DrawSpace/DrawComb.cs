@@ -203,7 +203,7 @@ namespace SkyCombImage.DrawSpace
         // Draw the bounding rectangles of the owned features
         public static void ObjectFeatures(DrawImageConfig config, int focusObjectId,
             ref Image<Bgr, byte> image,
-            CombFeature feature, CombObject combObject,
+            CombFeature feature, CombObject? combObject,
             Transform transform)
         {
             if (config.DrawRealFeatureColor == Color.White &&
@@ -235,9 +235,11 @@ namespace SkyCombImage.DrawSpace
                     if (feature.Significant || isFocusObject ||
                         (focusObjectId == -1)) // Draw object # for all objects if focusObjectId is -1
                     {
-                        string name = feature.ObjectId.ToString();
+                        string name;
                         if (combObject != null)
                             name = combObject.Name;
+                        else
+                            name = feature.ObjectId.ToString();
 
                         // Draw the object name to right of the rectangle.
                         image.Draw(name,
@@ -253,7 +255,7 @@ namespace SkyCombImage.DrawSpace
         public static void CombImage(
             DrawImageConfig drawConfig, ProcessConfigModel processConfig,
             int focusObjectId, ref Image<Bgr, byte> outputImg,
-            CombProcessAll process, int blockId, Transform transform)
+            CombProcessAll process, ProcessBlockModel block, Transform transform)
         {
             try
             {
@@ -262,27 +264,32 @@ namespace SkyCombImage.DrawSpace
                 if (process != null)
                 {
                     // Draw the leg name on the image (if any) at bottom right
-                    if (thermalImage && (process.Blocks[blockId - 1].LegId > 0))
+                    if (thermalImage && (block.LegId > 0))
                     {
                         var video = process.Drone.InputVideo;
                         int theY = (int)(video.ImageHeight * 98 / 100); // pixels
                         int theX = (int)(video.ImageWidth * 92 / 100); // pixels
-                        Text(ref outputImg, "Leg " + process.Blocks[blockId - 1].LegName,
+                        Text(ref outputImg, "Leg " + block.LegName,
                                 new Point(theX, theY), 1, DroneColors.LegNameBgr, video.FontScale);
                     }
 
-                    foreach (var feature in process.CombFeatures)
-                        if (feature.Value.CFM.BlockId == blockId)
+                    for (int featureId = block.MinFeatureId; featureId <= block.MaxFeatureId; featureId++)
+                    {
+                        if (process.CombFeatures.ContainsKey(featureId))
                         {
+                            var feature = process.CombFeatures[featureId];
+                            Assert(feature.CFM.BlockId == block.BlockId, "CombImage: Bad logic");
+
                             // Draw all hot pixels for the current block 
-                            HotPixels(drawConfig, processConfig, ref outputImg, feature.Value, transform);
+                            HotPixels(drawConfig, processConfig, ref outputImg, feature, transform);
 
                             // Draw the bounding rectangle of the owned feature
-                            CombObject theObject = null;
-                            if (feature.Value.ObjectId > 0)
-                                theObject = process.CombObjs.CombObjList[feature.Value.ObjectId];
-                            ObjectFeatures(drawConfig, focusObjectId, ref outputImg, feature.Value, theObject, transform);
+                            CombObject? theObject = null;
+                            if (feature.ObjectId > 0)
+                                theObject = process.CombObjs.CombObjList[feature.ObjectId];
+                            ObjectFeatures(drawConfig, focusObjectId, ref outputImg, feature, theObject, transform);
                         }
+                    }
                 }
 
                 if (!thermalImage)
@@ -313,16 +320,16 @@ namespace SkyCombImage.DrawSpace
 
 
         // Process a single input and (maybe) display video frame for the specified block, returning the modified input&display frames to show 
-        public static (Image<Bgr, byte>, Image<Bgr, byte>) Draw(
+        public static (Image<Bgr, byte>?, Image<Bgr, byte>?) Draw(
             RunProcessEnum runProcess,
             ProcessConfigModel processConfig, DrawImageConfig drawConfig, DroneConfigModel droneConfig,
-            int blockId, CombProcessAll combProcess, int focusObjectId,
+            ProcessBlockModel block, CombProcessAll combProcess, int focusObjectId,
             Image<Bgr, byte> inputFrame, Image<Bgr, byte> displayFrame)
         {
             try
             {
-                Image<Bgr, byte> modifiedInputFrame = null;
-                Image<Bgr, byte> modifiedDisplayFrame = null;
+                Image<Bgr, byte>? modifiedInputFrame = null;
+                Image<Bgr, byte>? modifiedDisplayFrame = null;
 
                 if (inputFrame != null)
                 {
@@ -331,7 +338,7 @@ namespace SkyCombImage.DrawSpace
                     if (runProcess == RunProcessEnum.Comb)
                         // Draw hot objects
                         CombImage(drawConfig, processConfig, focusObjectId,
-                            ref modifiedInputFrame, combProcess, blockId, new());
+                            ref modifiedInputFrame, combProcess, block, new());
                     else
                         // Handles RunModel = Threshold, Distance, Contour, GFTT, etc.
                         (modifiedInputFrame, _) = DrawImage.Draw(runProcess, processConfig, drawConfig, inputFrame);
@@ -353,7 +360,7 @@ namespace SkyCombImage.DrawSpace
                             inputFrame.Size, displayFrame.Size, droneConfig.ExcludeDisplayMarginRatio);
 
                         CombImage(newDrawConfig, processConfig, focusObjectId,
-                            ref modifiedDisplayFrame, combProcess, blockId, inputToDisplayTransform);
+                            ref modifiedDisplayFrame, combProcess, block, inputToDisplayTransform);
                     }
                 }
                 return (modifiedInputFrame, modifiedDisplayFrame);

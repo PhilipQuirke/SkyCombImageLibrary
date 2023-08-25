@@ -237,6 +237,7 @@ namespace SkyCombImage.ProcessLogic
                 }
 
 
+            currBlock.AddFeatureList(featuresInBlock);
             CombFeatures.AddFeatureList(featuresInBlock);
 
             // For each active object, where the above code did not find an 
@@ -289,6 +290,7 @@ namespace SkyCombImage.ProcessLogic
                 feature.Value.Significant = false;
             }
 
+            Blocks[^1].AddFeatureList(featuresInBlock);
             CombFeatures.AddFeatureList(featuresInBlock);
         }
 

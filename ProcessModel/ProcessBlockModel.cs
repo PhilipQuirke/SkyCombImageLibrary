@@ -1,6 +1,6 @@
 ﻿using SkyCombGround.CommonSpace;
 using SkyCombDrone.DroneModel;
-using System.Collections.Generic;
+using SkyCombImage.ProcessLogic;
 
 
 // Models are used in-memory and to persist/load data to/from the datastore
@@ -25,7 +25,7 @@ namespace SkyCombImage.ProcessModel
 
 
         // Approximate ground velocity in pixels per block
-        public VelocityF VelocityInPixelsPerBlock { get; set; }
+        public VelocityF? VelocityInPixelsPerBlock { get; set; }
 
 
         // ------ Input Video Position Data -----
@@ -42,8 +42,18 @@ namespace SkyCombImage.ProcessModel
         public int DisplayFrameMs { get; set; }
 
 
+
+        // ------ Min / Max Features associated with this block -----
+        public int MinFeatureId { get; set; }
+        public int MaxFeatureId { get; set; }
+
+
         // Number of significant objects in the block. Only used by Flow process. 
         public int NumSig { get; set; }
+
+
+
+
 
 
         public ProcessBlockModel(ProcessScopeModel scope) : base(scope.CurrBlockId)
@@ -55,6 +65,8 @@ namespace SkyCombImage.ProcessModel
             InputFrameMs = scope.CurrInputFrameMs;
             DisplayFrameId = scope.CurrDisplayFrameId;
             DisplayFrameMs = scope.CurrDisplayFrameMs;
+            MinFeatureId = UnknownValue;
+            MaxFeatureId = UnknownValue;
             NumSig = 0;
         }
 
@@ -65,6 +77,20 @@ namespace SkyCombImage.ProcessModel
             if (settings != null)
                 LoadSettings(settings);
             NumSig = 0;
+        }
+
+
+        public void AddFeatureList(CombFeatureList featuresToAdd)
+        {
+            if (featuresToAdd != null)
+            {
+                var count = featuresToAdd.Count;
+                if (count > 0)
+                {
+                    MinFeatureId = featuresToAdd.Keys[0];
+                    MaxFeatureId = featuresToAdd.Keys[count - 1];
+                }
+            }
         }
 
 
@@ -90,9 +116,11 @@ namespace SkyCombImage.ProcessModel
         public const int InputFrameMsSetting = FirstFreeSetting + 6;
         public const int DisplayFrameIdSetting = FirstFreeSetting + 7;
         public const int DisplayFrameMsSetting = FirstFreeSetting + 8;
-        public const int DsmMSetting = FirstFreeSetting + 9;
-        public const int DemMSetting = FirstFreeSetting + 10;
-        public const int HasLegSetting = FirstFreeSetting + 11;
+        public const int MinFeatureIdSetting = FirstFreeSetting + 9;
+        public const int MaxFeatureIdSetting = FirstFreeSetting + 10;
+        public const int DsmMSetting = FirstFreeSetting + 11;
+        public const int DemMSetting = FirstFreeSetting + 12;
+        public const int HasLegSetting = FirstFreeSetting + 13;
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
@@ -110,6 +138,8 @@ namespace SkyCombImage.ProcessModel
             answer.Add("Input Frame Ms", InputFrameMs, MillisecondsNdp);
             answer.Add("Display Frame Id", DisplayFrameId);
             answer.Add("Display Frame Ms", DisplayFrameMs, MillisecondsNdp);
+            answer.Add("Min Feat Id", MinFeatureId);
+            answer.Add("Max Feat Id", MaxFeatureId);
 
             return answer;
         }
@@ -130,6 +160,8 @@ namespace SkyCombImage.ProcessModel
             InputFrameMs = StringToNonNegInt(settings[i++]);
             DisplayFrameId = StringToNonNegInt(settings[i++]);
             DisplayFrameMs = StringToNonNegInt(settings[i++]);
+            MinFeatureId = StringToNonNegInt(settings[i++]);
+            MaxFeatureId = StringToNonNegInt(settings[i++]);
 
             if (LegId == 0)
                 LegId = UnknownValue;
