@@ -134,7 +134,7 @@ namespace SkyCombImage.DrawSpace
             }
 
             // Draw the estimated ground velocity (aka opposite of drone velocity) as arrow and text 
-            PointOfViewVelocity(ref outputImg, new Point(40, 40), FlowData.FlowBlocks[lastBlockId - 1] as FlowBlock, DroneColors.WhiteBgr);
+            PointOfViewVelocity(ref outputImg, new Point(40, 40), FlowData.FlowBlocks[lastBlockId] as FlowBlock, DroneColors.WhiteBgr);
         }
 
     }

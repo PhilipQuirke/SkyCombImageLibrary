@@ -32,7 +32,7 @@ namespace SkyCombImage.PersistModel
                         var blockId = ConfigBase.StringToNonNegInt(blockIdString);
 
                         // Load the non-blank cells in this row into a CombObject
-                        model.Blocks.Add(ProcessFactory.NewBlock(blockId, Data.GetRowSettings(row, 1), drone));
+                        model.Blocks.AddBlock(ProcessFactory.NewBlock(blockId, Data.GetRowSettings(row, 1), drone), null, drone);
 
                         row++;
                         cell = Data.Worksheet.Cells[row, TardisModel.TardisIdSetting];

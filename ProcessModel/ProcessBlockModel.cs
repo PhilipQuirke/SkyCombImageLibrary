@@ -1,6 +1,7 @@
 ﻿using SkyCombGround.CommonSpace;
 using SkyCombDrone.DroneModel;
 using SkyCombImage.ProcessLogic;
+using SkyCombDrone.DroneLogic;
 
 
 // Models are used in-memory and to persist/load data to/from the datastore
@@ -80,6 +81,13 @@ namespace SkyCombImage.ProcessModel
         }
 
 
+        public void AddFeature(ProcessFeatureModel featureToAdd)
+        {
+            if (MinFeatureId == UnknownValue || featureToAdd.FeatureId < MinFeatureId)
+                MinFeatureId = featureToAdd.FeatureId;
+            if (MaxFeatureId == UnknownValue || featureToAdd.FeatureId > MaxFeatureId)
+                MaxFeatureId = featureToAdd.FeatureId;
+        }
         public void AddFeatureList(CombFeatureList featuresToAdd)
         {
             if (featuresToAdd != null)

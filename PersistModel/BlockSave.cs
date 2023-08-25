@@ -37,9 +37,9 @@ namespace SkyCombImage.PersistModel
                 int blockRow = 0;
                 foreach (var block in blocks)
                 {
-                    Data.SetDataListRowKeysAndValues(ref blockRow, block.GetSettings());
-                    MinDatumId = Math.Min(MinDatumId, block.BlockId);
-                    MaxDatumId = Math.Max(MaxDatumId, block.BlockId);
+                    Data.SetDataListRowKeysAndValues(ref blockRow, block.Value.GetSettings());
+                    MinDatumId = Math.Min(MinDatumId, block.Value.BlockId);
+                    MaxDatumId = Math.Max(MaxDatumId, block.Value.BlockId);
                 }
 
                 Data.SetNumberColumnNdp(TardisModel.YawDegSetting, DegreesNdp);

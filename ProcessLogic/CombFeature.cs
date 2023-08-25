@@ -58,7 +58,7 @@ namespace SkyCombImage.ProcessLogic
             LoadSettings(settings);
 
             Model = model;
-            Block = Model.Blocks[CFM.BlockId - 1];
+            Block = Model.Blocks[CFM.BlockId];
         }
 
 

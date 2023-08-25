@@ -37,7 +37,7 @@ namespace SkyCombImage.ProcessLogic
 
         // Blocks often fall between two successive FlightSteps.
         // If so, interpolate Block attributes from the surrounding two steps.
-        public void CalculateSettings_FromSteps(Drone drone, ProcessBlock prevBlock, int blockMs)
+        public void CalculateSettings_FromSteps(Drone drone, ProcessBlock? prevBlock, int blockMs)
         {
             var thisBlockId = this.BlockId;
 
@@ -48,7 +48,7 @@ namespace SkyCombImage.ProcessLogic
             bool badBlockMs = ((prevBlock != null) && (prevBlock.InputFrameMs >= this.InputFrameMs));
 
             // Get the FlightStep AT or BEFORE blockMs            
-            FlightStep beforeStep;
+            FlightStep? beforeStep;
             if ((prevBlock != null) && (prevBlock.FlightStep != null))
                 beforeStep = drone.FlightSteps.FlightStepAtOrBeforeFlightMs(prevBlock.FlightStep, blockMs);
             else if (blockMs < drone.SectionIdToVideoMs(drone.FlightSteps.MinStepId))
@@ -60,7 +60,7 @@ namespace SkyCombImage.ProcessLogic
             Assert((!haveBeforeStep) || (beforeStepMs <= blockMs), "CalculateSettings_FromSteps: Logic 2");
 
             // Get the FlightStep AFTER blockMs            
-            FlightStep afterStep = null;
+            FlightStep? afterStep = null;
             if (haveBeforeStep)
                 drone.FlightSteps.Steps.TryGetValue(beforeStep.StepId + 1, out afterStep);
             bool haveAfterStep = (afterStep != null);
@@ -229,24 +229,32 @@ namespace SkyCombImage.ProcessLogic
     };
 
 
-    public class ProcessBlockList : List<ProcessBlock>
+
+
+    public class ProcessBlockList : SortedList<int,ProcessBlock>
     {
-        public void AddBlock(ProcessBlock newBlock, ProcessScope scope, Drone drone)
+        public void AddBlock(ProcessBlock newBlock, ProcessScope? scope, Drone drone)
         {
-            ProcessBlock prevBlock = null;
-            if (Count > 0)
-                prevBlock = this[Count - 1];
+            ProcessBlock? prevBlock = LastBlock;
 
-            Add(newBlock);
+            Add(newBlock.BlockId, newBlock);
 
-            newBlock.CalculateSettings(scope, drone, prevBlock);
+            if (scope != null)
+            {
+                newBlock.CalculateSettings(scope, drone, prevBlock);
 
-            BaseConstants.Assert(newBlock.BlockId == scope.PSM.CurrBlockId, "AddBlock: Bad scope");
-            BaseConstants.Assert(this.Count == scope.PSM.CurrBlockId, "AddBlock: Bad Blocks count");
-            int numBlocks = this.Count;
-            if (numBlocks >= 2)
-                BaseConstants.Assert(this[numBlocks - 2].BlockId == this[numBlocks - 1].BlockId - 1, "AddBlock: Bad Blocks order");
+                BaseConstants.Assert(newBlock.BlockId == scope.PSM.CurrBlockId, "AddBlock: Bad scope");
+                BaseConstants.Assert(this.Count == scope.PSM.CurrBlockId, "AddBlock: Bad Blocks count");
+            }
         }
+
+
+        public ProcessBlock? LastBlock { get { 
+            if (Count > 0)
+                return this[Keys[Count-1]];
+
+            return null;
+        } }
 
 
         // Returns the distance in meters between the fromBlock and the toBlock locations
@@ -269,16 +277,17 @@ namespace SkyCombImage.ProcessLogic
                 double minDiff = double.MaxValue;
                 foreach (var block in this)
                 {
-                    double diff = Math.Abs(timeMs - block.InputFrameMs);
+                    double diff = Math.Abs(timeMs - block.Value.InputFrameMs);
                     if (diff < minDiff)
                     {
                         minDiff = diff;
-                        theBlockId = block.BlockId;
+                        theBlockId = block.Value.BlockId;
                     }
                 }
             }
 
             return theBlockId;
         }
-    }
+    };
+
 }

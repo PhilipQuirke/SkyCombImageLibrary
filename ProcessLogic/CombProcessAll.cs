@@ -135,7 +135,7 @@ namespace SkyCombImage.ProcessLogic
         // last bounding rectangle, maximum pixel box, and the average object movement.
         public void AddPersistFeature(CombObject theObject)
         {
-            var theBlock = Blocks[^1];
+            var theBlock = Blocks.LastBlock;
 
             CombFeature theFeature = new(this, theBlock, CombFeatureTypeEnum.Unreal);
             theFeature.CFM.PixelBox = theObject.ExpectedLocationThisBlock();
@@ -164,7 +164,7 @@ namespace SkyCombImage.ProcessLogic
         // else creating new objects to hold the features.
         public void ProcessBlockForObjects(ProcessScope scope, CombFeatureList featuresInBlock)
         {
-            var currBlock = Blocks[^1];
+            var currBlock = Blocks.LastBlock;
             int blockID = currBlock.BlockId;
 
 
@@ -290,7 +290,7 @@ namespace SkyCombImage.ProcessLogic
                 feature.Value.Significant = false;
             }
 
-            Blocks[^1].AddFeatureList(featuresInBlock);
+            Blocks.LastBlock.AddFeatureList(featuresInBlock);
             CombFeatures.AddFeatureList(featuresInBlock);
         }
 

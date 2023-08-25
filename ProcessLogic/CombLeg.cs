@@ -200,15 +200,15 @@ namespace SkyCombImage.ProcessLogic
                 // Summarise the blocks in this leg
                 ResetTardis();
                 foreach (var theBlock in Process.Blocks)
-                    if (theBlock.LegId == LegId)
+                    if (theBlock.Value.LegId == LegId)
                     {
-                        if (theBlock.FlightStep != null)
+                        if (theBlock.Value.FlightStep != null)
                         {
                             if (MinStepId == UnknownValue)
-                                MinStepId = theBlock.FlightStep.StepId;
-                            MaxStepId = Math.Max(MaxStepId, theBlock.FlightStep.StepId);
+                                MinStepId = theBlock.Value.FlightStep.StepId;
+                            MaxStepId = Math.Max(MaxStepId, theBlock.Value.FlightStep.StepId);
                         }
-                        SummariseTardis(theBlock);
+                        SummariseTardis(theBlock.Value);
                     }
             }
             catch (Exception ex)

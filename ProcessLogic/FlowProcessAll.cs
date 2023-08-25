@@ -20,11 +20,11 @@ namespace SkyCombImage.ProcessModel
         // Ground velocity/speed for this block in pixels per frame, based on 25% percentile.
         // Based on the output of the Flow process.
         // This is an "instant" velocity - based on difference between prev and this block - without any multi-block smoothing.
-        public VelocityF FlowGroundVelInPixelsPerBlock { get; set; }
+        public VelocityF? FlowGroundVelInPixelsPerBlock { get; set; }
         // Average velocity/speed of all features in this block, based on 50% percentile. Higher than GroundVelocityInPixels. This is an "instant" velocity. 
-        public VelocityF FlowAverageVelInPixelsPerBlock { get; set; }
+        public VelocityF? FlowAverageVelInPixelsPerBlock { get; set; }
         // Surface (tree-top) velocity/speed for this block, based on 75% percentile. Higher than AverageVelocityInPixels. This is an "instant" velocity.
-        public VelocityF FlowSurfaceVelInPixelsPerBlock { get; set; }
+        public VelocityF? FlowSurfaceVelInPixelsPerBlock { get; set; }
 
 
         // On rare occassions (e.g. DJI_0088, from 140s to 144s) CalcOpticalFlowPyrLK will decide that an existing 
@@ -488,20 +488,20 @@ namespace SkyCombImage.ProcessModel
 
 
         // Create a flow feature and add it to the flow object. Update the block totals
-        public FlowFeature ObjectClaimsNewFeature(FlowObject theObject, int blockId, float currPointX, float currPointY)
+        public FlowFeature ObjectClaimsNewFeature(FlowObject theObject, FlowBlock block, float currPointX, float currPointY)
         {
             try
             {
-                var newFeature = FlowFeatures.AddFeature(blockId, new Point((int)currPointX, (int)currPointY));
+                var newFeature = FlowFeatures.AddFeature(block.BlockId, new Point((int)currPointX, (int)currPointY));
 
+                block.AddFeature(newFeature);
                 theObject.ClaimFeature(newFeature);
 
                 if (theObject.PrevPointY != UnknownValue)
                 {
-                    var theBlock = FlowBlocks[^1] as FlowBlock;
                     var deltaX = currPointX - theObject.PrevPointX;
                     var deltaY = currPointY - theObject.PrevPointY;
-                    theBlock.AddDelta((int)deltaY, (int)deltaX);
+                    block.AddDelta((int)deltaY, (int)deltaX);
                 }
 
                 theObject.PrevPointY = currPointY;
@@ -542,7 +542,7 @@ namespace SkyCombImage.ProcessModel
 
                 // We have found a new feature to track.
                 var newObject = FlowObjects.AddObject(scope);
-                ObjectClaimsNewFeature(newObject, scope.PSM.CurrBlockId, pointX, pointY);
+                ObjectClaimsNewFeature(newObject, FlowBlocks.LastBlock as FlowBlock, pointX, pointY);
             }
 
             return FlowObjects.SignificantCount();
@@ -670,9 +670,10 @@ namespace SkyCombImage.ProcessModel
                             "FlowProcessModel.ProcessBlock: prevPoints.Size=" + prevPoints.Size + " currPoints.Size=" + currPoints.Size);
 
                         // Calculate the cutoff and mark points moving faster than that as insignificant.
-                        (FlowBlocks[^1] as FlowBlock).MedianMovePx =
+                        var currBlock = FlowBlocks.LastBlock as FlowBlock;
+                        currBlock.MedianMovePx =
                             MarkVeryFastObjectsInsignificant(
-                                (FlowBlocks[^2] as FlowBlock).MedianMovePx,
+                                (FlowBlocks[currBlock.BlockId-1] as FlowBlock).MedianMovePx,
                                 significantObjects, prevPoints, currPoints, statuses);
 
                         // Update Features with flow information
@@ -700,7 +701,7 @@ namespace SkyCombImage.ProcessModel
                                 float currPointY = currPoints[i].Y;
                                 float currPointX = currPoints[i].X;
 
-                                ObjectClaimsNewFeature(thisObject, scope.PSM.CurrBlockId, currPointX, currPointY);
+                                ObjectClaimsNewFeature(thisObject, currBlock, currPointX, currPointY);
                             }
                         }
                     }
