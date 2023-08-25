@@ -9,7 +9,7 @@ using System.Diagnostics;
 
 namespace SkyCombImage.ProcessModel
 {
-    public enum RunProcessEnum { Comb, Threshold, Flow, Contour, Distance, GFTT, None };
+    public enum RunProcessEnum { Comb, Threshold, Flow, GFTT, None };
 
     public enum RunSpeedEnum { Max, Fast, Medium, Slow };
 
@@ -160,16 +160,9 @@ namespace SkyCombImage.ProcessModel
 
         // Process (analyse) a single image (using any one ProcessName) and returns an image.
         // The output image shows hot pixel in green, with red rectangles bounding significant features.
-        public static (Image<Bgr, byte>, string) Run(RunConfig config, Image<Bgr, byte> imgInput)
+        public static void Run(RunConfig config, ref Image<Bgr, byte> imgInput)
         {
-            Stopwatch watch = Stopwatch.StartNew();
-
-            (var image, var notes) = SkyCombImage.DrawSpace.DrawImage.Draw(config.RunProcess, config.Process, config.DrawImage, imgInput);
-
-            watch.Stop();
-            string fullNotes = string.Format("Calc={0}ms, {1}", watch.ElapsedMilliseconds, notes);
-
-            return (image, fullNotes);
+            DrawSpace.DrawImage.Draw(config.RunProcess, config.Process, config.DrawImage, ref imgInput);
         }
     }
 }

@@ -88,9 +88,11 @@ namespace SkyCombImage.PersistModel
                 var drawAltitudes = new DrawAltitudeByLinealM(drawScope);
 
                 drawAltitudes.Initialise(new Size(1600, 300));
-                var pathBitmap = drawAltitudes.CurrImage().ToBitmap();
+                var currImage = drawAltitudes.BaseImage.Clone();
+                drawAltitudes.CurrImage(ref currImage);
+                var graphBitmap = currImage.ToBitmap();
 
-                Data.SaveBitmap(pathBitmap, "BlocksElevations", FirstGraphRow, 0);
+                Data.SaveBitmap(graphBitmap, "BlocksElevations", FirstGraphRow, 0);
 
                 Data.SetTitleAndDataListColumn("Metrics", FirstGraphRow + 1, ChartWidth + 1, Summary.GetSettings_Altitude(), true, 1);
             }

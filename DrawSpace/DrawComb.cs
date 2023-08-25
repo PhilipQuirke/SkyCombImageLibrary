@@ -58,12 +58,10 @@ namespace SkyCombImage.DrawSpace
 
         // Draw drone flight path based on Drone/GroundSpace & RunSpace data
         // Draw least important then more important stuff as the rectangles will overlap.
-        public override Image<Bgr, byte> CurrImage()
+        public override void CurrImage(ref Image<Bgr, byte> image)
         {
             try
             {
-                var image = base.CurrImage();
-
                 if (HasPathGraphTransform() && (DrawScope.Process != null))
                 {
                     var inObjectBgr = DroneColors.InScopeObjectBgr;   // Red
@@ -100,8 +98,6 @@ namespace SkyCombImage.DrawSpace
                             DrawObject(thisObject.Value, ref image, inObjectBgr);
                         }
                 }
-
-                return image.Clone();
             }
             catch (Exception ex)
             {
@@ -112,12 +108,10 @@ namespace SkyCombImage.DrawSpace
 
         // Draw drone flight path and one object in particular.
         // Draw least important then more important stuff as the rectangles will overlap.
-        public Image<Bgr, byte> CurrImage(CombProcessAll process, ProcessObject focusObject)
+        public void CurrImage( ref Image<Bgr, byte> image, CombProcessAll process, ProcessObject focusObject)
         {
             try
             {
-                var image = base.CurrImage();
-
                 if (HasPathGraphTransform() && (process != null))
                 {
                     var inObjectBgr = DroneColors.InScopeObjectBgr;   // Red
@@ -142,8 +136,6 @@ namespace SkyCombImage.DrawSpace
                                 DrawObject(thisObject.Value, ref image, outObjectBgr);
                         }
                 }
-
-                return image.Clone();
             }
             catch (Exception ex)
             {
@@ -340,8 +332,8 @@ namespace SkyCombImage.DrawSpace
                         CombImage(drawConfig, processConfig, focusObjectId,
                             ref modifiedInputFrame, combProcess, block, new());
                     else
-                        // Handles RunModel = Threshold, Distance, Contour, GFTT, etc.
-                        (modifiedInputFrame, _) = DrawImage.Draw(runProcess, processConfig, drawConfig, inputFrame);
+                        // Handles RunModel = Contour, GFTT, etc.
+                        DrawImage.Draw(runProcess, processConfig, drawConfig, ref modifiedInputFrame);
 
                     if (displayFrame != null)
                     {
@@ -401,11 +393,7 @@ namespace SkyCombImage.DrawSpace
 
                 // Draw significant object as horizontally-stretched H with centroid - showing object duration and height
                 if (process != null)
-                {
-                    var image = GraphObjects(BaseImage, process);
-
-                    BaseImage = image.Clone();
-                }
+                    GraphObjects(ref BaseImage, process);
             }
             catch (Exception ex)
             {
@@ -417,12 +405,10 @@ namespace SkyCombImage.DrawSpace
         // Draw object at best estimate of height, location with error bars
         // Draw object "location error" as horizontally-stretched H
         // Draw object "height error" as vertically-stretched H
-        public Image<Bgr, byte> GraphObjects(Image<Bgr, byte> currImage, CombProcessAll process)
+        public void GraphObjects(ref Image<Bgr, byte> currImage, CombProcessAll process)
         {
             try
             {
-                var image = currImage.Clone();
-
                 if ((DroneDrawScope.Drone != null) && (process != null) && (process.CombObjs.CombObjList.Count > 0))
                 {
                     foreach (var thisObject in process.CombObjs.CombObjList)
@@ -442,13 +428,11 @@ namespace SkyCombImage.DrawSpace
                             if (thisObject.Value.InRunScope(DrawScope.ProcessScope))
                                 theBgr = DroneColors.InScopeObjectBgr;
 
-                            DrawObject(ref image, theBgr,
+                            DrawObject(ref currImage, theBgr,
                                 minHeight, avgHeight, maxHeight,
                                 firstWidth, middleWidth, lastWidth);
                         }
                 }
-
-                return image.Clone();
             }
             catch (Exception ex)
             {
@@ -458,17 +442,13 @@ namespace SkyCombImage.DrawSpace
 
 
         // Draw altitude data based on Drone/GroundSpace & RunSpace data
-        public override Image<Bgr, byte> CurrImage()
+        public override void CurrImage(ref Image<Bgr, byte> image)
         {
             try
             {
-                var image = base.CurrImage();
-
                 // Draw significant object as horizontally-stretched H with centroid - showing object duration and height
                 if (Process != null)
-                    image = GraphObjects(image, Process);
-
-                return image.Clone();
+                    GraphObjects(ref image, Process);
             }
             catch (Exception ex)
             {
@@ -508,9 +488,7 @@ namespace SkyCombImage.DrawSpace
                 // Draw significant object as horizontally-stretched H with centroid - showing object duration and height
                 if (process != null)
                 {
-                    var image = GraphObjects(BaseImage, process);
-
-                    BaseImage = image.Clone();
+                    GraphObjects(ref BaseImage, process);
                 }
             }
             catch (Exception ex)
@@ -523,12 +501,10 @@ namespace SkyCombImage.DrawSpace
         // Draw object at best estimate of height and center of period seen
         // Draw object "visible duration" as horizontally-stretched H
         // Draw object "height error" as vertically-stretched H
-        public Image<Bgr, byte> GraphObjects(Image<Bgr, byte> currImage, CombProcessAll process)
+        public void GraphObjects(ref Image<Bgr, byte> currImage, CombProcessAll process)
         {
             try
             {
-                var image = currImage.Clone();
-
                 if ((DroneDrawScope.Drone != null) && (process != null) && (process.CombObjs.CombObjList.Count > 0))
                 {
                     foreach (var thisObject in process.CombObjs.CombObjList)
@@ -561,14 +537,12 @@ namespace SkyCombImage.DrawSpace
                                     Assert(!(middleWidth > Size.Width + 1 || middleWidth < 0), "DrawCombAltitudeByTime.GraphObjects: middleWidth out of bounds");
                                 }
 
-                                DrawObject(ref image, theBgr,
+                                DrawObject(ref currImage, theBgr,
                                     minHeight, avgHeight, maxHeight,
                                     firstWidth, middleWidth, lastWidth);
                             }
                         }
                 }
-
-                return image.Clone();
             }
             catch (Exception ex)
             {
@@ -578,17 +552,13 @@ namespace SkyCombImage.DrawSpace
 
 
         // Draw altitude data based on Drone/GroundSpace & RunSpace data
-        public override Image<Bgr, byte> CurrImage()
+        public override void CurrImage(ref Image<Bgr, byte> image)
         {
             try
             {
-                var image = base.CurrImage();
-
                 // Draw significant object as horizontally-stretched H with centroid - showing object duration and height
                 if (Process != null)
-                    image = GraphObjects(image, Process);
-
-                return image.Clone();
+                    GraphObjects(ref image, Process);
             }
             catch (Exception ex)
             {
@@ -642,12 +612,10 @@ namespace SkyCombImage.DrawSpace
         }
 
 
-        public Image<Bgr, byte> CurrImage(CombProcessAll process, CombObject thisObject)
+        public void CurrImage(ref Image<Bgr, byte> image, CombProcessAll process, CombObject thisObject)
         {
             try
             {
-                var image = base.CurrImage();
-
                 var inObjectBgr = DroneColors.InScopeObjectBgr;   // Red
                 var realBgr = DroneColors.RealFeatureBgr;         // Orange
                 var unrealBgr = DroneColors.UnrealFeatureBgr;     // Yellow
@@ -677,8 +645,6 @@ namespace SkyCombImage.DrawSpace
                             new Point(thisWidthPxs, thisHeightPxs),
                             theBgr, NormalThickness, NormalThickness * 4);
                     }
-
-                return image.Clone();
             }
             catch (Exception ex)
             {
