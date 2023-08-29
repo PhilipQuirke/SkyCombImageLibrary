@@ -9,7 +9,6 @@ using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using System.Drawing;
-using SkyCombDrone.DroneLogic;
 
 
 namespace SkyCombImage.DrawSpace
@@ -56,12 +55,15 @@ namespace SkyCombImage.DrawSpace
         }
 
 
-        // Draw drone flight path based on Drone/GroundSpace & RunSpace data
-        // Draw least important then more important stuff as the rectangles will overlap.
+        // Draw drone flight path based on Drone/GroundSpace & RunSpace data.
+        // By default we DONT show insignificant or out of scope objects.
+        // For long flights, most objects will quickly become inactive, and we just have a few to draw.
         public override void CurrImage(ref Image<Bgr, byte> image)
         {
             try
             {
+                base.CurrImage(ref image);
+
                 if (HasPathGraphTransform() && (DrawScope.Process != null))
                 {
                     var inObjectBgr = DroneColors.InScopeObjectBgr;   // Red
@@ -71,19 +73,24 @@ namespace SkyCombImage.DrawSpace
 
                     bool showAllFeatures = (ProcessObject.Config.SaveObjectData == SaveObjectDataEnum.All);
 
-                    // Draw significant but out-of-scope objects as grey squares
-                    foreach (var thisObject in DrawScope.Process.CombObjs.CombObjList)
-                        if (thisObject.Value.Significant &&
-                            (thisObject.Value.LocationM != null) &&
-                            !thisObject.Value.InRunScope(DrawScope.ProcessScope))
-                            DrawObject(thisObject.Value, ref image, outObjectBgr);
-
-                    // Draw insignificant object features as yellow squares
                     if (showAllFeatures)
+                    {
+                        // Draw least important then more important stuff
+                        // as the significant inscope stuff (draw later) will overdraw this.
+
+                        // Draw significant but out-of-scope objects as grey squares
+                        foreach (var thisObject in DrawScope.Process.CombObjs.CombObjList)
+                            if (thisObject.Value.Significant &&
+                                (thisObject.Value.LocationM != null) &&
+                                !thisObject.Value.InRunScope(DrawScope.ProcessScope))
+                                DrawObject(thisObject.Value, ref image, outObjectBgr);
+
+                        // Draw insignificant object features as yellow squares
                         foreach (var thisObject in DrawScope.Process.CombObjs.CombObjList)
                             if (!thisObject.Value.Significant &&
                                 (thisObject.Value.LocationM != null))
                                 DrawObjectFeatures(thisObject.Value, ref image, CombFeatureTypeEnum.Real, unrealBgr);
+                    }
 
                     // Draw significant in-scope objects as red boxes with orange & yellow features
                     foreach (var thisObject in DrawScope.Process.CombObjs.CombObjList)

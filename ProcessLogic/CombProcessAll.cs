@@ -177,8 +177,8 @@ namespace SkyCombImage.ProcessLogic
                     (theObject.Value.LastFeature().Block.BlockId == blockID - 1) &&
                     theObject.Value.VaguelySignificant())
                 {
-                    inScopeObjects.Add(theObject.Value.ObjectId, theObject.Value);
-                    availObjects.Add(theObject.Value.ObjectId, theObject.Value);
+                    inScopeObjects.AddObject(theObject.Value);
+                    availObjects.AddObject(theObject.Value);
                 }
             // Each feature can only be claimed once
             CombFeatureList availFeatures = featuresInBlock.Clone();
