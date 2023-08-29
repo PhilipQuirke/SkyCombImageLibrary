@@ -258,7 +258,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Returns the distance in meters between the fromBlock and the toBlock locations
-        public double DistanceM(ProcessBlock fromBlock, ProcessBlock toBlock)
+        public double DistanceM(ProcessBlock? fromBlock, ProcessBlock? toBlock)
         {
             if ((fromBlock == null) || (toBlock == null) || (fromBlock.BlockId == toBlock.BlockId))
                 return 0;

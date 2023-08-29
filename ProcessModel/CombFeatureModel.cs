@@ -30,7 +30,7 @@ namespace SkyCombImage.ProcessModel
 
 
         // Location of this feature inside drone flight box, in meters
-        public DroneLocation LocationM { get; set; }
+        public DroneLocation? LocationM { get; set; }
 
 
         // Draft height of the parent CombObject as calculated when processing this feature. 

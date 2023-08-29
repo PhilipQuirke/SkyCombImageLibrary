@@ -242,23 +242,32 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Evaluate the distance of each feature's FlightStep from this object.
-        // Return the DEM of the closest FlightStep.
-        private float ClosestFlightStepDemM()
+        // Return the average altitude of the drone over the object features.
+        private float AverageFlightStepAltitudeM()
         {
-            float answer = this.DemM;
-            double bestDistance = 99999;
+            float answer = 0;
+            int count = 0;
 
             foreach (var feature in Features)
             {
-                var droneLocation = feature.Value.Block.FlightStep.DroneLocnM;
-                var distance = RelativeLocation.DistanceM(LocationM, droneLocation);
-                if (distance < bestDistance)
+                if (feature.Value.CFM.Type == CombFeatureTypeEnum.Real)
                 {
-                    bestDistance = distance;
-                    answer = feature.Value.Block.FlightStep.DemM;
+                    var step = feature.Value.Block.FlightStep;
+                    if (step != null)
+                    {
+                        var atlM = feature.Value.Block.FlightStep.AltitudeM;
+                        if (atlM != UnknownValue)
+                        {
+                            answer += atlM;
+                            count++;
+                        }
+                    }
                 }
             }
+            if (count > 0)
+                answer /= count;
+            else
+                answer = UnknownValue;
 
             return answer;
         }
@@ -271,7 +280,7 @@ namespace SkyCombImage.ProcessLogic
             // First estimate of object location (centroid) as average of real feature locations.
             // The feature locations are based on where in the drone's field of image the object was detected, and
             // assumes that the object is at drone (FlightStep) ground level. (The object's location is refined later.)
-            Calculate_LocationM_Pass1();
+            Calculate_LocationM();
 
             // Calculate location error, a measure of real feature dispersion,
             // as average distance from object location (centroid).
@@ -279,7 +288,7 @@ namespace SkyCombImage.ProcessLogic
 
             // Estimate the object's DEM at the object's location
             // (which could be say 20m left of the drone's flight path).
-            Calculate_DemM_UnderObject();
+            Calculate_DemM();
 
             // Estimate object height above ground based on distance down from drone
             // calculated using trigonometry and first/last real feature camera-view-angles.
@@ -306,11 +315,6 @@ namespace SkyCombImage.ProcessLogic
         {
             // Calculate the drone SumLinealM distance corresponding to the centroid of the object
             Calculate_AvgSumLinealM();
-
-            // First estimate of object's (ground) DEM using object's first/last-real-features associated FLIGHT_STEPS DEM.
-            // An object that is not located directly under the drone flight path may be at a different DEM.
-            // This first estimate of DEM is under the drone, not under the object. (The object's DEM is refined later.)
-            Calculate_DemM_UnderDrone();
 
             Calculate_RealObject_SimpleMemberLocationData(initialCalc);
         }
@@ -476,31 +480,11 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // First estimate of object's (ground) DEM using object's first/last-real-features associated FLIGHT_STEPS DEM.
-        // An object that is not located directly under the drone flight path may be at a different DEM.
-        // This first estimate of DEM is under the drone, not under the object. (The object's DEM is refined later.)
-        private void Calculate_DemM_UnderDrone()
+        // Calculate object's location (centroid) as average of real feature's locations.
+        // The feature locations are based on where in the drone's field of image the object was detected. 
+        private void Calculate_LocationM()
         {
-            var firstFeat = FirstFeature();
-            if (firstFeat.Block.FlightStep != null)
-            {
-                DemM = firstFeat.Block.FlightStep.DemM;
-
-                var lastFeat = LastRealFeature();
-                if ((lastFeat != null) &&
-                    (lastFeat != firstFeat) &&
-                    (lastFeat.Block.FlightStep != null))
-                    DemM = (DemM + lastFeat.Block.FlightStep.DemM) / 2.0f;
-            }
-        }
-
-
-        // First estimate of object location (centroid) as average of real feature locations.
-        // The feature locations are based on where in the drone's field of image the object was detected, and
-        // assumes that the object is at drone (FlightStep) ground level. (The object's location is refined later.)
-        private void Calculate_LocationM_Pass1()
-        {
-            LocationM = null;
+            LocationM = new();
 
             if (NumRealFeatures() >= 2)
             {
@@ -522,8 +506,12 @@ namespace SkyCombImage.ProcessLogic
                     LocationM = sumLocation.Clone();
                 }
             }
-            else if ((NumRealFeatures() == 1) && (FirstFeature().CFM.LocationM != null))
-                LocationM = FirstFeature().CFM.LocationM.Clone();
+            else if (NumRealFeatures() == 1)
+            {
+                var firstFeat = FirstFeature();
+                if(firstFeat.CFM.LocationM != null)
+                    LocationM = firstFeat.CFM.LocationM.Clone();
+            }
         }
 
 
@@ -644,11 +632,11 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Estimate object height above ground based on distance down from drone
+        // Estimate FEATURE height above ground based on distance down from drone
         // calculated using trigonometry and first/last real feature camera-view-angles.
         // This is a "look down" trig method. Accuracy limited by the accuracy of the drone altitude.
-        // During a leg, ground near the edge of the image should move at the same speed as the image center. 
-        // Object at the left/right edge of the image are further from the drone than objects directly under the drone.
+        // Object at the left/right edge of the image are slightly further from the drone
+        // than objects directly under the drone.
         private void Calculate_HeightM_Feature(bool initialCalc = true)
         {
             // These are the real features we will compare to estimate heightDownM from drone to object.
@@ -657,7 +645,7 @@ namespace SkyCombImage.ProcessLogic
 
             if ((firstRealFeature == null) ||
                 (lastRealFeature == null) ||
-                (firstRealFeature.FeatureId == lastRealFeature.FeatureId) || // Need at multiple real distinct features
+                (firstRealFeature.FeatureId == lastRealFeature.FeatureId) || // Need multiple real distinct features
                 (lastRealFeature.Block == null) ||
                 (lastRealFeature.Block.FlightStep == null))
                 return;
@@ -671,10 +659,9 @@ namespace SkyCombImage.ProcessLogic
             if (initialCalc && (SeenForMinDurations() < 1))
                 return;
 
+            // If drone is too low this method will not work.
             var lastStep = lastRealFeature.Block.FlightStep;
             float droneDistanceDownM = lastStep.DistanceDown;
-
-            // If drone is too low this method will not work.
             if (droneDistanceDownM < 5)
                 return; // Maintain current object height
 
@@ -685,7 +672,7 @@ namespace SkyCombImage.ProcessLogic
                 return; // Maintain current object height
 
             // Calculation is based on where object appears in the thermal camera field of view (FOV).
-            // If object does not appear to have changed position then this method will not work.
+            // If object does not appear to have changed image position then this method will not work.
             double firstPixelY = firstRealFeature.CFM.PixelBox.Y + ((double)firstRealFeature.CFM.PixelBox.Height) / 2.0;
             double lastPixelY = lastRealFeature.CFM.PixelBox.Y + ((double)lastRealFeature.CFM.PixelBox.Height) / 2.0;
             if (firstPixelY == lastPixelY)
@@ -699,7 +686,6 @@ namespace SkyCombImage.ProcessLogic
 
             // This is the change in angle from drone to object over the first/lastRealFeature frames.
             double fwdTanDiff = firstFwdTan - lastFwdTan;
-            //Assert(fwdTanDiff >= 0, "ModelCombObject.Calculate_HeightM_Feature: fwdTanDiff negative");
 
             // If the difference in vertical angle moved in direct of flight is too small,
             // this method will be too inaccurate to be useful.
@@ -708,25 +694,20 @@ namespace SkyCombImage.ProcessLogic
 
             // Returns the average tan of the sideways-down-angles
             // of the object in the first frame detected and the last frame detected.
-            double avgSideRads = Math.Abs(Calculate_Image_AvgSidewaysRads());
-            double avgSideTan = Math.Tan(avgSideRads);
+            // Drone may be stationary but rotating.
+            // double avgSideRads = Math.Abs(Calculate_Image_AvgSidewaysRads());
+            // double avgSideTan = Math.Tan(avgSideRads);
             // PQR TODO Integrate avgSideTan into calcs?? Or too small to matter?
 
-            double trigDownM = baselineM / fwdTanDiff;
+            var trigDownM = baselineM / fwdTanDiff;
 
-            // The object may be 10m to left of the drone flight path
-            // and the ground there may have a different DEM (by say 2m) 
-            // Use the flightStep where the drone is closest to this object location.
-            // If this.DemM is below flightStep.DemM then object height above ground is higher.
-            float groundFallDeltaM = ClosestFlightStepDemM() - this.DemM;
+            // The object may be 10m to left and 40m in front of the drone location
+            // Calculate the height of the drone above the OBJECT's location DemM.
+            var groundDownM = AverageFlightStepAltitudeM() - this.DemM;
 
-            var featureHeightM =
-                // Subtract trig distance down from the drone height to get object height
-                (float)(droneDistanceDownM - trigDownM) +
-                // Handle the ground at object falling away from land under in directly of flight over that 6m.
-                groundFallDeltaM;
+            var featureHeightM = (float)(groundDownM - trigDownM);
 
-            // Store the object height as calculated with the first and this feature to the feature.
+            // Store the object height calculated (frame by frame) to the feature for debug purposes.
             lastRealFeature.CFM.HeightM = featureHeightM;
 
 
@@ -817,8 +798,7 @@ namespace SkyCombImage.ProcessLogic
         // Based on MAXIMUM number of hot pixels in any real feature.
         private void Calculate_SizeCM2()
         {
-            if ((Model == null) ||
-                (Model.VideoData == null))
+            if ((Model == null) || (Model.VideoData == null))
                 return;
 
             var thisFeature = LastFeature();
@@ -858,23 +838,32 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // The object is likely not directly under the drone flightpath.
-        // Object could be say 20m to left or right.
-        // Estimate the object's DEM at the OBJECT'S location.
-        private void Calculate_DemM_UnderObject()
+        // Get the object's DEM at the OBJECT'S location.
+        private void Calculate_DemM()
         {
-            if ((LocationM != null) && (Model.GroundData != null))
-            {
-                var newDemM = Model.GroundData.DemModel.GetElevationByDroneLocn(LocationM);
-                // In rare cases, can detect object just outside ground datum grid.
-                if (newDemM != UnknownValue)
-                {
-                    // If flying high, the undulating land can cause big shifts in elevation
-                    // Assert(Math.Abs(newDemM - DemM) < 50, "Calculate_DemM_Pass2: Bad delta");
+            if ((LocationM == null) || (Model.GroundData == null) || (Model.GroundData.DemModel == null))
+                return;
 
-                    DemM = newDemM;
-                }
+            // Most accurate method. Nearly always works.
+            var newDemM = Model.GroundData.DemModel.GetElevationByDroneLocn(LocationM);
+            if (newDemM != UnknownValue)
+            {
+                DemM = newDemM;
+                return;
             }
+
+            // In rare cases, we have an object just outside ground datum grid.
+            // Object may be say 10m to left and 40m ahead of the drone's location.
+            // Forced to use less progressively less accurate methods.
+            var firstFeat = FirstFeature();
+            var firstStep = firstFeat.Block.FlightStep;
+            if (firstStep == null)
+                return;
+
+            if (firstStep.InputImageDemM != UnknownValue)
+                DemM = firstStep.InputImageDemM;
+            else
+                DemM = firstStep.DemM;
         }
 
 
