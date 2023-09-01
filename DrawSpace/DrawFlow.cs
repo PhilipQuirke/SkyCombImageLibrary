@@ -52,7 +52,7 @@ namespace SkyCombImage.DrawSpace
                 var speed = BlockSpeed.Speed();
                 Text(ref image,
                     string.Format("{0} {1}", speed.ToString("0.00"), speedUnit),
-                    new Point(center.X - 20, center.Y + shiftTextLocationY), 1, DroneColors.WhiteBgr);
+                    new Point(center.X - 20, center.Y + shiftTextLocationY), 0.5, DroneColors.WhiteBgr);
             }
             catch (Exception ex)
             {

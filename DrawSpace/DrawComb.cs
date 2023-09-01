@@ -269,7 +269,7 @@ namespace SkyCombImage.DrawSpace
                         int theY = (int)(video.ImageHeight * 98 / 100); // pixels
                         int theX = (int)(video.ImageWidth * 92 / 100); // pixels
                         Text(ref outputImg, "Leg " + block.LegName,
-                                new Point(theX, theY), 1, DroneColors.LegNameBgr, video.FontScale);
+                                new Point(theX, theY), 0.5, DroneColors.LegNameBgr, video.FontScale);
                     }
 
                     for (int featureId = block.MinFeatureId; featureId <= block.MaxFeatureId; featureId++)
@@ -379,7 +379,7 @@ namespace SkyCombImage.DrawSpace
         DrawScope DrawScope { get; }
 
 
-        public DrawCombAltitudeByLinealM(CombProcessAll process, DrawScope drawScope) : base(drawScope)
+        public DrawCombAltitudeByLinealM(CombProcessAll process, DrawScope drawScope) : base(drawScope, false)
         {
             Process = process;
             DrawScope = drawScope;
@@ -473,7 +473,7 @@ namespace SkyCombImage.DrawSpace
         DrawScope DrawScope { get; }
 
 
-        public DrawCombAltitudeByTime(CombProcessAll process, DrawScope drawScope) : base(drawScope)
+        public DrawCombAltitudeByTime(CombProcessAll process, DrawScope drawScope) : base(drawScope, false)
         {
             Process = process;
             DrawScope = drawScope;
@@ -578,7 +578,7 @@ namespace SkyCombImage.DrawSpace
     // Code to draw comb object height - including feature estimates
     public class DrawCombObjectHeight : DrawAltitudeByTime
     {
-        public DrawCombObjectHeight(DrawScope drawScope) : base(drawScope)
+        public DrawCombObjectHeight(DrawScope drawScope) : base(drawScope, false)
         {
             Description +=
                 "Object & object feature height are shown.";
@@ -589,8 +589,6 @@ namespace SkyCombImage.DrawSpace
         {
             try
             {
-                Size = size;
-
                 var image = Draw.NewLightGrayImage(size);
 
                 if (DroneDrawScope.Drone == null)
@@ -600,11 +598,11 @@ namespace SkyCombImage.DrawSpace
                 }
                 else
                 {
-                    DrawAxises(ref image);
-                    SetHorizLabelsByTime();
-
                     MinVertRaw = (float)Math.Floor(focusObject.MinHeightM);
                     MaxVertRaw = (float)Math.Ceiling(focusObject.MaxHeightM);
+
+                    DrawAxisesAndLabels(ref image);
+                    SetHorizLabelsByTime();
                     SetVerticalLabels("m", "0");
 
                     CalculateStepWidthAndStride(DroneDrawScope.FirstDrawMs, DroneDrawScope.LastDrawMs);
