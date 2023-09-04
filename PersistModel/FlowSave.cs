@@ -27,7 +27,7 @@ namespace SkyCombImage.PersistModel
 
             try
             {
-                if (!Config.Process.SaveAnnotatedVideo)
+                if (!Config.ProcessConfig.SaveAnnotatedVideo)
                     return;
 
                 outputImageFilename =
@@ -47,7 +47,7 @@ namespace SkyCombImage.PersistModel
         public static (VideoWriter, string) CreateVideoWriter(
             RunConfig Config, string inputFileName, double Fps, Size frameSize)
         {
-            if (!Config.Process.SaveAnnotatedVideo || Fps <= 0.1 || frameSize.Width == 0 || frameSize.Height == 0)
+            if (!Config.ProcessConfig.SaveAnnotatedVideo || Fps <= 0.1 || frameSize.Width == 0 || frameSize.Height == 0)
                 return (null, "");
 
             return VideoData.CreateVideoWriter(inputFileName, Config.OutputElseInputDirectory(), Fps, frameSize);
@@ -63,15 +63,15 @@ namespace SkyCombImage.PersistModel
 
             Data.SetTitles(ProcessSummaryTitle);
 
-            Data.SetTitleAndDataListColumn(ProcessConfigTitle, ModelTitleRow, LhsColOffset, runConfig.Process.GetModelSettings());
+            Data.SetTitleAndDataListColumn(ProcessConfigTitle, ModelTitleRow, LhsColOffset, runConfig.ProcessConfig.GetModelSettings());
 
             Data.SetTitleAndDataListColumn(RunConfigTitle, RunTitleRow, MidColOffset, runConfig.GetSettings());
 
             Data.SetTitleAndDataListColumn(EffortTitle, EffortTitleRow, MidColOffset, effort);
 
-            Data.SetTitleAndDataListColumn(OutputConfigTitle, OutputTitleRow, MidColOffset, runConfig.Process.GetOutputSettings());
+            Data.SetTitleAndDataListColumn(OutputConfigTitle, OutputTitleRow, MidColOffset, runConfig.ProcessConfig.GetOutputSettings());
 
-            Data.SetTitleAndDataListColumn(DrawTitle, DrawTitleRow, MidColOffset, runConfig.DrawImage.GetSettings());
+            Data.SetTitleAndDataListColumn(DrawTitle, DrawTitleRow, MidColOffset, runConfig.ImageConfig.GetSettings());
 
             Data.SetTitleAndDataListColumn(ModelFlightStepSummaryTitle, ModelTitleRow, RhsColOffset, settings);
 

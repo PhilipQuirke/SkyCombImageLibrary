@@ -42,19 +42,19 @@ namespace SkyCombImage.PersistModel
                     // Add the Block charts
                     AddBlocks2Tab(summary);
 
-                    var saveObjects = ((runConfig.Process.SaveObjectData != SaveObjectDataEnum.None) && (combProcess.CombObjs.CombObjList.Count > 0));
-                    var saveAllObjects = (runConfig.Process.SaveObjectData == SaveObjectDataEnum.All);
+                    var saveObjects = ((runConfig.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None) && (combProcess.CombObjs.CombObjList.Count > 0));
+                    var saveAllObjects = (runConfig.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All);
 
                     // Save the Pixel data 
-                    if ((runConfig.Process.SavePixels != SavePixelsEnum.None) && (combProcess.CombFeatures.Count > 0))
+                    if ((runConfig.ProcessConfig.SavePixels != SavePixelsEnum.None) && (combProcess.CombFeatures.Count > 0))
                     {
                         Data.SelectOrAddWorksheet(PixelsTabName);
                         int row = 0;
                         foreach (var feature in combProcess.CombFeatures)
-                            if (runConfig.Process.SavePixels == SavePixelsEnum.All || feature.Value.Significant)
+                            if (runConfig.ProcessConfig.SavePixels == SavePixelsEnum.All || feature.Value.Significant)
                                 if (feature.Value.Pixels != null)
                                     foreach (var pixel in feature.Value.Pixels)
-                                        if (runConfig.Process.SaveObjectData == SaveObjectDataEnum.All || feature.Value.Significant)
+                                        if (runConfig.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All || feature.Value.Significant)
                                             Data.SetDataListRowKeysAndValues(ref row, pixel.GetSettings());
 
                         Data.SetLastUpdateDateTime(PixelsTabName);
@@ -62,12 +62,12 @@ namespace SkyCombImage.PersistModel
 
 
                     // Save the Feature data 
-                    if ((runConfig.Process.SaveObjectData != SaveObjectDataEnum.None) && (combProcess.CombFeatures.Count > 0))
+                    if ((runConfig.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None) && (combProcess.CombFeatures.Count > 0))
                     {
                         Data.SelectOrAddWorksheet(FeaturesTabName);
                         int featureRow = 0;
                         foreach (var feature in combProcess.CombFeatures)
-                            if (runConfig.Process.SaveObjectData == SaveObjectDataEnum.All || feature.Value.Significant)
+                            if (runConfig.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All || feature.Value.Significant)
                                 Data.SetDataListRowKeysAndValues(ref featureRow, feature.Value.GetSettings());
 
                         Data.SetColumnWidth(ProcessFeatureModel.NotesSetting, 20);

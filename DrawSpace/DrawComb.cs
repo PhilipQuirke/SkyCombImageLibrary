@@ -4,7 +4,7 @@ using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
 using SkyCombDrone.CommonSpace;
 using SkyCombDrone.DrawSpace;
-using SkyCombDrone.DroneModel;
+using SkyCombDrone.DroneLogic;
 using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
@@ -321,7 +321,7 @@ namespace SkyCombImage.DrawSpace
         // Process a single input and (maybe) display video frame for the specified block, returning the modified input&display frames to show 
         public static (Image<Bgr, byte>?, Image<Bgr, byte>?) Draw(
             RunProcessEnum runProcess,
-            ProcessConfigModel processConfig, DrawImageConfig drawConfig, DroneConfigModel droneConfig,
+            ProcessConfigModel processConfig, DrawImageConfig drawConfig, Drone drone,
             ProcessBlockModel block, CombProcessAll combProcess, int focusObjectId,
             Image<Bgr, byte> inputFrame, Image<Bgr, byte> displayFrame)
         {
@@ -356,7 +356,7 @@ namespace SkyCombImage.DrawSpace
                         // Optical video can cover a wider field of vision than thermal.
                         // ExcludeMarginRatio is the (unitless) margin on the optical video, not visible in the thermal video, on all optical video edges
                         var inputToDisplayTransform = Transform.ImageToImageTransform(
-                            inputFrame.Size, displayFrame.Size, droneConfig.ExcludeDisplayMarginRatio);
+                            inputFrame.Size, displayFrame.Size, drone.ExcludeDisplayMarginRatio);
 
                         CombImage(newDrawConfig, processConfig, focusObjectId,
                             ref modifiedDisplayFrame, combProcess, block, inputToDisplayTransform);

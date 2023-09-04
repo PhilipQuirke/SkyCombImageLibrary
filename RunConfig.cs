@@ -25,9 +25,9 @@ namespace SkyCombImage.ProcessModel
     //      - WARNING: Changing the values below will have no effect.
     public class RunConfig : ConfigBase
     {
-        public DroneConfigModel Drone;
-        public ProcessConfigModel Process;
-        public DrawImageConfig DrawImage;
+        public DroneConfigModel DroneConfig;
+        public ProcessConfigModel ProcessConfig;
+        public DrawImageConfig ImageConfig;
 
 
         // Name of image or video file to load at app start up. Can be just a directory path. Can be blank.
@@ -51,17 +51,17 @@ namespace SkyCombImage.ProcessModel
 
         public RunConfig()
         {
-            Drone = new DroneConfigModel();
-            Process = new ProcessConfigModel();
-            DrawImage = new DrawImageConfig();
+            DroneConfig = new DroneConfigModel();
+            ProcessConfig = new ProcessConfigModel();
+            ImageConfig = new DrawImageConfig();
         }
 
 
         ~RunConfig()
         {
-            Drone = null;
-            Process = null;
-            DrawImage = null;
+            DroneConfig = null;
+            ProcessConfig = null;
+            ImageConfig = null;
         }
 
 
@@ -138,7 +138,7 @@ namespace SkyCombImage.ProcessModel
         {
             try
             {
-                Process.LoadSettings(settings);
+                ProcessConfig.LoadSettings(settings);
 
                 foreach (var setting in settings)
                     switch (setting.Key)
@@ -162,7 +162,7 @@ namespace SkyCombImage.ProcessModel
         // The output image shows hot pixel in green, with red rectangles bounding significant features.
         public static void Run(RunConfig config, ref Image<Bgr, byte> imgInput)
         {
-            DrawSpace.DrawImage.Draw(config.RunProcess, config.Process, config.DrawImage, ref imgInput);
+            DrawSpace.DrawImage.Draw(config.RunProcess, config.ProcessConfig, config.ImageConfig, ref imgInput);
         }
     }
 }
