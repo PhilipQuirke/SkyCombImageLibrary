@@ -275,7 +275,7 @@ namespace SkyCombImage.ProcessLogic
 
         // Calculate the simple (int, float, VelocityF, etc) member-data of this real object.
         // Calculates LocationM, LocationErrM, HeightM, HeightErrM, etc.
-        public void Calculate_RealObject_SimpleMemberLocationData(bool initialCalc = true)
+        public void Calculate_RealObject_SimpleMemberData_Core(bool initialCalc = true)
         {
             // First estimate of object location (centroid) as average of real feature locations.
             // The feature locations are based on where in the drone's field of image the object was detected, and
@@ -316,7 +316,7 @@ namespace SkyCombImage.ProcessLogic
             // Calculate the drone SumLinealM distance corresponding to the centroid of the object
             Calculate_AvgSumLinealM();
 
-            Calculate_RealObject_SimpleMemberLocationData(initialCalc);
+            Calculate_RealObject_SimpleMemberData_Core(initialCalc);
         }
 
 
@@ -557,7 +557,7 @@ namespace SkyCombImage.ProcessLogic
             double halfVertFoVDeg = fullVertFoVDeg / 2; // Say 16 degrees
 
             // Calculate the angle to object, in direction of flight (forward), to the vertical, in degrees
-            // Assumes drone is moving forward (not sidewards or backwards), as we are in a Leg.
+            // Assumes drone is moving forward (not sidewards or backwards) or stationary.
             double firstFwdFraction = yImageFracFirst * 2 - 1;
             Assert(firstFwdFraction >= -1 && firstFwdFraction <= 1, "Calculate_Image_FwdDeg: firstFwdFraction out of range");
 
@@ -613,7 +613,7 @@ namespace SkyCombImage.ProcessLogic
             //      If PixelBox.X = 0 then object is at the very left of the image => SideRads is -horizFoVRadians/2
             //      If PixelBox.X = ImageWidth/2 then object is in the middle of the image => SideRads is 0
             //      If PixelBox.X = ImageWidth then object is at the very right of the image => SideRads is +horizFoVRadians/2
-            // Assumes drone is moving forward (not sidewards or backwards), as we are in a Leg.
+            // Assumes drone is moving forward (not sidewards or backwards) or is stationary.
             double firstSideFraction = xFracFirst * 2 - 1;
             Assert(firstSideFraction >= -1 && firstSideFraction <= 1, "Calculate_Image_AvgSidewaysRads: firstSideFraction out of range");
 

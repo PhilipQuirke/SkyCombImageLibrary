@@ -480,7 +480,7 @@ namespace SkyCombImage.ProcessModel
 
         // For "Comb" process robustness, we want to process each leg independently.
         // So when a new drone flight leg starts, we "reset" the Gftt/OpticalFlow calculations.
-        public override void ProcessLegStart(int legId, Drone drone)
+        public override void ProcessLegStart(int legId)
         {
             // No existing objects should be live at the start of a new leg
             FlowObjects.ProcessLegStart();

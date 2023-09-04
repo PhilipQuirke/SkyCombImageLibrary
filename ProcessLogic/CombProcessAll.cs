@@ -65,7 +65,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Ensure each object has at least an "insignificant" name e.g. #16
-        public override void EnsureObjectsNamed(Drone drone)
+        public override void EnsureObjectsNamed()
         {
             foreach (var theObject in CombObjs.CombObjList)
                 if (theObject.Value.Name == "")
@@ -73,55 +73,55 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public override void ProcessLegStart(int legId, Drone drone)
+        protected void ProcessLegStart_Core()
         {
-            if (drone.UseFlightLegs)
+              // For "Comb" process robustness, we want to process each leg independently.
+            // So at the start and end of each leg we stop tracking all objects.
+            CombObjs.StopTracking();
+            LegSignificantObjects = 0;
+        }
+
+
+        public override void ProcessLegStart(int legId)
+        {
+            if (Drone.UseFlightLegs)
+                ProcessLegStart_Core();
+        }
+
+
+        protected void ProcessLegEnd_core(int legId)
+        {
+            // For "Comb" process robustness, we want to process each leg independently.
+            // So at the start and end of each leg we stop tracking all objects.
+            CombObjs.StopTracking();
+
+            // If we are lacking the current CombLeg then create it.
+            if ((legId > 0) && !CombLegs.TryGetValue(legId, out _))
             {
-                // For "Comb" process robustness, we want to process each leg independently.
-                // So at the start and end of each leg we stop tracking all objects.
-                CombObjs.StopTracking();
-                LegSignificantObjects = 0;
+                // Post process the objects found in the leg & maybe set FlightLegs.FixAltitudeM 
+                var combLeg = ProcessFactory.NewCombLeg(this, legId, Drone);
+                CombLegs.Add(combLeg);
+                combLeg.CalculateSettings(VideoData, Drone);
+                combLeg.AssertGood();
             }
         }
 
 
-        public override void ProcessLegEnd(int legId, Drone drone)
+        public override void ProcessLegEnd(int legId)
         {
-            if (drone.UseFlightLegs)
-            {
-                // For "Comb" process robustness, we want to process each leg independently.
-                // So at the start and end of each leg we stop tracking all objects.
-                CombObjs.StopTracking();
+            if (Drone.UseFlightLegs)
+                ProcessLegEnd_core(legId);
 
-                // If we are lacking the current CombLeg then create it.
-                if((legId > 0) && ! CombLegs.TryGetValue(legId, out _))
-                {
-                    // Post process the objects found in the leg & maybe set FlightLegs.FixAltitudeM 
-                    var combLeg = ProcessFactory.NewCombLeg(this, legId, drone);
-                    CombLegs.Add(combLeg);
-                    combLeg.CalculateSettings(VideoData, drone);
-                    combLeg.AssertGood();
-                }
-            }
-            else
-            {
-                // We are not using pre-calculated flight legs, but we still have drone altitude inaccuracies.
-                // We want to use the same "FlightLeg.FixAltitudeM" approach when we have objects in view.
-
-
-
-            }
-
-            EnsureObjectsNamed(drone);
+            EnsureObjectsNamed();
         }
 
 
         // Add a new block
-        public ProcessBlock AddCombBlock(ProcessScope scope, Drone drone)
+        public ProcessBlock AddCombBlock(ProcessScope scope)
         {
             var currBlock = ProcessFactory.NewBlock(scope);
 
-            Blocks.AddBlock(currBlock, scope, drone);
+            Blocks.AddBlock(currBlock, scope, Drone);
 
             return currBlock;
         }
