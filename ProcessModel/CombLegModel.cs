@@ -42,7 +42,7 @@ namespace SkyCombImage.ProcessModel
 
 
         // Constructor used when loaded objects from the datastore
-        public CombLegModel(List<string> settings = null) : base("Block")
+        public CombLegModel(List<string>? settings = null) : base("Block")
         {
             if (settings != null)
                 LoadSettings(settings);

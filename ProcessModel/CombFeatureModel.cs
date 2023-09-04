@@ -1,4 +1,5 @@
-﻿using SkyCombGround.CommonSpace;
+﻿// Copyright SkyComb Limited 2023. All rights reserved. 
+using SkyCombGround.CommonSpace;
 using System.Drawing;
 
 

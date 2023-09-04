@@ -25,7 +25,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public void CalculateSettings(ProcessScope scope, Drone drone, ProcessBlock prevBlock)
+        public void CalculateSettings(ProcessScope scope, Drone drone, ProcessBlock? prevBlock)
         {
             if ((drone != null) && drone.HasFlightSteps && (scope.PSM.CurrInputFrameId > 0))
             {
@@ -249,9 +249,9 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public ProcessBlock? LastBlock { get { 
+        public ProcessBlock? LastBlock { get {
             if (Count > 0)
-                return this[Keys[Count-1]];
+                return this.Last().Value; // this[Keys[Count-1]];
 
             return null;
         } }

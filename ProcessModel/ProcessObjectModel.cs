@@ -1,4 +1,5 @@
-﻿using SkyCombImage.CategorySpace;
+﻿// Copyright SkyComb Limited 2023. All rights reserved. 
+using SkyCombImage.CategorySpace;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 

@@ -19,7 +19,7 @@ namespace SkyCombImage.ProcessLogic
         private FlightLeg FlightLeg { get; set; }
 
 
-        public CombLeg(CombProcessAll process, FlightLeg flightLeg, List<string> settings = null) : base(settings)
+        public CombLeg(CombProcessAll process, FlightLeg flightLeg, List<string>? settings = null) : base(settings)
         {
             Process = process;
             LegId = flightLeg.LegId;

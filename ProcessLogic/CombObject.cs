@@ -273,7 +273,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Calculate the simple (int, float, VelocityF, etc) location-related member-data of this real object.
+        // Calculate the simple (int, float, VelocityF, etc) member-data of this real object.
         // Calculates LocationM, LocationErrM, HeightM, HeightErrM, etc.
         public void Calculate_RealObject_SimpleMemberLocationData(bool initialCalc = true)
         {

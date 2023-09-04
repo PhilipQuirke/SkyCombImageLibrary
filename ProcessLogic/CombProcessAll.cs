@@ -81,14 +81,6 @@ namespace SkyCombImage.ProcessLogic
                 // So at the start and end of each leg we stop tracking all objects.
                 CombObjs.StopTracking();
                 LegSignificantObjects = 0;
-/*
-                // If the FlightLeg has a FixAltitudeM value (from a previous processing run) then use it,
-                // else use the FixAltitudeM from the previous leg (if any) as a starting point.
-                if ((legId >= 2) &&
-                    (drone.FlightLegs.Legs[legId - 1].FixAltitudeM == 0))
-                    drone.FlightLegs.Legs[legId - 1].FixAltitudeM =
-                        drone.FlightLegs.Legs[legId - 2].FixAltitudeM;
-*/
             }
         }
 
@@ -101,19 +93,23 @@ namespace SkyCombImage.ProcessLogic
                 // So at the start and end of each leg we stop tracking all objects.
                 CombObjs.StopTracking();
 
-                if (legId > 0)
+                // If we are lacking the current CombLeg then create it.
+                if((legId > 0) && ! CombLegs.TryGetValue(legId, out _))
                 {
-                    // If we are lacking the current CombLeg then create it.
-                    CombLeg combLeg;
-                    if (!CombLegs.TryGetValue(legId, out combLeg))
-                    {
-                        // Post process the objects found in the leg & maybe set FlightLegs.FixAltitudeM 
-                        combLeg = ProcessFactory.NewCombLeg(this, legId, drone);
-                        CombLegs.Add(combLeg);
-                        combLeg.CalculateSettings(VideoData, drone);
-                        combLeg.AssertGood();
-                    }
+                    // Post process the objects found in the leg & maybe set FlightLegs.FixAltitudeM 
+                    var combLeg = ProcessFactory.NewCombLeg(this, legId, drone);
+                    CombLegs.Add(combLeg);
+                    combLeg.CalculateSettings(VideoData, drone);
+                    combLeg.AssertGood();
                 }
+            }
+            else
+            {
+                // We are not using pre-calculated flight legs, but we still have drone altitude inaccuracies.
+                // We want to use the same "FlightLeg.FixAltitudeM" approach when we have objects in view.
+
+
+
             }
 
             EnsureObjectsNamed(drone);
