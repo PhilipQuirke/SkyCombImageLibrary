@@ -103,7 +103,7 @@ namespace SkyCombImage.PersistModel
 
                         Data.SetColumnColor(CombLegModel.LegIdSetting, legRow, Color.Blue);
                         Data.SetColumnColor(CombLegModel.LegNameSetting, legRow, Color.Blue);
-                        Data.SetColumnColor(CombLegModel.BestFixAltitudeMSetting, legRow, Color.Blue);
+                        Data.SetColumnColor(CombLegModel.BestFixAltMSetting, legRow, Color.Blue);
 
                         Data.SetLastUpdateDateTime(Legs2TabName);
                     }

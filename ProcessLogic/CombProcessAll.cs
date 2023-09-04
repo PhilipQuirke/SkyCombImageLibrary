@@ -98,10 +98,10 @@ namespace SkyCombImage.ProcessLogic
             // If we are lacking the current CombLeg then create it.
             if ((legId > 0) && !CombLegs.TryGetValue(legId, out _))
             {
-                // Post process the objects found in the leg & maybe set FlightLegs.FixAltitudeM 
+                // Post process the objects found in the leg & maybe set FlightLegs.FixAltM 
                 var combLeg = ProcessFactory.NewCombLeg(this, legId, Drone);
                 CombLegs.Add(combLeg);
-                combLeg.CalculateSettings(VideoData, Drone);
+                combLeg.CalculateSettings_from_FlightLeg(VideoData, Drone);
                 combLeg.AssertGood();
             }
         }
