@@ -243,7 +243,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Return the average altitude of the drone over the object features.
-        private float AverageFlightStepAltitudeM()
+        private float AverageFlightStepFixedAltitudeM()
         {
             float answer = 0;
             int count = 0;
@@ -255,7 +255,7 @@ namespace SkyCombImage.ProcessLogic
                     var step = feature.Value.Block.FlightStep;
                     if (step != null)
                     {
-                        var atlM = feature.Value.Block.FlightStep.AltitudeM;
+                        var atlM = feature.Value.Block.FlightStep.FixedAltitudeM;
                         if (atlM != UnknownValue)
                         {
                             answer += atlM;
@@ -661,7 +661,7 @@ namespace SkyCombImage.ProcessLogic
 
             // If drone is too low this method will not work.
             var lastStep = lastRealFeature.Block.FlightStep;
-            float droneDistanceDownM = lastStep.DistanceDown;
+            float droneDistanceDownM = lastStep.FixedDistanceDown;
             if (droneDistanceDownM < 5)
                 return; // Maintain current object height
 
@@ -703,7 +703,7 @@ namespace SkyCombImage.ProcessLogic
 
             // The object may be 10m to left and 40m in front of the drone location
             // Calculate the height of the drone above the OBJECT's location DemM.
-            var groundDownM = AverageFlightStepAltitudeM() - this.DemM;
+            var groundDownM = AverageFlightStepFixedAltitudeM() - this.DemM;
 
             var featureHeightM = (float)(groundDownM - trigDownM);
 

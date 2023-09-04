@@ -122,7 +122,7 @@ namespace SkyCombImage.DrawSpace
                             {
                                 Circle(ref outputImg, new Point(thisX, thisY), theColor, theThickness);
                                 if (!isCombProcessDrawing)
-                                    Text(ref outputImg, theObject.ObjectId.ToString(), new Point(thisX + 6 * theThickness, thisY), theThickness, theColor);
+                                    Text(ref outputImg, theObject.ObjectId.ToString(), new Point(thisX + 6 * theThickness, thisY), 0.5, theColor);
                                 break;
                             }
 

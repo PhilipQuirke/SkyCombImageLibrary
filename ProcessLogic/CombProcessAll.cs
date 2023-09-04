@@ -3,7 +3,7 @@ using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
-
+using System.Linq.Expressions;
 
 namespace SkyCombImage.ProcessLogic
 {
@@ -101,7 +101,12 @@ namespace SkyCombImage.ProcessLogic
                 // Post process the objects found in the leg & maybe set FlightLegs.FixAltM 
                 var combLeg = ProcessFactory.NewCombLeg(this, legId, Drone);
                 CombLegs.Add(combLeg);
-                combLeg.CalculateSettings_from_FlightLeg();
+                if (true)
+                    combLeg.CalculateSettings_from_FlightLeg();
+                else
+                    // Should be equivalent to above, but not tested
+                    combLeg.CalculateSettings_from_Blocks(combLeg.FlightLeg.MinStepId, combLeg.FlightLeg.MaxStepId);
+
                 combLeg.AssertGood();
             }
         }

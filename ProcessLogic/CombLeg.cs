@@ -6,22 +6,21 @@ using SkyCombImage.ProcessModel;
 
 namespace SkyCombImage.ProcessLogic
 {
-    // FlightLeg contains the best estimate of a drone flight leg from drone data.
-    // CombLeg analyses CombObjects in that FlightLeg to refine/correct
-    // the flight altitude data using FlightStep.FixAltM.
+    // CombLeg analyses CombObjects in a leg (either FLightLeg or transatory) 
+    // to refine/correct the flight altitude data using FlightStep.FixAltM.
     public class CombLeg : CombLegModel
     {
         // Parent process
         private CombProcessAll Process { get; }
 
-        private FlightLeg FlightLeg { get; set; }
+        public FlightLeg? FlightLeg { get; set; }
 
 
-        public CombLeg(CombProcessAll process, FlightLeg flightLeg, List<string>? settings = null) : base(settings)
+        public CombLeg(CombProcessAll process, FlightLeg? flightLeg = null, List<string>? settings = null) : base(settings)
         {
             Process = process;
-            LegId = flightLeg.LegId;
             FlightLeg = flightLeg;
+            LegId = (flightLeg != null ? flightLeg.LegId : UnknownValue);
 
             if (settings != null)
                 LoadSettings(settings);
@@ -36,6 +35,16 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        private void ResetBest()
+        {
+            BestFixAltM = 0;
+            BestSumLocnErrM = 9999;
+            BestSumHeightErrM = 9999;
+            OrgSumLocnErrM = 9999;
+            OrgSumHeightErrM = 9999;
+        }
+
+
         private void SetBest(float fixAltM, CombObjList combObjs)
         {
             BestFixAltM = fixAltM;
@@ -47,11 +56,8 @@ namespace SkyCombImage.ProcessLogic
         // Apply FixAltM to the specified FlightSteps and CombObjects and their CombFeatures
         public bool CalculateSettings_ApplyFixAltM(float fixAltM, FlightStepList legSteps, CombObjList combObjs)
         {
-            // Save the new fixAltM to all the steps in scope.
-            legSteps.SetFixAltM(fixAltM);
-
             // The image associated with each leg step now covers a slightly different area
-            legSteps.CalculateSettings_ApplyFixAltM(Process.VideoData, Process.Drone.GroundData);
+            legSteps.CalculateSettings_FixAltM(fixAltM, Process.VideoData, Process.Drone.GroundData);
 
             foreach (var theObject in combObjs)
             {
@@ -88,11 +94,10 @@ namespace SkyCombImage.ProcessLogic
         // Apply various "FixAltM" trial values to the FlightSteps, CombFeatures & CombObjects.
         // For each trial, measure the sum of the object location errors.
         // Lock in the legSteps.FixAltM value that reduces the error most.
-        public void CalculateSettings_Core(FlightStepList legSteps, CombObjList combObjs)
+        public void CalculateSettings_FixAltM(FlightStepList legSteps, CombObjList combObjs)
         {
             try
             {
-                BestFixAltM = 0;
                 NumSignificantObjects = combObjs.Count;
 
                 if((legSteps.Count == 0) || (NumSignificantObjects == 0))
@@ -109,9 +114,6 @@ namespace SkyCombImage.ProcessLogic
 
                     // Calculate the initial object error location and height errors with no fix.
                     var fixAltM = 0.0f;
-                    BestFixAltM = 0;
-                    BestSumLocnErrM = 9999;
-                    BestSumHeightErrM = 9999;
                     CalculateSettings_ApplyFixAltM(fixAltM, legSteps, combObjs);
                     OrgSumLocnErrM = BestSumLocnErrM;
                     OrgSumHeightErrM = BestSumHeightErrM;
@@ -134,7 +136,7 @@ namespace SkyCombImage.ProcessLogic
                         CalculateSettings_ApplyFixAltM(fixAltM, legSteps, combObjs);
                     }
 
-                    // Lock in the best single value across the full leg
+                    // Lock in the best single value across the leg steps
                     fixAltM = BestFixAltM;
                     CalculateSettings_ApplyFixAltM(fixAltM, legSteps, combObjs);
                     Process.CombObjs.CombObjList.CalculateSettings(Process.CombObjs.CombObjList);
@@ -144,9 +146,6 @@ namespace SkyCombImage.ProcessLogic
                     // Trail method. Works but not well enough to replace above code. Needs refining.
 
                     var fixAltM = 0.0f;
-                    BestFixAltM = 0;
-                    BestSumLocnErrM = 9999;
-                    BestSumHeightErrM = 9999;
                     OrgSumLocnErrM = 9999;
                     OrgSumHeightErrM = 9999;
 
@@ -216,21 +215,100 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Analyse CombObjects in the FlightLeg by assuming the drone altitude is inaccurate.
-        // Apply various "FixAltM" trial values to the FlightSteps, CombFeatures & CombObjects in the leg.
-        // For each trial, measure the sum of the object location errors.
-        // Lock in the FlightSteps.FixAltM value that reduces the error most.
+        // Summarise the blocks in this leg
+        private void SummariseBlocks()
+        {
+            ResetTardis();
+            foreach (var theBlock in Process.Blocks)
+                if (theBlock.Value.LegId == LegId)
+                {
+                    if (theBlock.Value.FlightStep != null)
+                    {
+                        if (MinStepId == UnknownValue)
+                            MinStepId = theBlock.Value.FlightStep.StepId;
+                        MaxStepId = Math.Max(MaxStepId, theBlock.Value.FlightStep.StepId);
+                    }
+                    SummariseTardis(theBlock.Value);
+                }
+        }
+
+
+        // Analyse CombObjects in the FlightLeg - assuming the drone altitude is inaccurate.
+        // Lock in the FlightSteps.FixAltM value that reduces the location most.
         public void CalculateSettings_from_FlightLeg()
         {
+            ResetBest();
+
+            if (LegId == UnknownValue)
+                return;
+
             var legSteps = Process.Drone.FlightSteps.Steps.GetLegSteps(LegId);
             var combObjs = Process.CombObjs.CombObjList.GetSignificantLegObjects(LegId);
 
-            CalculateSettings_Core(legSteps, combObjs);
+            CalculateSettings_FixAltM(legSteps, combObjs);
+            SummariseBlocks();
+        }
+
+
+        // Analyse CombObjects in the Block series - assuming the drone altitude is inaccurate.
+        // Lock in the FlightSteps.FixAltM value that reduces the location most.
+        public void CalculateSettings_from_Blocks(int minBlockId, int maxBlockId)
+        {
+            ResetBest();
+
+            if (Process.CombObjs.CombObjList.Count > 0)
+            {
+                // Get the FlightSteps corresponding to the block range
+                FlightStepList legSteps = new();
+                for (int blockId = minBlockId; blockId <= maxBlockId; blockId++)
+                {
+                    ProcessBlock theBlock;
+                    if (Process.Blocks.TryGetValue(blockId, out theBlock) && (theBlock.FlightStep != null))
+                        legSteps.Add(theBlock.FlightStep.StepId, theBlock.FlightStep);
+                }
+                if (legSteps.Count >= 4)
+                {
+                    // Get the Objects that exist inside the block range (not overlapping the block range).
+                    // We may be analyzing 30 minutes of video.
+                    // Recall that objects are ordered by the BlockId of the first feature in the object.
+                    // For speed, scan backwards through CombObjList
+                    // until we find an object that ends before minBlockId.
+                    var allObjs = Process.CombObjs.CombObjList;
+                    CombObjList combObjs = new();
+                    for (int objectId = allObjs.Last().Key; objectId >= 0; objectId--)
+                    {
+                        CombObject theObject;
+                        if (allObjs.TryGetValue(objectId, out theObject))
+                        {
+                            var firstFeat = theObject.FirstFeature();
+                            var lastFeat = theObject.LastRealFeature();
+                            if ((firstFeat != null) && (lastFeat != null))
+                            {
+                                var firstBlockId = firstFeat.Block.BlockId;
+                                var lastRealBlockId = lastFeat.Block.BlockId;
+
+                                if ((firstBlockId >= minBlockId) && (lastRealBlockId <= minBlockId))
+                                    // Object lies fully within the specified block range
+                                    combObjs.AddObject(theObject);
+
+                                if (lastRealBlockId < minBlockId)
+                                    break; // We've gone back far enough
+                            }
+                        }
+
+                    }
+
+
+                    CalculateSettings_FixAltM(legSteps, combObjs);
+                }
+            }
+
+            SummariseBlocks();
         }
     }
 
 
-    // A list of Comb objects
+    // A list of CombLeg objects
     public class CombLegList : SortedList<int, CombLeg>
     {
         public CombLegList()
