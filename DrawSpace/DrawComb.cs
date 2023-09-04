@@ -268,8 +268,9 @@ namespace SkyCombImage.DrawSpace
                         var video = process.Drone.InputVideo;
                         int theY = (int)(video.ImageHeight * 98 / 100); // pixels
                         int theX = (int)(video.ImageWidth * 92 / 100); // pixels
+                        var fontScale = video.FontScale;
                         Text(ref outputImg, "Leg " + block.LegName,
-                                new Point(theX, theY), 0.5, DroneColors.LegNameBgr, video.FontScale);
+                                new Point(theX, theY), fontScale / 2.0f, DroneColors.LegNameBgr, fontScale);
                     }
 
                     for (int featureId = block.MinFeatureId; featureId <= block.MaxFeatureId; featureId++)
