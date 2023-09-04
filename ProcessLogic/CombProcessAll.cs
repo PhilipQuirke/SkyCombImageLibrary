@@ -101,7 +101,7 @@ namespace SkyCombImage.ProcessLogic
                 // Post process the objects found in the leg & maybe set FlightLegs.FixAltM 
                 var combLeg = ProcessFactory.NewCombLeg(this, legId, Drone);
                 CombLegs.Add(combLeg);
-                combLeg.CalculateSettings_from_FlightLeg(VideoData, Drone);
+                combLeg.CalculateSettings_from_FlightLeg();
                 combLeg.AssertGood();
             }
         }

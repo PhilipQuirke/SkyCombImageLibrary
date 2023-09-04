@@ -1,8 +1,6 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved. 
 using MathNet.Numerics.LinearRegression;
 using SkyCombDrone.DroneLogic;
-using SkyCombDrone.DroneModel;
-using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
 
 
@@ -46,14 +44,14 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Apply FixAltM to the FlightSteps, CombFeatures & CombObjects in the leg
-        public bool CalculateSettings_ApplyFixAltM(float fixAltM, VideoModel videoData, FlightStepList legSteps, CombObjList combObjs, GroundData? groundData)
+        // Apply FixAltM to the specified FlightSteps and CombObjects and their CombFeatures
+        public bool CalculateSettings_ApplyFixAltM(float fixAltM, FlightStepList legSteps, CombObjList combObjs)
         {
             // Save the new fixAltM to all the steps in scope.
             legSteps.SetFixAltM(fixAltM);
 
             // The image associated with each leg step now covers a slightly different area
-            legSteps.CalculateSettings_ApplyFixAltM(videoData, groundData);
+            legSteps.CalculateSettings_ApplyFixAltM(Process.VideoData, Process.Drone.GroundData);
 
             foreach (var theObject in combObjs)
             {
@@ -90,7 +88,7 @@ namespace SkyCombImage.ProcessLogic
         // Apply various "FixAltM" trial values to the FlightSteps, CombFeatures & CombObjects.
         // For each trial, measure the sum of the object location errors.
         // Lock in the legSteps.FixAltM value that reduces the error most.
-        public void CalculateSettings_Core(VideoModel videoData, Drone drone, FlightStepList legSteps, CombObjList combObjs)
+        public void CalculateSettings_Core(FlightStepList legSteps, CombObjList combObjs)
         {
             try
             {
@@ -102,7 +100,7 @@ namespace SkyCombImage.ProcessLogic
 
                 int maxTestAbsM = 8;
                 // If the OnGroundAt setting was not available then test a wider range.
-                if (!drone.FlightSteps.HasOnGroundAtFix)
+                if (!Process.Drone.FlightSteps.HasOnGroundAtFix)
                     maxTestAbsM = 15;
 
                 if (true)
@@ -114,31 +112,31 @@ namespace SkyCombImage.ProcessLogic
                     BestFixAltM = 0;
                     BestSumLocnErrM = 9999;
                     BestSumHeightErrM = 9999;
-                    CalculateSettings_ApplyFixAltM(fixAltM, videoData, legSteps, combObjs, drone.GroundData);
+                    CalculateSettings_ApplyFixAltM(fixAltM, legSteps, combObjs);
                     OrgSumLocnErrM = BestSumLocnErrM;
                     OrgSumHeightErrM = BestSumHeightErrM;
 
                     // Search upwards at +0.2m intervals. If maxTestAbsM == 5, do 24 evaluations 
                     for (fixAltM = 0.2f; fixAltM <= maxTestAbsM; fixAltM += 0.2f)
-                        if (!CalculateSettings_ApplyFixAltM(fixAltM, videoData, legSteps, combObjs, drone.GroundData))
+                        if (!CalculateSettings_ApplyFixAltM(fixAltM, legSteps, combObjs))
                             break;
 
                     // Search downwards at -0.2m intervals. If maxTestAbsM == 5, do 24 evaluations 
                     for (fixAltM = -0.2f; fixAltM >= -maxTestAbsM; fixAltM -= 0.2f)
-                        if (!CalculateSettings_ApplyFixAltM(fixAltM, videoData, legSteps, combObjs, drone.GroundData))
+                        if (!CalculateSettings_ApplyFixAltM(fixAltM, legSteps, combObjs))
                             break;
 
                     // Fine tune at 0.1m intervals. Costs 1 or 2 evaluations.
                     fixAltM = BestFixAltM + 0.1f;
-                    if (!CalculateSettings_ApplyFixAltM(fixAltM, videoData, legSteps, combObjs, drone.GroundData))
+                    if (!CalculateSettings_ApplyFixAltM(fixAltM, legSteps, combObjs))
                     {
                         fixAltM = BestFixAltM - 0.1f;
-                        CalculateSettings_ApplyFixAltM(fixAltM, videoData, legSteps, combObjs, drone.GroundData);
+                        CalculateSettings_ApplyFixAltM(fixAltM, legSteps, combObjs);
                     }
 
                     // Lock in the best single value across the full leg
                     fixAltM = BestFixAltM;
-                    CalculateSettings_ApplyFixAltM(fixAltM, videoData, legSteps, combObjs, drone.GroundData);
+                    CalculateSettings_ApplyFixAltM(fixAltM, legSteps, combObjs);
                     Process.CombObjs.CombObjList.CalculateSettings(Process.CombObjs.CombObjList);
                 }
                 else
@@ -160,7 +158,7 @@ namespace SkyCombImage.ProcessLogic
                     for (int i = 0; i < numPoints; i++)
                     {
                         fixAltM = i * 0.5f - 4; // Evaluate from -4 to +4
-                        CalculateSettings_ApplyFixAltM(fixAltM, videoData, legSteps, combObjs, drone.GroundData);
+                        CalculateSettings_ApplyFixAltM(fixAltM, legSteps, combObjs);
 
                         x[i] = fixAltM;
                         y[i] = combObjs.SumLocationErrM;
@@ -192,7 +190,7 @@ namespace SkyCombImage.ProcessLogic
 
                     // Lock in the best single value across the full leg
                     fixAltM = BestFixAltM;
-                    CalculateSettings_ApplyFixAltM(fixAltM, videoData, legSteps, combObjs, drone.GroundData);
+                    CalculateSettings_ApplyFixAltM(fixAltM, legSteps, combObjs);
                     SetBest(fixAltM, combObjs);
                     Process.CombObjs.CombObjList.CalculateSettings(Process.CombObjs.CombObjList);
                 }
@@ -218,17 +216,16 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-
         // Analyse CombObjects in the FlightLeg by assuming the drone altitude is inaccurate.
         // Apply various "FixAltM" trial values to the FlightSteps, CombFeatures & CombObjects in the leg.
         // For each trial, measure the sum of the object location errors.
         // Lock in the FlightSteps.FixAltM value that reduces the error most.
-        public void CalculateSettings_from_FlightLeg(VideoModel videoData, Drone drone)
+        public void CalculateSettings_from_FlightLeg()
         {
-            var legSteps = drone.FlightSteps.Steps.GetLegSteps(LegId);
+            var legSteps = Process.Drone.FlightSteps.Steps.GetLegSteps(LegId);
             var combObjs = Process.CombObjs.CombObjList.GetSignificantLegObjects(LegId);
 
-            CalculateSettings_Core(videoData, drone, legSteps, combObjs);
+            CalculateSettings_Core(legSteps, combObjs);
         }
     }
 
