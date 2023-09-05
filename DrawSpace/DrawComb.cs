@@ -263,13 +263,13 @@ namespace SkyCombImage.DrawSpace
                 if (process != null)
                 {
                     // Draw the leg name on the image (if any) at bottom right
-                    if (thermalImage && (block.LegId > 0))
+                    if (thermalImage && (block.FlightLegId > 0))
                     {
                         var video = process.Drone.InputVideo;
                         int theY = (int)(video.ImageHeight * 98 / 100); // pixels
                         int theX = (int)(video.ImageWidth * 92 / 100); // pixels
                         var fontScale = video.FontScale;
-                        Text(ref outputImg, "Leg " + block.LegName,
+                        Text(ref outputImg, "Leg " + block.FlightLegName,
                                 new Point(theX, theY), fontScale / 2.0f, DroneColors.LegNameBgr, fontScale);
                     }
 

@@ -67,13 +67,13 @@ namespace SkyCombImage.ProcessModel
         // Number of blocks this object was a significant object. Objects can become insignificant, after being significant.
         public int NumSigBlocks { get; set; }
         // LegId of the FlightLeg this object was found during
-        public int LegId { get; set; }
-        public string LegName { get { return LegIdToName(LegId); } }
+        public int FlightLegId { get; set; }
+        public string FlightLegName { get { return LegIdToName(FlightLegId); } }
 
 
         public ProcessObjectModel()
         {
-            LegId = 0;
+            FlightLegId = 0;
             Name = "";
             RunFromVideoS = 0.0F;
             RunToVideoS = 0.0F;
@@ -117,7 +117,7 @@ namespace SkyCombImage.ProcessModel
             if (positionInLeg == UnknownValue)
                 Name = "#" + ObjectId.ToString(); // e.g. #15
             else
-                Name = LegName + positionInLeg.ToString(); // e.g. C5
+                Name = FlightLegName + positionInLeg.ToString(); // e.g. C5
         }
 
 
@@ -184,7 +184,7 @@ namespace SkyCombImage.ProcessModel
                 { "Size Rnd CM2", (SizeCM2 == UnknownValue ? UnknownHeight : ((int)(SizeCM2 / 100)) * 100), AreaCM2Ndp },
                 { "Max Heat", MaxHeat},
                 { "Dem M", DemM, HeightNdp },
-                { "Leg", (LegId == UnknownValue ? 0 : LegId) },
+                { "Leg", (FlightLegId == UnknownValue ? 0 : FlightLegId) },
                 { "Attributes", Attributes },
                 { "Significant", Significant },
                 { "# Sig Blocks", NumSigBlocks },
@@ -217,7 +217,7 @@ namespace SkyCombImage.ProcessModel
             i++; // SizeRndCM2
             MaxHeat = StringToNonNegInt(settings[i++]);
             DemM = StringToFloat(settings[i++]);
-            LegId = StringToNonNegInt(settings[i++]);
+            FlightLegId = StringToNonNegInt(settings[i++]);
             Attributes = settings[i++];
             Significant = (settings[i++] == "true");
             NumSigBlocks = StringToNonNegInt(settings[i++]);

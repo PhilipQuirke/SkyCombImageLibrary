@@ -1,9 +1,10 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved. 
+using Emgu.CV.XFeatures2D;
 using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
-using System.Linq.Expressions;
+
 
 namespace SkyCombImage.ProcessLogic
 {
@@ -99,13 +100,9 @@ namespace SkyCombImage.ProcessLogic
             if ((legId > 0) && !CombLegs.TryGetValue(legId, out _))
             {
                 // Post process the objects found in the leg & maybe set FlightLegs.FixAltM 
-                var combLeg = ProcessFactory.NewCombLeg(this, legId, Drone);
-                CombLegs.Add(combLeg);
-                if (true)
-                    combLeg.CalculateSettings_from_FlightLeg();
-                else
-                    // Should be equivalent to above, but not tested
-                    combLeg.CalculateSettings_from_Blocks(combLeg.FlightLeg.MinStepId, combLeg.FlightLeg.MaxStepId);
+                var combLeg = ProcessFactory.NewCombLeg(this, legId);
+                CombLegs.AddLeg(combLeg);
+                combLeg.CalculateSettings_from_FlightLeg();
 
                 combLeg.AssertGood();
             }
@@ -118,6 +115,21 @@ namespace SkyCombImage.ProcessLogic
                 ProcessLegEnd_core(legId);
 
             EnsureObjectsNamed();
+        }
+
+
+        public void TestNonLegAltFix(int legId)
+        { 
+            var storeLegs = Drone.FlightLegs;
+            Drone.FlightLegs = null;
+
+            // Post process the objects found in the leg steps & maybe set FlightStep.FixAltM 
+            var combLeg = ProcessFactory.NewCombLeg(this, CombLegs.Count() + 1);
+            CombLegs.AddLeg(combLeg);
+            var leg = storeLegs.Legs[legId - 1];
+            combLeg.CalculateSettings_from_FlightSteps(leg.MinStepId, leg.MaxStepId);
+
+            Drone.FlightLegs = storeLegs;
         }
 
 
@@ -154,7 +166,7 @@ namespace SkyCombImage.ProcessLogic
         {
             if (ProcessConfig.SavePixels == SavePixelsEnum.None)
                 foreach (var theObject in CombObjs.CombObjList)
-                    if (theObject.Value.LegId <= 0)
+                    if (theObject.Value.FlightLegId <= 0)
                         foreach (var feature in theObject.Value.Features)
                             feature.Value.Pixels?.Clear();
         }
@@ -270,8 +282,8 @@ namespace SkyCombImage.ProcessLogic
             // Needs to be done ASAP so the "C5" name can be drawn on video frames.
             // Note: Some objects never become significant.
             foreach (var theObject in inScopeObjects)
-                if ((theObject.Value.LegId > 0) &&
-                   ((scope.CurrRunFlightStep == null) || (theObject.Value.LegId == scope.CurrRunFlightStep.LegId)) &&
+                if ((theObject.Value.FlightLegId > 0) &&
+                   ((scope.CurrRunFlightStep == null) || (theObject.Value.FlightLegId == scope.CurrRunFlightStep.FlightLegId)) &&
                    (theObject.Value.Significant) &&
                    (theObject.Value.Name == ""))
                 {

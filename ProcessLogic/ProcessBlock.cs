@@ -3,6 +3,7 @@ using SkyCombGround.CommonSpace;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombImage.ProcessModel;
+using System.Numerics;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -220,7 +221,7 @@ namespace SkyCombImage.ProcessLogic
                 answer.Add("DemM", 0, HeightNdp);
             }
 
-            answer.Add("HasLeg", (LegId <= 0 ? 0 : 1));
+            answer.Add("HasLeg", (FlightLegId <= 0 ? 0 : 1));
 
             AssertGood();
 
@@ -237,6 +238,7 @@ namespace SkyCombImage.ProcessLogic
         {
             ProcessBlock? prevBlock = LastBlock;
 
+            BaseConstants.Assert(newBlock.BlockId > 0, "ProcessBlockList.AddBlock: No Id");
             Add(newBlock.BlockId, newBlock);
 
             if (scope != null)

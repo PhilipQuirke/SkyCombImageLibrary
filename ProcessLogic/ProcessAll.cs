@@ -2,6 +2,7 @@
 using SkyCombDrone.DroneLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
+using Emgu.CV.XFeatures2D;
 
 
 namespace SkyCombImage.ProcessLogic

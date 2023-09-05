@@ -104,15 +104,15 @@ namespace SkyCombImage.PersistModel
                     while (cell != null && cell.Value != null && cell.Value.ToString() != "")
                     {
                         var legIdString = cell.Value.ToString();
-                        if (legIdString == "")
+                        if((legIdString == null) || (legIdString == ""))
                             break;
                         var legId = ConfigBase.StringToNonNegInt(legIdString);
 
 
                         // Load the non-blank cells in this row into a CombLeg
                         var settings = Data.GetRowSettings(row, 1);
-                        model.CombLegs.Add(
-                            ProcessFactory.NewCombLeg(model, legId, drone, settings));
+                        model.CombLegs.AddLeg(
+                            ProcessFactory.NewCombLeg(model, legId, settings));
 
                         row++;
                         cell = Data.Worksheet.Cells[row, CombLeg.LegIdSetting];

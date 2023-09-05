@@ -63,14 +63,9 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public static CombLeg NewCombLeg(CombProcessAll model, int legId, Drone drone, List<string> settings = null)
+        public static CombLeg NewCombLeg(CombProcessAll model, int legId, List<string> settings = null)
         {
-            Assert(drone != null, "NewCombLeg: droneAll is null");
-
-            var flightLeg = drone.FlightLegs.Legs[legId - 1];
-            Assert(flightLeg != null, "NewCombLeg: FlightLeg is null");
-
-            return new CombLeg(model, flightLeg, settings);
+             return new CombLeg(model, legId, settings);
         }
     }
 }

@@ -1014,6 +1014,7 @@ namespace SkyCombImage.ProcessLogic
 
         public void AddObject(CombObject theObject)
         {
+            BaseConstants.Assert(theObject.ObjectId > 0, "CombObjList.AddObject: No Id");
             Add(theObject.ObjectId, theObject);
         }
 
@@ -1059,7 +1060,7 @@ namespace SkyCombImage.ProcessLogic
             CombObjList answer = new();
 
             foreach (var theObject in this)
-                if ((theObject.Value.LegId == legId) && theObject.Value.Significant)
+                if ((theObject.Value.FlightLegId == legId) && theObject.Value.Significant)
                     answer.AddObject(theObject.Value);
 
             return answer;

@@ -21,8 +21,8 @@ namespace SkyCombImage.ProcessModel
 
 
         // Corresponding flight leg. One-based.
-        public int LegId { get; set; }
-        public string LegName { get { return LegIdToName(LegId); } }
+        public int FlightLegId { get; set; }
+        public string FlightLegName { get { return LegIdToName(FlightLegId); } }
 
 
         // Approximate ground velocity in pixels per block
@@ -60,7 +60,7 @@ namespace SkyCombImage.ProcessModel
         public ProcessBlockModel(ProcessScopeModel scope) : base(scope.CurrBlockId)
         {
             FlightStepId = UnknownValue;
-            LegId = scope.CurrRunLegId;
+            FlightLegId = scope.CurrRunLegId;
             VelocityInPixelsPerBlock = null;
             InputFrameId = scope.CurrInputFrameId;
             InputFrameMs = scope.CurrInputFrameMs;
@@ -138,8 +138,8 @@ namespace SkyCombImage.ProcessModel
             answer[0].Key = "Block";
 
             answer.Add("Flight Step", FlightStepId);
-            answer.Add("Leg Id", (LegId == UnknownValue ? 0 : LegId));
-            answer.Add("Leg Name", LegName);
+            answer.Add("Leg Id", (FlightLegId == UnknownValue ? 0 : FlightLegId));
+            answer.Add("Leg Name", FlightLegName);
             answer.Add("Vel Pxs.X", (VelocityInPixelsPerBlock == null ? 0 : VelocityInPixelsPerBlock.Value.X), PixelVelNdp);
             answer.Add("Vel Pxs.Y", (VelocityInPixelsPerBlock == null ? 0 : VelocityInPixelsPerBlock.Value.Y), PixelVelNdp);
             answer.Add("Input Frame Id", InputFrameId);
@@ -161,7 +161,7 @@ namespace SkyCombImage.ProcessModel
 
             int i = FirstFreeSetting - 1;
             FlightStepId = StringToInt(settings[i++]);
-            LegId = StringToNonNegInt(settings[i++]);
+            FlightLegId = StringToNonNegInt(settings[i++]);
             i++; // Skip LegName
             VelocityInPixelsPerBlock = new(StringToFloat(settings[i++]), StringToFloat(settings[i++]));
             InputFrameId = StringToNonNegInt(settings[i++]);
@@ -171,8 +171,8 @@ namespace SkyCombImage.ProcessModel
             MinFeatureId = StringToNonNegInt(settings[i++]);
             MaxFeatureId = StringToNonNegInt(settings[i++]);
 
-            if (LegId == 0)
-                LegId = UnknownValue;
+            if (FlightLegId == 0)
+                FlightLegId = UnknownValue;
         }
     };
 }

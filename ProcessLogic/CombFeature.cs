@@ -392,7 +392,7 @@ namespace SkyCombImage.ProcessLogic
             settings.Add("Num Hot Pixels", NumHotPixels());
             settings.Add("Density Perc", DensityPerc()); // 0 to 100
             settings.Add("Density Good", PixelDensityGood());
-            settings.Add("Leg", (Block != null ? Block.LegId : 0));
+            settings.Add("Leg", (Block != null ? Block.FlightLegId : 0));
 
             return settings;
         }
@@ -415,7 +415,7 @@ namespace SkyCombImage.ProcessLogic
         public void AddFeature(CombFeature feature)
         {
             BaseConstants.Assert(feature != null, "AddFeature: Feature not specified.");
-            BaseConstants.Assert(feature.FeatureId > 0, "AddFeature: FeatureId not specified.");
+            BaseConstants.Assert(feature.FeatureId > 0, "AddFeature: No Id");
 
             this.Add(feature.FeatureId, feature);
         }

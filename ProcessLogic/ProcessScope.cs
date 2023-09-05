@@ -60,7 +60,7 @@ namespace SkyCombImage.ProcessLogic
         {
             CurrRunFlightStep = step;
             PSM.CurrRunStepId = (step != null ? step.FlightSection.TardisId : UnknownValue);
-            PSM.CurrRunLegId = (step != null ? step.LegId : UnknownValue);
+            PSM.CurrRunLegId = (step != null ? step.FlightLegId : UnknownValue);
         }
 
 

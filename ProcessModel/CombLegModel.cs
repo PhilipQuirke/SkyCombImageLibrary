@@ -13,8 +13,8 @@ namespace SkyCombImage.ProcessModel
     {
         // DRONE FLIGHT DATA
         // Details of the associated FlightLeg
-        public int LegId { get; set; } = UnknownValue;
-        public string LegName { get { return LegIdToName(LegId); } }
+        public int CombLegId { get; set; } = UnknownValue;
+        public string CombLegName { get { return LegIdToName(CombLegId); } }
 
         // Id of FlightStep of first block of process summarised
         public int MinStepId { get; set; } = UnknownValue;
@@ -77,8 +77,8 @@ namespace SkyCombImage.ProcessModel
         {
             var answer = new DataPairList
             {
-                { "Leg Id", LegId },
-                { "Name", LegName },
+                { "Comb Leg Id", CombLegId },
+                { "Name", CombLegName },
                 { "Num Sig Objs", NumSignificantObjects },
                 { "Org Sum Locn Err M", OrgSumLocnErrM, LocationNdp },
                 { "Org Avg Locn Err M", (NumSignificantObjects > 0 ? OrgSumLocnErrM / NumSignificantObjects : UnknownValue), LocationNdp },
@@ -105,7 +105,7 @@ namespace SkyCombImage.ProcessModel
         public override void LoadSettings(List<string> settings)
         {
             int i = 0;
-            LegId = StringToInt(settings[i++]);
+            CombLegId = StringToInt(settings[i++]);
             i++; // Skip LegName  
             NumSignificantObjects = StringToInt(settings[i++]);
             OrgSumLocnErrM = StringToFloat(settings[i++]);

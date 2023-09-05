@@ -1,6 +1,7 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved. 
 using MathNet.Numerics.LinearRegression;
 using SkyCombDrone.DroneLogic;
+using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
 
 
@@ -13,14 +14,11 @@ namespace SkyCombImage.ProcessLogic
         // Parent process
         private CombProcessAll Process { get; }
 
-        public FlightLeg? FlightLeg { get; set; }
 
-
-        public CombLeg(CombProcessAll process, FlightLeg? flightLeg = null, List<string>? settings = null) : base(settings)
+        public CombLeg(CombProcessAll process, int legId, List<string>? settings = null) : base(settings)
         {
             Process = process;
-            FlightLeg = flightLeg;
-            LegId = (flightLeg != null ? flightLeg.LegId : UnknownValue);
+            CombLegId = legId;
 
             if (settings != null)
                 LoadSettings(settings);
@@ -29,7 +27,7 @@ namespace SkyCombImage.ProcessLogic
 
         public void AssertGood()
         {
-            Assert(LegId > 0, "CombLeg.AssertGood: Bad legId");
+            Assert(CombLegId > 0, "CombLeg.AssertGood: Bad legId");
             Assert(MinBlockId > 0, "CombLeg.AssertGood: Bad MinBlockId");
             Assert(MaxBlockId > 0, "CombLeg.AssertGood: Bad MaxBlockId");
         }
@@ -193,20 +191,6 @@ namespace SkyCombImage.ProcessLogic
                     SetBest(fixAltM, combObjs);
                     Process.CombObjs.CombObjList.CalculateSettings(Process.CombObjs.CombObjList);
                 }
-
-                // Summarise the blocks in this leg
-                ResetTardis();
-                foreach (var theBlock in Process.Blocks)
-                    if (theBlock.Value.LegId == LegId)
-                    {
-                        if (theBlock.Value.FlightStep != null)
-                        {
-                            if (MinStepId == UnknownValue)
-                                MinStepId = theBlock.Value.FlightStep.StepId;
-                            MaxStepId = Math.Max(MaxStepId, theBlock.Value.FlightStep.StepId);
-                        }
-                        SummariseTardis(theBlock.Value);
-                    }
             }
             catch (Exception ex)
             {
@@ -216,20 +200,17 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Summarise the blocks in this leg
-        private void SummariseBlocks()
+        private void SummariseSteps(FlightStepList steps)
         {
+            if(steps.Count > 0)
+            {
+                MinStepId = steps.First().Value.StepId;
+                MaxStepId = steps.Last().Value.StepId;
+            }
+
             ResetTardis();
-            foreach (var theBlock in Process.Blocks)
-                if (theBlock.Value.LegId == LegId)
-                {
-                    if (theBlock.Value.FlightStep != null)
-                    {
-                        if (MinStepId == UnknownValue)
-                            MinStepId = theBlock.Value.FlightStep.StepId;
-                        MaxStepId = Math.Max(MaxStepId, theBlock.Value.FlightStep.StepId);
-                    }
-                    SummariseTardis(theBlock.Value);
-                }
+            foreach(var step in steps)
+                SummariseTardis(step.Value);
         }
 
 
@@ -238,72 +219,79 @@ namespace SkyCombImage.ProcessLogic
         public void CalculateSettings_from_FlightLeg()
         {
             ResetBest();
+            ResetTardis();
 
-            if (LegId == UnknownValue)
+            if (CombLegId == UnknownValue)
                 return;
 
-            var legSteps = Process.Drone.FlightSteps.Steps.GetLegSteps(LegId);
-            var combObjs = Process.CombObjs.CombObjList.GetSignificantLegObjects(LegId);
+            var legSteps = Process.Drone.FlightSteps.Steps.GetLegSteps(CombLegId);
+            var combObjs = Process.CombObjs.CombObjList.GetSignificantLegObjects(CombLegId);
 
             CalculateSettings_FixAltM(legSteps, combObjs);
-            SummariseBlocks();
+            SummariseSteps(legSteps);
         }
 
 
         // Analyse CombObjects in the Block series - assuming the drone altitude is inaccurate.
         // Lock in the FlightSteps.FixAltM value that reduces the location most.
-        public void CalculateSettings_from_Blocks(int minBlockId, int maxBlockId)
+        public void CalculateSettings_from_FlightSteps(int minStepId, int maxStepId)
         {
-            ResetBest();
+            try { 
+                ResetBest();
+                ResetTardis();
 
-            if (Process.CombObjs.CombObjList.Count > 0)
-            {
-                // Get the FlightSteps corresponding to the block range
-                FlightStepList legSteps = new();
-                for (int blockId = minBlockId; blockId <= maxBlockId; blockId++)
+                if (Process.CombObjs.CombObjList.Count > 0)
                 {
-                    ProcessBlock theBlock;
-                    if (Process.Blocks.TryGetValue(blockId, out theBlock) && (theBlock.FlightStep != null))
-                        legSteps.Add(theBlock.FlightStep.StepId, theBlock.FlightStep);
-                }
-                if (legSteps.Count >= 4)
-                {
-                    // Get the Objects that exist inside the block range (not overlapping the block range).
-                    // We may be analyzing 30 minutes of video.
-                    // Recall that objects are ordered by the BlockId of the first feature in the object.
-                    // For speed, scan backwards through CombObjList
-                    // until we find an object that ends before minBlockId.
-                    var allObjs = Process.CombObjs.CombObjList;
-                    CombObjList combObjs = new();
-                    for (int objectId = allObjs.Last().Key; objectId >= 0; objectId--)
+                    // Get the FlightSteps corresponding to the block range
+                    FlightStepList legSteps = new();
+                    for (int stepId = minStepId; stepId <= maxStepId; stepId++)
                     {
-                        CombObject theObject;
-                        if (allObjs.TryGetValue(objectId, out theObject))
+                        FlightStep theStep;
+                        if (Process.Drone.FlightSteps.Steps.TryGetValue(stepId, out theStep))
+                            legSteps.AddStep(theStep);
+                    }
+                    if (legSteps.Count >= 4)
+                    {
+                        // Get the Objects that exist inside the block range (not overlapping the block range).
+                        // We may be analyzing 30 minutes of video.
+                        // Recall that objects are ordered by the BlockId of the first feature in the object.
+                        // For speed, scan backwards through CombObjList
+                        // until we find an object that ends before minBlockId.
+                        var allObjs = Process.CombObjs.CombObjList;
+                        CombObjList combObjs = new();
+                        for (int objectId = allObjs.Last().Key; objectId >= 0; objectId--)
                         {
-                            var firstFeat = theObject.FirstFeature();
-                            var lastFeat = theObject.LastRealFeature();
-                            if ((firstFeat != null) && (lastFeat != null))
+                            CombObject theObject;
+                            if (allObjs.TryGetValue(objectId, out theObject))
                             {
-                                var firstBlockId = firstFeat.Block.BlockId;
-                                var lastRealBlockId = lastFeat.Block.BlockId;
+                                var firstFeat = theObject.FirstFeature();
+                                var lastFeat = theObject.LastRealFeature();
+                                if ((firstFeat != null) && (lastFeat != null))
+                                {
+                                    var firstStepId = firstFeat.Block.FlightStepId;
+                                    var lastRealStepId = lastFeat.Block.FlightStepId;
 
-                                if ((firstBlockId >= minBlockId) && (lastRealBlockId <= minBlockId))
-                                    // Object lies fully within the specified block range
-                                    combObjs.AddObject(theObject);
+                                    if ((firstStepId >= minStepId) && (lastRealStepId <= maxStepId))
+                                        // Object lies fully within the specified block range
+                                        combObjs.AddObject(theObject);
 
-                                if (lastRealBlockId < minBlockId)
-                                    break; // We've gone back far enough
+                                    if (lastRealStepId < minStepId)
+                                        break; // We've gone back far enough
+                                }
                             }
+
                         }
 
+
+                        CalculateSettings_FixAltM(legSteps, combObjs);
+                        SummariseSteps(legSteps);
                     }
-
-
-                    CalculateSettings_FixAltM(legSteps, combObjs);
                 }
             }
-
-            SummariseBlocks();
+            catch (Exception ex)
+            {
+                throw ThrowException("CombLeg.CalculateSettings_from_FlightSteps", ex);
+            }
         }
     }
 
@@ -316,9 +304,10 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public void Add(CombLeg combLeg)
+        public void AddLeg(CombLeg combLeg)
         {
-            Add(combLeg.LegId, combLeg);
+            BaseConstants.Assert(combLeg.CombLegId > 0, "CombLegList.AddLeg: No Id");
+            Add(combLeg.CombLegId, combLeg);
         }
     }
 }

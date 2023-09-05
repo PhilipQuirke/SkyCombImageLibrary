@@ -21,7 +21,7 @@ namespace SkyCombImage.ProcessLogic
             ObjectId = ++NextObjectId;
             if (scope != null)
             {
-                LegId = scope.PSM.CurrRunLegId;
+                FlightLegId = scope.PSM.CurrRunLegId;
                 RunFromVideoS = (float)(scope.PSM.CurrInputFrameMs / 1000.0);
                 RunToVideoS = RunFromVideoS;
             }

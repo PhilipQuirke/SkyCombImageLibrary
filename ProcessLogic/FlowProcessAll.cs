@@ -95,7 +95,7 @@ namespace SkyCombImage.ProcessModel
                 // The accuracy of the Flow speeds relies on the whole screen moving in same direction.
                 // A spin event or dynamically changing the camera down angle breaks the Flow speed calculations.
                 // Only calculate flow speed during legs
-                if (LegId <= 0)
+                if (FlightLegId <= 0)
                 {
                     FlowGroundVelInPixelsPerBlock = null;
                     FlowAverageVelInPixelsPerBlock = null;
