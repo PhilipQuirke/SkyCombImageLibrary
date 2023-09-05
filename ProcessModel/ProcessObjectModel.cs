@@ -68,7 +68,7 @@ namespace SkyCombImage.ProcessModel
         public int NumSigBlocks { get; set; }
         // LegId of the FlightLeg this object was found during
         public int FlightLegId { get; set; }
-        public string FlightLegName { get { return LegIdToName(FlightLegId); } }
+        public string FlightLegName { get { return IdToLetter(FlightLegId); } }
 
 
         public ProcessObjectModel()

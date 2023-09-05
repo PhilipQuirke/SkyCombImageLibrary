@@ -22,7 +22,7 @@ namespace SkyCombImage.ProcessModel
 
         // Corresponding flight leg. One-based.
         public int FlightLegId { get; set; }
-        public string FlightLegName { get { return LegIdToName(FlightLegId); } }
+        public string FlightLegName { get { return IdToLetter(FlightLegId); } }
 
 
         // Approximate ground velocity in pixels per block

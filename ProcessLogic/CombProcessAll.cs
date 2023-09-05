@@ -24,7 +24,7 @@ namespace SkyCombImage.ProcessLogic
         public CombObjs CombObjs { get; set; }
 
         // List of CombLegs that analsyse CombObjects found in the leg to refine FlightLeg etc data.
-        public CombLegList CombLegs { get; set; }
+        public CombLegList CombSpans { get; set; }
 
         // How many significant objects have been found in this leg?
         private int LegSignificantObjects { get; set; } = 0;
@@ -42,7 +42,7 @@ namespace SkyCombImage.ProcessLogic
             Blocks = new();
             CombFeatures = new();
             CombObjs = new(this);
-            CombLegs = new();
+            CombSpans = new();
         }
 
 
@@ -55,7 +55,7 @@ namespace SkyCombImage.ProcessLogic
             Blocks.Clear();
             CombFeatures.Clear();
             CombObjs.CombObjList.Clear();
-            CombLegs.Clear();
+            CombSpans.Clear();
 
             base.ResetModel();
 
@@ -97,13 +97,12 @@ namespace SkyCombImage.ProcessLogic
             CombObjs.StopTracking();
 
             // If we are lacking the current CombLeg then create it.
-            if ((legId > 0) && !CombLegs.TryGetValue(legId, out _))
+            if ((legId > 0) && !CombSpans.TryGetValue(legId, out _))
             {
                 // Post process the objects found in the leg & maybe set FlightLegs.FixAltM 
                 var combLeg = ProcessFactory.NewCombLeg(this, legId);
-                CombLegs.AddLeg(combLeg);
+                CombSpans.AddLeg(combLeg);
                 combLeg.CalculateSettings_from_FlightLeg();
-
                 combLeg.AssertGood();
             }
         }
@@ -118,18 +117,15 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public void TestNonLegAltFix(int legId)
-        { 
-            var storeLegs = Drone.FlightLegs;
-            Drone.FlightLegs = null;
-
-            // Post process the objects found in the leg steps & maybe set FlightStep.FixAltM 
-            var combLeg = ProcessFactory.NewCombLeg(this, CombLegs.Count() + 1);
-            CombLegs.AddLeg(combLeg);
-            var leg = storeLegs.Legs[legId - 1];
-            combLeg.CalculateSettings_from_FlightSteps(leg.MinStepId, leg.MaxStepId);
-
-            Drone.FlightLegs = storeLegs;
+        public void ProcessNonLegEnd()
+        {
+            if ((!Drone.UseFlightLegs) && (Blocks.Count > 4))
+            {
+                var combLeg = ProcessFactory.NewCombLeg(this, CombSpans.Count() + 1);
+                CombSpans.AddLeg(combLeg);
+                combLeg.CalculateSettings_from_FlightSteps(
+                    Blocks.First().Value.FlightStepId, Blocks.Last().Value.FlightStepId);
+            }
         }
 
 

@@ -93,19 +93,19 @@ namespace SkyCombImage.PersistModel
                     // Add the Object/Feature charts
                     SaveObject.SaveObjectGraphs(MaxDatumId);
 
-                    // Save the CombLeg data 
-                    if ((combProcess.CombLegs != null) && (combProcess.CombLegs.Count > 0))
+                    // Save the CombSpan data 
+                    if ((combProcess.CombSpans != null) && (combProcess.CombSpans.Count > 0))
                     {
-                        Data.SelectOrAddWorksheet(Legs2TabName);
+                        Data.SelectOrAddWorksheet(SpanTabName);
                         int legRow = 0;
-                        foreach (var leg in combProcess.CombLegs)
+                        foreach (var leg in combProcess.CombSpans)
                             Data.SetDataListRowKeysAndValues(ref legRow, leg.Value.GetSettings());
 
-                        Data.SetColumnColor(CombLegModel.LegIdSetting, legRow, Color.Blue);
-                        Data.SetColumnColor(CombLegModel.LegNameSetting, legRow, Color.Blue);
-                        Data.SetColumnColor(CombLegModel.BestFixAltMSetting, legRow, Color.Blue);
+                        Data.SetColumnColor(CombSpanModel.SpanIdSetting, legRow, Color.Blue);
+                        Data.SetColumnColor(CombSpanModel.SpanNameSetting, legRow, Color.Blue);
+                        Data.SetColumnColor(CombSpanModel.BestFixAltMSetting, legRow, Color.Blue);
 
-                        Data.SetLastUpdateDateTime(Legs2TabName);
+                        Data.SetLastUpdateDateTime(SpanTabName);
                     }
 
                     if (saveObjects)

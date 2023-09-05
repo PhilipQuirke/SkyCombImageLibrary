@@ -1,6 +1,7 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved. 
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
+using SkyCombImage.ProcessLogic;
 
 
 // Models are used in-memory and to persist/load data to/from the datastore
@@ -9,27 +10,27 @@ namespace SkyCombImage.ProcessModel
     // FlightLeg contains the best estimate of a drone flight leg from drone data.
     // CombLeg analyses CombObjects in that FlightLeg to refine/correct
     // the flight altitude data using FlightStep.FixAltM.
-    public class CombLegModel : TardisSummaryModel
+    public class CombSpanModel : TardisSummaryModel
     {
-        // DRONE FLIGHT DATA
-        // Details of the associated FlightLeg
-        public int CombLegId { get; set; } = UnknownValue;
-        public string CombLegName { get { return LegIdToName(CombLegId); } }
+        // Unique identifier of this CombSpan. If UseLeg there is a 1-1 correspondence to FlightLeg. Otherwise they are unrelated.
+        public int CombSpanId { get; set; } = UnknownValue;
+        public string Name { get { return IdToLetter(CombSpanId); } }
 
-        // Id of FlightStep of first block of process summarised
+        // Id of first FlightStep in this span
         public int MinStepId { get; set; } = UnknownValue;
-        // Id of FlightStep of last block of process summarised
+        // Id of last FlightStep in this span
         public int MaxStepId { get; set; } = UnknownValue;
 
 
         // DATA USED TO CALCULATE BestFixAltM
+        // The original (after) error value with best altitude fix 
+        public float BestFixAltM { get; set; } = 0;
+        protected float BestSumLocnErrM { get; set; } = UnknownValue;
+        protected float BestSumHeightErrM { get; set; } = UnknownValue;
         // The original (before) error values (with FlightLeg.FixAltM set to 0)
         protected float OrgSumLocnErrM { get; set; } = UnknownValue;
         protected float OrgSumHeightErrM { get; set; } = UnknownValue;
-        // The original (after) error value with best altitude fix 
-        protected float BestFixAltM { get; set; } = 0;
-        protected float BestSumLocnErrM { get; set; } = UnknownValue;
-        protected float BestSumHeightErrM { get; set; } = UnknownValue;
+
 
 
         // IMAGE PROCESSING DATA
@@ -42,7 +43,7 @@ namespace SkyCombImage.ProcessModel
 
 
         // Constructor used when loaded objects from the datastore
-        public CombLegModel(List<string>? settings = null) : base("Block")
+        public CombSpanModel(List<string>? settings = null) : base("Block")
         {
             if (settings != null)
                 LoadSettings(settings);
@@ -54,19 +55,37 @@ namespace SkyCombImage.ProcessModel
         public override TardisModel? GetTardisModel(int index) { return null; }
 
 
+        protected void ResetBest()
+        {
+            BestFixAltM = 0;
+            BestSumLocnErrM = 9999;
+            BestSumHeightErrM = 9999;
+            OrgSumLocnErrM = 9999;
+            OrgSumHeightErrM = 9999;
+        }
+
+
+        protected void SetBest(float fixAltM, CombObjList combObjs)
+        {
+            BestFixAltM = fixAltM;
+            BestSumLocnErrM = combObjs.SumLocationErrM;
+            BestSumHeightErrM = combObjs.SumHeightErrM;
+        }
+
+
         // One-based settings index values. Must align with GetSettings procedure below
-        public const int LegIdSetting = 1;
-        public const int LegNameSetting = 2;
+        public const int SpanIdSetting = 1;
+        public const int SpanNameSetting = 2;
         public const int NumSigObjsSetting = 3;
-        public const int OrgSumLocnErrMSetting = 4;
-        public const int OrgObjLocnErrMSetting = 5;
-        public const int OrgSumHeightErrMSetting = 6;
-        public const int OrgObjHeightErrMSetting = 7;
-        public const int BestFixAltMSetting = 8;
-        public const int BestSumLocnErrMSetting = 9;
-        public const int BestObjLocnErrMSetting = 10;
-        public const int BestSumHeightErrMSetting = 11;
-        public const int BestObjHeightErrMSetting = 12;
+        public const int BestFixAltMSetting = 4;
+        public const int BestSumLocnErrMSetting = 5;
+        public const int BestObjLocnErrMSetting = 6;
+        public const int BestSumHeightErrMSetting = 7;
+        public const int BestObjHeightErrMSetting = 8;
+        public const int OrgSumLocnErrMSetting = 9;
+        public const int OrgObjLocnErrMSetting = 10;
+        public const int OrgSumHeightErrMSetting = 11;
+        public const int OrgObjHeightErrMSetting = 12;
         public const int MinStepIdSetting = 13;
         public const int MaxStepIdSetting = 14;
         public const int NumBlocksSetting = 15;
@@ -77,18 +96,18 @@ namespace SkyCombImage.ProcessModel
         {
             var answer = new DataPairList
             {
-                { "Comb Leg Id", CombLegId },
-                { "Name", CombLegName },
+                { "Comb Leg Id", CombSpanId },
+                { "Name", Name },
                 { "Num Sig Objs", NumSignificantObjects },
-                { "Org Sum Locn Err M", OrgSumLocnErrM, LocationNdp },
-                { "Org Avg Locn Err M", (NumSignificantObjects > 0 ? OrgSumLocnErrM / NumSignificantObjects : UnknownValue), LocationNdp },
-                { "Org Sum Ht Err M", OrgSumHeightErrM, LocationNdp},
-                { "Org Avg Ht Err M", (NumSignificantObjects > 0 ? OrgSumHeightErrM / NumSignificantObjects : UnknownValue), LocationNdp },
                 { "Bst Fix Alt M", BestFixAltM, HeightNdp},
                 { "Bst Sum Locn Err M", BestSumLocnErrM, LocationNdp },
                 { "Bst Avg Locn Err M", (NumSignificantObjects > 0 ? BestSumLocnErrM / NumSignificantObjects : UnknownValue), LocationNdp },
                 { "Bst Sum Ht Err M", BestSumHeightErrM, LocationNdp },
                 { "Bst Avg Ht Err M", (NumSignificantObjects > 0 ? BestSumHeightErrM / NumSignificantObjects : UnknownValue), LocationNdp },
+                { "Org Sum Locn Err M", OrgSumLocnErrM, LocationNdp },
+                { "Org Avg Locn Err M", (NumSignificantObjects > 0 ? OrgSumLocnErrM / NumSignificantObjects : UnknownValue), LocationNdp },
+                { "Org Sum Ht Err M", OrgSumHeightErrM, LocationNdp},
+                { "Org Avg Ht Err M", (NumSignificantObjects > 0 ? OrgSumHeightErrM / NumSignificantObjects : UnknownValue), LocationNdp },
                 { "Min Step Id", MinStepId },
                 { "Max Step Id", MaxStepId },
                 { "# Blocks", MaxBlockId - MinBlockId + 1 },
@@ -105,18 +124,18 @@ namespace SkyCombImage.ProcessModel
         public override void LoadSettings(List<string> settings)
         {
             int i = 0;
-            CombLegId = StringToInt(settings[i++]);
+            CombSpanId = StringToInt(settings[i++]);
             i++; // Skip LegName  
             NumSignificantObjects = StringToInt(settings[i++]);
-            OrgSumLocnErrM = StringToFloat(settings[i++]);
-            i++; // OrgObjLocnErrM  
-            OrgSumHeightErrM = StringToFloat(settings[i++]);
-            i++; // OrgObjHeightErrM  
             BestFixAltM = StringToFloat(settings[i++]);
             BestSumLocnErrM = StringToFloat(settings[i++]);
             i++; // BestObjLocnErrM  
             BestSumHeightErrM = StringToFloat(settings[i++]);
             i++; // BestObjHeightErrM       
+            OrgSumLocnErrM = StringToFloat(settings[i++]);
+            i++; // OrgObjLocnErrM  
+            OrgSumHeightErrM = StringToFloat(settings[i++]);
+            i++; // OrgObjHeightErrM  
             MinStepId = StringToInt(settings[i++]);
             MaxStepId = StringToInt(settings[i++]);
             i++; // #Blocks

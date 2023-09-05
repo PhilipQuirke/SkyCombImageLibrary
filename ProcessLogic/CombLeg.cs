@@ -1,6 +1,7 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved. 
 using MathNet.Numerics.LinearRegression;
 using SkyCombDrone.DroneLogic;
+using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
 
@@ -9,7 +10,7 @@ namespace SkyCombImage.ProcessLogic
 {
     // CombLeg analyses CombObjects in a leg (either FLightLeg or transatory) 
     // to refine/correct the flight altitude data using FlightStep.FixAltM.
-    public class CombLeg : CombLegModel
+    public class CombLeg : CombSpanModel
     {
         // Parent process
         private CombProcessAll Process { get; }
@@ -18,7 +19,7 @@ namespace SkyCombImage.ProcessLogic
         public CombLeg(CombProcessAll process, int legId, List<string>? settings = null) : base(settings)
         {
             Process = process;
-            CombLegId = legId;
+            CombSpanId = legId;
 
             if (settings != null)
                 LoadSettings(settings);
@@ -27,27 +28,9 @@ namespace SkyCombImage.ProcessLogic
 
         public void AssertGood()
         {
-            Assert(CombLegId > 0, "CombLeg.AssertGood: Bad legId");
+            Assert(CombSpanId > 0, "CombLeg.AssertGood: Bad legId");
             Assert(MinBlockId > 0, "CombLeg.AssertGood: Bad MinBlockId");
             Assert(MaxBlockId > 0, "CombLeg.AssertGood: Bad MaxBlockId");
-        }
-
-
-        private void ResetBest()
-        {
-            BestFixAltM = 0;
-            BestSumLocnErrM = 9999;
-            BestSumHeightErrM = 9999;
-            OrgSumLocnErrM = 9999;
-            OrgSumHeightErrM = 9999;
-        }
-
-
-        private void SetBest(float fixAltM, CombObjList combObjs)
-        {
-            BestFixAltM = fixAltM;
-            BestSumLocnErrM = combObjs.SumLocationErrM;
-            BestSumHeightErrM = combObjs.SumHeightErrM;
         }
 
 
@@ -221,11 +204,11 @@ namespace SkyCombImage.ProcessLogic
             ResetBest();
             ResetTardis();
 
-            if (CombLegId == UnknownValue)
+            if (CombSpanId == UnknownValue)
                 return;
 
-            var legSteps = Process.Drone.FlightSteps.Steps.GetLegSteps(CombLegId);
-            var combObjs = Process.CombObjs.CombObjList.GetSignificantLegObjects(CombLegId);
+            var legSteps = Process.Drone.FlightSteps.Steps.GetLegSteps(CombSpanId);
+            var combObjs = Process.CombObjs.CombObjList.GetSignificantLegObjects(CombSpanId);
 
             CalculateSettings_FixAltM(legSteps, combObjs);
             SummariseSteps(legSteps);
@@ -306,8 +289,26 @@ namespace SkyCombImage.ProcessLogic
 
         public void AddLeg(CombLeg combLeg)
         {
-            BaseConstants.Assert(combLeg.CombLegId > 0, "CombLegList.AddLeg: No Id");
-            Add(combLeg.CombLegId, combLeg);
+            BaseConstants.Assert(combLeg.CombSpanId > 0, "CombLegList.AddLeg: No Id");
+            Add(combLeg.CombSpanId, combLeg);
+        }
+
+
+        public void SetFixAltMAfterLoad(VideoModel videoData, Drone drone)
+        {
+            var steps = drone.FlightSteps.Steps;
+
+            foreach (var combLeg in this)
+                if( combLeg.Value.BestFixAltM != 0 )
+                    for(int stepId = combLeg.Value.MinStepId; stepId <= combLeg.Value.MaxStepId; stepId++)
+                    {
+                        if( steps.TryGetValue(stepId, out var step) )
+                        {
+                            step.FixAltM = combLeg.Value.BestFixAltM;
+                            step.CalculateSettings_InputImageCenterDemDsm(videoData, drone.GroundData);
+
+                        }
+                    }
         }
     }
 }

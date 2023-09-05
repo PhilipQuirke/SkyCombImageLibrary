@@ -91,16 +91,16 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // Load all Comb Legs from the datastore
-        public void CombLegs(CombProcessAll model, Drone drone)
+        // Load all Comb Spans from the datastore
+        public void CombSpans(CombProcessAll model, Drone drone)
         {
             int row = 2;
 
             try
             {
-                if (Data.SelectWorksheet(Legs2TabName))
+                if (Data.SelectWorksheet(SpanTabName))
                 {
-                    var cell = Data.Worksheet.Cells[row, CombLeg.LegIdSetting];
+                    var cell = Data.Worksheet.Cells[row, CombLeg.SpanIdSetting];
                     while (cell != null && cell.Value != null && cell.Value.ToString() != "")
                     {
                         var legIdString = cell.Value.ToString();
@@ -111,11 +111,11 @@ namespace SkyCombImage.PersistModel
 
                         // Load the non-blank cells in this row into a CombLeg
                         var settings = Data.GetRowSettings(row, 1);
-                        model.CombLegs.AddLeg(
+                        model.CombSpans.AddLeg(
                             ProcessFactory.NewCombLeg(model, legId, settings));
 
                         row++;
-                        cell = Data.Worksheet.Cells[row, CombLeg.LegIdSetting];
+                        cell = Data.Worksheet.Cells[row, CombLeg.SpanIdSetting];
                     }
                 }
             }
@@ -123,7 +123,7 @@ namespace SkyCombImage.PersistModel
             {
                 // Suppress the error and any objects loaded
                 System.Diagnostics.Debug.WriteLine("Suppressed CombLoad.CombLegs failure: " + ex.ToString());
-                model.CombLegs.Clear();
+                model.CombSpans.Clear();
             }
         }
 
