@@ -1,5 +1,4 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved. 
-using Emgu.CV.XFeatures2D;
 using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
@@ -26,9 +25,22 @@ namespace SkyCombImage.ProcessLogic
         // List of CombLegs that analsyse CombObjects found in the leg to refine FlightLeg etc data.
         public CombLegList CombSpans { get; set; }
 
-        // How many significant objects have been found in this leg?
-        private int LegSignificantObjects { get; set; } = 0;
+        // How many significant objects have been found in this FlightLeg?
+        public int FlightLegSignificantObjects { get; set; }
+        // How many significant objects have been found not in a FlightLeg?
+        public int NonLeg_SigObjectsFound { get; set; }
+        private int NonLeg_PrevSigObjectsFound { get; set; }
+        // If not UseFlightLegs then we need to generate CombSpans for each group of significant objects,
+        // so we can do FixAltM calculations on them.
+        private int NonLeg_StartFlightStepId { get; set; }
 
+
+        private void ResetNonLegData()
+        {
+            NonLeg_SigObjectsFound = 0;
+            NonLeg_PrevSigObjectsFound = 0;
+            NonLeg_StartFlightStepId = 0;
+        }
 
 
         public CombProcessAll(ProcessConfigModel config, VideoData video, GroundData groundData, Drone drone) : base(config, video, drone)
@@ -43,6 +55,8 @@ namespace SkyCombImage.ProcessLogic
             CombFeatures = new();
             CombObjs = new(this);
             CombSpans = new();
+            FlightLegSignificantObjects = 0;
+            ResetNonLegData();
         }
 
 
@@ -50,7 +64,8 @@ namespace SkyCombImage.ProcessLogic
         public override void ResetModel()
         {
             CombFeature.NextFeatureId = 0;
-            LegSignificantObjects = 0;
+            FlightLegSignificantObjects = 0;
+            ResetNonLegData();
 
             Blocks.Clear();
             CombFeatures.Clear();
@@ -74,36 +89,14 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        protected void ProcessLegStart_Core()
-        {
-              // For "Comb" process robustness, we want to process each leg independently.
-            // So at the start and end of each leg we stop tracking all objects.
-            CombObjs.StopTracking();
-            LegSignificantObjects = 0;
-        }
-
-
         public override void ProcessLegStart(int legId)
         {
             if (Drone.UseFlightLegs)
-                ProcessLegStart_Core();
-        }
-
-
-        protected void ProcessLegEnd_core(int legId)
-        {
-            // For "Comb" process robustness, we want to process each leg independently.
-            // So at the start and end of each leg we stop tracking all objects.
-            CombObjs.StopTracking();
-
-            // If we are lacking the current CombLeg then create it.
-            if ((legId > 0) && !CombSpans.TryGetValue(legId, out _))
             {
-                // Post process the objects found in the leg & maybe set FlightLegs.FixAltM 
-                var combLeg = ProcessFactory.NewCombLeg(this, legId);
-                CombSpans.AddLeg(combLeg);
-                combLeg.CalculateSettings_from_FlightLeg();
-                combLeg.AssertGood();
+                // For "Comb" process robustness, we want to process each leg independently.
+                // So at the start and end of each leg we stop tracking all objects.
+                CombObjs.StopTracking();
+                FlightLegSignificantObjects = 0;
             }
         }
 
@@ -111,20 +104,36 @@ namespace SkyCombImage.ProcessLogic
         public override void ProcessLegEnd(int legId)
         {
             if (Drone.UseFlightLegs)
-                ProcessLegEnd_core(legId);
+            {
+                // For "Comb" process robustness, we want to process each leg independently.
+                // So at the start and end of each leg we stop tracking all objects.
+                CombObjs.StopTracking();
+
+                // If we are lacking the current CombLeg then create it.
+                if ((legId > 0) && !CombSpans.TryGetValue(legId, out _))
+                {
+                    // Post process the objects found in the leg & maybe set FlightLegs.FixAltM 
+                    var combLeg = ProcessFactory.NewCombLeg(this, legId);
+                    CombSpans.AddLeg(combLeg);
+                    combLeg.CalculateSettings_from_FlightLeg();
+                    combLeg.AssertGood();
+                }
+            }
 
             EnsureObjectsNamed();
         }
 
 
-        public void ProcessNonLegEnd()
+        // Process a CombSpan that has NOT been triggered by a FlightLeg
+        public void Process_NonFlightLeg_CombSpan()
         {
-            if ((!Drone.UseFlightLegs) && (Blocks.Count > 4))
+            if ((!Drone.UseFlightLegs) && (NonLeg_SigObjectsFound > 0))
             {
                 var combLeg = ProcessFactory.NewCombLeg(this, CombSpans.Count() + 1);
                 CombSpans.AddLeg(combLeg);
                 combLeg.CalculateSettings_from_FlightSteps(
-                    Blocks.First().Value.FlightStepId, Blocks.Last().Value.FlightStepId);
+                    NonLeg_StartFlightStepId, Blocks.Last().Value.FlightStepId);
+                ResetNonLegData();
             }
         }
 
@@ -191,6 +200,34 @@ namespace SkyCombImage.ProcessLogic
                 }
             // Each feature can only be claimed once
             CombFeatureList availFeatures = featuresInBlock.Clone();
+
+
+            if (!Drone.UseFlightLegs)
+            {
+                if (NonLeg_SigObjectsFound > 0)
+                {
+                    if (NonLeg_PrevSigObjectsFound == 0)
+                    {
+                        // PQR Should scan all the (just become) significant objects
+                        // and take the minimise StepID of them all
+                        NonLeg_StartFlightStepId = currBlock.FlightStepId - 1;
+                        NonLeg_PrevSigObjectsFound = NonLeg_SigObjectsFound;
+                    }
+                    else if((inScopeObjects.NumSignificantObjects() == 0) &&
+                        (currBlock.FlightStepId - NonLeg_StartFlightStepId > 8))
+                    {
+                        // We have been tracking some objects for at least a second,
+                        // and the number of objects has fallen to zero.
+                        // PQR we should wait for a second in case objectsa promptly reappear.
+                        Process_NonFlightLeg_CombSpan();
+
+                        ResetNonLegData();
+                    }
+                    else
+                        NonLeg_PrevSigObjectsFound = NonLeg_SigObjectsFound;
+                }
+            }
+
 
 
             // For each active object, consider each frame feature (significant or not)
@@ -278,13 +315,19 @@ namespace SkyCombImage.ProcessLogic
             // Needs to be done ASAP so the "C5" name can be drawn on video frames.
             // Note: Some objects never become significant.
             foreach (var theObject in inScopeObjects)
-                if ((theObject.Value.FlightLegId > 0) &&
-                   ((scope.CurrRunFlightStep == null) || (theObject.Value.FlightLegId == scope.CurrRunFlightStep.FlightLegId)) &&
-                   (theObject.Value.Significant) &&
-                   (theObject.Value.Name == ""))
+                if((theObject.Value.Significant) && (theObject.Value.Name == ""))
                 {
-                    LegSignificantObjects++;
-                    theObject.Value.SetName(LegSignificantObjects);
+                    if(!Drone.UseFlightLegs)
+                    {
+                        NonLeg_SigObjectsFound++;
+                        theObject.Value.SetName();
+                    }
+                    else if ((theObject.Value.FlightLegId > 0) &&
+                            ((scope.CurrRunFlightStep == null) || (theObject.Value.FlightLegId == scope.CurrRunFlightStep.FlightLegId)))
+                    {
+                        FlightLegSignificantObjects++;
+                        theObject.Value.SetName(FlightLegSignificantObjects);
+                    }
                 }
         }
 
