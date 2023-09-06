@@ -8,18 +8,18 @@ using SkyCombImage.ProcessModel;
 
 namespace SkyCombImage.ProcessLogic
 {
-    // CombLeg analyses CombObjects in a leg (either FLightLeg or transatory) 
-    // to refine/correct the flight altitude data using FlightStep.FixAltM.
-    public class CombLeg : CombSpanModel
+    // CombSpan relates to either the steps in a FlightLeg OR a sequence of FlightSteps (not related to a FlightLeg).
+    // Either way, CombSpan analyses CombObjects to refine/correct the flight altitude data using FlightStep.FixAltM.
+    public class CombSpan : CombSpanModel
     {
         // Parent process
         private CombProcessAll Process { get; }
 
 
-        public CombLeg(CombProcessAll process, int legId, List<string>? settings = null) : base(settings)
+        public CombSpan(CombProcessAll process, int spanId, List<string>? settings = null) : base(settings)
         {
             Process = process;
-            CombSpanId = legId;
+            CombSpanId = spanId;
 
             if (settings != null)
                 LoadSettings(settings);
@@ -28,9 +28,9 @@ namespace SkyCombImage.ProcessLogic
 
         public void AssertGood()
         {
-            Assert(CombSpanId > 0, "CombLeg.AssertGood: Bad legId");
-            Assert(MinBlockId > 0, "CombLeg.AssertGood: Bad MinBlockId");
-            Assert(MaxBlockId > 0, "CombLeg.AssertGood: Bad MaxBlockId");
+            Assert(CombSpanId > 0, "CombSpan.AssertGood: Bad SpanId");
+            Assert(MinBlockId > 0, "CombSpan.AssertGood: Bad MinBlockId");
+            Assert(MaxBlockId > 0, "CombSpan.AssertGood: Bad MaxBlockId");
         }
 
 
@@ -177,7 +177,7 @@ namespace SkyCombImage.ProcessLogic
             }
             catch (Exception ex)
             {
-                throw ThrowException("CombLeg.CalculateSettings_Core", ex);
+                throw ThrowException("CombSpan.CalculateSettings_Core", ex);
             }
         }
 
@@ -273,24 +273,24 @@ namespace SkyCombImage.ProcessLogic
             }
             catch (Exception ex)
             {
-                throw ThrowException("CombLeg.CalculateSettings_from_FlightSteps", ex);
+                throw ThrowException("CombSpan.CalculateSettings_from_FlightSteps", ex);
             }
         }
     }
 
 
-    // A list of CombLeg objects
-    public class CombLegList : SortedList<int, CombLeg>
+    // A list of CombSpan objects
+    public class CombSpanList : SortedList<int, CombSpan>
     {
-        public CombLegList()
+        public CombSpanList()
         {
         }
 
 
-        public void AddLeg(CombLeg combLeg)
+        public void AddSpan(CombSpan combSpan)
         {
-            BaseConstants.Assert(combLeg.CombSpanId > 0, "CombLegList.AddLeg: No Id");
-            Add(combLeg.CombSpanId, combLeg);
+            BaseConstants.Assert(combSpan.CombSpanId > 0, "CombSpanList.AddLeg: No Id");
+            Add(combSpan.CombSpanId, combSpan);
         }
 
 
@@ -298,15 +298,14 @@ namespace SkyCombImage.ProcessLogic
         {
             var steps = drone.FlightSteps.Steps;
 
-            foreach (var combLeg in this)
-                if( combLeg.Value.BestFixAltM != 0 )
-                    for(int stepId = combLeg.Value.MinStepId; stepId <= combLeg.Value.MaxStepId; stepId++)
+            foreach (var combSpan in this)
+                if( combSpan.Value.BestFixAltM != 0 )
+                    for(int stepId = combSpan.Value.MinStepId; stepId <= combSpan.Value.MaxStepId; stepId++)
                     {
                         if( steps.TryGetValue(stepId, out var step) )
                         {
-                            step.FixAltM = combLeg.Value.BestFixAltM;
+                            step.FixAltM = combSpan.Value.BestFixAltM;
                             step.CalculateSettings_InputImageCenterDemDsm(videoData, drone.GroundData);
-
                         }
                     }
         }

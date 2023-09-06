@@ -63,9 +63,9 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public static CombLeg NewCombLeg(CombProcessAll model, int legId, List<string> settings = null)
+        public static CombSpan NewCombSpan(CombProcessAll model, int legId, List<string> settings = null)
         {
-             return new CombLeg(model, legId, settings);
+             return new CombSpan(model, legId, settings);
         }
     }
 }

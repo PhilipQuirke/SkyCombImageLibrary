@@ -7,9 +7,8 @@ using SkyCombImage.ProcessLogic;
 // Models are used in-memory and to persist/load data to/from the datastore
 namespace SkyCombImage.ProcessModel
 {
-    // FlightLeg contains the best estimate of a drone flight leg from drone data.
-    // CombLeg analyses CombObjects in that FlightLeg to refine/correct
-    // the flight altitude data using FlightStep.FixAltM.
+    // CombSpan relates to either the steps in a FlightLeg OR a sequence of FlightSteps (not related to a FlightLeg).
+    // Either way, CombSpan analyses CombObjects to refine/correct the flight altitude data using FlightStep.FixAltM.
     public class CombSpanModel : TardisSummaryModel
     {
         // Unique identifier of this CombSpan. If UseLeg there is a 1-1 correspondence to FlightLeg. Otherwise they are unrelated.

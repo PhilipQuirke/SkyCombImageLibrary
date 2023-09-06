@@ -22,23 +22,23 @@ namespace SkyCombImage.ProcessLogic
         // List of comb objects found. Each is a logical object derived from overlapping features over successive frames. 
         public CombObjs CombObjs { get; set; }
 
-        // List of CombLegs that analsyse CombObjects found in the leg to refine FlightLeg etc data.
-        public CombLegList CombSpans { get; set; }
+        // List of CombSpans that analsyse CombObjects to generate FixAltM data
+        public CombSpanList CombSpans { get; set; }
 
         // If UseFlightLegs, how many significant objects have been found in this FlightLeg?
         public int FlightLeg_SigObjects { get; set; }
 
-        // If !UseFlightLegs, we need to generate CombSpans for each group of significant objects
-        public int CombSpan_PrevSigObjects { get; set; }
-        public int CombSpan_MinFlightStepId { get; set; }
-        public int CombSpan_MaxFlightStepId { get; set; }
+        // If !UseFlightLegs, we need to generate CombSpans for each cluster of significant objects (over a series of FlightSteps)
+        public int FlightSteps_PrevSigObjects { get; set; }
+        public int FlightSteps_MinStepId { get; set; }
+        public int FlightSteps_MaxStepId { get; set; }
 
 
         private void ResetCombSpanData()
         {
-            CombSpan_PrevSigObjects = 0;
-            CombSpan_MinFlightStepId = UnknownValue;
-            CombSpan_MaxFlightStepId = UnknownValue;
+            FlightSteps_PrevSigObjects = 0;
+            FlightSteps_MinStepId = UnknownValue;
+            FlightSteps_MaxStepId = UnknownValue;
         }
 
 
@@ -88,7 +88,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public override void ProcessLegStart(int legId)
+        public override void ProcessFlightLegStart(int legId)
         {
             if (Drone.UseFlightLegs)
             {
@@ -100,7 +100,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public override void ProcessLegEnd(int legId)
+        public override void ProcessFlightLegEnd(int legId)
         {
             if (Drone.UseFlightLegs)
             {
@@ -108,14 +108,14 @@ namespace SkyCombImage.ProcessLogic
                 // So at the start and end of each leg we stop tracking all objects.
                 CombObjs.StopTracking();
 
-                // If we are lacking the current CombLeg then create it.
+                // If we are lacking the current CombSpan then create it.
                 if ((legId > 0) && !CombSpans.TryGetValue(legId, out _))
                 {
                     // Post process the objects found in the leg & maybe set FlightLegs.FixAltM 
-                    var combLeg = ProcessFactory.NewCombLeg(this, legId);
-                    CombSpans.AddLeg(combLeg);
-                    combLeg.CalculateSettings_from_FlightLeg();
-                    combLeg.AssertGood();
+                    var combSpan = ProcessFactory.NewCombSpan(this, legId);
+                    CombSpans.AddSpan(combSpan);
+                    combSpan.CalculateSettings_from_FlightLeg();
+                    combSpan.AssertGood();
                 }
             }
 
@@ -123,15 +123,14 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Process a CombSpan (not at all related to FlightLegs).
+        // If we have been tracking some significant objects, create a CombSpan for them
         public void Process_CombSpan_Create()
         {
-            if ((!Drone.UseFlightLegs) && (CombSpan_PrevSigObjects > 0))
+            if ((!Drone.UseFlightLegs) && (FlightSteps_PrevSigObjects > 0))
             {
-                var combLeg = ProcessFactory.NewCombLeg(this, CombSpans.Count() + 1);
-                CombSpans.AddLeg(combLeg);
-                combLeg.CalculateSettings_from_FlightSteps(
-                    CombSpan_MinFlightStepId, Blocks.Last().Value.FlightStepId);
+                var combSpan = ProcessFactory.NewCombSpan(this, CombSpans.Count() + 1);
+                CombSpans.AddSpan(combSpan);
+                combSpan.CalculateSettings_from_FlightSteps(FlightSteps_MinStepId, FlightSteps_MaxStepId);
                 ResetCombSpanData();
             }
         }
@@ -176,44 +175,45 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Track data related to a CombSpan (not a FlightLeg)
-        private void Process_CombSpan_Evaluate(CombObjList inScopeObjects, ProcessBlock currBlock)
+        // If !UseFlightLegs, track significant objects, based on their corresponding FlightSteps.
+        // Does not make use of FlightLegs.
+        private void ProcessObjectsFlightSteps(CombObjList inScopeObjects, ProcessBlock currBlock)
         {
-            if (Drone.UseFlightLegs)
-                return;
-
-            foreach (var theObject in inScopeObjects)
-                if (theObject.Value.Name == "")
-                    theObject.Value.SetName();
-
-            int combSpan_SigObjects = inScopeObjects.NumSignificantObjects();
-            if (combSpan_SigObjects > 0)
+            if (!Drone.UseFlightLegs)
             {
-                if (CombSpan_PrevSigObjects == 0)
-                    // COMB SPAN START EVENT
-                    // Object(s) have just become significant. Last frame there were no significant objects.
-                    // It takes a few steps to become significant, so get the minimal FlightStep.StepID of the object(s).
-                    // CombSpan_MinFlightStepId is the starting step of a future CombSpan object.
-                    CombSpan_MinFlightStepId = inScopeObjects.GetMinStepId();
+                foreach (var theObject in inScopeObjects)
+                    if (theObject.Value.Name == "")
+                        theObject.Value.SetName();
 
-                CombSpan_PrevSigObjects = Math.Max(CombSpan_PrevSigObjects, combSpan_SigObjects);
-                CombSpan_MaxFlightStepId = currBlock.FlightStepId;
-            }
-            else
-            {
-                // We have no significant objects 
-
-                if (CombSpan_PrevSigObjects > 0)
+                int sigObjects = inScopeObjects.NumSignificantObjects();
+                if (sigObjects > 0)
                 {
-                    // We have unprocessed objects from previous blocks. 
+                    if (FlightSteps_PrevSigObjects == 0)
+                        // COMB SPAN START EVENT
+                        // Object(s) have just become significant. Last frame there were no significant objects.
+                        // It takes a few steps to become significant, so get the minimal FlightStep.StepID of the object(s).
+                        // CombSpan_MinFlightStepId is the starting step of a future CombSpan object.
+                        FlightSteps_MinStepId = inScopeObjects.GetMinStepId();
 
-                    if (currBlock.FlightStepId - CombSpan_MaxFlightStepId > 8)
+                    FlightSteps_PrevSigObjects = Math.Max(FlightSteps_PrevSigObjects, sigObjects);
+                    FlightSteps_MaxStepId = currBlock.FlightStepId;
+                }
+                else
+                {
+                    // We have no significant objects 
+
+                    if (FlightSteps_PrevSigObjects > 0)
                     {
-                        // COMB SPAN END EVENT
-                        // We tracked some significant objects, then they all became insignificant, and 8 frames have passed
-                        Process_CombSpan_Create();
+                        // We have unprocessed significant objects from previous blocks. 
 
-                        ResetCombSpanData();
+                        if (currBlock.FlightStepId - FlightSteps_MaxStepId > 8)
+                        {
+                            // COMB SPAN END EVENT
+                            // We tracked some significant objects, then they all became insignificant, and 8 frames have passed
+                            Process_CombSpan_Create();
+
+                            ResetCombSpanData();
+                        }
                     }
                 }
             }
@@ -343,7 +343,7 @@ namespace SkyCombImage.ProcessLogic
             }
             else
                 // Track data related to a CombSpan (not a FlightLeg)
-                Process_CombSpan_Evaluate(inScopeObjects, currBlock);
+                ProcessObjectsFlightSteps(inScopeObjects, currBlock);
         }
 
 
