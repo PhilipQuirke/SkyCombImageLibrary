@@ -1067,6 +1067,23 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Get the minimum StepId of all objects
+        public int GetMinStepId()
+        {
+            if (Count == 0)
+                return BaseConstants.UnknownValue;
+
+            int answer = 9999999;
+            foreach (var theObject in this)
+            {
+                var firstFeat = theObject.Value.FirstFeature();
+                if (firstFeat != null)
+                    answer = Math.Min(answer, firstFeat.Block.FlightStepId);
+            }
+            return answer;
+        }
+
+
         // Calculate settings based on all provided objects 
         public void CalculateSettings(CombObjList objects)
         {
