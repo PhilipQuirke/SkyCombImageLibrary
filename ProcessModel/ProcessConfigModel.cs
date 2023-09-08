@@ -40,7 +40,7 @@ namespace SkyCombImage.ProcessModel
         // Theshold:
         // Theshold Process. Takes values binary, binaryinv, tozero, tozeroinv, trunc, none. Lowercase
         public ThresholdProcessEnum ThresholdProcess { get; set; } = ThresholdProcessEnum.Binary;
-        // Pixel gray-scale value that ThresholdProcess uses. Takes values from 0 to 255
+        // Pixel gray-scale value that ThresholdProcess uses. Takes values from 50 to 255
         public int ThresholdValue { get; set; } = 235;
         // A setting to allow stupidly hot pixels to (optionally) be ignored.
         public int TruncThresholdValue { get; set; } = UnknownValue;
@@ -139,6 +139,18 @@ namespace SkyCombImage.ProcessModel
                 answer += "Save Objects: " + SaveObjectData + "\r\n";
 
             return answer;
+        }
+
+
+        // The ThresholdValue should be in range 50 to 255.
+        // A user may mistake the range for 0.0 to 1.0, so we set the min value to 50
+        public void ValidateThresholdValue()
+        {
+            if (ThresholdValue < 50)
+                ThresholdValue = 50;
+
+            if (ThresholdValue > 255)
+                ThresholdValue = 255;
         }
 
 
