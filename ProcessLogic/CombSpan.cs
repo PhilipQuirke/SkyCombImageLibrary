@@ -223,7 +223,7 @@ namespace SkyCombImage.ProcessLogic
                 ResetBest();
                 ResetTardis();
 
-                if (Process.CombObjs.CombObjList.Count > 0)
+                if((Process.Drone.FlightSteps != null) && (Process.CombObjs.CombObjList.Count > 0))
                 {
                     // Get the FlightSteps corresponding to the block range
                     FlightStepList legSteps = new();
@@ -296,6 +296,9 @@ namespace SkyCombImage.ProcessLogic
 
         public void SetFixAltMAfterLoad(VideoModel videoData, Drone drone)
         {
+            if( drone.FlightSteps == null )
+                return;
+
             var steps = drone.FlightSteps.Steps;
 
             foreach (var combSpan in this)
