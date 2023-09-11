@@ -22,7 +22,7 @@ namespace SkyCombImage.PersistModel
 
             try
             {
-                if (Data.SelectWorksheet(CategoryTabName))
+                if (Data.SelectWorksheet(MasterCategoryTabName))
                 {
                     list.Clear();
 

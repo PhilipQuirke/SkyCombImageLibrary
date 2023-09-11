@@ -20,7 +20,7 @@ namespace SkyCombImage.PersistModel
                 // Save the categories
                 if ((list != null) && (list.Count > 0))
                 {
-                    Data.SelectOrAddWorksheet(CategoryTabName);
+                    Data.SelectOrAddWorksheet(MasterCategoryTabName);
                     int theRow = 0;
                     foreach (var annotation in list)
                         Data.SetDataListRowKeysAndValues(ref theRow, annotation.Value.GetSettings());
@@ -30,7 +30,7 @@ namespace SkyCombImage.PersistModel
             }
             catch (Exception ex)
             {
-                throw ThrowException("CategorySave.CategoryList", ex);
+                throw ThrowException("CategorySave.SaveMasterCategories", ex);
             }
         }
 
@@ -48,12 +48,12 @@ namespace SkyCombImage.PersistModel
                     foreach (var annotation in list)
                         Data.SetDataListRowKeysAndValues(ref theRow, annotation.Value.GetSettings());
 
-                    Data.SetLastUpdateDateTime(CategoryTabName);
+                    Data.SetLastUpdateDateTime(ObjectCategoryTabName);
                 }
             }
             catch (Exception ex)
             {
-                throw ThrowException("CategorySave.ObjectCategoryList", ex);
+                throw ThrowException("CategorySave.SaveObjectCategories", ex);
             }
         }
 
