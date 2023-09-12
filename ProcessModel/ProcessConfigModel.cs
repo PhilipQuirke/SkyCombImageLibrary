@@ -33,7 +33,7 @@ namespace SkyCombImage.ProcessModel
         // --------------------- Process Techniques --------------------- 
 
         // Smooth Process
-        public SmoothProcessEnum SmoothProcess { get; set; } = SmoothProcessEnum.Median;
+        public SmoothProcessEnum SmoothProcess { get; set; } = SmoothProcessEnum.None;
         public int SmoothPixels { get; set; } = 3;
 
 
