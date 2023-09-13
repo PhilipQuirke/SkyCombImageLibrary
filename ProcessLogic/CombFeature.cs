@@ -470,10 +470,12 @@ namespace SkyCombImage.ProcessLogic
                 // For each location where inputSearched[y,x] = false
                 for (y = 0; y < imageHeight; y++)
                     for (x = 0; x < imageWidth; x++)
-                        if (inputSearched[y * imageWidth + x] == false)
+                    {
+                        var index = y * imageWidth + x;
+                        if (! inputSearched[index])
                         {
                             // Set inputSearched[y,x] = true
-                            inputSearched[y * imageWidth + x] = true;
+                            inputSearched[index] = true;
 
                             // If imgThreshold[y,x] is a hot pixel
                             var currPixelIsHot = (imgThreshold.Data[y, x, 0] != 0);
@@ -492,6 +494,7 @@ namespace SkyCombImage.ProcessLogic
                                 AddFeature(feature);
                             }
                         }
+                    }
             }
             catch (Exception ex)
             {
