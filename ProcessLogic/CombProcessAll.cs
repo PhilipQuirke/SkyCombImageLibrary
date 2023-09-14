@@ -393,7 +393,8 @@ namespace SkyCombImage.ProcessLogic
 
             metrics.Add("# Objects", combObjList.Count);
             metrics.Add("# Objects per KM2", (groundSeenM2 <= 0 ? 0 : 1000000.0f * combObjList.Count / groundSeenM2), 0);
-            metrics.Add("Avg Obj Height M", combObjList.AvgHeightM, HeightNdp);
+            metrics.Add("Max Obj Height M", combObjList.MaxHeightM, HeightNdp);
+            metrics.Add("Min Obj Height M", combObjList.MinHeightM, HeightNdp);
             metrics.Add("Max Obj Size CM2", combObjList.MaxSizeCM2, AreaCM2Ndp);
             metrics.Add("Min Obj Size CM2", combObjList.MinSizeCM2, AreaCM2Ndp);
         }
