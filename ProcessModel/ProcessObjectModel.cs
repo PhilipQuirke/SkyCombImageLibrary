@@ -54,6 +54,10 @@ namespace SkyCombImage.ProcessModel
         public float SizeCM2 { get; set; }
 
 
+        // The average distance from the object to the drone in meters
+        public int AvgRangeM { get; set; }
+
+
         // Maximum heat value of any pixel in this object in any frame
         public int MaxHeat { get; set; }
 
@@ -66,7 +70,7 @@ namespace SkyCombImage.ProcessModel
         public bool Significant { get; set; }
         // Number of blocks this object was a significant object. Objects can become insignificant, after being significant.
         public int NumSigBlocks { get; set; }
-        // LegId of the FlightLeg this object was found during
+        // LegId of the FlightLeg (if any) this object was found during
         public int FlightLegId { get; set; }
         public string FlightLegName { get { return IdToLetter(FlightLegId); } }
 
@@ -97,6 +101,7 @@ namespace SkyCombImage.ProcessModel
             MaxHeightM = UnknownValue;
             HeightErrM = UnknownValue;
             SizeCM2 = 0;
+            AvgRangeM = UnknownValue;
             MaxHeat = 0;
             DemM = 0;
             Attributes = "";
@@ -137,26 +142,27 @@ namespace SkyCombImage.ProcessModel
         public const int HeightRndMSetting = 13;
         public const int SizeCM2Setting = 14;
         public const int SizeRndCM2Setting = 15;
-        public const int MaxHeatSetting = 16;
-        public const int DemMSetting = 17;
-        public const int LegIdSetting = 18;
-        public const int AttributesSetting = 19;
-        public const int SignificantSetting = 20;
-        public const int NumSigBlocksSetting = 21;
+        public const int AvgRangeMSetting = 16;
+        public const int MaxHeatSetting = 17;
+        public const int DemMSetting = 18;
+        public const int LegIdSetting = 19;
+        public const int AttributesSetting = 20;
+        public const int SignificantSetting = 21;
+        public const int NumSigBlocksSetting = 22;
         // CombObject additional settings
-        public const int FirstBlockSetting = 22;
-        public const int CenterBlockSetting = 23;
-        public const int LastRealBlockSetting = 24;
-        public const int LastBlockSetting = 25;
-        public const int MaxRealHotPixelsSetting = 26;
-        public const int MaxRealPixelWidthSetting = 27;
-        public const int MaxRealPixelHeightSetting = 28;
-        public const int FirstFwdDownDegSetting = 29;
-        public const int LastFwdDownDegSetting = 30;
-        public const int RangeFwdDownDegSetting = 31;
-        public const int NumRealFeaturesSetting = 32;
-        public const int RealDensityPxSetting = 33;
-        public const int LocnErrPerFeatCMSetting = 34;
+        public const int FirstBlockSetting = 23;
+        public const int CenterBlockSetting = 24;
+        public const int LastRealBlockSetting = 25;
+        public const int LastBlockSetting = 26;
+        public const int MaxRealHotPixelsSetting = 27;
+        public const int MaxRealPixelWidthSetting = 28;
+        public const int MaxRealPixelHeightSetting = 29;
+        public const int FirstFwdDownDegSetting = 30;
+        public const int LastFwdDownDegSetting = 31;
+        public const int RangeFwdDownDegSetting = 32;
+        public const int NumRealFeaturesSetting = 33;
+        public const int RealDensityPxSetting = 34;
+        public const int LocnErrPerFeatCMSetting = 35;
 
 
         public int UnknownHeight = -2;
@@ -182,7 +188,8 @@ namespace SkyCombImage.ProcessModel
                 { "Hght Rnd M", (HeightM == UnknownValue ? UnknownHeight : ((int)(HeightM * 2)) / 2), HeightNdp },
                 { "Size CM2", SizeCM2, AreaCM2Ndp },
                 { "Size Rnd CM2", (SizeCM2 == UnknownValue ? UnknownHeight : ((int)(SizeCM2 / 100)) * 100), AreaCM2Ndp },
-                { "Max Heat", MaxHeat},
+                { "Avg Range M", AvgRangeM },
+                { "Max Heat", MaxHeat}, 
                 { "Dem M", DemM, HeightNdp },
                 { "Leg", (FlightLegId == UnknownValue ? 0 : FlightLegId) },
                 { "Attributes", Attributes },
@@ -215,6 +222,7 @@ namespace SkyCombImage.ProcessModel
             i++; // HghtRndM
             SizeCM2 = StringToNonNegInt(settings[i++]);
             i++; // SizeRndCM2
+            AvgRangeM = StringToInt(settings[i++]);
             MaxHeat = StringToNonNegInt(settings[i++]);
             DemM = StringToFloat(settings[i++]);
             FlightLegId = StringToNonNegInt(settings[i++]);

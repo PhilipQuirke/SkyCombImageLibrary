@@ -1,9 +1,11 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved. 
 using SkyCombImage.CategorySpace;
 using SkyCombGround.CommonSpace;
+using SkyCombDrone.DroneModel;
 using SkyCombImage.ProcessModel;
 using System.Drawing;
-
+using MathNet.Numerics;
+using Emgu.CV.Ocl;
 
 namespace SkyCombImage.ProcessLogic
 {
@@ -300,6 +302,9 @@ namespace SkyCombImage.ProcessLogic
             // Calculate the size of the object in square centimeters.
             // Based on MAXIMUM number of hot pixels in any real feature.
             Calculate_SizeCM2();
+
+            // Calculate the average range of the object from the drone in meters.
+            Calculate_AvgRangeM();
 
             // Calculate the maximum heat value of any pixel in this object in any frame 
             Calculate_MaxHeat();
@@ -801,19 +806,19 @@ namespace SkyCombImage.ProcessLogic
             if ((Model == null) || (Model.VideoData == null))
                 return;
 
-            var thisFeature = LastFeature();
-            if ((thisFeature == null) ||
-                (thisFeature.CFM.Type != CombFeatureTypeEnum.Real) ||
-                (thisFeature.Block == null) ||
-                (thisFeature.Block.FlightStep == null) ||
-                (thisFeature.Block.FlightStep.InputImageSizeM == null))
+            var lastFeature = LastFeature();
+            if ((lastFeature == null) ||
+                (lastFeature.CFM.Type != CombFeatureTypeEnum.Real) ||
+                (lastFeature.Block == null) ||
+                (lastFeature.Block.FlightStep == null) ||
+                (lastFeature.Block.FlightStep.InputImageSizeM == null))
                 return;
 
             // The number of hot pixels in the last (real) feature.
-            float hotPixels = thisFeature.NumHotPixels();
+            float hotPixels = lastFeature.NumHotPixels();
 
             // Grab the drone input image area
-            float imageAreaM2 = thisFeature.Block.FlightStep.InputImageSizeM.AreaM2();
+            float imageAreaM2 = lastFeature.Block.FlightStep.InputImageSizeM.AreaM2();
 
             // Calculate the number of pixels in the video image
             float framePixels = Model.VideoData.ImageWidth * Model.VideoData.ImageHeight;
@@ -824,6 +829,29 @@ namespace SkyCombImage.ProcessLogic
             var thisSizeCM2 = (int)(thisSizeM2 * 100 * 100);
 
             SizeCM2 = Math.Max(SizeCM2, thisSizeCM2);
+        }
+
+
+        // Calculate the average range of the object from the drone in meters.
+        private void Calculate_AvgRangeM()
+        {
+            if ((Model == null) || (Model.VideoData == null))
+                return;
+
+            var firstFeature = FirstFeature();
+            var lastFeature = LastFeature();
+            if ((firstFeature == null) ||
+                (firstFeature.Block == null) ||
+                (firstFeature.Block.FlightStep == null) ||
+                (lastFeature == null) ||
+                (lastFeature.CFM.Type != CombFeatureTypeEnum.Real) ||
+                (lastFeature.Block == null) ||
+                (lastFeature.Block.FlightStep == null))
+                return;
+
+            AvgRangeM = (int)(
+                (RelativeLocation.DistanceM(firstFeature.CFM.LocationM, firstFeature.Block.FlightStep.DroneLocnM) +
+                 RelativeLocation.DistanceM(lastFeature.CFM.LocationM, lastFeature.Block.FlightStep.DroneLocnM)) / 2.0);
         }
 
 
@@ -990,6 +1018,18 @@ namespace SkyCombImage.ProcessLogic
         public float MaxSizeCM2 { get; set; }
 
 
+        // Minimum range of any object from the drone in meters
+        public int MinRangeM { get; set; }
+        // Maximum range of any object from the drone in meters
+        public int MaxRangeM { get; set; }
+
+
+        // Minimum heat of any object
+        public int MinHeat { get; set; }
+        // Maximum heat of any object
+        public int MaxHeat { get; set; }
+
+
         public CombObjList()
         {
             ResetSettings();
@@ -1009,6 +1049,10 @@ namespace SkyCombImage.ProcessLogic
             SumHeightErrM = 0;
             MinSizeCM2 = BaseConstants.UnknownValue;
             MaxSizeCM2 = BaseConstants.UnknownValue;
+            MinRangeM = BaseConstants.UnknownValue;
+            MaxRangeM = BaseConstants.UnknownValue;
+            MinHeat = BaseConstants.UnknownValue;
+            MaxHeat = BaseConstants.UnknownValue;
         }
 
 
@@ -1092,56 +1136,24 @@ namespace SkyCombImage.ProcessLogic
             foreach (var theObject in objects)
             {
                 var thisLocnErrM = theObject.Value.LocationErrM;
-                if (MinLocationErrM == BaseConstants.UnknownValue)
-                {
-                    MinLocationErrM = thisLocnErrM;
-                    MaxLocationErrM = thisLocnErrM;
-                }
-                else
-                {
-                    MinLocationErrM = Math.Min(MinLocationErrM, thisLocnErrM);
-                    MaxLocationErrM = Math.Max(MaxLocationErrM, thisLocnErrM);
-                }
-                SumLocationErrM += thisLocnErrM;
-
+                (MinLocationErrM, MaxLocationErrM) = TardisSummaryModel.SummariseFloat(MinLocationErrM, MaxLocationErrM, thisLocnErrM);
+                if (thisLocnErrM != BaseConstants.UnknownValue)
+                    SumLocationErrM += thisLocnErrM;
 
                 var thisHtM = theObject.Value.HeightM;
                 var thisHtErrM = theObject.Value.HeightErrM;
+                (MinHeightM, MaxHeightM) = TardisSummaryModel.SummariseFloat(MinHeightM, MaxHeightM, thisHtM);
+                (MinHeightErrM, MaxHeightErrM) = TardisSummaryModel.SummariseFloat(MinHeightErrM, MaxHeightErrM, thisHtErrM);
                 if (thisHtM != BaseConstants.UnknownValue)
-                {
-                    if (MinHeightM == BaseConstants.UnknownValue)
-                    {
-                        MinHeightM = thisHtM;
-                        MaxHeightM = thisHtM;
-                        MinHeightErrM = thisHtErrM;
-                        MaxHeightErrM = thisHtErrM;
-                    }
-                    else
-                    {
-                        MinHeightM = Math.Min(MinHeightM, thisHtM);
-                        MaxHeightM = Math.Max(MaxHeightM, thisHtM);
-                        MinHeightErrM = Math.Min(MinHeightErrM, thisHtErrM);
-                        MaxHeightErrM = Math.Max(MaxHeightErrM, thisHtErrM);
-                    }
                     SumHeightM += thisHtM;
+                if (thisHtErrM != BaseConstants.UnknownValue)
                     SumHeightErrM += thisHtErrM;
-                }
 
+                (MinSizeCM2, MaxSizeCM2) = TardisSummaryModel.SummariseFloat(MinSizeCM2, MaxSizeCM2, theObject.Value.SizeCM2);
 
-                var sizeCM2 = theObject.Value.SizeCM2;
-                if (sizeCM2 != BaseConstants.UnknownValue)
-                {
-                    if (MinSizeCM2 == BaseConstants.UnknownValue)
-                    {
-                        MinSizeCM2 = sizeCM2;
-                        MaxSizeCM2 = sizeCM2;
-                    }
-                    else
-                    {
-                        MinSizeCM2 = Math.Min(MinSizeCM2, sizeCM2);
-                        MaxSizeCM2 = Math.Max(MaxSizeCM2, sizeCM2);
-                    }
-                }
+                (MinRangeM, MaxRangeM) = TardisSummaryModel.SummariseInt(MinRangeM, MaxRangeM, theObject.Value.AvgRangeM);
+
+                (MinHeat, MaxHeat) = TardisSummaryModel.SummariseInt(MinHeat, MaxHeat, theObject.Value.MaxHeat);
             }
         }
 
@@ -1170,6 +1182,10 @@ namespace SkyCombImage.ProcessLogic
                 { "Sum Hght Err M", SumHeightErrM, BaseConstants.HeightNdp },
                 { "Min Size CM2", MinSizeCM2, BaseConstants.AreaCM2Ndp },
                 { "Max Size CM2", MaxSizeCM2, BaseConstants.AreaCM2Ndp },
+                { "Min Range M", MinRangeM },
+                { "Max Range M", MaxRangeM },
+                { "Min Heat", MinHeat },
+                { "Max Heat", MaxHeat },
             };
         }
 
@@ -1178,18 +1194,23 @@ namespace SkyCombImage.ProcessLogic
         // This function must align to the above GetSettings function.
         public void LoadSettings(List<string> settings)
         {
-            // # Objects = settings[0]
-            MinLocationErrM = ConfigBase.StringToFloat(settings[1]);
-            MaxLocationErrM = ConfigBase.StringToFloat(settings[2]);
-            SumLocationErrM = ConfigBase.StringToFloat(settings[3]);
-            MinHeightM = ConfigBase.StringToFloat(settings[4]);
-            MaxHeightM = ConfigBase.StringToFloat(settings[5]);
-            SumHeightM = ConfigBase.StringToFloat(settings[6]);
-            MinHeightErrM = ConfigBase.StringToFloat(settings[7]);
-            MaxHeightErrM = ConfigBase.StringToFloat(settings[8]);
-            SumHeightErrM = ConfigBase.StringToFloat(settings[9]);
-            MinSizeCM2 = ConfigBase.StringToFloat(settings[10]);
-            MaxSizeCM2 = ConfigBase.StringToFloat(settings[11]);
+            int index = 0;
+            index++; // # Objects = settings[0]
+            MinLocationErrM = ConfigBase.StringToFloat(settings[index++]);
+            MaxLocationErrM = ConfigBase.StringToFloat(settings[index++]);
+            SumLocationErrM = ConfigBase.StringToFloat(settings[index++]);
+            MinHeightM = ConfigBase.StringToFloat(settings[index++]);
+            MaxHeightM = ConfigBase.StringToFloat(settings[index++]);
+            SumHeightM = ConfigBase.StringToFloat(settings[index++]);
+            MinHeightErrM = ConfigBase.StringToFloat(settings[index++]);
+            MaxHeightErrM = ConfigBase.StringToFloat(settings[index++]);
+            SumHeightErrM = ConfigBase.StringToFloat(settings[index++]);
+            MinSizeCM2 = ConfigBase.StringToFloat(settings[index++]);
+            MaxSizeCM2 = ConfigBase.StringToFloat(settings[index++]);
+            MinRangeM = ConfigBase.StringToInt(settings[index++]);
+            MaxRangeM = ConfigBase.StringToInt(settings[index++]);
+            MinHeat = ConfigBase.StringToInt(settings[index++]);
+            MaxHeat = ConfigBase.StringToInt(settings[index++]);
         }
     }
 
