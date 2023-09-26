@@ -16,6 +16,8 @@ namespace SkyCombImage.DrawSpace
         public CombProcessAll Process;
 
 
+
+
         // Drone encompassing box size in local coordinate system - NorthingM/EastingM
         public override DroneLocation MinDroneLocnM { get { return ProcessScope.MinDroneLocnM; } }
         public override DroneLocation MaxDroneLocnM { get { return ProcessScope.MaxDroneLocnM; } }
@@ -121,9 +123,21 @@ namespace SkyCombImage.DrawSpace
     public class DrawObjectScope : DrawScope
     {
         // First millisecond object visible
-        public int FirstObjectMs = UnknownValue;
+        public int FirstObjectMs;
         // Last millisecond object visible
-        public int LastObjectMs = UnknownValue;
+        public int LastObjectMs;
+
+        // Optional filters on the objects to draw
+        public int MinHeightM;
+        public int MaxHeightM;
+        public int MinSizeCM2;
+        public int MaxSizeCM2;
+        public int MinHeat;
+        public int MaxHeat;
+        public int MinRangeM;
+        public int MaxRangeM;
+
+        public int NumObjects;
 
 
         public override int FirstDrawMs { get { return FirstObjectMs; } }
@@ -139,9 +153,43 @@ namespace SkyCombImage.DrawSpace
         public override void Reset(ProcessScope scope, Drone drone)
         {
             base.Reset(scope, drone);
+            ResetMemberData();
+        }
+
+
+        private void ResetMemberData()
+        {
             FirstObjectMs = UnknownValue;
             LastObjectMs = UnknownValue;
+            MinHeightM = UnknownValue;
+            MaxHeightM = UnknownValue;
+            MinSizeCM2 = UnknownValue;
+            MaxSizeCM2 = UnknownValue;
+            MinHeat = UnknownValue;
+            MaxHeat = UnknownValue;
+            MinRangeM = UnknownValue;
+            MaxRangeM = UnknownValue;
+            NumObjects = 0;
+        }
 
+
+        public void SetObjectRange(CombObjList objList)
+        {
+            if (objList == null)
+                ResetMemberData();
+            else
+            {
+                MinHeightM = Math.Max(0, (int)Math.Floor(objList.MinHeightM));
+                MaxHeightM = (int)Math.Ceiling(objList.MaxHeightM);
+                MinSizeCM2 = (int)Math.Floor(objList.MinSizeCM2);
+                MaxSizeCM2 = (int)Math.Ceiling(objList.MaxSizeCM2);
+                MinHeat = objList.MinHeat;
+                MaxHeat = objList.MaxHeat;
+                MinRangeM = objList.MinRangeM;
+                MaxRangeM = objList.MaxRangeM;
+
+                NumObjects = objList.Count;
+            }
         }
     }
 }

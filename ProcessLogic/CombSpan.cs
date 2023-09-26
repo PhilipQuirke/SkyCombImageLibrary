@@ -208,7 +208,7 @@ namespace SkyCombImage.ProcessLogic
                 return;
 
             var legSteps = Process.Drone.FlightSteps.Steps.GetLegSteps(CombSpanId);
-            var combObjs = Process.CombObjs.CombObjList.GetSignificantLegObjects(CombSpanId);
+            var combObjs = Process.CombObjs.CombObjList.FilterByLeg(CombSpanId);
 
             CalculateSettings_FixAltM(legSteps, combObjs);
             SummariseSteps(legSteps);

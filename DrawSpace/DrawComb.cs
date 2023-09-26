@@ -24,11 +24,14 @@ namespace SkyCombImage.DrawSpace
 
 
         public DrawScope DrawScope { get; }
+        // Scope of objects to draw. May be null.
+        public DrawObjectScope ObjectScope { get; }
 
 
-        public DrawCombFlightPath(DrawScope drawScope) : base(drawScope, true)
+        public DrawCombFlightPath(DrawScope drawScope, DrawObjectScope objectScope) : base(drawScope, true)
         {
             DrawScope = drawScope;
+            ObjectScope = objectScope;
         }
 
 
@@ -73,27 +76,33 @@ namespace SkyCombImage.DrawSpace
 
                     bool showAllFeatures = (ProcessObject.Config.SaveObjectData == SaveObjectDataEnum.All);
 
+
+                    var objList = DrawScope.Process.CombObjs.CombObjList;
+                    if (ObjectScope != null)
+                        objList = objList.FilterByObjectScope(ObjectScope);
+
+
                     if (showAllFeatures)
                     {
                         // Draw least important then more important stuff
                         // as the significant inscope stuff (draw later) will overdraw this.
 
                         // Draw significant but out-of-scope objects as grey squares
-                        foreach (var thisObject in DrawScope.Process.CombObjs.CombObjList)
+                        foreach (var thisObject in objList)
                             if (thisObject.Value.Significant &&
                                 (thisObject.Value.LocationM != null) &&
                                 !thisObject.Value.InRunScope(DrawScope.ProcessScope))
                                 DrawObject(thisObject.Value, ref image, outObjectBgr);
 
                         // Draw insignificant object features as yellow squares
-                        foreach (var thisObject in DrawScope.Process.CombObjs.CombObjList)
+                        foreach (var thisObject in objList)
                             if (!thisObject.Value.Significant &&
                                 (thisObject.Value.LocationM != null))
                                 DrawObjectFeatures(thisObject.Value, ref image, CombFeatureTypeEnum.Real, unrealBgr);
                     }
 
                     // Draw significant in-scope objects as red boxes with orange & yellow features
-                    foreach (var thisObject in DrawScope.Process.CombObjs.CombObjList)
+                    foreach (var thisObject in objList)
                         if (thisObject.Value.Significant &&
                             (thisObject.Value.LocationM != null) &&
                             thisObject.Value.InRunScope(DrawScope.ProcessScope))
@@ -115,7 +124,7 @@ namespace SkyCombImage.DrawSpace
 
         // Draw drone flight path and one object in particular.
         // Draw least important then more important stuff as the rectangles will overlap.
-        public void CurrImage( ref Image<Bgr, byte> image, CombProcessAll process, ProcessObject focusObject)
+        public void CurrImage(ref Image<Bgr, byte> image, CombProcessAll process, ProcessObject focusObject)
         {
             try
             {

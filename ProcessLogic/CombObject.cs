@@ -2,10 +2,10 @@
 using SkyCombImage.CategorySpace;
 using SkyCombGround.CommonSpace;
 using SkyCombDrone.DroneModel;
+using SkyCombImage.DrawSpace;
 using SkyCombImage.ProcessModel;
 using System.Drawing;
-using MathNet.Numerics;
-using Emgu.CV.Ocl;
+
 
 namespace SkyCombImage.ProcessLogic
 {
@@ -1085,7 +1085,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public CombObjList GetSignificantByScope(ProcessScope scope, int focusObjectID = BaseConstants.UnknownValue)
+        public CombObjList FilterByProcessScope(ProcessScope scope, int focusObjectID = BaseConstants.UnknownValue)
         {
             CombObjList answer = new();
 
@@ -1099,7 +1099,51 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public CombObjList GetSignificantLegObjects(int legId)
+        public CombObjList FilterByObjectScope(DrawObjectScope objectScope)
+        {
+            CombObjList answer = new();
+
+            foreach (var theObject in this)
+            {
+                var theObj = theObject.Value;
+
+                if( theObj.HeightM != BaseConstants.UnknownValue)
+                {
+                    if (theObj.HeightM < objectScope.MinHeightM)
+                        continue;
+                    if (theObj.HeightM > objectScope.MaxHeightM)
+                        continue;
+                }
+                if( theObj.AvgRangeM != BaseConstants.UnknownValue)
+                {
+                    if (theObj.AvgRangeM < objectScope.MinRangeM)
+                        continue;
+                    if (theObj.AvgRangeM > objectScope.MaxRangeM)
+                        continue;
+                }
+                if( theObj.SizeCM2 != BaseConstants.UnknownValue)
+                {
+                    if (theObj.SizeCM2 < objectScope.MinSizeCM2)
+                        continue;
+                    if (theObj.SizeCM2 > objectScope.MaxSizeCM2)
+                        continue;
+                }
+                if( theObj.MaxHeat != BaseConstants.UnknownValue)
+                {
+                    if (theObj.MaxHeat < objectScope.MinHeat)
+                        continue;
+                    if (theObj.MaxHeat > objectScope.MaxHeat)
+                        continue;
+                }
+
+                answer.AddObject(theObject.Value);
+            }
+
+            return answer;
+        }
+
+
+        public CombObjList FilterByLeg(int legId)
         {
             CombObjList answer = new();
 
@@ -1161,7 +1205,7 @@ namespace SkyCombImage.ProcessLogic
         // Calculate settings based on significant child objects 
         public void CalculateSettings(ProcessScope scope, int focusObjectID)
         {
-            CalculateSettings(GetSignificantByScope(scope, focusObjectID));
+            CalculateSettings(FilterByProcessScope(scope, focusObjectID));
         }
 
 
@@ -1288,7 +1332,7 @@ namespace SkyCombImage.ProcessLogic
         {
             var answer = new List<object[]>();
 
-            var sigObjects = CombObjList.GetSignificantByScope(scope, focusObjectID);
+            var sigObjects = CombObjList.FilterByProcessScope(scope, focusObjectID);
             foreach (var theObject in sigObjects)
             {
                 ObjectCategoryModel annotation = null;

@@ -120,7 +120,24 @@ namespace SkyCombImage.ProcessModel
             }
 
             if (positionInLeg == UnknownValue)
-                Name = "#" + ObjectId.ToString(); // e.g. #15
+            {
+                string mapping = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                char[] resultChars = new char[5];
+                for (int i = 4; i >= 0; i--)
+                    resultChars[i] = (char)0;
+
+                var number = ObjectId;
+                for (int i = 4; i >= 0; i--)
+                {
+                    int index = number % 26;
+                    resultChars[i] = mapping[index];
+                    number /= 26;
+                    if(number == 0)
+                        break;
+                }
+
+                Name = "#" + resultChars;
+            }
             else
                 Name = FlightLegName + positionInLeg.ToString(); // e.g. C5
         }
