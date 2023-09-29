@@ -1107,28 +1107,28 @@ namespace SkyCombImage.ProcessLogic
             {
                 var theObj = theObject.Value;
 
-                if( theObj.HeightM != BaseConstants.UnknownValue)
+                if((theObj.HeightM != BaseConstants.UnknownValue) && (objectScope.MinHeightM != BaseConstants.UnknownValue))
                 {
                     if (theObj.HeightM < objectScope.MinHeightM)
                         continue;
                     if (theObj.HeightM > objectScope.MaxHeightM)
                         continue;
                 }
-                if( theObj.AvgRangeM != BaseConstants.UnknownValue)
+                if((theObj.AvgRangeM != BaseConstants.UnknownValue) && (objectScope.MinRangeM != BaseConstants.UnknownValue))
                 {
                     if (theObj.AvgRangeM < objectScope.MinRangeM)
                         continue;
                     if (theObj.AvgRangeM > objectScope.MaxRangeM)
                         continue;
                 }
-                if( theObj.SizeCM2 != BaseConstants.UnknownValue)
+                if((theObj.SizeCM2 != BaseConstants.UnknownValue) && (objectScope.MinSizeCM2 != BaseConstants.UnknownValue))
                 {
                     if (theObj.SizeCM2 < objectScope.MinSizeCM2)
                         continue;
                     if (theObj.SizeCM2 > objectScope.MaxSizeCM2)
                         continue;
                 }
-                if( theObj.MaxHeat != BaseConstants.UnknownValue)
+                if((theObj.MaxHeat != BaseConstants.UnknownValue) && (objectScope.MinHeat > 0))
                 {
                     if (theObj.MaxHeat < objectScope.MinHeat)
                         continue;

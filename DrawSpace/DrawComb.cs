@@ -26,12 +26,15 @@ namespace SkyCombImage.DrawSpace
         public DrawScope DrawScope { get; }
         // Scope of objects to draw. May be null.
         public DrawObjectScope ObjectScope { get; }
+        // Scope of objects to draw. May be null.
+        public CombObjList CombObjList { get; }
 
 
-        public DrawCombFlightPath(DrawScope drawScope, DrawObjectScope objectScope) : base(drawScope, true)
+        public DrawCombFlightPath(DrawScope drawScope, CombObjList combObjList, DrawObjectScope objectScope) : base(drawScope, true)
         {
             DrawScope = drawScope;
             ObjectScope = objectScope;
+            CombObjList = combObjList;
         }
 
 
@@ -77,42 +80,47 @@ namespace SkyCombImage.DrawSpace
                     bool showAllFeatures = (ProcessObject.Config.SaveObjectData == SaveObjectDataEnum.All);
 
 
-                    var objList = DrawScope.Process.CombObjs.CombObjList;
-                    if (ObjectScope != null)
-                        objList = objList.FilterByObjectScope(ObjectScope);
+                    // This of objects in process scope
+                    var objList = CombObjList;
 
+                    // Reduce list of objects by the user filter values.
+                    if((objList != null) && (ObjectScope != null))
+                        objList = CombObjList.FilterByObjectScope(ObjectScope);
 
-                    if (showAllFeatures)
+                    if (objList != null)
                     {
-                        // Draw least important then more important stuff
-                        // as the significant inscope stuff (draw later) will overdraw this.
+                        if (showAllFeatures)
+                        {
+                            // Draw least important then more important stuff
+                            // as the significant inscope stuff (draw later) will overdraw this.
 
-                        // Draw significant but out-of-scope objects as grey squares
+                            // Draw significant but out-of-scope objects as grey squares
+                            foreach (var thisObject in objList)
+                                if (thisObject.Value.Significant &&
+                                    (thisObject.Value.LocationM != null) &&
+                                    !thisObject.Value.InRunScope(DrawScope.ProcessScope))
+                                    DrawObject(thisObject.Value, ref image, outObjectBgr);
+
+                            // Draw insignificant object features as yellow squares
+                            foreach (var thisObject in objList)
+                                if (!thisObject.Value.Significant &&
+                                    (thisObject.Value.LocationM != null))
+                                    DrawObjectFeatures(thisObject.Value, ref image, CombFeatureTypeEnum.Real, unrealBgr);
+                        }
+
+                        // Draw significant in-scope objects as red boxes with orange & yellow features
                         foreach (var thisObject in objList)
                             if (thisObject.Value.Significant &&
                                 (thisObject.Value.LocationM != null) &&
-                                !thisObject.Value.InRunScope(DrawScope.ProcessScope))
-                                DrawObject(thisObject.Value, ref image, outObjectBgr);
-
-                        // Draw insignificant object features as yellow squares
-                        foreach (var thisObject in objList)
-                            if (!thisObject.Value.Significant &&
-                                (thisObject.Value.LocationM != null))
-                                DrawObjectFeatures(thisObject.Value, ref image, CombFeatureTypeEnum.Real, unrealBgr);
+                                thisObject.Value.InRunScope(DrawScope.ProcessScope))
+                            {
+                                // Draw least important then more important stuff as the rectangles will overlap.
+                                if (showAllFeatures)
+                                    DrawObjectFeatures(thisObject.Value, ref image, CombFeatureTypeEnum.Unreal, unrealBgr);
+                                DrawObjectFeatures(thisObject.Value, ref image, CombFeatureTypeEnum.Real, realBgr);
+                                DrawObject(thisObject.Value, ref image, inObjectBgr);
+                            }
                     }
-
-                    // Draw significant in-scope objects as red boxes with orange & yellow features
-                    foreach (var thisObject in objList)
-                        if (thisObject.Value.Significant &&
-                            (thisObject.Value.LocationM != null) &&
-                            thisObject.Value.InRunScope(DrawScope.ProcessScope))
-                        {
-                            // Draw least important then more important stuff as the rectangles will overlap.
-                            if (showAllFeatures)
-                                DrawObjectFeatures(thisObject.Value, ref image, CombFeatureTypeEnum.Unreal, unrealBgr);
-                            DrawObjectFeatures(thisObject.Value, ref image, CombFeatureTypeEnum.Real, realBgr);
-                            DrawObject(thisObject.Value, ref image, inObjectBgr);
-                        }
                 }
             }
             catch (Exception ex)
