@@ -165,7 +165,7 @@ namespace SkyCombImage.ProcessModel
 
         // Return the data required to draw the FRAME Point of View speed/direction as arrow and speed text.
         // This is NOT the drone speed/direction. 
-        public (bool, VelocityF, String) GetFlowGroundVelocity()
+        public (bool, VelocityF?, string) GetFlowGroundVelocity()
         {
             return ((FlowGroundVelInPixelsPerBlock != null), FlowGroundVelInPixelsPerBlock, "px/frame");
         }

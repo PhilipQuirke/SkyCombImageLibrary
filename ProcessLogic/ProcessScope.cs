@@ -11,10 +11,10 @@ namespace SkyCombImage.ProcessLogic
     // The Video, Drone & model scope of a processing run
     public class ProcessScope : FlightStepSummaryModel
     {
-        public ProcessScopeModel PSM { get; set; } = null;
+        public ProcessScopeModel PSM { get; }
 
         // Current flight step to process
-        public FlightStep CurrRunFlightStep { get; set; } = null;
+        public FlightStep? CurrRunFlightStep { get; set; } = null;
         // First step of flight data to process 
         public int FirstRunStepId { get { return MinStepId; } }
         // Last step of flight data to process
@@ -136,10 +136,10 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Return current input video frame and corresponding display video frame (if any)
-        public (Image<Bgr, byte> inputImage, Image<Bgr, byte> displayImage) ConvertImages(Drone drone)
+        public (Image<Bgr, byte>? inputImage, Image<Bgr, byte>? displayImage) ConvertImages(Drone drone)
         {
-            Image<Bgr, byte> inputImage = null;
-            Image<Bgr, byte> displayImage = null;
+            Image<Bgr, byte>? inputImage = null;
+            Image<Bgr, byte>? displayImage = null;
 
             if (drone.HaveFrames())
             {

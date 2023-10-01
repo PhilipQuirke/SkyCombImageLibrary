@@ -26,7 +26,7 @@ namespace SkyCombImage.CategorySpace
 
 
         // Constructor used when loading objects from the datastore
-        public CategoryModel(List<string> settings)
+        public CategoryModel(List<string>? settings)
         {
             if (settings != null)
                 LoadSettings(settings);
@@ -276,7 +276,7 @@ namespace SkyCombImage.CategorySpace
 
 
         // Constructor used when loading objects from the datastore
-        public ObjectCategoryModel(List<string> settings)
+        public ObjectCategoryModel(List<string>? settings)
         {
             if (settings != null)
                 LoadSettings(settings);

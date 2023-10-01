@@ -1085,6 +1085,28 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Find and return the closest object to the drone location (within maxDeltaM)
+        public CombObject? GetObjectByLocationM(DroneLocation droneLocation, int minDeltaM = 1, int maxDeltaM = 10)
+        {
+            CombObject? answer = null;
+            double minRange = maxDeltaM;
+
+            foreach (var theObj in this)
+            {
+                var range = RelativeLocation.DistanceM(theObj.Value.LocationM, droneLocation);
+                if (range <= minDeltaM)
+                    return theObj.Value;
+                else if (range <= minRange)
+                {
+                    answer = theObj.Value;
+                    minRange = range;
+                }
+            }
+
+            return answer;
+        }
+
+
         public CombObjList FilterByProcessScope(ProcessScope scope, int focusObjectID = BaseConstants.UnknownValue)
         {
             CombObjList answer = new();
@@ -1335,7 +1357,7 @@ namespace SkyCombImage.ProcessLogic
             var sigObjects = CombObjList.FilterByProcessScope(scope, focusObjectID);
             foreach (var theObject in sigObjects)
             {
-                ObjectCategoryModel annotation = null;
+                ObjectCategoryModel? annotation = null;
                 if (annotations != null)
                     annotation = annotations.GetData(theObject.Value.Name);
 

@@ -9,6 +9,7 @@ using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using System.Drawing;
+using Emgu.CV.Reg;
 
 
 namespace SkyCombImage.DrawSpace
@@ -27,7 +28,9 @@ namespace SkyCombImage.DrawSpace
         // Scope of objects to draw. May be null.
         public DrawObjectScope ObjectScope { get; }
         // Scope of objects to draw. May be null.
-        public CombObjList CombObjList { get; }
+        public CombObjList CombObjList { get; set; }
+        // Object user has hovered mouse over. May be null.
+        public CombObject? HoverObject { get; set; }
 
 
         public DrawCombFlightPath(DrawScope drawScope, CombObjList combObjList, DrawObjectScope objectScope) : base(drawScope, true)
@@ -35,6 +38,7 @@ namespace SkyCombImage.DrawSpace
             DrawScope = drawScope;
             ObjectScope = objectScope;
             CombObjList = combObjList;
+            HoverObject = null;
         }
 
 
@@ -165,6 +169,55 @@ namespace SkyCombImage.DrawSpace
             {
                 throw ThrowException("DrawCombPath.CurrImage", ex);
             }
+        }
+
+
+        // Generate a bitmap of the graph as per scope settings.
+        public override Bitmap CurrBitmap()
+        {
+            var answer = base.CurrBitmap();
+
+            // Draw the hover object details (if any) on the bitmap
+            if (HoverObject != null)
+            {
+                var objName = HoverObject.Name;
+                var objHeight = (HoverObject.HeightM == BaseConstants.UnknownValue ? "N/A" : HoverObject.HeightM.ToString() + " m");
+                var objSize = HoverObject.SizeCM2.ToString() + " cm2";
+                var objHeat = HoverObject.MaxHeat.ToString();
+                var objRange = HoverObject.AvgRangeM.ToString() + " m"; // Distance from drone to object
+
+                int vertStep = 25;
+                int horizStep = 80;
+
+                using (Graphics graphics = Graphics.FromImage(answer))
+                {
+                    // Define a font and brush for the text
+                    Font font = new Font("Arial", 12);
+                    SolidBrush brush = new SolidBrush(Color.Red);
+
+                    // Define the position where you want to draw the text
+                    Rectangle objectRect = DroneLocnMToPixelSquare(
+                        HoverObject.LocationM, ObjectPixels);
+                    PointF leftPosition = new PointF(objectRect.Right, objectRect.Bottom);
+                    PointF rightPosition = new PointF(objectRect.Right + horizStep, objectRect.Bottom);
+
+                    // Draw the text titles on the bitmap
+                    graphics.DrawString("Object", font, brush, leftPosition); leftPosition.Y += vertStep;
+                    graphics.DrawString("Height", font, brush, leftPosition); leftPosition.Y += vertStep;
+                    graphics.DrawString("Size", font, brush, leftPosition); leftPosition.Y += vertStep;
+                    graphics.DrawString("Heat", font, brush, leftPosition); leftPosition.Y += vertStep;
+                    graphics.DrawString("Range", font, brush, leftPosition); 
+
+                    // Draw the text data on the bitmap
+                    graphics.DrawString(objName, font, brush, rightPosition); rightPosition.Y += vertStep;
+                    graphics.DrawString(objHeight, font, brush, rightPosition); rightPosition.Y += vertStep;
+                    graphics.DrawString(objSize, font, brush, rightPosition); rightPosition.Y += vertStep;
+                    graphics.DrawString(objHeat, font, brush, rightPosition); rightPosition.Y += vertStep;
+                    graphics.DrawString(objRange, font, brush, rightPosition); 
+                }
+            }
+
+            return answer;
         }
     }
 
@@ -675,7 +728,5 @@ namespace SkyCombImage.DrawSpace
             }
         }
     }
-
-
 }
 
