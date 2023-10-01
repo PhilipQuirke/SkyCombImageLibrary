@@ -67,7 +67,7 @@ namespace SkyCombImage.PersistModel
         // Add a graph of the drone & ground elevations 
         public void AddElevationsGraph()
         {
-            /*
+            /* PQR
             AddElevationsGraph(
                 0,
                 "BlocksElevations",
@@ -85,7 +85,7 @@ namespace SkyCombImage.PersistModel
 
                 // Generate a bitmap of the DSM land overlaid with the drone path 
                 var drawScope = new DroneDrawScope(Drone);
-                var drawAltitudes = new DrawAltitudeByLinealM(drawScope, true);
+                var drawAltitudes = new DrawAltitudeByLinealM(drawScope);
                 drawAltitudes.Initialise(new Size(1600, 300));
                 var graphBitmap = drawAltitudes.CurrBitmap();
 

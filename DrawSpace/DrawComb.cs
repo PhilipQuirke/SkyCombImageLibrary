@@ -450,7 +450,7 @@ namespace SkyCombImage.DrawSpace
         DrawScope DrawScope { get; }
 
 
-        public DrawCombAltitudeByLinealM(CombProcessAll process, DrawScope drawScope) : base(drawScope, false)
+        public DrawCombAltitudeByLinealM(CombProcessAll process, DrawScope drawScope) : base(drawScope)
         {
             Process = process;
             DrawScope = drawScope;
