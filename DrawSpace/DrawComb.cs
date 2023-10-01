@@ -544,7 +544,7 @@ namespace SkyCombImage.DrawSpace
         DrawScope DrawScope { get; }
 
 
-        public DrawCombAltitudeByTime(CombProcessAll process, DrawScope drawScope) : base(drawScope, false)
+        public DrawCombAltitudeByTime(CombProcessAll process, DrawScope drawScope) : base(drawScope)
         {
             Process = process;
             DrawScope = drawScope;
@@ -649,7 +649,7 @@ namespace SkyCombImage.DrawSpace
     // Code to draw comb object height - including feature estimates
     public class DrawCombObjectHeight : DrawAltitudeByTime
     {
-        public DrawCombObjectHeight(DrawScope drawScope) : base(drawScope, false)
+        public DrawCombObjectHeight(DrawScope drawScope) : base(drawScope)
         {
             Description +=
                 "Object & object feature height are shown.";
