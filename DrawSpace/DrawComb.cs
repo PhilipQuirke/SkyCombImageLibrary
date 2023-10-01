@@ -181,18 +181,18 @@ namespace SkyCombImage.DrawSpace
             if (HoverObject != null)
             {
                 var objName = HoverObject.Name;
-                var objHeight = (HoverObject.HeightM == BaseConstants.UnknownValue ? "N/A" : HoverObject.HeightM.ToString() + " m");
-                var objSize = HoverObject.SizeCM2.ToString() + " cm2";
+                var objHeight = (HoverObject.HeightM == BaseConstants.UnknownValue ? "N/A" : Math.Round(HoverObject.HeightM,1).ToString() + " m");
+                var objSize = ((int)HoverObject.SizeCM2).ToString() + " cm2";
                 var objHeat = HoverObject.MaxHeat.ToString();
                 var objRange = HoverObject.AvgRangeM.ToString() + " m"; // Distance from drone to object
 
-                int vertStep = 25;
+                int vertStep = 20;
                 int horizStep = 80;
 
                 using (Graphics graphics = Graphics.FromImage(answer))
                 {
                     // Define a font and brush for the text
-                    Font font = new Font("Arial", 12);
+                    Font font = new Font("Arial", 11);
                     SolidBrush brush = new SolidBrush(DroneColors.ActiveDroneColor);
 
                     // Define the position where you want to draw the text
