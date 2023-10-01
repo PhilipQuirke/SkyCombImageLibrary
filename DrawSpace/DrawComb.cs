@@ -193,7 +193,7 @@ namespace SkyCombImage.DrawSpace
                 {
                     // Define a font and brush for the text
                     Font font = new Font("Arial", 12);
-                    SolidBrush brush = new SolidBrush(Color.Red);
+                    SolidBrush brush = new SolidBrush(DroneColors.ActiveDroneColor);
 
                     // Define the position where you want to draw the text
                     Rectangle objectRect = DroneLocnMToPixelSquare(
