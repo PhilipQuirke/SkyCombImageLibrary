@@ -2,6 +2,7 @@
 using SkyCombImage.CategorySpace;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
+using System;
 
 
 // Models are used in-memory and to persist/load data to/from the datastore
@@ -119,27 +120,26 @@ namespace SkyCombImage.ProcessModel
                 return; // Name already set (e.g. C5)
             }
 
-            if (positionInLeg == UnknownValue)
-            {
-                string mapping = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-                char[] resultChars = new char[5];
-                for (int i = 4; i >= 0; i--)
-                    resultChars[i] = (char)0;
-
-                var number = ObjectId;
-                for (int i = 4; i >= 0; i--)
-                {
-                    int index = number % 26;
-                    resultChars[i] = mapping[index];
-                    number /= 26;
-                    if(number == 0)
-                        break;
-                }
-
-                Name = "#" + resultChars;
-            }
-            else
+            if (positionInLeg != UnknownValue)
                 Name = FlightLegName + positionInLeg.ToString(); // e.g. C5
+            else if (ObjectId == 0)
+                Name = "A";
+            else
+            {
+                const int baseValue = 26;
+                int number = ObjectId;
+
+                Name = "";
+                while (number > 0)
+                {
+                    int remainder = (number - 1) % baseValue;
+                    char letter = (char)('A' + remainder);
+                    Name = letter + Name;
+                    number = (number - 1) / baseValue;
+                }
+            }
+
+            Assert(Name.Length < 10, "ProcessObjectModel.SetName: Bad length");
         }
 
 

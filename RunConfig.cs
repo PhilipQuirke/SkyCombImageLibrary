@@ -43,7 +43,7 @@ namespace SkyCombImage.ProcessModel
         public RunProcessEnum RunProcess { get; set; } = RunProcessEnum.Comb;
 
         // Between processing blocks, do we pause (slows down processing). That values max, fast, medium, slow. 
-        public RunSpeedEnum RunSpeed { get; set; } = RunSpeedEnum.Fast;
+        public RunSpeedEnum RunSpeed { get; set; } = RunSpeedEnum.Max;
 
         // Close the application after processing load file?
         public bool RunAutoClose { get; set; } = false;
