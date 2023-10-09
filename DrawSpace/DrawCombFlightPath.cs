@@ -208,7 +208,7 @@ namespace SkyCombImage.DrawSpace
                     graphics.DrawString("Size", font, brush, leftPosition); leftPosition.Y += vertStep;
                     graphics.DrawString("Heat", font, brush, leftPosition); leftPosition.Y += vertStep;
                     graphics.DrawString("Range", font, brush, leftPosition); leftPosition.Y += vertStep;
-                    graphics.DrawString("From", font, brush, leftPosition); leftPosition.Y += vertStep;
+                    graphics.DrawString("At (m:s)", font, brush, leftPosition); leftPosition.Y += vertStep;
 
                     // Draw the text data on the bitmap
                     graphics.DrawString(objName, font, brush, rightPosition); rightPosition.Y += vertStep;

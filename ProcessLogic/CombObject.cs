@@ -1117,6 +1117,9 @@ namespace SkyCombImage.ProcessLogic
                     theObject.Value.InRunScope(scope))
                     answer.AddObject(theObject.Value);
 
+            if(answer.Count > 0)
+                answer.CalculateSettings(answer);
+
             return answer;
         }
 
