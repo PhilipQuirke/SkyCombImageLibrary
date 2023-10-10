@@ -282,11 +282,7 @@ namespace SkyCombImage.ProcessLogic
             // First estimate of object location (centroid) as average of real feature locations.
             // The feature locations are based on where in the drone's field of image the object was detected, and
             // assumes that the object is at drone (FlightStep) ground level. (The object's location is refined later.)
-            Calculate_LocationM();
-
-            // Calculate location error, a measure of real feature dispersion,
-            // as average distance from object location (centroid).
-            Calculate_LocationErrM();
+            Calculate_LocationM_and_LocationErrM();
 
             // Estimate the object's DEM at the object's location
             // (which could be say 20m left of the drone's flight path).
@@ -297,7 +293,7 @@ namespace SkyCombImage.ProcessLogic
             Calculate_HeightM_Feature(initialCalc);
 
             // Calculate object height and object height error.
-            Calculate_HeightM_Object();
+            Calculate_HeightM_and_HeightErrM();
 
             // Calculate the size of the object in square centimeters.
             // Based on MAXIMUM number of hot pixels in any real feature.
@@ -487,118 +483,12 @@ namespace SkyCombImage.ProcessLogic
 
         // Calculate object's location (centroid) as average of real feature's locations.
         // The feature locations are based on where in the drone's field of image the object was detected. 
-        private void Calculate_LocationM()
-        {
-            LocationM = new();
-
-            if (NumRealFeatures() >= 2)
-            {
-                int sumCount = 0;
-                DroneLocation sumLocation = new();
-                foreach (var feature in Features)
-                    if ((feature.Value.CFM.LocationM != null) &&
-                        (feature.Value.CFM.Type == CombFeatureTypeEnum.Real))
-                    {
-                        sumCount++;
-                        sumLocation.NorthingM += feature.Value.CFM.LocationM.NorthingM;
-                        sumLocation.EastingM += feature.Value.CFM.LocationM.EastingM;
-                    }
-
-                if (sumCount > 0)
-                {
-                    sumLocation.NorthingM /= sumCount;
-                    sumLocation.EastingM /= sumCount;
-                    LocationM = sumLocation.Clone();
-                }
-            }
-            else if (NumRealFeatures() == 1)
-            {
-                var firstFeat = FirstFeature();
-                if(firstFeat.CFM.LocationM != null)
-                    LocationM = firstFeat.CFM.LocationM.Clone();
-            }
-        }
-
-
         // Calculate location error, a measure of real feature dispersion,
         // as average distance from object location (centroid).
         // Refer https://stats.stackexchange.com/questions/13272/2d-analog-of-standard-deviation for rationale.
-        private void Calculate_LocationErrM()
+        private void Calculate_LocationM_and_LocationErrM()
         {
-            LocationErrM = 0;
-
-            if ((NumRealFeatures() >= 2) && (LocationM != null))
-            {
-                int sumCount = 0;
-                double sumDist = 0;
-                foreach (var feature in Features)
-                    if ((feature.Value.CFM.LocationM != null) &&
-                        (feature.Value.CFM.Type == CombFeatureTypeEnum.Real))
-                    {
-                        sumCount++;
-                        sumDist += RelativeLocation.DistanceM(feature.Value.CFM.LocationM, LocationM);
-                    }
-
-                if (sumCount > 0)
-                    LocationErrM = (float)(sumDist / sumCount);
-            }
-        }
-
-
-        // Returns the forward-down-angles of the object in the first frame image 
-        // it was detected in and the last frame image it was detected in.
-        // Only uses camera physics and object position in image data.
-        private (double firstFwdDegs, double lastFwdDegs) Calculate_Image_FwdDeg(CombFeature firstFeature, CombFeature lastFeature)
-        {
-            // Unitless numbers
-            // If yImageFrac = 0 then object is at the very bottom of the image (furtherest from drone) => FwdDegs is +16
-            // If yImageFrac = 1/2 then object is in the middle of the image => FwdDegs is 0
-            // If yImageFrac = 1 then object is at the top of the image (closest to drone) => FwdDegs is -16
-            (var _, var yImageFracFirst) = firstFeature.CentroidImageFractions();
-            (var _, var yImageFracLast) = lastFeature.CentroidImageFractions();
-
-            // Calculation is based on physical parameters of the camera.
-            double fullVertFoVDeg = Model.VideoData.VFOVDeg; // Say 32 degrees
-            double halfVertFoVDeg = fullVertFoVDeg / 2; // Say 16 degrees
-
-            // Calculate the angle to object, in direction of flight (forward), to the vertical, in degrees
-            // Assumes drone is moving forward (not sidewards or backwards) or stationary.
-            double firstFwdFraction = yImageFracFirst * 2 - 1;
-            Assert(firstFwdFraction >= -1 && firstFwdFraction <= 1, "Calculate_Image_FwdDeg: firstFwdFraction out of range");
-
-            double firstFwdDeg = halfVertFoVDeg * firstFwdFraction; // Often close to +16
-            Assert(Math.Abs(firstFwdDeg) <= halfVertFoVDeg, "Calculate_Image_FwdDeg: firstFwdDeg out of range");
-
-            double lastFwdFraction = yImageFracLast * 2 - 1;
-            Assert(lastFwdFraction >= -1 && firstFwdFraction <= 1, "Calculate_Image_FwdDeg: lastFwdFraction out of range");
-
-            double lastFwdDeg = halfVertFoVDeg * lastFwdFraction; // Often close to -16
-            Assert(Math.Abs(lastFwdDeg) <= halfVertFoVDeg, "Calculate_Image_FwdDeg: lastFwdDeg out of range");
-
-            Assert(Math.Abs(lastFwdDeg - firstFwdDeg) < fullVertFoVDeg, "Calculate_Image_FwdDeg: Bad From/to fwd range");
-
-            var firstCameraToVertDeg = firstFeature.Block.FlightStep.CameraToVerticalForwardDeg;
-            var lastCameraToVertDeg = lastFeature.Block.FlightStep.CameraToVerticalForwardDeg;
-
-            Assert(firstCameraToVertDeg >= 0 && firstCameraToVertDeg <= 90, "Calculate_Image_FwdDeg: Bad firstCameraToVertDeg");
-            Assert(lastCameraToVertDeg >= 0 && lastCameraToVertDeg <= 90, "Calculate_Image_FwdDeg: Bad lastCameraToVertDeg");
-
-            firstFwdDeg += firstCameraToVertDeg;
-            lastFwdDeg += lastCameraToVertDeg;
-
-
-            // Save initial and final direction-of-flight drone-down-to-object 
-            // angles in degrees to DataStore for further analysis
-            COM.FirstFwdDownDeg = (float)firstFwdDeg;
-            COM.LastFwdDownDeg = (float)lastFwdDeg;
-
-            // Store some intermediate values to display in ObjectForm for debugging purposes.
-            // lastFeature.Debug1 = yImageFracFirst;
-            // lastFeature.Debug2 = firstFwdDeg;
-            // lastFeature.Debug3 = yImageFracLast;
-            // lastFeature.Debug4 = lastFwdDeg;
-
-            return (firstFwdDeg, lastFwdDeg);
+            (LocationM, LocationErrM) = Features.Calculate_LocationM_and_LocationErrM(LocationM);
         }
 
 
@@ -634,6 +524,29 @@ namespace SkyCombImage.ProcessLogic
             Assert(Math.Abs(lastSideRads - firstSideRads) < fullHorizFoVRadians, "Calculate_Image_AvgSidewaysRads: Bad From/to side range");
 
             return (firstSideRads + lastSideRads) / 2;
+        }
+
+
+        // Returns the forward-down-angles of the object in the first frame image 
+        // it was detected in and the last frame image it was detected in.
+        // Only uses camera physics and object position in image data.
+        private (double firstFwdDegs, double lastFwdDegs) Calculate_Image_FwdDeg(CombFeature firstFeature, CombFeature lastFeature)
+        {
+            double firstFwdDegs = firstFeature.Calculate_Image_FwdDeg();
+            double lastFwdDegs = lastFeature.Calculate_Image_FwdDeg();
+
+            // Save initial and final direction-of-flight drone-down-to-object 
+            // angles in degrees to DataStore for further analysis
+            COM.FirstFwdDownDeg = (float)firstFwdDegs;
+            COM.LastFwdDownDeg = (float)lastFwdDegs;
+
+            // Store some intermediate values to display in ObjectForm for debugging purposes.
+            // lastFeature.Debug1 = firstFwdDegs;
+            // lastFeature.Debug2 = lastFwdDegs;
+            // lastFeature.Debug3 = 0;
+            // lastFeature.Debug4 = 0;
+
+            return (firstFwdDegs, lastFwdDegs);
         }
 
 
@@ -683,21 +596,6 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Calculate the height of the object using dead reckoning
-        private float Calculate_HeightM_Feature_Using_Dead_Reckoning(
-                        CombFeature firstRealFeature,
-                        CombFeature lastRealFeature,
-                        double baselineM)
-        {
-            float featureHeightM = UnknownValue;
-
-            // PQR TODO
-
-            return featureHeightM;
-        }
-
-
-
         // Estimate FEATURE height above ground based on distance down from drone
         // calculated using trigonometry and first/last real feature camera-view-angles.
         // This is a "look down" trig method. Accuracy limited by the accuracy of the drone altitude.
@@ -733,20 +631,17 @@ namespace SkyCombImage.ProcessLogic
                 return; // Maintain current object height
 
 
-            float featureHeightM = UnknownValue;
-
             // Drone moved from point A to point B (base-line distance L) in metres.
             double baselineM = Model.Blocks.DistanceM(firstRealFeature.Block, lastRealFeature.Block);
             // If drone has not moved enough this method will be very inaccurate.
-            if (baselineM > 1 + (initialCalc ? 1 : 0))
-                // Calculate the height of the object based on changes in down angle over the baseline distance travelled. 
-                featureHeightM = Calculate_HeightM_Feature_Using_BaseLine_Movement(
-                                firstRealFeature, lastRealFeature, baselineM);
-            else if(seenForUnits >= 3)
-                // Object has been seen for a while, but drone has not moved much at all.
-                // Drone operator may be watched it. Use dead reckoning to estimate height.
-                featureHeightM = Calculate_HeightM_Feature_Using_Dead_Reckoning(
-                                firstRealFeature, lastRealFeature, baselineM);
+            if (baselineM < 1 + (initialCalc ? 1 : 0))
+                return; // Maintain current object height
+
+
+            // Calculate the height of the object based on changes in down angle over the baseline distance travelled. 
+            float featureHeightM = 
+                Calculate_HeightM_Feature_Using_BaseLine_Movement(
+                    firstRealFeature, lastRealFeature, baselineM);
             if (featureHeightM < 0)
                 return;
 
@@ -755,10 +650,10 @@ namespace SkyCombImage.ProcessLogic
 
 
             // Store some intermediate values to display in ObjectForm for debugging purposes.
-            // lastFeature.Debug1 = firstFwdRads;
-            // lastFeature.Debug2 = firstFwdTan;
-            // lastFeature.Debug3 = lastFwdRads;
-            // lastFeature.Debug4 = lastFwdTan;
+            // lastFeature.Debug1 = seenForUnits;
+            // lastFeature.Debug2 = baselineM;
+            // lastFeature.Debug3 = featureHeightM;
+            // lastFeature.Debug4 = droneDistanceDownM;
 
 
             // Keep a record of the range of height estimates (over the frames the object is visible in)
@@ -784,47 +679,23 @@ namespace SkyCombImage.ProcessLogic
 
         // Calculate object height and object height error.
         // The longer the baseline, the more accurate the object height calculation.
-        // So we use the last 8 real features. The "8" is arbitrary.
-        // It is > 1 in case there is some drone turbulence or "end of leg" yawing
-        // in the data. For DJI Mavic 8 frames represents 1 second.
-        // If there are fewer than 8 real frames we use all the frames we do have.
-        private void Calculate_HeightM_Object()
+        private void Calculate_HeightM_and_HeightErrM()
         {
-            HeightM = UnknownValue;
-            HeightErrM = UnknownValue;
-
             if ((NumRealFeatures() >= 2) && (LocationM != null))
             {
+                // To calculate the error, we use the last 8 real features. The "8" is arbitrary.
+                // It is > 1 in case there is some drone turbulence or "end of leg" yawing
+                // in the data. For DJI Mavic 8 frames represents 1 second.
+                // If there are fewer than 8 real frames we use all the frames we do have.
                 int lastBlockId = LastRealFeature().Block.BlockId;
                 int firstBlockId = lastBlockId - NumRealFeaturesForHeightErr;
 
-                int sumCount = 0;
-                float sumHeight = 0;
-                float minHeight = 9999;
-                float maxHeight = -9999;
-                foreach (var feature in Features)
-                    if ((feature.Value.CFM.LocationM != null) &&
-                        (feature.Value.CFM.Type == CombFeatureTypeEnum.Real) &&
-                        (feature.Value.Block.BlockId >= firstBlockId) &&
-                        (feature.Value.Block.BlockId <= lastBlockId))
-                    {
-                        var featureHeight = feature.Value.CFM.HeightM;
-                        if (featureHeight != UnknownValue)
-                        {
-                            sumCount++;
-                            sumHeight += featureHeight;
-                            minHeight = Math.Min(featureHeight, minHeight);
-                            maxHeight = Math.Max(featureHeight, maxHeight);
-                        }
-                    }
-
-                if (sumCount > 0)
-                {
-                    HeightM = (float)(sumHeight / sumCount);
-                    HeightErrM = Math.Max(
-                        Math.Abs(maxHeight - HeightM),
-                        Math.Abs(minHeight - HeightM));
-                }
+                (HeightM, HeightErrM) = Features.Calculate_HeightM_and_HeightErrM(firstBlockId, lastBlockId);
+            }
+            else
+            {
+                HeightM = UnknownValue;
+                HeightErrM = UnknownValue;
             }
         }
 

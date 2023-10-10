@@ -51,7 +51,7 @@ namespace SkyCombImage.ProcessLogic
                 foreach (var theFeature in objectFeatures)
                 {
                     theFeature.Value.ResetMemberData();
-                    theFeature.Value.CalculateSettings_LocationM(false);
+                    theFeature.Value.CalculateSettings_LocationM(theObject.Value.LastRealFeature(), false);
                     theObject.Value.ClaimFeature(theFeature.Value, false);
                 }
             }
