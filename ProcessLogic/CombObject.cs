@@ -637,6 +637,67 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Calculate the height of the object based on changes in down angle over the baseline distance travelled. 
+        private float Calculate_HeightM_Feature_Using_BaseLine_Movement(
+                        CombFeature firstRealFeature,
+                        CombFeature lastRealFeature,
+                        double baselineM)
+        {
+            // Calculation is based on where object appears in the thermal camera field of view (FOV).
+            // If object does not appear to have changed image position then this method will not work.
+            double firstPixelY = firstRealFeature.CFM.PixelBox.Y + ((double)firstRealFeature.CFM.PixelBox.Height) / 2.0;
+            double lastPixelY = lastRealFeature.CFM.PixelBox.Y + ((double)lastRealFeature.CFM.PixelBox.Height) / 2.0;
+            if (firstPixelY == lastPixelY)
+                return UnknownValue; // Maintain current object height
+
+            // Get forward-down-angles of the object in the first / last frame detected.
+            // In DJI_0116, leg 4, objects are detected from +15 to -4 degrees.
+            (double firstFwdDegs, double lastFwdDegs) = Calculate_Image_FwdDeg(firstRealFeature, lastRealFeature);
+            double firstFwdTan = Math.Tan(firstFwdDegs * BaseConstants.DegreesToRadians); // Often postive
+            double lastFwdTan = Math.Tan(lastFwdDegs * BaseConstants.DegreesToRadians); // Often negative
+
+            // This is the change in angle from drone to object over the first/lastRealFeature frames.
+            double fwdTanDiff = firstFwdTan - lastFwdTan;
+
+            // If the difference in vertical angle moved in direct of flight is too small,
+            // this method will be too inaccurate to be useful.
+            if (Math.Abs(fwdTanDiff) < 0.1) // 0.1 rads = ~6 degrees
+                return UnknownValue; // Maintain current object height
+
+            // Returns the average tan of the sideways-down-angles
+            // of the object in the first frame detected and the last frame detected.
+            // Drone may be stationary but rotating.
+            // double avgSideRads = Math.Abs(Calculate_Image_AvgSidewaysRads());
+            // double avgSideTan = Math.Tan(avgSideRads);
+            // PQR TODO Integrate avgSideTan into calcs?? Or too small to matter?
+
+            var trigDownM = baselineM / fwdTanDiff;
+
+            // The object may be 10m to left and 40m in front of the drone location
+            // Calculate the height of the drone above the OBJECT's location DemM.
+            var groundDownM = AverageFlightStepFixedAltitudeM() - this.DemM;
+
+            var featureHeightM = (float)(groundDownM - trigDownM);
+
+            return featureHeightM;
+        }
+
+
+        // Calculate the height of the object using dead reckoning
+        private float Calculate_HeightM_Feature_Using_Dead_Reckoning(
+                        CombFeature firstRealFeature,
+                        CombFeature lastRealFeature,
+                        double baselineM)
+        {
+            float featureHeightM = UnknownValue;
+
+            // PQR TODO
+
+            return featureHeightM;
+        }
+
+
+
         // Estimate FEATURE height above ground based on distance down from drone
         // calculated using trigonometry and first/last real feature camera-view-angles.
         // This is a "look down" trig method. Accuracy limited by the accuracy of the drone altitude.
@@ -661,7 +722,8 @@ namespace SkyCombImage.ProcessLogic
 
             // We only call objects significant if they persist for at least Config.ObjectMinDurationMs
             // So don't evaluate the object height until we have seen it for that long.
-            if (initialCalc && (SeenForMinDurations() < 1))
+            var seenForUnits = SeenForMinDurations();
+            if (initialCalc && (seenForUnits < 1))
                 return;
 
             // If drone is too low this method will not work.
@@ -670,47 +732,23 @@ namespace SkyCombImage.ProcessLogic
             if (droneDistanceDownM < 5)
                 return; // Maintain current object height
 
+
+            float featureHeightM = UnknownValue;
+
             // Drone moved from point A to point B (base-line distance L) in metres.
             double baselineM = Model.Blocks.DistanceM(firstRealFeature.Block, lastRealFeature.Block);
             // If drone has not moved enough this method will be very inaccurate.
-            if (baselineM < 1 + (initialCalc ? 1 : 0))
-                return; // Maintain current object height
-
-            // Calculation is based on where object appears in the thermal camera field of view (FOV).
-            // If object does not appear to have changed image position then this method will not work.
-            double firstPixelY = firstRealFeature.CFM.PixelBox.Y + ((double)firstRealFeature.CFM.PixelBox.Height) / 2.0;
-            double lastPixelY = lastRealFeature.CFM.PixelBox.Y + ((double)lastRealFeature.CFM.PixelBox.Height) / 2.0;
-            if (firstPixelY == lastPixelY)
-                return; // Maintain current object height
-
-            // Get forward-down-angles of the object in the first / last frame detected.
-            // In DJI_0116, leg 4, objects are detected from +15 to -4 degrees.
-            (double firstFwdDegs, double lastFwdDegs) = Calculate_Image_FwdDeg(firstRealFeature, lastRealFeature);
-            double firstFwdTan = Math.Tan(firstFwdDegs * BaseConstants.DegreesToRadians); // Often postive
-            double lastFwdTan = Math.Tan(lastFwdDegs * BaseConstants.DegreesToRadians); // Often negative
-
-            // This is the change in angle from drone to object over the first/lastRealFeature frames.
-            double fwdTanDiff = firstFwdTan - lastFwdTan;
-
-            // If the difference in vertical angle moved in direct of flight is too small,
-            // this method will be too inaccurate to be useful.
-            if (Math.Abs(fwdTanDiff) < 0.1) // 0.1 rads = ~6 degrees
-                return; // Maintain current object height
-
-            // Returns the average tan of the sideways-down-angles
-            // of the object in the first frame detected and the last frame detected.
-            // Drone may be stationary but rotating.
-            // double avgSideRads = Math.Abs(Calculate_Image_AvgSidewaysRads());
-            // double avgSideTan = Math.Tan(avgSideRads);
-            // PQR TODO Integrate avgSideTan into calcs?? Or too small to matter?
-
-            var trigDownM = baselineM / fwdTanDiff;
-
-            // The object may be 10m to left and 40m in front of the drone location
-            // Calculate the height of the drone above the OBJECT's location DemM.
-            var groundDownM = AverageFlightStepFixedAltitudeM() - this.DemM;
-
-            var featureHeightM = (float)(groundDownM - trigDownM);
+            if (baselineM > 1 + (initialCalc ? 1 : 0))
+                // Calculate the height of the object based on changes in down angle over the baseline distance travelled. 
+                featureHeightM = Calculate_HeightM_Feature_Using_BaseLine_Movement(
+                                firstRealFeature, lastRealFeature, baselineM);
+            else if(seenForUnits >= 3)
+                // Object has been seen for a while, but drone has not moved much at all.
+                // Drone operator may be watched it. Use dead reckoning to estimate height.
+                featureHeightM = Calculate_HeightM_Feature_Using_Dead_Reckoning(
+                                firstRealFeature, lastRealFeature, baselineM);
+            if (featureHeightM < 0)
+                return;
 
             // Store the object height calculated (frame by frame) to the feature for debug purposes.
             lastRealFeature.CFM.HeightM = featureHeightM;
@@ -721,14 +759,6 @@ namespace SkyCombImage.ProcessLogic
             // lastFeature.Debug2 = firstFwdTan;
             // lastFeature.Debug3 = lastFwdRads;
             // lastFeature.Debug4 = lastFwdTan;
-            // lastFeature.Debug1 = droneDistanceDownM;
-            // lastFeature.Debug2 = baselineM;
-            // lastFeature.Debug3 = lastStep.DemM;
-            // lastFeature.Debug4 = this.DemM;
-            // lastFeature.Debug1 = firstFwdTan;
-            // lastFeature.Debug2 = lastFwdTan;
-            // lastFeature.Debug3 = trigDownM; // Biggest (worst) range over features
-            // lastFeature.Debug4 = HeightM;
 
 
             // Keep a record of the range of height estimates (over the frames the object is visible in)
