@@ -34,6 +34,9 @@ namespace SkyCombImage.DrawSpace
 
             HorizLeftLabel = MinHorizRaw.ToString();
             HorizRightLabel = MaxHorizRaw.ToString();
+
+            MaxHorizRaw += 2; // Extra room needed to draw the last histogram bar width
+
             Scale = scale;
 
             TextFontSize = 8;
@@ -65,11 +68,12 @@ namespace SkyCombImage.DrawSpace
                     if( value <= 0)
                         continue;
 
+                    var pxsDown = RawDataToHeightPixels(value, MaxFreq);
                     var rect = new Rectangle(
                         StepToWidth(rectNum * Scale + MinHorizRaw),
-                        OriginPixel.Y,
+                        pxsDown,
                         (int)StepWidthPxs,
-                        RawDataToHeightPixels(value, MaxFreq) - OriginPixel.Y);
+                        OriginPixel.Y - pxsDown);
 
                     image.Draw(rect, DroneColors.LegNameBgr, 1);
                 }

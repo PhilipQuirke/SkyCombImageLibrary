@@ -1242,7 +1242,7 @@ namespace SkyCombImage.ProcessLogic
             foreach (var theObject in this)
             {
                 int metric = (int)Math.Round(theObject.Value.HeightM);
-                if (metric != BaseConstants.UnknownValue)
+                if (metric >= 0)
                 {
                     var index = metric;
                     while (answer.Count <= index)
@@ -1263,7 +1263,7 @@ namespace SkyCombImage.ProcessLogic
             foreach (var theObject in this)
             {
                 var metric = (int)(theObject.Value.SizeCM2 / 1000);
-                if (metric != BaseConstants.UnknownValue)
+                if (metric >= 0)
                 {
                     var index = metric;
                     while (answer.Count <= index)
@@ -1284,7 +1284,7 @@ namespace SkyCombImage.ProcessLogic
             foreach (var theObject in this)
             {
                 var metric = theObject.Value.MaxHeat - this.MinHeat + 1;
-                if (metric != BaseConstants.UnknownValue)
+                if (metric >= 0)
                 {
                     var index = metric;
                     while (answer.Count <= index)
@@ -1305,7 +1305,7 @@ namespace SkyCombImage.ProcessLogic
             foreach (var theObject in this)
             {
                 var metric = theObject.Value.AvgRangeM;
-                if (metric != BaseConstants.UnknownValue)
+                if (metric >= 0)
                 {
                     var index = metric;
                     while (answer.Count <= index)
