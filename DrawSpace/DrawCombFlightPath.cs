@@ -1,6 +1,5 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved.
 using Emgu.CV;
-using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
 using SkyCombDrone.CommonSpace;
 using SkyCombDrone.DrawSpace;
@@ -9,7 +8,6 @@ using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using System.Drawing;
-using Emgu.CV.Reg;
 
 
 namespace SkyCombImage.DrawSpace

@@ -1234,6 +1234,90 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Return a histogram of the heights of the objects in this list
+        public List<int> HistogramHeightM()
+        {
+            var answer = new List<int>();
+
+            foreach (var theObject in this)
+            {
+                int metric = (int)Math.Round(theObject.Value.HeightM);
+                if (metric != BaseConstants.UnknownValue)
+                {
+                    var index = metric;
+                    while (answer.Count <= index)
+                        answer.Add(0);
+                    answer[index]++;
+                }
+            }
+
+            return answer;
+        }
+
+
+        // Return a histogram of the size of the objects in this list
+        public List<int> HistogramSize1000Cm2()
+        {
+            var answer = new List<int>();
+
+            foreach (var theObject in this)
+            {
+                var metric = (int)(theObject.Value.SizeCM2 / 1000);
+                if (metric != BaseConstants.UnknownValue)
+                {
+                    var index = metric;
+                    while (answer.Count <= index)
+                        answer.Add(0);
+                    answer[index]++;
+                }
+            }
+
+            return answer;
+        }
+
+
+        // Return a histogram of the heat of the objects in this list
+        public List<int> HistogramHeat()
+        {
+            var answer = new List<int>();
+
+            foreach (var theObject in this)
+            {
+                var metric = theObject.Value.MaxHeat - this.MinHeat + 1;
+                if (metric != BaseConstants.UnknownValue)
+                {
+                    var index = metric;
+                    while (answer.Count <= index)
+                        answer.Add(0);
+                    answer[index]++;
+                }
+            }
+
+            return answer;
+        }
+
+
+        // Return a histogram of the range of the objects in this list
+        public List<int> HistogramRangeM()
+        {
+            var answer = new List<int>();
+
+            foreach (var theObject in this)
+            {
+                var metric = theObject.Value.AvgRangeM;
+                if (metric != BaseConstants.UnknownValue)
+                {
+                    var index = metric;
+                    while (answer.Count <= index)
+                        answer.Add(0);
+                    answer[index]++;
+                }
+            }
+
+            return answer;
+        }
+
+
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
         public virtual DataPairList GetSettings()
         {
