@@ -272,8 +272,6 @@ namespace SkyCombImage.DrawSpace
 
 
         // Draw object at best estimate of height, location with error bars
-        // Draw object "location error" as horizontally-stretched H
-        // Draw object "height error" as vertically-stretched H
         public void GraphObjects(ref Image<Bgr, byte> currImage, CombProcessAll process)
         {
             try
@@ -281,7 +279,7 @@ namespace SkyCombImage.DrawSpace
                 if ((DroneDrawScope.Drone != null) && (process != null) && (process.CombObjs.CombObjList.Count > 0))
                 {
                     foreach (var thisObject in process.CombObjs.CombObjList)
-                        if (thisObject.Value.Significant)
+                        if (thisObject.Value.Significant && (thisObject.Value.HeightM != UnknownValue))
                         {
                             var avgHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.HeightM - MinVertRaw, VertRangeRaw));
                             var minHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.MinHeightM - MinVertRaw, VertRangeRaw));

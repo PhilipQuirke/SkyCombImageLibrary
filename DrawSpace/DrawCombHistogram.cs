@@ -24,7 +24,7 @@ namespace SkyCombImage.DrawSpace
             DrawScope = drawScope;
 
             Values = values;
-            MaxFreq = Math.Max(1, Values.Max());
+            MaxFreq = (Values.Count == 0 ? 1 : Math.Max(1, Values.Max()));
 
             MinHorizRaw = min;
             MaxHorizRaw = max;
