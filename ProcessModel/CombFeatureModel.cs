@@ -29,12 +29,10 @@ namespace SkyCombImage.ProcessModel
         // Note that y = 0 is the top of the image, but the furtherest pixel from the drone 
         public Rectangle PixelBox { get; set; }
 
-
         // Location of this feature inside drone flight box, in meters
         public DroneLocation? LocationM { get; set; }
 
-
-        // Draft height of the parent CombObject as calculated when processing this feature. 
+        // Height of this feature above the ground. 
         public float HeightM { get; set; }
 
 

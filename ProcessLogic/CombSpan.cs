@@ -51,7 +51,8 @@ namespace SkyCombImage.ProcessLogic
                 foreach (var theFeature in objectFeatures)
                 {
                     theFeature.Value.ResetMemberData();
-                    theFeature.Value.CalculateSettings_LocationM(theObject.Value.LastRealFeature(), false);
+                    theFeature.Value.CalculateSettings_LocationM_FlatGround(theObject.Value.LastRealFeature(), false);
+                    theFeature.Value.CalculateSettings_LocationM_HeightM_LineofSight();
                     theObject.Value.ClaimFeature(theFeature.Value, false);
                 }
             }
@@ -80,6 +81,10 @@ namespace SkyCombImage.ProcessLogic
             try
             {
                 NumSignificantObjects = combObjs.Count;
+
+                // Testing
+                // return;
+
 
                 if((legSteps.Count == 0) || (NumSignificantObjects == 0))
                     return;

@@ -35,7 +35,7 @@ namespace SkyCombImage.DrawSpace
             HorizLeftLabel = MinHorizRaw.ToString();
             HorizRightLabel = MaxHorizRaw.ToString();
 
-            MaxHorizRaw += 2; // Extra room needed to draw the last histogram bar width
+            MaxHorizRaw += 1; // Extra room needed to draw the last histogram bar width
 
             Scale = scale;
 
@@ -70,12 +70,13 @@ namespace SkyCombImage.DrawSpace
 
                     var pxsDown = RawDataToHeightPixels(value, MaxFreq);
                     var rect = new Rectangle(
-                        StepToWidth(rectNum * Scale + MinHorizRaw),
+                        StepToWidth(rectNum * Scale + MinHorizRaw) + 1,
                         pxsDown,
-                        (int)StepWidthPxs,
+                        Math.Max(1, (int)StepWidthPxs - 2),
                         OriginPixel.Y - pxsDown);
 
-                    image.Draw(rect, DroneColors.LegNameBgr, 1);
+                    image.Draw(rect, DroneColors.LegNameBgr,
+                        -1); // If thickness is less than 1, the rectangle is filled up
                 }
             }
             catch (Exception ex)

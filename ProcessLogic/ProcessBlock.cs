@@ -159,7 +159,7 @@ namespace SkyCombImage.ProcessLogic
                 Assert(advanceMS >= 0, "CalculateSettings_FromSteps: Logic 11");
                 StartTime += TimeSpan.FromMilliseconds(advanceMS);
             }
-            LinealM = travelM.DiagonalM();
+            LinealM = travelM.DiagonalM;
 
             if (prevBlock != null)
                 SumLinealM = prevBlock.SumLinealM + LinealM;

@@ -179,7 +179,7 @@ namespace SkyCombImage.DrawSpace
                 ResetMemberData();
             else
             {
-                MinHeightM = Math.Max(0, (int)Math.Floor(objList.MinHeightM));
+                MinHeightM = Math.Min(0, (int)Math.Floor(objList.MinHeightM)); // If we have negative heights show them
                 MaxHeightM = (int)Math.Ceiling(objList.MaxHeightM);
                 MinSizeCM2 = (int)Math.Floor(objList.MinSizeCM2);
                 MaxSizeCM2 = (int)Math.Ceiling(objList.MaxSizeCM2);

@@ -6,6 +6,7 @@ using SkyCombGround.CommonSpace;
 using System.Drawing;
 
 
+
 namespace SkyCombImage.ProcessLogic
 {
     // A Comb feature, is a dense cluster of hot pixels, associated 1-1 with a Block
@@ -77,143 +78,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Calculate center (centroid) of feature in image as fraction 0 to 1
-        // If yImageFrac = 0 then object is at the very bottom of the image (furtherest from drone)
-        // If yImageFrac = 1/2 then object is in the middle of the image 
-        // If yImageFrac = 1 then object is at the top of the image (closest to drone)
-        // Y = 1 is the top of the image, closest to the drone. 
-        public (double xFraction, double yFraction) CentroidImageFractions(bool initialCalc = true)
-        {
-            double xCenterPixels = CFM.PixelBox.X + CFM.PixelBox.Width / 2.0;
-            double yCenterPixels = CFM.PixelBox.Y + CFM.PixelBox.Height / 2.0;
-
-            // Calculate position of center of feature as fraction of drone image area.
-            double xFraction = xCenterPixels / Model.VideoData.ImageWidth;
-            // With image pixels, y = 0 is the top of the image. 
-            // Here we change the "sign" of Y, so that y = 0 is the bottom of the image.
-            double yFraction = (Model.VideoData.ImageHeight - yCenterPixels) / Model.VideoData.ImageHeight;
-
-            if (initialCalc)
-            {
-                // Should be between 0 and 1, but allow for rounding errors.
-                Assert(xFraction >= -0.1 && xFraction <= 1.1, "CentroidImageFractions: xFraction out of range");
-                Assert(yFraction >= -0.1 && yFraction <= 1.1, "CentroidImageFractions: yFraction out of range");
-            }
-
-            return (xFraction, yFraction);
-        }
-
-
-        // Returns the forward-down-angle (to vertical) of the object in the feature.
-        // Only uses camera physics and object position in image data.
-        public double Calculate_Image_FwdDeg( )
-        {
-            // Unitless numbers
-            // If yImageFrac = 0 then object is at the very bottom of the image (furtherest from drone) => FwdDegs is +16
-            // If yImageFrac = 1/2 then object is in the middle of the image => FwdDegs is 0
-            // If yImageFrac = 1 then object is at the top of the image (closest to drone) => FwdDegs is -16
-            (var _, var yImageFrac) = this.CentroidImageFractions();
-
-            // Calculation is based on physical parameters of the camera.
-            double fullVertFoVDeg = Model.VideoData.VFOVDeg; // Say 32 degrees
-            double halfVertFoVDeg = fullVertFoVDeg / 2; // Say 16 degrees
-
-            // Calculate the angle to object, in direction of flight (forward), to the vertical, in degrees
-            // Assumes drone is moving forward (not sidewards or backwards) or stationary.
-            double fwdFraction = yImageFrac * 2 - 1;
-            Assert(fwdFraction >= -1 && fwdFraction <= 1, "Calculate_Image_FwdDeg: fwdFraction out of range");
-
-            double fwdDeg = halfVertFoVDeg * fwdFraction; // Often close to +16
-            Assert(Math.Abs(fwdDeg) <= halfVertFoVDeg, "Calculate_Image_FwdDeg: fwdDeg out of range");
-
-            var cameraToVertDeg = this.Block.FlightStep.CameraToVerticalForwardDeg;
-
-            Assert(cameraToVertDeg >= 0 && cameraToVertDeg <= 90, "Calculate_Image_FwdDeg: Bad cameraToVertDeg");
-
-            fwdDeg += cameraToVertDeg;
-
-            return fwdDeg;
-        }
-
-
-        // Calculate the location (centroid) of this feature inside the drone imaging box
-        // This is the key translation from IMAGE to PHYSICAL coordinate system. 
-        public void CalculateSettings_LocationM(CombFeature lastRealFeature, bool initialCalc = true)
-        {
-            if ((CFM.LocationM != null) || (Block.FlightStep == null) || (Block.FlightStep.InputImageCenter == null))
-                return;
-
-            if((CFM.Type == CombFeatureTypeEnum.Unreal) && (lastRealFeature != null))
-            {
-                // Copy the last real features location
-                CFM.LocationM = lastRealFeature.CFM.LocationM?.Clone();
-                return;
-            }
-
-            // Calculate center (centroid) of feature in image pixels.
-            (double xFraction, double yFraction) = CentroidImageFractions(initialCalc);
-
-            // There are multiple Blocks per FlightLocation.
-            // This is the smoothed block-level change in location
-            // since the previous FlightStep, in the flight direction.
-            DroneLocation deltaBlockLocnM = new(
-                Block.DroneLocnM.NorthingM - Block.FlightStep.DroneLocnM.NorthingM,
-                Block.DroneLocnM.EastingM - Block.FlightStep.DroneLocnM.EastingM);
-
-            // Calculate physical location of this feature based on:
-            // 1) the POSITION in the image of the feature (given by xFraction, yFraction, say 0.4, 0.1)
-            // 2) the CENTER of the drone physical field of vision (given by FlightStep.InputImageCenter, say 240m Northing, 78m Easting )
-            // 3) the SIZE of the drone physical field of vision (given by InputImageSizeM, say 18m by 9m)
-            // 4) the DIRECTION of flight of the drone (given by YawDeg, say -73 degrees)
-            // This is the key translation from IMAGE to PHYSICAL coordinate system. 
-            // Does NOT consider land contour undulations. Assumes land is flat.
-            var flatLandLocationM =
-                Block.FlightStep.CalcImageFeatureLocationM(deltaBlockLocnM, xFraction, yFraction, initialCalc)
-                    ?.Clone();
-
-            // First approximation of location is based on flat land assumption.
-            CFM.LocationM = flatLandLocationM;
-
-            if(Model.GroundData == null)
-                return;
-            var groundModel = Model.GroundData.HasDsmModel ? Model.GroundData.DsmModel : Model.GroundData.DemModel;
-
-
-            // Consider land contour undulations 
-            // Move stepwise from the drone location in the direction the camera is pointing
-            // decreasing in height as per fwdDegs until we hit the DSM or DEM at that location.
-            var flightStep = Block.FlightStep;
-            var horizUnitVector = flightStep.InputImageUnitVector;
-
-            var fwdToVertDeg = Calculate_Image_FwdDeg();
-            float vertStepDown = (float)Math.Tan((90-fwdToVertDeg) * DegreesToRadians);
-            if (vertStepDown <= 0.1)
-                // Camera is almost horizontal and this method wont work well.
-                return;
-
-            DroneLocation viewLocnM = flightStep.DroneLocnM.Clone();
-            float viewAltitudeM = flightStep.FixedAltitudeM;
-            float viewDsmM = flightStep.DsmElseDemM;
-
-            float epsilon = 0.2F; // 10cm
-            int count = 0;
-            while ((viewDsmM != UnknownValue) && (viewAltitudeM > viewDsmM + epsilon))
-            {
-                // Move the view location away from the drone and vertically downwards.
-                viewLocnM.Add(horizUnitVector);
-                viewAltitudeM -= vertStepDown;
-                viewDsmM = groundModel.GetElevationByDroneLocn(viewLocnM);
-                if (viewDsmM == UnknownValue)
-                    break;
-                count++;
-                Assert(count < 250, "Bad range");
-            }
-            if (viewDsmM != UnknownValue)
-                CFM.LocationM = viewLocnM;
-        }
-
-
-        // Number of hot pixels inside the PixelBox
+         // Number of hot pixels inside the PixelBox
         public int NumHotPixels()
         {
             if (Pixels != null)
@@ -435,6 +300,262 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Calculate center (centroid) of feature in image as fraction 0 to 1
+        // If yImageFrac = 0 then object is at the very bottom of the image (furtherest from drone)
+        // If yImageFrac = 1/2 then object is in the middle of the image 
+        // If yImageFrac = 1 then object is at the top of the image (closest to drone)
+        // Y = 1 is the top of the image, closest to the drone. 
+        public (double xFraction, double yFraction) CentroidImageFractions(bool initialCalc = true)
+        {
+            double xCenterPixels = CFM.PixelBox.X + CFM.PixelBox.Width / 2.0;
+            double yCenterPixels = CFM.PixelBox.Y + CFM.PixelBox.Height / 2.0;
+
+            // Calculate position of center of feature as fraction of drone image area.
+            double xFraction = xCenterPixels / Model.VideoData.ImageWidth;
+            // With image pixels, y = 0 is the top of the image. 
+            // Here we change the "sign" of Y, so that y = 0 is the bottom of the image.
+            double yFraction = (Model.VideoData.ImageHeight - yCenterPixels) / Model.VideoData.ImageHeight;
+
+            if (initialCalc)
+            {
+                // Should be between 0 and 1, but allow for rounding errors.
+                Assert(xFraction >= -0.1 && xFraction <= 1.1, "CentroidImageFractions: xFraction out of range");
+                Assert(yFraction >= -0.1 && yFraction <= 1.1, "CentroidImageFractions: yFraction out of range");
+            }
+
+            return (xFraction, yFraction);
+        }
+
+
+        // Returns the forward-down-angle (to vertical) of the object in the feature.
+        // Only uses camera physics and object position in image data.
+        public double Calculate_Image_FwdDeg()
+        {
+            // Unitless numbers
+            // If yImageFrac = 0 then object is at the very bottom of the image (furtherest from drone) => FwdDegs is +16
+            // If yImageFrac = 1/2 then object is in the middle of the image => FwdDegs is 0
+            // If yImageFrac = 1 then object is at the top of the image (closest to drone) => FwdDegs is -16
+            (var _, var yImageFrac) = this.CentroidImageFractions();
+
+            // Calculation is based on physical parameters of the camera.
+            double fullVertFoVDeg = Model.VideoData.VFOVDeg; // Say 32 degrees
+            double halfVertFoVDeg = fullVertFoVDeg / 2; // Say 16 degrees
+
+            // Calculate the angle to object, in direction of flight (forward), to the vertical, in degrees
+            // Assumes drone is moving forward (not sidewards or backwards) or stationary.
+            double fwdFraction = yImageFrac * 2 - 1;
+            Assert(fwdFraction >= -1 && fwdFraction <= 1, "Calculate_Image_FwdDeg: fwdFraction out of range");
+
+            double fwdDeg = halfVertFoVDeg * fwdFraction; // Often close to +16
+            Assert(Math.Abs(fwdDeg) <= halfVertFoVDeg, "Calculate_Image_FwdDeg: fwdDeg out of range");
+
+            var cameraToVertDeg = this.Block.FlightStep.CameraToVerticalForwardDeg;
+
+            Assert(cameraToVertDeg >= 0 && cameraToVertDeg <= 90, "Calculate_Image_FwdDeg: Bad cameraToVertDeg");
+
+            fwdDeg += cameraToVertDeg;
+
+            return fwdDeg;
+        }
+
+
+        // Calculate the location (centroid) of this feature inside the drone imaging box
+        // This is the key translation from IMAGE to PHYSICAL coordinate system.
+        // If DSM or DEM data is available then considers ground level undulations between the drone and the feature.
+        // Assumes ground is flat and object is on the ground.
+        public void CalculateSettings_LocationM_FlatGround(CombFeature? lastRealFeature, bool initialCalc = true)
+        {
+            if ((CFM.LocationM != null) || (Block.FlightStep == null) || (Block.FlightStep.InputImageCenter == null))
+                return;
+            var flightStep = Block.FlightStep;
+
+            if ((CFM.Type == CombFeatureTypeEnum.Unreal) && (lastRealFeature != null))
+            {
+                // For unreal features, just copy the last real feature's location
+                CFM.LocationM = lastRealFeature.CFM.LocationM?.Clone();
+                CFM.HeightM = lastRealFeature.CFM.HeightM;
+                return;
+            }
+
+            // Calculate center (centroid) of feature in image pixels.
+            (double xFraction, double yFraction) = CentroidImageFractions(initialCalc);
+
+            // There are multiple Blocks per FlightLocation.
+            // This is the smoothed block-level change in location
+            // since the previous FlightStep, in the flight direction.
+            var droneBlockLocnM = Block.DroneLocnM;
+            DroneLocation deltaBlockLocnM = new(
+                droneBlockLocnM.NorthingM - flightStep.DroneLocnM.NorthingM,
+                droneBlockLocnM.EastingM - flightStep.DroneLocnM.EastingM);
+
+            // Calculate physical location of this feature based on:
+            // 1) the POSITION in the image of the feature (given by xFraction, yFraction, say 0.4, 0.1)
+            // 2) the CENTER of the drone physical field of vision (given by FlightStep.InputImageCenter, say 240m Northing, 78m Easting )
+            // 3) the SIZE of the drone physical field of vision (given by InputImageSizeM, say 18m by 9m)
+            // 4) the DIRECTION of flight of the drone (given by YawDeg, say -73 degrees)
+            // This is the key translation from IMAGE to PHYSICAL coordinate system. 
+            // Does NOT consider land contour undulations. Assumes land is flat.
+            var flatLandLocationM =
+                flightStep.CalcImageFeatureLocationM(deltaBlockLocnM, xFraction, yFraction, initialCalc)
+                    ?.Clone();
+
+            // First approximation of location is based on flat land assumption.
+            CFM.LocationM = flatLandLocationM;
+        }
+
+
+        // Calculate land contour undulations impact on object location and height.
+        // The DSM level at flatLandLocationM may be higher or lower than the ground level below the drone.
+        // Start half-way between the drone location and move stepwise to the flatLandLocationM and some distance beyond.
+        // Compare the sight-line height at each step to the DSM level at that location.
+        // Stop when the drone sight-line intersects the DSM level.
+        // Algorithm works even if drone is stationary. CameraToVerticalForwardDeg must be between 10 and 80 degrees
+        public void CalculateSettings_LocationM_HeightM_LineofSight(bool initialCalc = true)
+        {
+            if ((Block.FlightStep == null) || (Block.FlightStep.InputImageCenter == null))
+                return;
+            var flightStep = Block.FlightStep;
+
+            // Algorithm does not work if camera is pointing straight down.
+            // Algorithm works inaccurately if the camera is pointing at the horizon.
+            var fwdToVertDeg = flightStep.CameraToVerticalForwardDeg;
+            if ((fwdToVertDeg < 10) || (fwdToVertDeg > 80))
+                return;
+
+            if ((CFM.LocationM == null) || (Model.GroundData == null))
+                return;
+            var flatLandLocationM = CFM.LocationM;
+            var groundModel = Model.GroundData.HasDsmModel ? Model.GroundData.DsmModel : Model.GroundData.DemModel;
+            if(groundModel == null)
+                return;
+
+            // We use the drone camera's forward-down-angle (to vertical) to calculate the step-down distance (per 1 m horizontal).
+            // (Not the object as the object may be at the edge of the image with a FwdDeg of ~0.
+
+            var tan = Math.Tan(fwdToVertDeg * DegreesToRadians);
+            if (tan == 0)
+                return;
+            float vertStepDownPerHorizM = (float)(1.0 / tan);
+            if (vertStepDownPerHorizM <= 0.1)
+                // This is a 10cm drop in altitude for each 1m step towards the 
+                // Camera is almost horizontal and this method wont work well.
+                return;
+
+            // Calculate the distance from the drone to the flatLandLocationM
+            var droneBlockLocnM = Block.DroneLocnM;
+            DroneLocation deltaLocnM = flatLandLocationM.Subtract(droneBlockLocnM);
+            var deltaM = deltaLocnM.DiagonalM;
+            var horizUnitVector = deltaLocnM.UnitVector();
+
+            // Calculate horizontal step distance
+            var vertEpsilonM = 0.20f; // 20cm
+            var horizStepM = vertEpsilonM / vertStepDownPerHorizM;
+
+            // Step from the drone towards the flatLandLocationM and beyond
+            for (float testM = deltaM * 0.2f; testM < deltaM * 1.4f; testM += horizStepM)
+            {
+                var testLocnM = droneBlockLocnM.Add(horizUnitVector.Multiply(testM));
+                var testDsmM = groundModel.GetElevationByDroneLocn(testLocnM);
+                if (testDsmM == UnknownValue)
+                    continue;
+
+                var testAltM = Block.AltitudeM - testM * vertStepDownPerHorizM;
+                if (testAltM < testDsmM + vertEpsilonM)
+                {
+                    // Drone line of sight has intersected the surface layer
+                    CFM.LocationM = testLocnM;
+                    if (Model.GroundData.HasDemModel)
+                    {
+                        var testDemM = Model.GroundData.DemModel.GetElevationByDroneLocn(testLocnM);
+                        if (testDemM != UnknownValue)
+                        {
+                            CFM.LocationM = testLocnM;
+                            CFM.HeightM = testAltM - testDemM;
+
+                            Assert(testAltM <= Block.AltitudeM, "CalculateSettings_LocationM_and_HeightM: Bad HeightM 1");
+                            Assert(testDemM <= Block.AltitudeM, "CalculateSettings_LocationM_and_HeightM: Bad HeightM 2");
+                            Assert(CFM.HeightM < Block.AltitudeM - testDemM, "CalculateSettings_LocationM_and_HeightM: Bad HeightM 3");
+                            Assert(CFM.HeightM >= -vertEpsilonM, "CalculateSettings_LocationM_and_HeightM: Bad HeightM 4");
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+
+
+        // Estimate last FEATURE height above ground based on distance down from drone
+        // calculated using trigonometry and first/last real feature camera-view-angles.
+        // This is a "look down" trig method. Accuracy limited by the accuracy of the drone altitude.
+        // Object at the left/right edge of the image are slightly further from the drone
+        // than objects directly under the drone.
+        // Only works if the drone has moved horizontally a distance. Works at 1m. Better at 5m
+        // If drone is not moving now, calculated HeightM will be the same as last feature (within Gimbal wobble). 
+        public void Calculate_HeightM_BaseLineMovement(
+                    CombFeature firstRealFeature,
+                    double seenForMinDurations,
+                    float demM,
+                    float averageFlightStepFixedAltitudeM)
+        {
+            if ((firstRealFeature == null) ||
+                (firstRealFeature.FeatureId == this.FeatureId) || // Need multiple real distinct features
+                (this.Block == null) || // Last real feature
+                (this.Block.FlightStep == null))
+                return;
+
+            // If drone is too low this method will not work.
+            var lastStep = this.Block.FlightStep;
+            float droneDistanceDownM = lastStep.FixedDistanceDown;
+            if (droneDistanceDownM < 5)
+                return; // Maintain current object height
+
+            // Drone moved from point A to point B (base-line distance L) in metres.
+            double baselineM = RelativeLocation.DistanceM(firstRealFeature.Block.DroneLocnM, this.Block.DroneLocnM);
+
+            // The object may be 10m to left and 40m in front of the drone location
+            // Calculate the height of the drone above the OBJECT's location DemM.
+            var groundDownM = averageFlightStepFixedAltitudeM - demM;
+
+            // Calculation is based on where object appears in the thermal camera field of view (FOV).
+            // If object does not appear to have changed image position then this method will not work.
+            double firstPixelY = firstRealFeature.CFM.PixelBox.Y + ((double)firstRealFeature.CFM.PixelBox.Height) / 2.0;
+            double lastPixelY = this.CFM.PixelBox.Y + ((double)this.CFM.PixelBox.Height) / 2.0;
+            if (firstPixelY == lastPixelY)
+                return; // Maintain current object height
+
+            // Get forward-down-angles of the object in the first / last frame detected.
+            // In DJI_0116, leg 4, objects are detected from +15 to -4 degrees.
+            double firstFwdDegs = firstRealFeature.Calculate_Image_FwdDeg();
+            double lastFwdDegs = this.Calculate_Image_FwdDeg();
+
+            double firstFwdTan = Math.Tan(firstFwdDegs * BaseConstants.DegreesToRadians); // Often postive
+            double lastFwdTan = Math.Tan(lastFwdDegs * BaseConstants.DegreesToRadians); // Often negative
+
+            // This is the change in angle from drone to object over the first/lastRealFeature frames.
+            double fwdTanDiff = firstFwdTan - lastFwdTan;
+
+            // If the difference in vertical angle moved in direct of flight is too small,
+            // this method will be too inaccurate to be useful.
+            if (Math.Abs(fwdTanDiff) < 0.1) // 0.1 rads = ~6 degrees
+                return; // Maintain current object height
+
+            // Returns the average tan of the sideways-down-angles
+            // of the object in the first frame detected and the last frame detected.
+            // Drone may be stationary but rotating.
+            // double avgSideRads = Math.Abs(Calculate_Image_AvgSidewaysRads());
+            // double avgSideTan = Math.Tan(avgSideRads);
+            // PQR TODO Integrate avgSideTan into calcs?? Or too small to matter?
+
+            var trigDownM = baselineM / fwdTanDiff;
+
+            var featureHeightM = (float)(groundDownM - trigDownM);
+
+            if (featureHeightM >= 0)
+                this.CFM.HeightM = featureHeightM;
+        }
+
+
         // Get the class's settings as datapairs for use in ObjectForm
         public DataPairList GetSettings_ObjectForm(RelativeLocation objectLocation)
         {
@@ -527,7 +648,7 @@ namespace SkyCombImage.ProcessLogic
         //          - PixelNeighborSearch, minimum 3 x 3 search, adding hot pixels to hotPixels, until all edges finds zero hot pixels.
         //          - Add search area rectangle, hot pixel count, max heat, min heat, and hotPixels list into a results list.  
         //  - Repeat for next location where inputSearched[y,x] = 0                   
-        public void Process(
+        public void CreateFeaturesFromImage(
             CombProcessAll model,
             ProcessBlock block,
             Image<Bgr, byte> imgOriginal,
@@ -563,9 +684,6 @@ namespace SkyCombImage.ProcessLogic
                                     ref inputSearched,
                                     imgOriginal, imgThreshold,
                                     y, x);
-
-                                // This is the key translation from IMAGE to PHYSICAL coordinate system. 
-                                feature.CalculateSettings_LocationM(null);
 
                                 AddFeature(feature);
                             }
@@ -612,14 +730,13 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Calculate object's location (centroid) as average of real feature's locations. Also calculate error.
-        // The feature locations are based on where in the drone's field of image the object was detected. 
-        public (DroneLocation, float) Calculate_LocationM_and_LocationErrM(DroneLocation locationM)
+        // Calculate object's location (centroid) as average of real feature's locations, using real features.
+        // Also calculate the average error in location relative to the centroid.
+        public (DroneLocation, float) Calculate_Avg_LocationM_and_LocationErrM()
         {
             if (Count >= 2)
             {
                 int sumCount = 0;
-                double sumDist = 0;
                 DroneLocation sumLocation = new();
 
                 foreach (var feature in this)
@@ -627,19 +744,22 @@ namespace SkyCombImage.ProcessLogic
                         (feature.Value.CFM.Type == CombFeatureTypeEnum.Real))
                     {
                         sumCount++;
-
-                        if(locationM != null)
-                            sumDist += RelativeLocation.DistanceM(feature.Value.CFM.LocationM, locationM);
-                        
                         sumLocation.NorthingM += feature.Value.CFM.LocationM.NorthingM;
                         sumLocation.EastingM += feature.Value.CFM.LocationM.EastingM;
                     }
 
                 if (sumCount > 0)
                 {
-                    sumLocation.NorthingM /= sumCount;
-                    sumLocation.EastingM /= sumCount;
-                    return (sumLocation.Clone(), (float)(sumDist / sumCount));
+                    var theLocationM = sumLocation.Multiply(1.0f / sumCount);
+
+                    double sumDist = 0;
+                    foreach (var feature in this)
+                        if ((feature.Value.CFM.LocationM != null) &&
+                            (feature.Value.CFM.Type == CombFeatureTypeEnum.Real))
+                            sumDist += RelativeLocation.DistanceM(feature.Value.CFM.LocationM, theLocationM);
+                    var theLocationErrM = (float)(sumDist / sumCount);
+
+                    return (theLocationM.Clone(), theLocationErrM);
                 }
             }
             else if (Count == 1)
@@ -653,8 +773,8 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Calculate object height and object height error.
-        public (float, float) Calculate_HeightM_and_HeightErrM(int firstBlockId, int lastBlockId)
+        // Calculate object height and object height error, using real features.
+        public (float heightM, float heightErrM, float minHeight, float maxHeight) Calculate_Avg_HeightM_and_HeightErrM()
         {
             int theCount = 0;
             float sumHeight = 0;
@@ -669,14 +789,8 @@ namespace SkyCombImage.ProcessLogic
                     {
                         theCount++;
                         sumHeight += featureHeight;
-
-                        // To calculate the error, we use just the last X real features. 
-                        if ((feature.Value.Block.BlockId >= firstBlockId) &&
-                            (feature.Value.Block.BlockId <= lastBlockId))
-                        {
-                            minHeight = Math.Min(featureHeight, minHeight);
-                            maxHeight = Math.Max(featureHeight, maxHeight);
-                        }
+                        minHeight = Math.Min(featureHeight, minHeight);
+                        maxHeight = Math.Max(featureHeight, maxHeight);
                     }
                 }
 
@@ -687,11 +801,42 @@ namespace SkyCombImage.ProcessLogic
                     heightM,
                     Math.Max(
                         Math.Abs(maxHeight - heightM),
-                        Math.Abs(minHeight - heightM)));
+                        Math.Abs(minHeight - heightM)),
+                    minHeight, maxHeight);
             }
 
-            return (BaseConstants.UnknownValue, BaseConstants.UnknownValue);
+            return (BaseConstants.UnknownValue, BaseConstants.UnknownValue, BaseConstants.UnknownValue, BaseConstants.UnknownValue);
         }
 
+
+        // Return the average altitude of the drone over the object features.
+        public float AverageFlightStepFixedAltitudeM()
+        {
+            float answer = 0;
+            int count = 0;
+
+            foreach (var feature in this)
+            {
+                if (feature.Value.CFM.Type == CombFeatureTypeEnum.Real)
+                {
+                    var step = feature.Value.Block.FlightStep;
+                    if (step != null)
+                    {
+                        var atlM = feature.Value.Block.FlightStep.FixedAltitudeM;
+                        if (atlM != BaseConstants.UnknownValue)
+                        {
+                            answer += atlM;
+                            count++;
+                        }
+                    }
+                }
+            }
+            if (count > 0)
+                answer /= count;
+            else
+                answer = BaseConstants.UnknownValue;
+
+            return answer;
+        }
     };
 }
