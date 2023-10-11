@@ -31,13 +31,6 @@ namespace SkyCombImage.ProcessLogic
         public CombFeatureModel CFM { get; set; }
 
 
-        // During calculation we store in memory some values to aid debugging.
-        // They are NOT persisted to the Datastore, & so are NOT loaded from the Datastore.
-        public double Debug1 { get; set; }
-        public double Debug2 { get; set; }
-        public double Debug3 { get; set; }
-        public double Debug4 { get; set; }
-
 
         public CombFeature(CombProcessAll model, ProcessBlock block, CombFeatureTypeEnum type) : base(++NextFeatureId)
         {
@@ -70,11 +63,6 @@ namespace SkyCombImage.ProcessLogic
             base.ResetMemberData();
 
             CFM.ResetMemberData();
-
-            Debug1 = 0;
-            Debug2 = 0;
-            Debug3 = 0;
-            Debug4 = 0;
         }
 
 
@@ -272,11 +260,6 @@ namespace SkyCombImage.ProcessLogic
         // This feature consumes/absorbs/takes-hot-pixels-from the otherFeature, leaving otherFeature empty.
         public void Consume(CombFeature otherFeature)
         {
-            // Debugging - Set breakpoint on assignment. Assignment value is overridden later in this proc.
-            if (otherFeature.ObjectId == Config.FocusObjectId)
-                otherFeature.Attributes = "";
-
-
             // Transfer the pixels
             this.Pixels.AddRange(otherFeature.Pixels);
             otherFeature.Pixels = null;
@@ -569,12 +552,6 @@ namespace SkyCombImage.ProcessLogic
                 { "WidthPixels", CFM.PixelBox.Width },
                 { "DepthPixels", CFM.PixelBox.Height },
                 { "#HotPixels", NumHotPixels() },
-
-                // During calculation we store in memory some values to aid debugging. They are NOT persisted to the Datastore.
-                { "Debug1", Debug1, 4 },
-                { "Debug2", Debug2, 4 },
-                { "Debug3", Debug3, 4 },
-                { "Debug4", Debug4, 4 },
             };
         }
 

@@ -270,20 +270,19 @@ namespace SkyCombImage.ProcessLogic
             // Which estimates object height above ground based on distance down from drone
             // calculated using trigonometry and first/last real feature camera-view-angles.
             // May override CalculateSettings_LocationM_HeightM_LineofSight
-            if((!initialCalc || (SeenForMinDurations() >= 1)) && HasMoved(initialCalc))
+            if((!initialCalc || (SeenForMinDurations() >= 1)) && HasMoved(initialCalc)) // PQR    && is moving now.
                 Calculate_HeightM_LastFeature_BaseLineMovement();
 
-            // Calculate object height and object height error.
+            // Calculate object height and object height error (as average over features).
             Calculate_HeightM_and_HeightErrM();
 
-            // Calculate the size of the object in square centimeters.
-            // Based on MAXIMUM number of hot pixels in any real feature.
+            // Calculate the size of the object in square centimeters (based on maximum # hot pixels over features).
             Calculate_SizeCM2();
 
-            // Calculate the average range of the object from the drone in meters.
+            // Calculate the range of the object from the drone in meters (as average over features).
             Calculate_AvgRangeM();
 
-            // Calculate the maximum heat value of any pixel in this object in any frame 
+            // Calculate the maximum heat value of any pixel in this object (as maximum over features).
             Calculate_MaxHeat();
 
             // Is this object significant?
