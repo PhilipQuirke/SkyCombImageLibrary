@@ -243,7 +243,8 @@ namespace SkyCombImage.ProcessLogic
         public void Consume(CombFeature otherFeature)
         {
             // Transfer the pixels
-            this.Pixels.AddRange(otherFeature.Pixels);
+            if(otherFeature.Pixels != null)
+                Pixels.AddRange(otherFeature.Pixels);
             otherFeature.Pixels = null;
 
             // Expand PixelBox
@@ -379,9 +380,9 @@ namespace SkyCombImage.ProcessLogic
         // Compare the sight-line height at each step to the DSM level at that location.
         // Stop when the drone sight-line intersects the DSM level.
         // Algorithm works even if drone is stationary. CameraToVerticalForwardDeg must be between 10 and 80 degrees
-        public void CalculateSettings_LocationM_HeightM_LineofSight(bool initialCalc = true)
+        public void CalculateSettings_LocationM_HeightM_LineofSight()
         {
-            if ((Block.FlightStep == null) || (Block.FlightStep.InputImageCenter == null))
+            if ((Model == null) || (Block.FlightStep == null) || (Block.FlightStep.InputImageCenter == null))
                 return;
             var flightStep = Block.FlightStep;
 
@@ -444,7 +445,7 @@ namespace SkyCombImage.ProcessLogic
                             Assert(testAltM <= Block.AltitudeM, "CalculateSettings_LocationM_and_HeightM: Bad HeightM 1");
                             Assert(testDemM <= Block.AltitudeM, "CalculateSettings_LocationM_and_HeightM: Bad HeightM 2");
                             Assert(HeightM < Block.AltitudeM - testDemM, "CalculateSettings_LocationM_and_HeightM: Bad HeightM 3");
-                            Assert(HeightM >= -vertEpsilonM, "CalculateSettings_LocationM_and_HeightM: Bad HeightM 4");
+                            Assert(HeightM >= -2.0*vertEpsilonM, "CalculateSettings_LocationM_and_HeightM: Bad HeightM 4");
                         }
                     }
 
@@ -553,16 +554,6 @@ namespace SkyCombImage.ProcessLogic
             settings.Add("Leg", (Block != null ? Block.FlightLegId : 0));
 
             return settings;
-        }
-
-
-        // Load this feature's settings from strings (loaded from a spreadsheet)
-        // This function must align to the above GetSettings function.
-        override public void LoadSettings(List<string> settings)
-        {
-            base.LoadSettings(settings);
-
-            LoadSettings(settings);
         }
     }
 

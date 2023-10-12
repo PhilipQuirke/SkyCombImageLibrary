@@ -251,41 +251,56 @@ namespace SkyCombImage.ProcessLogic
             COM.FirstFwdDownDeg = (float)FirstFeature().Calculate_Image_FwdDeg();
             COM.LastFwdDownDeg = (float)LastRealFeature().Calculate_Image_FwdDeg();
 
-            // First estimate of object location (centroid) as average of real feature locations.
+            // First estimate of OBJECT location (centroid) as average over all real features.
             // The feature locations are based on where in the drone's field of image the object was detected,
             // and takes into account ground undulations. The object's location is further refined later.
             Calculate_LocationM_and_LocationErrM();
 
-            // Estimate the object's DEM at the object's location
+            // Estimate the OBJECT's DEM at the object's location
             // (which could be say 20m left of the drone's flight path).
             Calculate_DemM();
 
             // In RunVideoCombDrone.AddBlockAndProcessInputVideoFrame, a new CombFeature is created
-            // and these "feature" calls are made (before the feature is assigned to an object):
-            //    feature.CalculateSettings_LocationM_FlatGround();           // Assumes flat ground & feature is on ground
-            //    feature.CalculateSettings_LocationM_HeightM_LineofSight();  // Works if CameraFwdDeg between 10 and 80.
+            // and these "one-feature" function calls are made (before the feature is assigned to an object):
+            //    FEATURE.CalculateSettings_LocationM_FlatGround();           // Assumes flat ground & feature is on ground
+            //    FEATURE.CalculateSettings_LocationM_HeightM_LineofSight();  // Works if CameraFwdDeg between 10 and 80.
             // Later a CombObject consumes/claims the new feature.
             // The new feature may be the 10th feature of the object we call:
-            //    Calculate_HeightM_LastFeature_BaseLineMovement();           // Works if drone has moved horizontally
+            //    FEATURE.Calculate_HeightM_BaseLineMovement();           // Works if drone has moved horizontally
             // Which estimates object height above ground based on distance down from drone
             // calculated using trigonometry and first/last real feature camera-view-angles.
+            // Only works if the drone has moved horizontally some distance. Works at 1m. Better at 5m
             // May override CalculateSettings_LocationM_HeightM_LineofSight
-            if((!initialCalc || (SeenForMinDurations() >= 1)) && HasMoved(initialCalc)) // PQR    && is moving now.
-                Calculate_HeightM_LastFeature_BaseLineMovement();
+            if ((!initialCalc || (SeenForMinDurations() >= 1)) && HasMoved(initialCalc))
+            { 
+                // Estimate last FEATURE height above ground based on distance down from drone
+                // calculated using trigonometry and first/last real feature camera-view-angles.
+                // This is a "look down" trig method. Accuracy limited by the accuracy of the drone altitude.
+                // Object at the left/right edge of the image are slightly further from the drone
+                // than objects directly under the drone.
+                // If drone is not moving now, calculated HeightM will be the same as last feature (within Gimbal wobble). 
+                var lastFeature = LastFeature();
+                if (lastFeature.Type == CombFeatureTypeEnum.Real) // PQR    && is moving now.
+                    lastFeature.Calculate_HeightM_BaseLineMovement(
+                            FirstFeature(),
+                            SeenForMinDurations(),
+                            DemM,
+                            Features.AverageFlightStepFixedAltitudeM());
+            }
 
-            // Calculate object height and object height error (as average over features).
+            // Calculate OBJECT height and object height error (as average over real features).
             Calculate_HeightM_and_HeightErrM();
 
-            // Calculate the size of the object in square centimeters (based on maximum # hot pixels over features).
+            // Calculate OBJECT size in square centimeters (based on maximum # hot pixels over real features).
             Calculate_SizeCM2();
 
-            // Calculate the range of the object from the drone in meters (as average over features).
+            // Calculate the range of the OBJECT from the drone in meters (as average over real features).
             Calculate_AvgRangeM();
 
-            // Calculate the maximum heat value of any pixel in this object (as maximum over features).
+            // Calculate the OBJECT maximum heat value (of any pixel over real features).
             Calculate_MaxHeat();
 
-            // Is this object significant?
+            // Is this OBJECT significant?
             Calculate_Significant();
         }
 
@@ -515,27 +530,6 @@ namespace SkyCombImage.ProcessLogic
                 LastRealFeature().Block.DroneLocnM);
             // If drone has not moved enough this method will be very inaccurate.
             return (baselineM >= 1 + (initialCalc ? 1 : 0));
-        }
-
-
-        // Estimate last FEATURE height above ground based on distance down from drone
-        // calculated using trigonometry and first/last real feature camera-view-angles.
-        // This is a "look down" trig method. Accuracy limited by the accuracy of the drone altitude.
-        // Object at the left/right edge of the image are slightly further from the drone
-        // than objects directly under the drone.
-        // Only works if the drone has moved horizontally a distance. Works at 1m. Better at 5m
-        // If drone is not moving now, calculated HeightM will be the same as last feature (within Gimbal wobble). 
-        private void Calculate_HeightM_LastFeature_BaseLineMovement()
-        {
-            var lastFeature = LastFeature();
-
-            // We only refine object height using real features
-            if (lastFeature.Type == CombFeatureTypeEnum.Real)
-                lastFeature.Calculate_HeightM_BaseLineMovement(
-                        FirstFeature(),
-                        SeenForMinDurations(),
-                        DemM,
-                        Features.AverageFlightStepFixedAltitudeM() );
         }
 
 

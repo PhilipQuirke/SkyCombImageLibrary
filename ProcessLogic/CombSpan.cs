@@ -82,10 +82,6 @@ namespace SkyCombImage.ProcessLogic
             {
                 NumSignificantObjects = combObjs.Count;
 
-                // Testing
-                // return;
-
-
                 if((legSteps.Count == 0) || (NumSignificantObjects == 0))
                     return;
 
