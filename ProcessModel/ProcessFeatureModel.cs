@@ -6,11 +6,23 @@ using System.Drawing;
 // Models are used in-memory and to persist/load data to/from the datastore
 namespace SkyCombImage.ProcessModel
 {
-    /// Is the feature:
-    /// - Real (containing hot pixels), 
-    /// - Unreal (Persistance search feature, no hot pixels), or
-    /// - Consumed (was Real once but now eaten by another Real feature in the same block).
+    // Is the feature:
+    // - Real (containing hot pixels), 
+    // - Unreal (Persistance search feature, no hot pixels), or
+    // - Consumed (was Real once but now eaten by another Real feature in the same block).
     public enum CombFeatureTypeEnum { Real, Unreal, Consumed };
+
+
+    // Height alogrithm
+    public enum HeightAlgorithmEnum { 
+        Unknown = 0,        // Default value
+        // Success cases:
+        UnrealCopy = 1,     // Height was copied from a previous feature for an unreal feature.
+        BaseLine = 2,       // Height was calculated from change in camera down angle and the drone base line movement
+        LineOfSight = 3,    // Height was calculated from camera down angle and land contours.
+        // Failure cases:
+        BaseLine_TooSoon = 20, BaseLine_Bad1 = 21, BaseLine_Bad2 = 22, BaseLine_Bad3 = 23, BaseLine_Bad4 = 24, BaseLine_Neg = 25,
+        LineOfSight_NoDsm = 30, LineOfSight_NoDem = 31 };
 
 
     // A class to hold a significant feature 
@@ -50,7 +62,8 @@ namespace SkyCombImage.ProcessModel
 
         // Height of this feature above the ground. 
         public float HeightM { get; set; }
-
+        // Technique used to calculate HeightM 
+        public HeightAlgorithmEnum HeightAlgorithm { get; set; }
 
 
         public ProcessFeatureModel(int blockId, CombFeatureTypeEnum type)
@@ -82,6 +95,20 @@ namespace SkyCombImage.ProcessModel
             ObjectId = 0;
             LocationM = null;
             HeightM = UnknownValue;
+            HeightAlgorithm = HeightAlgorithmEnum.Unknown;
+        }
+
+
+        // Set the HeightAlgorithm value to an error value - unless it is already set to a success value.
+        // We may try two height algorithms on this feature. If the first succeeds, we retain that success value
+        public void SetHeightAlgorithmError(HeightAlgorithmEnum theCase)
+        {
+            if ((theCase == HeightAlgorithmEnum.UnrealCopy) ||
+                (theCase == HeightAlgorithmEnum.BaseLine) ||
+                (theCase == HeightAlgorithmEnum.LineOfSight))
+                return;
+
+            HeightAlgorithm = theCase;
         }
 
 
@@ -98,16 +125,17 @@ namespace SkyCombImage.ProcessModel
         public const int NorthingMSetting = 8;
         public const int EastingMSetting = 9;
         public const int HeightMSetting = 10;
-        public const int PixelBoxXSetting = 11;
-        public const int PixelBoxYSetting = 12;
-        public const int PixelBoxWidthSetting = 13;
-        public const int PixelBoxHeightSetting = 14;
-        public const int MinHeatSetting = 15;
-        public const int MaxHeatSetting = 16;
-        public const int NumHotPixelsSetting = 17;
-        public const int DensityPercSetting = 18;
-        public const int PixelDensityGoodSetting = 19;
-        public const int LegIdSetting = 20;
+        public const int HeightAlgorithmSetting = 11;
+        public const int PixelBoxXSetting = 12;
+        public const int PixelBoxYSetting = 13;
+        public const int PixelBoxWidthSetting = 14;
+        public const int PixelBoxHeightSetting = 15;
+        public const int MinHeatSetting = 16;
+        public const int MaxHeatSetting = 17;
+        public const int NumHotPixelsSetting = 18;
+        public const int DensityPercSetting = 19;
+        public const int PixelDensityGoodSetting = 20;
+        public const int LegIdSetting = 21;
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
@@ -128,6 +156,7 @@ namespace SkyCombImage.ProcessModel
                 { "Northing M", (LocationM != null ? LocationM.NorthingM : 0), LocationNdp },
                 { "Easting M", (LocationM != null ? LocationM.EastingM : 0), LocationNdp },
                 { "Height M", (HeightM == UnknownValue ? UnknownHeight : HeightM), HeightNdp },
+                { "Ht Algorithm", (int)HeightAlgorithm },
                 { "Box.X", PixelBox.X },
                 { "Box.Y", PixelBox.Y },
                 { "Box.Width", PixelBox.Width },
@@ -138,7 +167,7 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        virtual public void LoadSettings(List<string> settings)
+        public void LoadSettings(List<string> settings)
         {
             FeatureId = StringToNonNegInt(settings[FeatureIdSetting - 1]);
             IsTracked = settings[IsTrackedSetting-1] == "true";
@@ -153,6 +182,7 @@ namespace SkyCombImage.ProcessModel
             HeightM = StringToFloat(settings[HeightMSetting - 1]);
             if (HeightM == UnknownHeight)
                 HeightM = UnknownValue;
+            HeightAlgorithm = (HeightAlgorithmEnum) StringToNonNegInt(settings[ObjectIdSetting - 1]);
 
             PixelBox = new Rectangle(
                 StringToInt(settings[PixelBoxXSetting - 1]),

@@ -46,7 +46,6 @@ namespace SkyCombImage.PersistModel
                 Data.SetNumberColumnNdp(TardisModel.DeltaYawDegSetting, DegreesNdp);
                 Data.SetNumberColumnNdp(TardisModel.PitchDegSetting, DegreesNdp);
                 Data.SetNumberColumnNdp(TardisModel.RollDegSetting, DegreesNdp);
-                Data.SetNumberColumnNdp(ProcessBlockModel.VelXSetting, PixelVelNdp);
                 Data.SetNumberColumnNdp(ProcessBlockModel.VelYSetting, PixelVelNdp);
 
                 Data.SetColumnColor(TardisModel.TardisIdSetting, blockRow, Color.Blue);

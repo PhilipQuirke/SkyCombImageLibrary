@@ -19,6 +19,11 @@ namespace SkyCombImage.DrawSpace
         private int Scale;
 
 
+        // Sometimes user chooses to view a subset of the raw data.
+        public int FilterMin { get; set; } = UnknownValue;
+        public int FilterMax { get; set; } = UnknownValue;
+
+
         public DrawHistogram(DrawScope drawScope, List<int> values, int min, int max, int scale=1) : base(drawScope, true, true)
         {
             DrawScope = drawScope;
@@ -60,24 +65,37 @@ namespace SkyCombImage.DrawSpace
                 if (Values.Count <= 2)
                     return;
 
-                // Draw series of rectangles
-                int numRects = Values.Count;
-                for (int rectNum = 0; rectNum < numRects; rectNum++)
-                {
-                    int value = Values[rectNum];
-                    if( value <= 0)
-                        continue;
+                // Draw series of rectangles in two passes: Out of filter range first, then in filter range (so on top).
+                for (int pass = 0; pass <= 1; pass++)
+                    for (int rectNum = 0; rectNum < Values.Count; rectNum++)
+                    {
+                        int value = Values[rectNum];
+                        if( value <= 0)
+                            continue;
 
-                    var pxsDown = RawDataToHeightPixels(value, MaxFreq);
-                    var rect = new Rectangle(
-                        StepToWidth(rectNum * Scale + MinHorizRaw) + 1,
-                        pxsDown,
-                        Math.Max(1, (int)StepWidthPxs - 2),
-                        OriginPixel.Y - pxsDown);
+                        var horizValue = rectNum * Scale + MinHorizRaw;
 
-                    image.Draw(rect, DroneColors.LegNameBgr,
-                        -1); // If thickness is less than 1, the rectangle is filled up
-                }
+                        bool outOfFilterRange =
+                            ((FilterMin != UnknownValue) && (horizValue < FilterMin)) ||
+                            ((FilterMax != UnknownValue) && (horizValue > FilterMax));
+
+                        if (((pass == 0) && outOfFilterRange) ||
+                            ((pass == 1) && !outOfFilterRange))
+                        {
+                            // Show "out of filter range" histogram bars as dark gray rectangles.
+                            var theColor = (pass == 0 ? DroneColors.DarkGrayBgr : DroneColors.LegNameBgr);
+                            var thickness = -1; // If thickness is less than 1, the rectangle is filled up
+
+                            var pxsDown = RawDataToHeightPixels(value, MaxFreq);
+                            var rect = new Rectangle(
+                                StepToWidth(horizValue) + 1,
+                                pxsDown,
+                                Math.Max(1, (int)StepWidthPxs - 2),
+                                OriginPixel.Y - pxsDown);
+
+                            image.Draw(rect, theColor, thickness);
+                        }
+                    }
             }
             catch (Exception ex)
             {
@@ -89,36 +107,44 @@ namespace SkyCombImage.DrawSpace
 
     public class DrawHeightHistogram : DrawHistogram
     {
-        public DrawHeightHistogram(DrawScope drawScope, CombObjList objs) :
+        public DrawHeightHistogram(DrawScope drawScope, DrawObjectScope drawObjectScope, CombObjList objs) :
             base(drawScope, objs.HistogramHeightM(), 0, (int)Math.Ceiling(objs.MaxHeightM))
         {
+            FilterMin = drawObjectScope.MinHeightM;
+            FilterMax = drawObjectScope.MaxHeightM;
         }
     }
 
 
     public class DrawSizeHistogram : DrawHistogram
     {
-        public DrawSizeHistogram(DrawScope drawScope, CombObjList objs) :
+        public DrawSizeHistogram(DrawScope drawScope, DrawObjectScope drawObjectScope, CombObjList objs) :
             base(drawScope, objs.HistogramSize1000Cm2(), 0, (int)Math.Ceiling(objs.MaxSizeCM2), 1000)
         {
+            FilterMin = drawObjectScope.MinSizeCM2;
+            FilterMax = drawObjectScope.MaxSizeCM2;
         }
     }
 
 
     public class DrawHeatHistogram : DrawHistogram
     {
-        public DrawHeatHistogram(DrawScope drawScope, CombObjList objs) :
+        public DrawHeatHistogram(DrawScope drawScope, DrawObjectScope drawObjectScope, CombObjList objs) :
             base(drawScope, objs.HistogramHeat(), objs.MinHeat, objs.MaxHeat)
         {
+            FilterMin = drawObjectScope.MinHeat;
+            FilterMax = drawObjectScope.MaxHeat;
         }
     }
 
 
     public class DrawRangeHistogram : DrawHistogram
     {
-        public DrawRangeHistogram(DrawScope drawScope, CombObjList objs) :
+        public DrawRangeHistogram(DrawScope drawScope, DrawObjectScope drawObjectScope, CombObjList objs) :
             base(drawScope, objs.HistogramRangeM(), 0, objs.MaxRangeM)
         {
+            FilterMin = drawObjectScope.MinRangeM;
+            FilterMax = drawObjectScope.MaxRangeM;
         }
     }
 }

@@ -172,7 +172,7 @@ namespace SkyCombImage.ProcessLogic
             // Estimate the approximate speed of the drone at this block in pixels per block.
             // Based on drone speed, drone height, camera down angle & video resolution.
             // Similar to the CalculateSettings_InputImageCenter code.
-            VelocityInPixelsPerBlock = new();
+            VelocityInYPixelsPerBlock = UnknownValue;
             if ((beforeStep != null) && (beforeStep.DemM != UnknownValue) && (beforeStep.InputImageSizeM != null))
             {
                 // Fraction of image traversed per second
@@ -184,7 +184,7 @@ namespace SkyCombImage.ProcessLogic
 
                 // The 0 below assumes drone is not yawing. But in leg,
                 // MaxLegStepDeltaYawDeg=4 & MaxLegSumDeltaYawDeg=10. Yaw is often much less.
-                VelocityInPixelsPerBlock = new(0, imagePixelsPerBlock);
+                VelocityInYPixelsPerBlock = imagePixelsPerBlock;
             }
 
             if ((prevBlock != null) && (!badBlockMs))
@@ -228,8 +228,6 @@ namespace SkyCombImage.ProcessLogic
             return answer;
         }
     };
-
-
 
 
     public class ProcessBlockList : SortedList<int,ProcessBlock>

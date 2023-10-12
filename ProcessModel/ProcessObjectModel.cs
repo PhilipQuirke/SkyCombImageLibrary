@@ -2,7 +2,6 @@
 using SkyCombImage.CategorySpace;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
-using System;
 
 
 // Models are used in-memory and to persist/load data to/from the datastore

@@ -40,46 +40,39 @@ namespace SkyCombImage.ProcessLogic
         // Constructor used when loaded objects from the datastore
         public CombFeature(CombProcessAll model, List<string> settings) : base(settings)
         {
-            ResetMemberData();
-            LoadSettings(settings);
-
             Model = model;
             Block = Model.Blocks[BlockId];
         }
 
 
         // Number of hot pixels inside the PixelBox
-        public int NumHotPixels()
-        {
+        public int NumHotPixels { get {
             if (Pixels != null)
                 return Pixels.Count;
             return 0;
-        }
+        } }
 
 
         // Percentage of PixelBox which is hot pixels
-        public int DensityPerc()
-        {
+        public int DensityPerc { get {
             if (Pixels != null)
                 return (int)((100.0f * Pixels.Count) / (PixelBox.Width * PixelBox.Height));
             return 0;
-        }
+        } }
 
 
         // Is this feature's hot pixel density percentage above the minimum?
-        public bool PixelDensityGood()
-        {
-            return DensityPerc() >= Config.FeatureMinDensityPerc;
-        }
+        public bool PixelDensityGood { get {
+            return DensityPerc >= Config.FeatureMinDensityPerc;
+        } }
 
 
         // Is this feature larger than the largest allowed?
-        public bool FeatureOverSized()
-        {
+        public bool FeatureOverSized { get {
             return
                 (PixelBox.Width > Config.FeatureMaxSize) ||
                 (PixelBox.Height > Config.FeatureMaxSize);
-        }
+        } }
 
 
         // Does this Feature's rectangles and the specified object's rectangle overlap significantly?
@@ -210,17 +203,17 @@ namespace SkyCombImage.ProcessLogic
                     PixelBox = new Rectangle(rectLeft, rectTop, rectRight - rectLeft + 1, rectBottom - rectTop + 1);
 
                     // If the rectangle density is lower than the density threshold then stop expanding. Avoids large, difuse features.
-                    if (!PixelDensityGood())
+                    if (!PixelDensityGood)
                         break;
 
                     // If this fearure is larger than allowed then stop expanding
-                    if (FeatureOverSized())
+                    if (FeatureOverSized)
                         break;
                 }
 
                 // Is this feature significant?
-                bool sizeOk = (NumHotPixels() >= Config.FeatureMinPixels);
-                bool densityOk = PixelDensityGood();
+                bool sizeOk = (NumHotPixels >= Config.FeatureMinPixels);
+                bool densityOk = PixelDensityGood;
                 Significant = sizeOk && densityOk;
                 if (Significant)
                     Attributes = "Yes";
@@ -328,7 +321,7 @@ namespace SkyCombImage.ProcessLogic
             // Angles above horizontal may break our code so limit max to 90 (horizontal).
             // We are looking for close-by animals, not animals on the horizon,
             // so our algorithms tend to ignore data when fwdDeg > 80 (eighty) degrees. 
-            fwdDeg = Math.Max(90, fwdDeg); // 90 degrees is horizontal
+            fwdDeg = Math.Min(90, fwdDeg); // 90 degrees is horizontal
 
             return fwdDeg;
         }
@@ -351,6 +344,7 @@ namespace SkyCombImage.ProcessLogic
                     // For unreal features, just copy the last real feature's location
                     LocationM = lastRealFeature.LocationM?.Clone();
                     HeightM = lastRealFeature.HeightM;
+                    HeightAlgorithm = HeightAlgorithmEnum.UnrealCopy;
                     return;
                 }
 
@@ -449,7 +443,10 @@ namespace SkyCombImage.ProcessLogic
                     var testLocnM = droneBlockLocnM.Add(horizUnitVector.Multiply(testM));
                     float testDsmM = groundModel.GetElevationByDroneLocn(testLocnM);
                     if (testDsmM == UnknownValue)
+                    {
+                        SetHeightAlgorithmError(HeightAlgorithmEnum.LineOfSight_NoDsm);
                         continue;
+                    }
 
                     phase = 7;
                     float testAltM = Block.AltitudeM - testM * vertStepDownPerHorizM;
@@ -481,8 +478,13 @@ namespace SkyCombImage.ProcessLogic
                                 }
                                 else
                                     HeightM = Math.Max(0, testHeightM);
+                                HeightAlgorithm = HeightAlgorithmEnum.LineOfSight;
                             }
+                            else
+                                SetHeightAlgorithmError(HeightAlgorithmEnum.LineOfSight_NoDem);
                         }
+                        else
+                            SetHeightAlgorithmError(HeightAlgorithmEnum.LineOfSight_NoDem);
 
                         break;
                     }
@@ -516,13 +518,20 @@ namespace SkyCombImage.ProcessLogic
                     (firstRealFeature.FeatureId == this.FeatureId) || // Need multiple real distinct features
                     (this.Block == null) || // Last real feature
                     (this.Block.FlightStep == null))
+                {
+                    SetHeightAlgorithmError(HeightAlgorithmEnum.BaseLine_Bad1);
                     return;
+                }
 
                 // If drone is too low this method will not work.
                 var lastStep = this.Block.FlightStep;
                 float droneDistanceDownM = lastStep.FixedDistanceDown;
                 if (droneDistanceDownM < 5)
-                    return; // Maintain current object height
+                {
+                    SetHeightAlgorithmError(HeightAlgorithmEnum.BaseLine_Bad2);
+                    return;
+                }
+
 
                 // Drone moved from point A to point B (base-line distance L) in metres.
                 double baselineM = RelativeLocation.DistanceM(firstRealFeature.Block.DroneLocnM, this.Block.DroneLocnM);
@@ -536,7 +545,11 @@ namespace SkyCombImage.ProcessLogic
                 double firstPixelY = firstRealFeature.PixelBox.Y + ((double)firstRealFeature.PixelBox.Height) / 2.0;
                 double lastPixelY = this.PixelBox.Y + ((double)this.PixelBox.Height) / 2.0;
                 if (firstPixelY == lastPixelY)
-                    return; // Maintain current object height
+                {
+                    SetHeightAlgorithmError(HeightAlgorithmEnum.BaseLine_Bad3);
+                    return;
+                }
+
 
                 // Get forward-down-angles of the object in the first / last frame detected.
                 // In DJI_0116, leg 4, objects are detected from +15 to -4 degrees.
@@ -551,8 +564,13 @@ namespace SkyCombImage.ProcessLogic
 
                 // If the difference in vertical angle moved in direct of flight is too small,
                 // this method will be too inaccurate to be useful.
+                // Can occur when 1) camera is near horizontal and the target is far away or 2) drone is not moving.
                 if (Math.Abs(fwdTanDiff) < 0.1) // 0.1 rads = ~6 degrees
-                    return; // Maintain current object height
+                {
+                    SetHeightAlgorithmError(HeightAlgorithmEnum.BaseLine_Bad4);
+                    return;
+                }
+
 
                 // Returns the average tan of the sideways-down-angles
                 // of the object in the first frame detected and the last frame detected.
@@ -566,7 +584,11 @@ namespace SkyCombImage.ProcessLogic
                 var featureHeightM = (float)(groundDownM - trigDownM);
 
                 if (featureHeightM >= 0)
-                    this.HeightM = featureHeightM;
+                {
+                    HeightM = featureHeightM;
+                    HeightAlgorithm = HeightAlgorithmEnum.BaseLine;
+                } else
+                    SetHeightAlgorithmError(HeightAlgorithmEnum.BaseLine_Neg);
             }
             catch (Exception ex)
             {
@@ -587,7 +609,7 @@ namespace SkyCombImage.ProcessLogic
                 { "HeightCM", HeightM * 100, 0 },
                 { "WidthPixels", PixelBox.Width },
                 { "DepthPixels", PixelBox.Height },
-                { "#HotPixels", NumHotPixels() },
+                { "#HotPixels", NumHotPixels },
             };
         }
 
@@ -597,9 +619,9 @@ namespace SkyCombImage.ProcessLogic
         {
             var settings = base.GetSettings();
 
-            settings.Add("Num Hot Pixels", NumHotPixels());
-            settings.Add("Density Perc", DensityPerc()); // 0 to 100
-            settings.Add("Density Good", PixelDensityGood());
+            settings.Add("Num Hot Pixels", NumHotPixels);
+            settings.Add("Density Perc", DensityPerc); // 0 to 100
+            settings.Add("Density Good", PixelDensityGood);
             settings.Add("Leg", (Block != null ? Block.FlightLegId : 0));
 
             return settings;
@@ -724,7 +746,7 @@ namespace SkyCombImage.ProcessLogic
                 maxHeat = Math.Max(maxHeat, feature.Value.MaxHeat);
                 if (feature.Value.MinHeat > 0)
                     minHeat = Math.Min(minHeat, feature.Value.MinHeat);
-                maxPixels = Math.Max(maxPixels, feature.Value.NumHotPixels());
+                maxPixels = Math.Max(maxPixels, feature.Value.NumHotPixels);
             }
 
             return (minHeat, maxHeat, maxPixels);

@@ -273,6 +273,7 @@ namespace SkyCombImage.ProcessLogic
                 // calculated using trigonometry and first/last real feature camera-view-angles.
                 // Only works if the drone has moved horizontally some distance. Works at 1m. Better at 5m
                 // May override CalculateSettings_LocationM_HeightM_LineofSight
+                var lastFeature = LastFeature();
                 if ((!initialCalc || (SeenForMinDurations() >= 1)) && HasMoved(initialCalc))
                 {
                     // Estimate last FEATURE height above ground based on distance down from drone
@@ -281,13 +282,14 @@ namespace SkyCombImage.ProcessLogic
                     // Object at the left/right edge of the image are slightly further from the drone
                     // than objects directly under the drone.
                     // If drone is not moving now, calculated HeightM will be the same as last feature (within Gimbal wobble). 
-                    var lastFeature = LastFeature();
                     if (lastFeature.Type == CombFeatureTypeEnum.Real) // PQR    && is moving now.
                         lastFeature.Calculate_HeightM_BaseLineMovement(
                                 FirstFeature(),
                                 DemM,
                                 Features.AverageFlightStepFixedAltitudeM());
                 }
+                else
+                    lastFeature.SetHeightAlgorithmError(HeightAlgorithmEnum.BaseLine_TooSoon);
 
                 // Calculate OBJECT height and object height error (as average over real features).
                 Calculate_HeightM_and_HeightErrM();
@@ -349,16 +351,16 @@ namespace SkyCombImage.ProcessLogic
                     // But claiming theFeature can make this object exceed FeatureMaxSize
                     // or reduce the density below FeatureMinDensityPerc, potentially making the object insignificant.
 
-                    if (theFeature.FeatureOverSized())
+                    if (theFeature.FeatureOverSized)
                         return false;
-                    if (!theFeature.PixelDensityGood())
+                    if (!theFeature.PixelDensityGood)
                         return false;
 
                     // ToDo: This approach allows one bad block before it stops growth. Bad. May make object insignificant.
-                    if (lastFeature.FeatureOverSized())
+                    if (lastFeature.FeatureOverSized)
                         return false;
                     if ((lastFeature.Type == CombFeatureTypeEnum.Real) && // Unreal features have no density
-                        !lastFeature.PixelDensityGood())
+                        !lastFeature.PixelDensityGood)
                         return false;
                 }
 
@@ -377,7 +379,7 @@ namespace SkyCombImage.ProcessLogic
                 if (theFeature.Type == CombFeatureTypeEnum.Real)
                 {
                     theFeature.IsTracked = true;
-                    COM.MaxRealHotPixels = Math.Max(COM.MaxRealHotPixels, theFeature.NumHotPixels());
+                    COM.MaxRealHotPixels = Math.Max(COM.MaxRealHotPixels, theFeature.NumHotPixels);
 
                     var theBlock = theFeature.Block;
 
@@ -415,6 +417,7 @@ namespace SkyCombImage.ProcessLogic
                     Features.AddFeature(theFeature);
 
                     LastFeature().HeightM = HeightM;
+                    LastFeature().HeightAlgorithm = HeightAlgorithmEnum.UnrealCopy;
                 }
 
 
@@ -562,7 +565,7 @@ namespace SkyCombImage.ProcessLogic
                 return;
 
             // The number of hot pixels in the last (real) feature.
-            float hotPixels = lastFeature.NumHotPixels();
+            float hotPixels = lastFeature.NumHotPixels;
 
             // Grab the drone input image area
             float imageAreaM2 = lastFeature.Block.FlightStep.InputImageSizeM.AreaM2();
