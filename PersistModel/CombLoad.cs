@@ -70,12 +70,11 @@ namespace SkyCombImage.PersistModel
                         var featureIdString = cell.Value.ToString();
                         if (featureIdString == "")
                             break;
-                        var featureId = ConfigBase.StringToNonNegInt(featureIdString);
 
                         // Load the non-blank cells in this row into a CombFeature
                         var settings = Data.GetRowSettings(row, 1);
                         model.CombFeatures.AddFeature(
-                            ProcessFactory.NewCombFeature(model, featureId, settings));
+                            ProcessFactory.NewCombFeature(model, settings));
 
                         row++;
                         cell = Data.Worksheet.Cells[row, 1];

@@ -186,31 +186,11 @@ namespace SkyCombImage.ProcessModel
     // A "Good Feature To Track" feature 
     public class FlowFeature : ProcessFeatureModel
     {
-        // Block that the feature was created in
-        public int BlockId { get; }
-        // The pixel location the feature was found at
-        public Point Location { get; }
-
-
-        public FlowFeature(int featureId, int blockId, Point location) : base(featureId)
+        public FlowFeature(int blockId, Point location) : base(blockId, CombFeatureTypeEnum.Real)
         {
             ResetMemberData();
-            BlockId = blockId;
-            Location = location;
+            LocationM = new DroneLocation(location.Y,location.X);
             Significant = true;
-        }
-
-
-        // Get the class's settings as datapairs (e.g. for saving to the datastore)
-        override public DataPairList GetSettings()
-        {
-            var answer = base.GetSettings();
-
-            answer.Add("Block", BlockId);
-            answer.Add("Locn.X", Location.X, BaseConstants.PixelNdp);
-            answer.Add("Locn.Y", Location.Y, BaseConstants.PixelNdp);
-
-            return answer;
         }
     };
 
@@ -221,7 +201,7 @@ namespace SkyCombImage.ProcessModel
 
         public FlowFeature AddFeature(int blockId, Point location)
         {
-            var answer = new FlowFeature(Count + 1, blockId, location);
+            var answer = new FlowFeature(blockId, location);
             this.Add(answer);
             return answer;
         }
@@ -274,10 +254,10 @@ namespace SkyCombImage.ProcessModel
                 return false;
 
             // Euclidian distance test without use of slow square root function.
-            var lastEntry = LastFeature.Location;
+            var lastEntry = LastFeature.LocationM;
             return
-                Math.Pow(lastEntry.X - theX, 2) +
-                Math.Pow(lastEntry.Y - theY, 2) <
+                Math.Pow(lastEntry.EastingM - theX, 2) +
+                Math.Pow(lastEntry.NorthingM - theY, 2) <
                 Config.GfttMinDistance * Config.GfttMinDistance;
         }
 
@@ -301,8 +281,8 @@ namespace SkyCombImage.ProcessModel
                 var prevLastFeature = LastFeature;
                 LastFeature = theFeature;
 
-                int deltaY = (int)(theFeature.Location.Y - prevLastFeature.Location.Y);
-                int deltaX = (int)(theFeature.Location.X - prevLastFeature.Location.X);
+                int deltaY = (int)(theFeature.LocationM.NorthingM - prevLastFeature.LocationM.NorthingM);
+                int deltaX = (int)(theFeature.LocationM.EastingM - prevLastFeature.LocationM.EastingM);
 
                 SumDeltaY += deltaY;
                 SumDeltaX += deltaX;

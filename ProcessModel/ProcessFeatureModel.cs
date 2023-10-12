@@ -1,41 +1,91 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved. 
 using SkyCombGround.CommonSpace;
+using System.Drawing;
 
 
 // Models are used in-memory and to persist/load data to/from the datastore
 namespace SkyCombImage.ProcessModel
 {
+    /// Is the feature:
+    /// - Real (containing hot pixels), 
+    /// - Unreal (Persistance search feature, no hot pixels), or
+    /// - Consumed (was Real once but now eaten by another Real feature in the same block).
+    public enum CombFeatureTypeEnum { Real, Unreal, Consumed };
+
+
     // A class to hold a significant feature 
     public class ProcessFeatureModel : ConfigBase
     {
+        // Static NextFeatureId shared by all Comb features
+        public static int NextFeatureId = 0;
+
+
         // Unique identifier
-        public int FeatureId { get; }
+        public int FeatureId { get; set; }
         // Is this feature actively being tracked now
         public bool IsTracked { get; set; }
         // Is this feature significant?
         public bool Significant { get; set; }
         // Attributes about this feature
-        public string Attributes { get; set; }
+        public string Attributes { get; set; } = "";
         // A feature can be associated with an object
         public int ObjectId { get; set; }
 
 
-        public ProcessFeatureModel(int featureId)
+        // A Comb feature is associated 1-1 with a Block
+        public int BlockId { get; set; } = UnknownValue;
+
+        public int MinHeat { get; set; } = 0;
+        public int MaxHeat { get; set; } = 0;
+
+        // Is the feature Real, Unreal or Consumed.
+        public CombFeatureTypeEnum Type { get; set; }
+
+        // Rectangular box that bounds the hot pixels. Origin is top (Y=0) left (X=0) of image.
+        // Note that y = 0 is the top of the image, but the furtherest pixel from the drone 
+        public Rectangle PixelBox { get; set; }
+
+        // Location of this feature inside drone flight box, in meters
+        public DroneLocation? LocationM { get; set; }
+
+        // Height of this feature above the ground. 
+        public float HeightM { get; set; }
+
+
+
+        public ProcessFeatureModel(int blockId, CombFeatureTypeEnum type)
         {
-            FeatureId = featureId;
+            NextFeatureId++;
+
+            FeatureId = NextFeatureId;
+            BlockId = blockId;
+            Type = type;
+            ResetMemberData();
+        }
+
+
+        // Constructor used when loaded objects from the datastore
+        public ProcessFeatureModel(List<string> settings)
+        {
+            ResetMemberData();
+            LoadSettings(settings);
         }
 
 
         // Reset member data to mirror a newly created feature.
         // Used in experimentation to allow repeated calculation run against this feature.
-        public virtual void ResetMemberData()
+        public void ResetMemberData()
         {
             IsTracked = true;
             Significant = false;
             Attributes = "";
             ObjectId = 0;
+            LocationM = null;
+            HeightM = UnknownValue;
         }
 
+
+        private int UnknownHeight = -2;
 
         // One-based settings index values. Must align with GetSettings procedure below     
         public const int FeatureIdSetting = 1;
@@ -43,7 +93,6 @@ namespace SkyCombImage.ProcessModel
         public const int SignificantSetting = 3;
         public const int NotesSetting = 4;
         public const int ObjectIdSetting = 5;
-        // CombFeature additional settings
         public const int BlockIdSetting = 6;
         public const int TypeSetting = 7;
         public const int NorthingMSetting = 8;
@@ -74,17 +123,44 @@ namespace SkyCombImage.ProcessModel
                 { "Significant", Significant },
                 { "Attributes", theAttributes },
                 { "Object", ObjectId },
+                { "Block", BlockId },
+                { "Type", Type.ToString() },
+                { "Northing M", (LocationM != null ? LocationM.NorthingM : 0), LocationNdp },
+                { "Easting M", (LocationM != null ? LocationM.EastingM : 0), LocationNdp },
+                { "Height M", (HeightM == UnknownValue ? UnknownHeight : HeightM), HeightNdp },
+                { "Box.X", PixelBox.X },
+                { "Box.Y", PixelBox.Y },
+                { "Box.Width", PixelBox.Width },
+                { "Box.Height", PixelBox.Height },
+                { "Min Heat", MinHeat },
+                { "Max Heat", MaxHeat },
             };
         }
 
 
         virtual public void LoadSettings(List<string> settings)
         {
-            // FeatureId (already done) = settings[0]
-            IsTracked = settings[1] == "true";
-            Significant = settings[2] == "true";
-            Attributes = settings[3];
-            ObjectId = StringToNonNegInt(settings[4]);
+            FeatureId = StringToNonNegInt(settings[FeatureIdSetting - 1]);
+            IsTracked = settings[IsTrackedSetting-1] == "true";
+            Significant = settings[SignificantSetting-1] == "true";
+            Attributes = settings[NotesSetting-1];
+            ObjectId = StringToNonNegInt(settings[ObjectIdSetting-1]);
+
+            BlockId = StringToNonNegInt(settings[BlockIdSetting - 1]);
+            Type = (CombFeatureTypeEnum)Enum.Parse(typeof(CombFeatureTypeEnum), settings[TypeSetting - 1]);
+            LocationM = new DroneLocation(settings[NorthingMSetting - 1], settings[EastingMSetting - 1]);
+
+            HeightM = StringToFloat(settings[HeightMSetting - 1]);
+            if (HeightM == UnknownHeight)
+                HeightM = UnknownValue;
+
+            PixelBox = new Rectangle(
+                StringToInt(settings[PixelBoxXSetting - 1]),
+                StringToInt(settings[PixelBoxYSetting - 1]),
+                StringToInt(settings[PixelBoxWidthSetting - 1]),
+                StringToInt(settings[PixelBoxHeightSetting - 1]));
+            MinHeat = StringToNonNegInt(settings[MinHeatSetting - 1]);
+            MaxHeat = StringToNonNegInt(settings[MaxHeatSetting - 1]);
         }
     }
 }

@@ -112,8 +112,8 @@ namespace SkyCombImage.DrawSpace
                         var theFeature = FlowData.FlowFeatures[i];
                         if (theFeature.ObjectId == theObject.ObjectId)
                         {
-                            var thisX = (int)theFeature.Location.X;
-                            var thisY = (int)theFeature.Location.Y;
+                            var thisX = (int)theFeature.LocationM.EastingM;
+                            var thisY = (int)theFeature.LocationM.NorthingM;
 
                             if (prevX != UnknownValue)
                                 Line(ref outputImg, new Point(prevX, prevY), new Point(thisX, thisY), theColor, theThickness);

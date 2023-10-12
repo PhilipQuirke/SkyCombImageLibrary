@@ -35,7 +35,7 @@ namespace SkyCombImage.ProcessLogic
 
             if (initialFeature != null)
             {
-                Assert(initialFeature.CFM.Type == CombFeatureTypeEnum.Real, "Initial feature must be Real");
+                Assert(initialFeature.Type == CombFeatureTypeEnum.Real, "Initial feature must be Real");
                 ClaimFeature(initialFeature);
             }
         }
@@ -72,7 +72,7 @@ namespace SkyCombImage.ProcessLogic
             if (COM.LastRealFeatureIndex >= 0)
                 // Rarely, the object may have a sequence of real, then unreal, then real features.
                 foreach (var feature in Features)
-                    if (feature.Value.CFM.Type == CombFeatureTypeEnum.Real)
+                    if (feature.Value.Type == CombFeatureTypeEnum.Real)
                         answer++;
 
             return answer;
@@ -309,7 +309,7 @@ namespace SkyCombImage.ProcessLogic
             Assert(feature.ObjectId == ObjectId, "SetLinksAfterLoad: Feature not for this object.");
 
             Features.AddFeature(feature);
-            if (feature.CFM.Type == CombFeatureTypeEnum.Real)
+            if (feature.Type == CombFeatureTypeEnum.Real)
                 COM.LastRealFeatureIndex = Features.Count - 1;
         }
 
@@ -322,7 +322,7 @@ namespace SkyCombImage.ProcessLogic
             try
             {
                 var lastFeature = LastFeature();
-                if ((theFeature.CFM.Type == CombFeatureTypeEnum.Real) && (lastFeature != null))
+                if ((theFeature.Type == CombFeatureTypeEnum.Real) && (lastFeature != null))
                 {
                     // To get here, theFeature overlaps this object significantly.
                     // But claiming theFeature can make this object exceed FeatureMaxSize
@@ -336,7 +336,7 @@ namespace SkyCombImage.ProcessLogic
                     // ToDo: This approach allows one bad block before it stops growth. Bad. May make object insignificant.
                     if (lastFeature.FeatureOverSized())
                         return false;
-                    if ((lastFeature.CFM.Type == CombFeatureTypeEnum.Real) && // Unreal features have no density
+                    if ((lastFeature.Type == CombFeatureTypeEnum.Real) && // Unreal features have no density
                         !lastFeature.PixelDensityGood())
                         return false;
                 }
@@ -353,7 +353,7 @@ namespace SkyCombImage.ProcessLogic
                 bool wasSignificant = Significant;
 
                 // Is object a real feature?
-                if (theFeature.CFM.Type == CombFeatureTypeEnum.Real)
+                if (theFeature.Type == CombFeatureTypeEnum.Real)
                 {
                     theFeature.IsTracked = true;
                     COM.MaxRealHotPixels = Math.Max(COM.MaxRealHotPixels, theFeature.NumHotPixels());
@@ -367,8 +367,8 @@ namespace SkyCombImage.ProcessLogic
                         COM.LastRealFeatureIndex = Features.Count - 1;
                         RunToVideoS = (float)(LastRealFeature().Block.InputFrameMs / 1000.0);
 
-                        COM.MaxRealPixelWidth = Math.Max(COM.MaxRealPixelWidth, theFeature.CFM.PixelBox.Width);
-                        COM.MaxRealPixelHeight = Math.Max(COM.MaxRealPixelHeight, theFeature.CFM.PixelBox.Height);
+                        COM.MaxRealPixelWidth = Math.Max(COM.MaxRealPixelWidth, theFeature.PixelBox.Width);
+                        COM.MaxRealPixelHeight = Math.Max(COM.MaxRealPixelHeight, theFeature.PixelBox.Height);
                     }
                     else
                     {
@@ -380,26 +380,26 @@ namespace SkyCombImage.ProcessLogic
                         LastRealFeature().Consume(theFeature);
                         theFeature.ObjectId = UnknownValue;
 
-                        COM.MaxRealPixelWidth = Math.Max(COM.MaxRealPixelWidth, LastRealFeature().CFM.PixelBox.Width);
-                        COM.MaxRealPixelHeight = Math.Max(COM.MaxRealPixelHeight, LastRealFeature().CFM.PixelBox.Height);
+                        COM.MaxRealPixelWidth = Math.Max(COM.MaxRealPixelWidth, LastRealFeature().PixelBox.Width);
+                        COM.MaxRealPixelHeight = Math.Max(COM.MaxRealPixelHeight, LastRealFeature().PixelBox.Height);
                     }
 
                     // Calculate the simple member data (int, float, VelocityF, etc) of this real object.
                     // Calculates DemM, LocationM, LocationErrM, HeightM, HeightErrM, AvgSumLinealM, etc.
                     Calculate_RealObject_SimpleMemberData(initialCalc);
                 }
-                else if (theFeature.CFM.Type == CombFeatureTypeEnum.Unreal)
+                else if (theFeature.Type == CombFeatureTypeEnum.Unreal)
                 {
                     // theFeature is unreal - it is a persistance object
                     Features.AddFeature(theFeature);
 
-                    LastFeature().CFM.HeightM = HeightM;
+                    LastFeature().HeightM = HeightM;
                 }
 
 
                 // Copy these details to the feature to be saved in the DataStore.
                 // Useful for understanding the feature by feature progression of values that are refined over time.
-                LastFeature().Significant = Significant & (LastFeature().CFM.Type == CombFeatureTypeEnum.Real);
+                LastFeature().Significant = Significant & (LastFeature().Type == CombFeatureTypeEnum.Real);
                 LastFeature().Attributes = Attributes;
                 if (Significant && !wasSignificant)
                     // This object has just become significant. Two use cases:
@@ -530,7 +530,7 @@ namespace SkyCombImage.ProcessLogic
             var lastFeature = LastFeature();
 
             // We only refine object height using real features
-            if (lastFeature.CFM.Type == CombFeatureTypeEnum.Real)
+            if (lastFeature.Type == CombFeatureTypeEnum.Real)
                 lastFeature.Calculate_HeightM_BaseLineMovement(
                         FirstFeature(),
                         SeenForMinDurations(),
@@ -555,7 +555,7 @@ namespace SkyCombImage.ProcessLogic
 
             var lastFeature = LastFeature();
             if ((lastFeature == null) ||
-                (lastFeature.CFM.Type != CombFeatureTypeEnum.Real) ||
+                (lastFeature.Type != CombFeatureTypeEnum.Real) ||
                 (lastFeature.Block == null) ||
                 (lastFeature.Block.FlightStep == null) ||
                 (lastFeature.Block.FlightStep.InputImageSizeM == null))
@@ -648,13 +648,13 @@ namespace SkyCombImage.ProcessLogic
             var firstFeat = FirstFeature();
             var lastFeat = LastFeature();
 
-            var firstBox = firstFeat.CFM.PixelBox;
-            var lastBox = lastFeat.CFM.PixelBox;
+            var firstBox = firstFeat.PixelBox;
+            var lastBox = lastFeat.PixelBox;
 
             int lastWidth = lastBox.Width;
             int lastHeight = lastBox.Height;
 
-            var numBlockSteps = lastFeat.CFM.BlockId - firstFeat.CFM.BlockId + 1;
+            var numBlockSteps = lastFeat.BlockId - firstFeat.BlockId + 1;
             if (numBlockSteps >= 2)
             {
                 // In DJI_0118 leg 3, Object 1 starts large but fades
@@ -685,7 +685,7 @@ namespace SkyCombImage.ProcessLogic
                     lastWidth,
                     lastHeight);
 
-            if(lastFeat.CFM.Type == CombFeatureTypeEnum.Real)
+            if(lastFeat.Type == CombFeatureTypeEnum.Real)
                 // We don't want a drone wobble to break the object feature sequence
                 // So we inflate the expected location by 5 pixels in each direction.
                 answer.Inflate(5, 5);

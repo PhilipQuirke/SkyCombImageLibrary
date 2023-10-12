@@ -45,9 +45,9 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public static CombFeature NewCombFeature(CombProcessAll model, int featureId, List<string> settings)
+        public static CombFeature NewCombFeature(CombProcessAll model, List<string> settings)
         {
-            return new CombFeature(model, featureId, settings);
+            return new CombFeature(model, settings);
         }
 
 

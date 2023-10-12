@@ -28,7 +28,7 @@ namespace SkyCombImage.ProcessModel
 
 
         // Constructor used when loaded objects from the datastore
-        public CombObjectModel(List<string> settings = null)
+        public CombObjectModel(List<string>? settings = null)
         {
             ResetMemberData();
 

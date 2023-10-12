@@ -77,16 +77,16 @@ namespace SkyCombImage.DrawSpace
                 var theColor = Color.White;
                 if (focusObjectId > 0)
                     theColor = (feature.ObjectId == focusObjectId ? DroneColors.InScopeObjectColor : DroneColors.RealFeatureColor);
-                else if (feature.CFM.Type == CombFeatureTypeEnum.Unreal)
+                else if (feature.Type == CombFeatureTypeEnum.Unreal)
                     theColor = config.DrawUnrealFeatureColor;
-                else if (feature.CFM.Type == CombFeatureTypeEnum.Real)
+                else if (feature.Type == CombFeatureTypeEnum.Real)
                     theColor = feature.Significant ? DroneColors.InScopeObjectColor : config.DrawRealFeatureColor;
 
                 if (theColor != Color.White)
                 {
                     var isFocusObject = (focusObjectId == feature.ObjectId);
                     int thickness = (int)transform.Scale;
-                    var scaledRect = transform.CalcRect(feature.CFM.PixelBox);
+                    var scaledRect = transform.CalcRect(feature.PixelBox);
 
                     BoundingRectangle(config, ref image, scaledRect, theColor, thickness);
 
@@ -139,7 +139,7 @@ namespace SkyCombImage.DrawSpace
                         if (process.CombFeatures.ContainsKey(featureId))
                         {
                             var feature = process.CombFeatures[featureId];
-                            Assert(feature.CFM.BlockId == block.BlockId, "CombImage: Bad logic");
+                            Assert(feature.BlockId == block.BlockId, "CombImage: Bad logic");
 
                             // Draw all hot pixels for the current block 
                             HotPixels(drawConfig, processConfig, ref outputImg, feature, transform);
@@ -499,11 +499,11 @@ namespace SkyCombImage.DrawSpace
 
                 // Draw the object features as orange or yellow crosses
                 foreach (var thisFeature in thisObject.Features)
-                    if ((thisFeature.Value.CFM.HeightM != UnknownValue) &&
-                        (thisFeature.Value.CFM.BlockId <= DroneDrawScope.MaxFeatureBlockIdToDraw))
+                    if ((thisFeature.Value.HeightM != UnknownValue) &&
+                        (thisFeature.Value.BlockId <= DroneDrawScope.MaxFeatureBlockIdToDraw))
                     {
-                        var theBgr = (thisFeature.Value.CFM.Type == CombFeatureTypeEnum.Real ? realBgr : unrealBgr);
-                        var thisHeightPxs = TrimHeight(RawDataToHeightPixels(thisFeature.Value.CFM.HeightM - MinVertRaw, VertRangeRaw));
+                        var theBgr = (thisFeature.Value.Type == CombFeatureTypeEnum.Real ? realBgr : unrealBgr);
+                        var thisHeightPxs = TrimHeight(RawDataToHeightPixels(thisFeature.Value.HeightM - MinVertRaw, VertRangeRaw));
                         var thisWidthPxs = StepToWidth(thisFeature.Value.Block.SumTimeMs, firstMs);
 
                         Draw.Cross(ref image,

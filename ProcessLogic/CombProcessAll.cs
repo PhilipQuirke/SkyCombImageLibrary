@@ -154,7 +154,7 @@ namespace SkyCombImage.ProcessLogic
             var theBlock = Blocks.LastBlock;
 
             CombFeature theFeature = new(this, theBlock, CombFeatureTypeEnum.Unreal);
-            theFeature.CFM.PixelBox = theObject.ExpectedLocationThisBlock();
+            theFeature.PixelBox = theObject.ExpectedLocationThisBlock();
             CombFeatures.AddFeature(theFeature);
 
             Assert(Blocks.Count == theFeature.Block.BlockId, "AddPersistFeature: Bad Blocks count");
@@ -255,7 +255,7 @@ namespace SkyCombImage.ProcessLogic
                 {
                     var lastFeat = theObject.Value.LastFeature();
                     if((lastFeat.Block.BlockId == blockID - 1) &&
-                        (pass == 0 ? lastFeat.CFM.Type == CombFeatureTypeEnum.Real : lastFeat.CFM.Type != CombFeatureTypeEnum.Unreal))
+                        (pass == 0 ? lastFeat.Type == CombFeatureTypeEnum.Real : lastFeat.Type != CombFeatureTypeEnum.Unreal))
                     {
                         // If one or more features overlaps the object's expected location,
                         // claim ownership of the feature(s), and mark them as Significant.

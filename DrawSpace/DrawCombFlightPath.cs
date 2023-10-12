@@ -44,11 +44,11 @@ namespace SkyCombImage.DrawSpace
         private void DrawObjectFeatures(CombObject thisObject, ref Image<Bgr, byte> image, CombFeatureTypeEnum type, Bgr color)
         {
             foreach (var thisFeature in thisObject.Features)
-                if ((thisFeature.Value.CFM.LocationM != null) &&
-                    (thisFeature.Value.CFM.Type == type) &&
-                    (thisFeature.Value.CFM.BlockId <= BaseDrawScope.MaxFeatureBlockIdToDraw))
+                if ((thisFeature.Value.LocationM != null) &&
+                    (thisFeature.Value.Type == type) &&
+                    (thisFeature.Value.BlockId <= BaseDrawScope.MaxFeatureBlockIdToDraw))
                     Draw.Cross(ref image,
-                        DroneLocnMToPixelPoint(thisFeature.Value.CFM.LocationM),
+                        DroneLocnMToPixelPoint(thisFeature.Value.LocationM),
                         color, NormalThickness, NormalThickness * FeaturePixels);
         }
 
