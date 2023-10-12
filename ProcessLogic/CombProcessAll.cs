@@ -225,125 +225,145 @@ namespace SkyCombImage.ProcessLogic
         // else creating new objects to hold the features.
         public void ProcessBlockForObjects(ProcessScope scope, CombFeatureList featuresInBlock)
         {
-            var currBlock = Blocks.LastBlock;
-            int blockID = currBlock.BlockId;
+            int Phase = 0;
+
+            try
+            {
+                Phase = 1;
+                var currBlock = Blocks.LastBlock;
+                int blockID = currBlock.BlockId;
 
 
-            // We only want to consider objects that are active.
-            // For long flights most objects will have become inactive seconds or minutes ago.
-            CombObjList inScopeObjects = new();
-            CombObjList availObjects = new();
-            foreach (var theObject in CombObjs.CombObjList)
-                if ((theObject.Value.LastFeature() != null) &&
-                    (theObject.Value.LastFeature().Block.BlockId == blockID - 1) &&
-                    theObject.Value.VaguelySignificant())
-                {
-                    inScopeObjects.AddObject(theObject.Value);
-                    availObjects.AddObject(theObject.Value);
-                }
-            // Each feature can only be claimed once
-            CombFeatureList availFeatures = featuresInBlock.Clone();
+                // We only want to consider objects that are active.
+                // For long flights most objects will have become inactive seconds or minutes ago.
+                Phase = 2;
+                CombObjList inScopeObjects = new();
+                CombObjList availObjects = new();
+                foreach (var theObject in CombObjs.CombObjList)
+                    if ((theObject.Value.LastFeature() != null) &&
+                        (theObject.Value.LastFeature().Block.BlockId == blockID - 1) &&
+                        theObject.Value.VaguelySignificant())
+                    {
+                        inScopeObjects.AddObject(theObject.Value);
+                        availObjects.AddObject(theObject.Value);
+                    }
+                // Each feature can only be claimed once
+                CombFeatureList availFeatures = featuresInBlock.Clone();
 
 
-            // For each active object, consider each frame feature (significant or not)
-            // found in this frame to see if it overlaps.
-            // This priviledges objects with multiple real features,
-            // as they can more accurately estimate their expected location.
-            // We priviledge objects with a "real" last feature over objects with a "unreal" last feature.
-            for (int pass = 0; pass < 2; pass++)
-                foreach (var theObject in inScopeObjects)
-                {
-                    var lastFeat = theObject.Value.LastFeature();
-                    if((lastFeat.Block.BlockId == blockID - 1) &&
-                        (pass == 0 ? lastFeat.Type == CombFeatureTypeEnum.Real : lastFeat.Type != CombFeatureTypeEnum.Unreal))
+                // For each active object, consider each frame feature (significant or not)
+                // found in this frame to see if it overlaps.
+                // This priviledges objects with multiple real features,
+                // as they can more accurately estimate their expected location.
+                // We priviledge objects with a "real" last feature over objects with a "unreal" last feature.
+                Phase = 3;
+                for (int pass = 0; pass < 2; pass++)
+                    foreach (var theObject in inScopeObjects)
+                    {
+                        var lastFeat = theObject.Value.LastFeature();
+                        if ((lastFeat.Block.BlockId == blockID - 1) &&
+                            (pass == 0 ? lastFeat.Type == CombFeatureTypeEnum.Real : lastFeat.Type != CombFeatureTypeEnum.Unreal))
+                        {
+                            // If one or more features overlaps the object's expected location,
+                            // claim ownership of the feature(s), and mark them as Significant.
+                            var expectedObjectLocation = theObject.Value.ExpectedLocationThisBlock();
+
+                            bool claimedFeatures = false;
+                            foreach (var feature in featuresInBlock)
+                                // Object will claim feature if the object remains viable after claiming feature
+                                if (theObject.Value.MaybeClaimFeature(feature.Value, expectedObjectLocation))
+                                {
+                                    availFeatures.Remove(feature.Value.FeatureId);
+                                    claimedFeatures = true;
+                                }
+                            if (claimedFeatures)
+                                availObjects.Remove(theObject.Value.ObjectId);
+                        }
+                    }
+
+                // An active object with exactly one real feature can't estimate its expected location at all.
+                // An active object with two features has a lot of wobble in its expected movement/location.
+                // If the object is moving in the image quickly, the object location
+                // and feature location will not overlap. Instead the feature will (usually)
+                // be vertically below the object estimated location.
+                Phase = 4;
+                foreach (var theObject in availObjects)
+                    if (theObject.Value.NumRealFeatures() <= 2)
                     {
                         // If one or more features overlaps the object's expected location,
                         // claim ownership of the feature(s), and mark them as Significant.
                         var expectedObjectLocation = theObject.Value.ExpectedLocationThisBlock();
 
-                        bool claimedFeatures = false;
-                        foreach (var feature in featuresInBlock)
-                            // Object will claim feature if the object remains viable after claiming feature
-                            if (theObject.Value.MaybeClaimFeature(feature.Value, expectedObjectLocation))
-                            {
-                                availFeatures.Remove(feature.Value.FeatureId);
-                                claimedFeatures = true;
-                            }
-                        if (claimedFeatures)
-                            availObjects.Remove(theObject.Value.ObjectId);
+                        // Search higher in the image 
+                        expectedObjectLocation = new System.Drawing.Rectangle(
+                            expectedObjectLocation.X,
+                            expectedObjectLocation.Y + 20, // Higher
+                            expectedObjectLocation.Width,
+                            expectedObjectLocation.Height);
+
+                        foreach (var feature in availFeatures)
+                            theObject.Value.MaybeClaimFeature(feature.Value, expectedObjectLocation);
                     }
-                }
-
-            // An active object with exactly one real feature can't estimate its expected location at all.
-            // An active object with two features has a lot of wobble in its expected movement/location.
-            // If the object is moving in the image quickly, the object location
-            // and feature location will not overlap. Instead the feature will (usually)
-            // be vertically below the object estimated location.
-            foreach (var theObject in availObjects)
-                if(theObject.Value.NumRealFeatures() <= 2)
-                {
-                    // If one or more features overlaps the object's expected location,
-                    // claim ownership of the feature(s), and mark them as Significant.
-                    var expectedObjectLocation = theObject.Value.ExpectedLocationThisBlock();
-
-                    // Search higher in the image 
-                    expectedObjectLocation = new System.Drawing.Rectangle(
-                        expectedObjectLocation.X,
-                        expectedObjectLocation.Y + 20, // Higher
-                        expectedObjectLocation.Width,
-                        expectedObjectLocation.Height);
-
-                    foreach (var feature in availFeatures)
-                        theObject.Value.MaybeClaimFeature(feature.Value, expectedObjectLocation);
-                }
 
 
-            currBlock.AddFeatureList(featuresInBlock);
-            CombFeatures.AddFeatureList(featuresInBlock);
+                Phase = 5;
+                currBlock.AddFeatureList(featuresInBlock);
+                CombFeatures.AddFeatureList(featuresInBlock);
 
-            // For each active object, where the above code did not find an 
-            // overlapping feature in this Block, if it is worth continuing tracking...
-            foreach (var theObject in inScopeObjects)
-                if (theObject.Value.COM.BeingTracked &&
-                   (theObject.Value.COM.LastRealFeatureIndex != UnknownValue) &&
-                   (theObject.Value.LastRealFeature().Block.BlockId < blockID) &&
-                   theObject.Value.KeepTracking(blockID))
-                    // ... persist this object another Block. Create an unreal feature, with no pixels, with a rectangle   
-                    // calculated from the object's last bounding rectangle and the average frame movement.
-                    AddPersistFeature(theObject.Value);
-
-
-            // All active features have passed the min pixels and min density tests, and are worth tracking.
-            // For all unowned active features in this frame, create a new object to own the feature.
-            foreach (var feature in availFeatures)
-                if (feature.Value.IsTracked && (feature.Value.ObjectId == 0))
-                {
-                    CombObjs.Add(scope, feature.Value);
-                    if (blockID >= 2)
-                    {
-                        // TODO: Consider claiming overship of overlapping inactive features from the previous Block(s).
-                    }
-                }
-
-
-            if (Drone.UseFlightLegs)
-            {
-                // Ensure each significant object in this leg has a "significant" name e.g. C5
-                // Needs to be done ASAP so the "C5" name can be drawn on video frames.
-                // Note: Some objects never become significant.
+                // For each active object, where the above code did not find an 
+                // overlapping feature in this Block, if it is worth continuing tracking...
+                Phase = 6;
                 foreach (var theObject in inScopeObjects)
-                    if ((theObject.Value.FlightLegId > 0) &&
-                       ((scope.CurrRunFlightStep == null) || (theObject.Value.FlightLegId == scope.CurrRunFlightStep.FlightLegId)) &&
-                       (theObject.Value.Significant) &&
-                       (theObject.Value.Name == ""))
+                    if (theObject.Value.COM.BeingTracked &&
+                       (theObject.Value.COM.LastRealFeatureIndex != UnknownValue) &&
+                       (theObject.Value.LastRealFeature().Block.BlockId < blockID) &&
+                       theObject.Value.KeepTracking(blockID))
+                        // ... persist this object another Block. Create an unreal feature, with no pixels, with a rectangle   
+                        // calculated from the object's last bounding rectangle and the average frame movement.
+                        AddPersistFeature(theObject.Value);
+
+
+                // All active features have passed the min pixels and min density tests, and are worth tracking.
+                // For all unowned active features in this frame, create a new object to own the feature.
+                Phase = 7;
+                foreach (var feature in availFeatures)
+                    if (feature.Value.IsTracked && (feature.Value.ObjectId == 0))
                     {
-                        FlightLeg_SigObjects++;
-                        theObject.Value.SetName(FlightLeg_SigObjects);
+                        CombObjs.Add(scope, feature.Value);
+                        if (blockID >= 2)
+                        {
+                            // TODO: Consider claiming overship of overlapping inactive features from the previous Block(s).
+                        }
                     }
+
+
+                if (Drone.UseFlightLegs)
+                {
+                    // Ensure each significant object in this leg has a "significant" name e.g. C5
+                    // Needs to be done ASAP so the "C5" name can be drawn on video frames.
+                    // Note: Some objects never become significant.
+                    Phase = 8;
+                    foreach (var theObject in inScopeObjects)
+                        if ((theObject.Value.FlightLegId > 0) &&
+                           ((scope.CurrRunFlightStep == null) || (theObject.Value.FlightLegId == scope.CurrRunFlightStep.FlightLegId)) &&
+                           (theObject.Value.Significant) &&
+                           (theObject.Value.Name == ""))
+                        {
+                            FlightLeg_SigObjects++;
+                            theObject.Value.SetName(FlightLeg_SigObjects);
+                        }
+                }
+                else
+                {
+                    // Track data related to a CombSpan (not a FlightLeg)
+                    Phase = 9;
+                    ProcessObjectsFlightSteps(inScopeObjects, currBlock);
+                }
             }
-            else
-                // Track data related to a CombSpan (not a FlightLeg)
-                ProcessObjectsFlightSteps(inScopeObjects, currBlock);
+            catch (Exception ex)
+            {
+                throw ThrowException("ProcessBlockForObjects.Phase=" + Phase, ex);
+            }
         }
 
 
