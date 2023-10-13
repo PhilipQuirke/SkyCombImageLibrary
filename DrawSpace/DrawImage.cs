@@ -49,19 +49,19 @@ namespace SkyCombImage.DrawSpace
             switch( config.ThresholdProcess )
             {
                 case ThresholdProcessEnum.Binary: 
-                    imgInput = imgInput.ThresholdBinary(new Gray(config.ThresholdValue), new Gray(255)); 
+                    imgInput = imgInput.ThresholdBinary(new Gray(config.HeatThresholdValue), new Gray(255)); 
                     break;
                 case ThresholdProcessEnum.BinaryInv: 
-                    imgInput = imgInput.ThresholdBinaryInv(new Gray(config.ThresholdValue), new Gray(255)); 
+                    imgInput = imgInput.ThresholdBinaryInv(new Gray(config.HeatThresholdValue), new Gray(255)); 
                     break;
                 case ThresholdProcessEnum.ToZero: 
-                    imgInput = imgInput.ThresholdToZero(new Gray(config.ThresholdValue)); 
+                    imgInput = imgInput.ThresholdToZero(new Gray(config.HeatThresholdValue)); 
                     break;
                 case ThresholdProcessEnum.ToZeroInv: 
-                    imgInput = imgInput.ThresholdToZeroInv(new Gray(config.ThresholdValue)); 
+                    imgInput = imgInput.ThresholdToZeroInv(new Gray(config.HeatThresholdValue)); 
                     break;
                 case ThresholdProcessEnum.Trunc: 
-                    imgInput = imgInput.ThresholdTrunc(new Gray(config.ThresholdValue)); 
+                    imgInput = imgInput.ThresholdTrunc(new Gray(config.HeatThresholdValue)); 
                     break;
             }
         }

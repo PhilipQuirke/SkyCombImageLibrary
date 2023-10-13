@@ -1,4 +1,5 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved.
+using Emgu.CV.ML;
 using SkyCombGround.CommonSpace;
 
 
@@ -41,7 +42,7 @@ namespace SkyCombImage.ProcessModel
         // Theshold Process. Takes values binary, binaryinv, tozero, tozeroinv, trunc, none. Lowercase
         public ThresholdProcessEnum ThresholdProcess { get; set; } = ThresholdProcessEnum.Binary;
         // Pixel gray-scale value that ThresholdProcess uses. Takes values from 50 to 255
-        public int ThresholdValue { get; set; } = 235;
+        public int HeatThresholdValue { get; set; } = 235;
         // A setting to allow stupidly hot pixels to (optionally) be ignored.
         public int TruncThresholdValue { get; set; } = UnknownValue;
 
@@ -111,7 +112,7 @@ namespace SkyCombImage.ProcessModel
         // Create annotated video file as output
         public bool SaveAnnotatedVideo { get; set; } = true;
         // Save the objects and features to the datastore. Takes values all, significant, none.
-        public SaveObjectDataEnum SaveObjectData { get; set; } = SaveObjectDataEnum.Significant;
+        public SaveObjectDataEnum SaveObjectData { get; set; } = SaveObjectDataEnum.Significant; 
         // Save the pixels to the datastore (slow & bulky). Takes values all, some, none.
         public SavePixelsEnum SavePixels { get; set; } = SavePixelsEnum.None;
 
@@ -127,12 +128,27 @@ namespace SkyCombImage.ProcessModel
         public float BadHeightErrM { get; set; } = 1.0f;
 
 
+        // --------------------- Processing Limits --------------------- 
+
+        // If the camera view includes the horizon, then the camera can experience "thermal bloom",
+        // giving bad thermal readings, and lots of suprious features.
+        // Manual operators of drtones occassionally look at the horizon to make sure the drone is not going to run into anything.
+        // We automatically ignore video frames where the camera down angle is greater than MinCameraDownDeg.
+        // If MinCameraDownDeg is set to 35, and camera has vertical field of vision (VFOV) of 47.6 degrees,
+        // then the highest view the app processes is 35 +/- 24 degrees which is 11 to 49 degrees down from the horizon.
+        public int MinCameraDownDeg { get; set; } = 35; // Min 25, Max 90
+
+        // We set a maximum distance and ignore objects detected beyond that distance.
+        // SkyComb Analyst is not designed to detect things in the far distance (as they would need to be very large).
+        // Things detected by 
+        public int MaxFeatureDistanceM { get; set; } = 150; // Min 50, Max 250
+
 
         // Describe (summarise) the key process settings.
         public string Describe()
         {
             var answer =
-                "Gray Threshold: " + ThresholdValue + "\r\n" +
+                "Heat Threshold: " + HeatThresholdValue + "\r\n" +
                 "Save Annotated Video: " + (SaveAnnotatedVideo ? "Yes" : "No") + "\r\n";
 
             if (SaveObjectData != SaveObjectDataEnum.None)
@@ -144,13 +160,33 @@ namespace SkyCombImage.ProcessModel
 
         // The ThresholdValue should be in range 50 to 255.
         // A user may mistake the range for 0.0 to 1.0, so we set the min value to 50
-        public void ValidateThresholdValue()
+        public void ValidateHeatThresholdValue()
         {
-            if (ThresholdValue < 50)
-                ThresholdValue = 50;
+            if (HeatThresholdValue < 50)
+                HeatThresholdValue = 50;
 
-            if (ThresholdValue > 255)
-                ThresholdValue = 255;
+            if (HeatThresholdValue > 255)
+                HeatThresholdValue = 255;
+        }
+
+
+        public void ValidateMinCameraDownDeg()
+        {
+            if (MinCameraDownDeg < 25)
+                MinCameraDownDeg = 25;
+
+            if (MinCameraDownDeg > 90)
+                MinCameraDownDeg = 90;
+        }
+
+
+        public void ValidateMaxFeatureDistanceM()
+        {
+            if (MaxFeatureDistanceM < 50)
+                MaxFeatureDistanceM = 50;
+
+            if (MaxFeatureDistanceM > 250)
+                MaxFeatureDistanceM = 250;
         }
 
 
@@ -163,7 +199,7 @@ namespace SkyCombImage.ProcessModel
                 { "Smooth Process", SmoothProcess.ToString() },
                 { "Smooth Pixels", SmoothPixels },
                 { "Threshold Process", ThresholdProcess.ToString() },
-                { "Threshold Value", ThresholdValue },
+                { "Threshold Value", HeatThresholdValue },
                 { "Trunc Threshold Value", TruncThresholdValue },
                 { "Feature Min Pixels", FeatureMinPixels },
                 { "Feature MinDensity Perc", FeatureMinDensityPerc },
@@ -200,7 +236,7 @@ namespace SkyCombImage.ProcessModel
             SmoothProcess = (SmoothProcessEnum)Enum.Parse(typeof(SmoothProcessEnum), settings[i++]);
             SmoothPixels = StringToNonNegInt(settings[i++]);
             ThresholdProcess = (ThresholdProcessEnum)Enum.Parse(typeof(ThresholdProcessEnum), settings[i++]);
-            ThresholdValue = StringToNonNegInt(settings[i++]);
+            HeatThresholdValue = StringToNonNegInt(settings[i++]);
             TruncThresholdValue = StringToInt(settings[i++]);
             FeatureMinPixels = StringToNonNegInt(settings[i++]);
             FeatureMinDensityPerc = StringToNonNegInt(settings[i++]);
@@ -252,6 +288,8 @@ namespace SkyCombImage.ProcessModel
                 { "Bad Location Err M", BadLocationErrM, LocationNdp },
                 { "Good Height Err M", GoodHeightErrM, HeightNdp },
                 { "Bad Height Err M", BadHeightErrM, HeightNdp },
+                { "Min Camera Down Deg", MinCameraDownDeg },
+                { "Max Feature Distance M", MaxFeatureDistanceM },
             };
         }
 
@@ -268,6 +306,8 @@ namespace SkyCombImage.ProcessModel
             BadLocationErrM = StringToNonNegFloat(settings[i++]);
             GoodHeightErrM = StringToNonNegFloat(settings[i++]);
             BadHeightErrM = StringToNonNegFloat(settings[i++]);
+            MinCameraDownDeg = StringToNonNegInt(settings[i++]);
+            MaxFeatureDistanceM = StringToNonNegInt(settings[i++]);
         }
 
 

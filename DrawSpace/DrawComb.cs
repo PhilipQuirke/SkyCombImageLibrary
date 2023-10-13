@@ -34,10 +34,10 @@ namespace SkyCombImage.DrawSpace
                 Color.FromArgb(255, 255, 0, 0), numColors);
 
             // Use a linear threshold from the processConfig.ThresholdValue to 255
-            int thresholdStep = (255 - processConfig.ThresholdValue) / numColors;
+            int thresholdStep = (255 - processConfig.HeatThresholdValue) / numColors;
             int[] threshold = new int[numColors];
             for (int i = 0; i < numColors; i++)
-                threshold[i] = processConfig.ThresholdValue + i * thresholdStep;
+                threshold[i] = processConfig.HeatThresholdValue + i * thresholdStep;
 
             foreach (var pixel in feature.Pixels)
             {
