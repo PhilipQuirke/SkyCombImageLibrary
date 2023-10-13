@@ -130,14 +130,6 @@ namespace SkyCombImage.ProcessModel
 
         // --------------------- Processing Limits --------------------- 
 
-        // If the camera view includes the horizon, then the camera can experience "thermal bloom",
-        // giving bad thermal readings, and lots of suprious features.
-        // Manual operators of drtones occassionally look at the horizon to make sure the drone is not going to run into anything.
-        // We automatically ignore video frames where the camera down angle is greater than MinCameraDownDeg.
-        // If MinCameraDownDeg is set to 35, and camera has vertical field of vision (VFOV) of 47.6 degrees,
-        // then the highest view the app processes is 35 +/- 24 degrees which is 11 to 49 degrees down from the horizon.
-        public int MinCameraDownDeg { get; set; } = 35; // Min 25, Max 90
-
         // We set a maximum distance and ignore objects detected beyond that distance.
         // SkyComb Analyst is not designed to detect things in the far distance (as they would need to be very large).
         // Things detected by 
@@ -167,16 +159,6 @@ namespace SkyCombImage.ProcessModel
 
             if (HeatThresholdValue > 255)
                 HeatThresholdValue = 255;
-        }
-
-
-        public void ValidateMinCameraDownDeg()
-        {
-            if (MinCameraDownDeg < 25)
-                MinCameraDownDeg = 25;
-
-            if (MinCameraDownDeg > 90)
-                MinCameraDownDeg = 90;
         }
 
 
@@ -288,7 +270,6 @@ namespace SkyCombImage.ProcessModel
                 { "Bad Location Err M", BadLocationErrM, LocationNdp },
                 { "Good Height Err M", GoodHeightErrM, HeightNdp },
                 { "Bad Height Err M", BadHeightErrM, HeightNdp },
-                { "Min Camera Down Deg", MinCameraDownDeg },
                 { "Max Feature Distance M", MaxFeatureDistanceM },
             };
         }
@@ -306,7 +287,6 @@ namespace SkyCombImage.ProcessModel
             BadLocationErrM = StringToNonNegFloat(settings[i++]);
             GoodHeightErrM = StringToNonNegFloat(settings[i++]);
             BadHeightErrM = StringToNonNegFloat(settings[i++]);
-            MinCameraDownDeg = StringToNonNegInt(settings[i++]);
             MaxFeatureDistanceM = StringToNonNegInt(settings[i++]);
         }
 
