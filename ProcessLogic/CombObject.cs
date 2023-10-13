@@ -289,7 +289,7 @@ namespace SkyCombImage.ProcessLogic
                                 Features.AverageFlightStepFixedAltitudeM());
                 }
                 else
-                    lastFeature.SetHeightAlgorithmError(HeightAlgorithmEnum.BaseLine_TooSoon);
+                    lastFeature.SetHeightAlgorithmError("BL_TooShort"); // Either in time or distance.
 
                 // Calculate OBJECT height and object height error (as average over real features).
                 Calculate_HeightM_and_HeightErrM();
@@ -417,7 +417,7 @@ namespace SkyCombImage.ProcessLogic
                     Features.AddFeature(theFeature);
 
                     LastFeature().HeightM = HeightM;
-                    LastFeature().HeightAlgorithm = HeightAlgorithmEnum.UnrealCopy;
+                    LastFeature().HeightAlgorithm = CombFeature.UnrealCopyHeightAlgorithm;
                 }
 
 

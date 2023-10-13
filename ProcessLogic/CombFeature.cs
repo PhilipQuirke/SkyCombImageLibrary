@@ -344,7 +344,7 @@ namespace SkyCombImage.ProcessLogic
                     // For unreal features, just copy the last real feature's location
                     LocationM = lastRealFeature.LocationM?.Clone();
                     HeightM = lastRealFeature.HeightM;
-                    HeightAlgorithm = HeightAlgorithmEnum.UnrealCopy;
+                    HeightAlgorithm = UnrealCopyHeightAlgorithm;
                     return;
                 }
 
@@ -444,7 +444,7 @@ namespace SkyCombImage.ProcessLogic
                     float testDsmM = groundModel.GetElevationByDroneLocn(testLocnM);
                     if (testDsmM == UnknownValue)
                     {
-                        SetHeightAlgorithmError(HeightAlgorithmEnum.LineOfSight_NoDsm);
+                        SetHeightAlgorithmError("LOS_NoDsm");
                         continue;
                     }
 
@@ -478,13 +478,13 @@ namespace SkyCombImage.ProcessLogic
                                 }
                                 else
                                     HeightM = Math.Max(0, testHeightM);
-                                HeightAlgorithm = HeightAlgorithmEnum.LineOfSight;
+                                HeightAlgorithm = LineOfSightHeightAlgorithm;
                             }
                             else
-                                SetHeightAlgorithmError(HeightAlgorithmEnum.LineOfSight_NoDem);
+                                SetHeightAlgorithmError("LOS_NoDem");
                         }
                         else
-                            SetHeightAlgorithmError(HeightAlgorithmEnum.LineOfSight_NoDem);
+                            SetHeightAlgorithmError("LOS_NoDem");
 
                         break;
                     }
@@ -519,7 +519,7 @@ namespace SkyCombImage.ProcessLogic
                     (this.Block == null) || // Last real feature
                     (this.Block.FlightStep == null))
                 {
-                    SetHeightAlgorithmError(HeightAlgorithmEnum.BaseLine_Bad1);
+                    SetHeightAlgorithmError("BL_TooFew");
                     return;
                 }
 
@@ -528,7 +528,7 @@ namespace SkyCombImage.ProcessLogic
                 float droneDistanceDownM = lastStep.FixedDistanceDown;
                 if (droneDistanceDownM < 5)
                 {
-                    SetHeightAlgorithmError(HeightAlgorithmEnum.BaseLine_Bad2);
+                    SetHeightAlgorithmError("BL_TooLow");
                     return;
                 }
 
@@ -546,7 +546,7 @@ namespace SkyCombImage.ProcessLogic
                 double lastPixelY = this.PixelBox.Y + ((double)this.PixelBox.Height) / 2.0;
                 if (firstPixelY == lastPixelY)
                 {
-                    SetHeightAlgorithmError(HeightAlgorithmEnum.BaseLine_Bad3);
+                    SetHeightAlgorithmError("BL_SameY");
                     return;
                 }
 
@@ -567,7 +567,7 @@ namespace SkyCombImage.ProcessLogic
                 // Can occur when 1) camera is near horizontal and the target is far away or 2) drone is not moving.
                 if (Math.Abs(fwdTanDiff) < 0.1) // 0.1 rads = ~6 degrees
                 {
-                    SetHeightAlgorithmError(HeightAlgorithmEnum.BaseLine_Bad4);
+                    SetHeightAlgorithmError("BL_TanDiff");
                     return;
                 }
 
@@ -586,9 +586,9 @@ namespace SkyCombImage.ProcessLogic
                 if (featureHeightM >= 0)
                 {
                     HeightM = featureHeightM;
-                    HeightAlgorithm = HeightAlgorithmEnum.BaseLine;
+                    HeightAlgorithm = BaseLineHeightAlgorithm;
                 } else
-                    SetHeightAlgorithmError(HeightAlgorithmEnum.BaseLine_Neg);
+                    SetHeightAlgorithmError("BL_Neg");
             }
             catch (Exception ex)
             {
@@ -797,12 +797,15 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Calculate object height and object height error, using real features.
+        // With the BaseLine calculation algorithm the last value is most accurate.
+        // With the LineOfSight calculation algorithm every value is equally accurate.
         public (float heightM, float heightErrM, float minHeight, float maxHeight) Calculate_Avg_HeightM_and_HeightErrM()
         {
-            int theCount = 0;
-            float sumHeight = 0;
+            int countLOS = 0;
+            float sumLOSHeight = 0;
             float minHeight = 9999;
-            float maxHeight = -9999;
+            float maxHeight = BaseConstants.UnknownValue;
+            float lastBLHeight = BaseConstants.UnknownValue;
             foreach (var feature in this)
                 if ((feature.Value.LocationM != null) &&
                     (feature.Value.Type == CombFeatureTypeEnum.Real))
@@ -810,23 +813,27 @@ namespace SkyCombImage.ProcessLogic
                     var featureHeight = feature.Value.HeightM;
                     if (featureHeight != BaseConstants.UnknownValue)
                     {
-                        theCount++;
-                        sumHeight += featureHeight;
                         minHeight = Math.Min(featureHeight, minHeight);
                         maxHeight = Math.Max(featureHeight, maxHeight);
+                        if (feature.Value.HeightAlgorithm == CombFeature.BaseLineHeightAlgorithm)
+                            lastBLHeight = featureHeight;
+                        else if (feature.Value.HeightAlgorithm == CombFeature.LineOfSightHeightAlgorithm)
+                        {
+                            countLOS++;
+                            sumLOSHeight += featureHeight;
+                        }
                     }
                 }
 
-            if (theCount > 0)
-            {
-                var heightM = (float)(sumHeight / theCount);
+            // Use BaseLine value if available, else the LOS value if available.
+            var heightM = (lastBLHeight > 0 ? lastBLHeight : (countLOS > 0 ? (float)(sumLOSHeight / countLOS) : BaseConstants.UnknownValue));
+            if (heightM >= 0)
                 return (
                     heightM,
                     Math.Max(
                         Math.Abs(maxHeight - heightM),
                         Math.Abs(minHeight - heightM)),
                     minHeight, maxHeight);
-            }
 
             return (BaseConstants.UnknownValue, BaseConstants.UnknownValue, BaseConstants.UnknownValue, BaseConstants.UnknownValue);
         }

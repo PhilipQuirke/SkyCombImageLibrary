@@ -13,23 +13,16 @@ namespace SkyCombImage.ProcessModel
     public enum CombFeatureTypeEnum { Real, Unreal, Consumed };
 
 
-    // Height alogrithm
-    public enum HeightAlgorithmEnum { 
-        Unknown = 0,        // Default value
-        // Success cases:
-        UnrealCopy = 1,     // Height was copied from a previous feature for an unreal feature.
-        BaseLine = 2,       // Height was calculated from change in camera down angle and the drone base line movement
-        LineOfSight = 3,    // Height was calculated from camera down angle and land contours.
-        // Failure cases:
-        BaseLine_TooSoon = 20, BaseLine_Bad1 = 21, BaseLine_Bad2 = 22, BaseLine_Bad3 = 23, BaseLine_Bad4 = 24, BaseLine_Neg = 25,
-        LineOfSight_NoDsm = 30, LineOfSight_NoDem = 31 };
-
-
     // A class to hold a significant feature 
     public class ProcessFeatureModel : ConfigBase
     {
         // Static NextFeatureId shared by all Comb features
         public static int NextFeatureId = 0;
+
+        // Height algorithm "success" statuses
+        public const string UnrealCopyHeightAlgorithm = "UC"; // Height was copied from a previous feature for an unreal feature.
+        public const string BaseLineHeightAlgorithm = "BL"; // Height was calculated from change in camera down angle and the drone base line movement
+        public const string LineOfSightHeightAlgorithm = "LOS"; // Height was calculated from camera down angle and land contours.
 
 
         // Unique identifier
@@ -63,7 +56,7 @@ namespace SkyCombImage.ProcessModel
         // Height of this feature above the ground. 
         public float HeightM { get; set; }
         // Technique used to calculate HeightM 
-        public HeightAlgorithmEnum HeightAlgorithm { get; set; }
+        public string HeightAlgorithm { get; set; }
 
 
         public ProcessFeatureModel(int blockId, CombFeatureTypeEnum type)
@@ -95,20 +88,18 @@ namespace SkyCombImage.ProcessModel
             ObjectId = 0;
             LocationM = null;
             HeightM = UnknownValue;
-            HeightAlgorithm = HeightAlgorithmEnum.Unknown;
+            HeightAlgorithm = "";
         }
 
 
         // Set the HeightAlgorithm value to an error value - unless it is already set to a success value.
-        // We may try two height algorithms on this feature. If the first succeeds, we retain that success value
-        public void SetHeightAlgorithmError(HeightAlgorithmEnum theCase)
+        // There a few height algorithms. If one succeeds, we retain that success value
+        public void SetHeightAlgorithmError(string theCase)
         {
-            if ((theCase == HeightAlgorithmEnum.UnrealCopy) ||
-                (theCase == HeightAlgorithmEnum.BaseLine) ||
-                (theCase == HeightAlgorithmEnum.LineOfSight))
-                return;
-
-            HeightAlgorithm = theCase;
+            if ((HeightAlgorithm != UnrealCopyHeightAlgorithm) &&
+                (HeightAlgorithm != BaseLineHeightAlgorithm) &&
+                (HeightAlgorithm != LineOfSightHeightAlgorithm))
+                HeightAlgorithm = theCase;
         }
 
 
@@ -156,7 +147,7 @@ namespace SkyCombImage.ProcessModel
                 { "Northing M", (LocationM != null ? LocationM.NorthingM : 0), LocationNdp },
                 { "Easting M", (LocationM != null ? LocationM.EastingM : 0), LocationNdp },
                 { "Height M", (HeightM == UnknownValue ? UnknownHeight : HeightM), HeightNdp },
-                { "Ht Algorithm", (int)HeightAlgorithm },
+                { "Ht Algorithm", HeightAlgorithm },
                 { "Box.X", PixelBox.X },
                 { "Box.Y", PixelBox.Y },
                 { "Box.Width", PixelBox.Width },
@@ -182,7 +173,7 @@ namespace SkyCombImage.ProcessModel
             HeightM = StringToFloat(settings[HeightMSetting - 1]);
             if (HeightM == UnknownHeight)
                 HeightM = UnknownValue;
-            HeightAlgorithm = (HeightAlgorithmEnum) StringToNonNegInt(settings[ObjectIdSetting - 1]);
+            HeightAlgorithm = settings[ObjectIdSetting - 1];
 
             PixelBox = new Rectangle(
                 StringToInt(settings[PixelBoxXSetting - 1]),
