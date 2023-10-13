@@ -247,11 +247,12 @@ namespace SkyCombImage.ProcessLogic
                         inScopeObjects.AddObject(theObject.Value);
                         availObjects.AddObject(theObject.Value);
                     }
+
                 // Each feature can only be claimed once
                 CombFeatureList availFeatures = featuresInBlock.Clone();
 
 
-                // For each active object, consider each frame feature (significant or not)
+                // For each active object, consider each feature (significant or not)
                 // found in this frame to see if it overlaps.
                 // This priviledges objects with multiple real features,
                 // as they can more accurately estimate their expected location.

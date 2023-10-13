@@ -264,7 +264,7 @@ namespace SkyCombImage.ProcessLogic
         // If yImageFrac = 1/2 then object is in the middle of the image 
         // If yImageFrac = 1 then object is at the top of the image (closest to drone)
         // Y = 1 is the top of the image, closest to the drone. 
-        public (double xFraction, double yFraction) CentroidImageFractions(bool initialCalc = true)
+        public (double xFraction, double yFraction) CentroidImageFractions()
         {
             double xCenterPixels = PixelBox.X + PixelBox.Width / 2.0;
             double yCenterPixels = PixelBox.Y + PixelBox.Height / 2.0;
@@ -274,13 +274,6 @@ namespace SkyCombImage.ProcessLogic
             // With image pixels, y = 0 is the top of the image. 
             // Here we change the "sign" of Y, so that y = 0 is the bottom of the image.
             double yFraction = (Model.VideoData.ImageHeight - yCenterPixels) / Model.VideoData.ImageHeight;
-
-            if (initialCalc)
-            {
-                // Should be between 0 and 1, but allow for rounding errors.
-                Assert(xFraction >= -0.1 && xFraction <= 1.1, "CentroidImageFractions: xFraction out of range");
-                Assert(yFraction >= -0.1 && yFraction <= 1.1, "CentroidImageFractions: yFraction out of range");
-            }
 
             return (xFraction, yFraction);
         }
@@ -331,7 +324,7 @@ namespace SkyCombImage.ProcessLogic
         // This is the key translation from IMAGE to PHYSICAL coordinate system.
         // If DSM or DEM data is available then considers ground level undulations between the drone and the feature.
         // Assumes ground is flat and object is on the ground.
-        public void CalculateSettings_LocationM_FlatGround(CombFeature? lastRealFeature, bool initialCalc = true)
+        public void CalculateSettings_LocationM_FlatGround(CombFeature? lastRealFeature)
         {
             try
             {
@@ -349,7 +342,7 @@ namespace SkyCombImage.ProcessLogic
                 }
 
                 // Calculate center (centroid) of feature in image pixels.
-                (double xFraction, double yFraction) = CentroidImageFractions(initialCalc);
+                (double xFraction, double yFraction) = CentroidImageFractions();
 
                 // There are multiple Blocks per FlightLocation.
                 // This is the smoothed block-level change in location
@@ -367,7 +360,7 @@ namespace SkyCombImage.ProcessLogic
                 // This is the key translation from IMAGE to PHYSICAL coordinate system. 
                 // Does NOT consider land contour undulations. Assumes land is flat.
                 var flatLandLocationM =
-                    flightStep.CalcImageFeatureLocationM(deltaBlockLocnM, xFraction, yFraction, initialCalc)
+                    flightStep.CalcImageFeatureLocationM(deltaBlockLocnM, xFraction, yFraction)
                         ?.Clone();
 
                 // First approximation of location is based on flat land assumption.
@@ -623,6 +616,9 @@ namespace SkyCombImage.ProcessLogic
             settings.Add("Density Perc", DensityPerc); // 0 to 100
             settings.Add("Density Good", PixelDensityGood);
             settings.Add("Leg", (Block != null ? Block.FlightLegId : 0));
+
+            // Horizontal distance from feature to drone.
+            settings.Add("RangeM", (Block != null ? RelativeLocation.DistanceM(LocationM, Block.DroneLocnM) : 0 ), LocationNdp);  
 
             return settings;
         }

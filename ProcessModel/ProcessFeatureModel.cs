@@ -127,6 +127,7 @@ namespace SkyCombImage.ProcessModel
         public const int DensityPercSetting = 19;
         public const int PixelDensityGoodSetting = 20;
         public const int LegIdSetting = 21;
+        public const int RangeMSetting = 22;
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.

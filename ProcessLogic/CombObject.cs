@@ -28,15 +28,15 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Constructor used processing video 
-        public CombObject(ProcessScope scope, CombProcessAll model, CombFeature initialFeature) : base(scope)
+        public CombObject(ProcessScope scope, CombProcessAll model, CombFeature firstFeature) : base(scope)
         {
             Model = model;
             ResetMemberData();
 
-            if (initialFeature != null)
+            if (firstFeature != null)
             {
-                Assert(initialFeature.Type == CombFeatureTypeEnum.Real, "Initial feature must be Real");
-                ClaimFeature(initialFeature);
+                Assert(firstFeature.Type == CombFeatureTypeEnum.Real, "Initial feature must be Real");
+                ClaimFeature(firstFeature);
             }
         }
 
@@ -246,7 +246,7 @@ namespace SkyCombImage.ProcessLogic
 
         // Calculate the simple (int, float, VelocityF, etc) member-data of this real object.
         // Calculates LocationM, LocationErrM, HeightM, HeightErrM, etc.
-        public void Calculate_RealObject_SimpleMemberData_Core(bool initialCalc = true)
+        public void Calculate_RealObject_SimpleMemberData_Core()
         {
             try
             {
@@ -274,7 +274,7 @@ namespace SkyCombImage.ProcessLogic
                 // Only works if the drone has moved horizontally some distance. Works at 1m. Better at 5m
                 // May override CalculateSettings_LocationM_HeightM_LineofSight
                 var lastFeature = LastFeature();
-                if ((!initialCalc || (SeenForMinDurations() >= 1)) && HasMoved(initialCalc))
+                if ((SeenForMinDurations() >= 1) && HasMoved())
                 {
                     // Estimate last FEATURE height above ground based on distance down from drone
                     // calculated using trigonometry and first/last real feature camera-view-angles.
@@ -315,12 +315,12 @@ namespace SkyCombImage.ProcessLogic
 
         // Calculate the simple (int, float, VelocityF, etc) member-data of this real object.
         // Calculates DemM, LocationM, LocationErrM, HeightM, HeightErrM, AvgSumLinealM, etc.
-        public void Calculate_RealObject_SimpleMemberData(bool initialCalc = true)
+        public void Calculate_RealObject_SimpleMemberData()
         {
             // Calculate the drone SumLinealM distance corresponding to the centroid of the object
             Calculate_AvgSumLinealM();
 
-            Calculate_RealObject_SimpleMemberData_Core(initialCalc);
+            Calculate_RealObject_SimpleMemberData_Core();
         }
 
 
@@ -340,7 +340,7 @@ namespace SkyCombImage.ProcessLogic
         // Object will claim ownership of this feature extending the objects lifetime and improving its "Significant" score.
         // In rare cases, object can claim multiple features from a single block (e.g. a tree branch bisects a heat spot into two features) 
         // But only if the object reamins viable after claiming feature (e.g. doesn't get too big or density too low).
-        public bool ClaimFeature(CombFeature theFeature, bool initialCalc = true)
+        public bool ClaimFeature(CombFeature theFeature)
         {
             try
             {
@@ -409,7 +409,7 @@ namespace SkyCombImage.ProcessLogic
 
                     // Calculate the simple member data (int, float, VelocityF, etc) of this real object.
                     // Calculates DemM, LocationM, LocationErrM, HeightM, HeightErrM, AvgSumLinealM, etc.
-                    Calculate_RealObject_SimpleMemberData(initialCalc);
+                    Calculate_RealObject_SimpleMemberData();
                 }
                 else if (theFeature.Type == CombFeatureTypeEnum.Unreal)
                 {
@@ -531,14 +531,14 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        private bool HasMoved(bool initialCalc)
+        private bool HasMoved()
         {
             // Drone moved from point A to point B (base-line distance L) in metres.
             double baselineM = RelativeLocation.DistanceM(
                 FirstFeature().Block.DroneLocnM,
                 LastRealFeature().Block.DroneLocnM);
             // If drone has not moved enough this method will be very inaccurate.
-            return (baselineM >= 1 + (initialCalc ? 1 : 0));
+            return (baselineM >= 2);
         }
 
 
@@ -717,6 +717,10 @@ namespace SkyCombImage.ProcessLogic
             answer.Add("#RealFeats", NumRealFeatures());
             answer.Add("RealDensityPx", RealDensityPx(), AreaM2Ndp);
             answer.Add("LocnErrPerFeatCM", LocationErrPerFeatureM() * 100, LocationNdp);
+
+            // Average horizontal distance from object to drone in M.
+            answer.Add("RangeM", AvgRangeM);
+
 
             return answer;
         }
