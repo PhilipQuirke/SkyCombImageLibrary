@@ -46,7 +46,7 @@ namespace SkyCombImage.DrawSpace
             foreach (var thisFeature in thisObject.Features)
                 if ((thisFeature.Value.LocationM != null) &&
                     (thisFeature.Value.Type == type) &&
-                    (thisFeature.Value.BlockId <= BaseDrawScope.MaxFeatureBlockIdToDraw))
+                    (thisFeature.Value.BlockId <= DroneDrawScope.MaxFeatureBlockIdToDraw))
                     Draw.Cross(ref image,
                         DroneLocnMToPixelPoint(thisFeature.Value.LocationM),
                         color, NormalThickness, NormalThickness * FeaturePixels);
