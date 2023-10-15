@@ -280,6 +280,16 @@ namespace SkyCombImage.ProcessLogic
                 throw ThrowException("CombSpan.CalculateSettings_from_FlightSteps", ex);
             }
         }
+
+
+        public int PercentOverlapWithRunFromTo(Drone drone)
+        {
+            return FlightLeg.PercentOverlapWithRunFromTo(drone, MinStepId, MaxStepId);
+        }
+        public bool OverlapsRunFromTo(Drone drone)
+        {
+            return PercentOverlapWithRunFromTo(drone) >= FlightLegModel.MinOverlapPercent;
+        }
     }
 
 
@@ -295,6 +305,31 @@ namespace SkyCombImage.ProcessLogic
         {
             BaseConstants.Assert(combSpan.CombSpanId > 0, "CombSpanList.AddLeg: No Id");
             Add(combSpan.CombSpanId, combSpan);
+        }
+
+
+        // Return the index of the first and last CombSpan overlap of this leg with the RunVideoFromS / RunVideoToS range
+        public (int, int) OverlappingSpansRange(Drone drone)
+        {
+            int firstSpanId = BaseConstants.UnknownValue;
+            int lastSpanId = BaseConstants.UnknownValue;
+
+            foreach (var span in this)
+            {
+                if (span.Value.OverlapsRunFromTo(drone))
+                {
+                    if (firstSpanId == BaseConstants.UnknownValue)
+                        firstSpanId = span.Value.CombSpanId;
+                    lastSpanId = span.Value.CombSpanId;
+                }
+                else
+                {
+                    if (firstSpanId != BaseConstants.UnknownValue)
+                        break;
+                }
+            }
+
+            return (firstSpanId, lastSpanId);
         }
 
 
