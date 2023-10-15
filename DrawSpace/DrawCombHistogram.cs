@@ -54,7 +54,8 @@ namespace SkyCombImage.DrawSpace
 
             CalculateStepWidthAndStride(MinHorizRaw, MaxHorizRaw);
 
-            DrawAxisesAndLabels(ref BaseImage);
+            if(BaseImage != null)
+                DrawAxisesAndLabels(ref BaseImage);
         }
 
 
@@ -110,8 +111,8 @@ namespace SkyCombImage.DrawSpace
         public DrawHeightHistogram(DrawScope drawScope, DrawObjectScope drawObjectScope, CombObjList objs) :
             base(drawScope, objs.HistogramHeightM(), 0, (int)Math.Ceiling(objs.MaxHeightM))
         {
-            FilterMin = drawObjectScope.MinHeightM;
-            FilterMax = drawObjectScope.MaxHeightM;
+            FilterMin = (drawObjectScope == null ? 0 : drawObjectScope.MinHeightM);
+            FilterMax = (drawObjectScope == null ? 10 : drawObjectScope.MaxHeightM);
         }
     }
 
@@ -121,8 +122,8 @@ namespace SkyCombImage.DrawSpace
         public DrawSizeHistogram(DrawScope drawScope, DrawObjectScope drawObjectScope, CombObjList objs) :
             base(drawScope, objs.HistogramSize1000Cm2(), 0, (int)Math.Ceiling(objs.MaxSizeCM2), 1000)
         {
-            FilterMin = drawObjectScope.MinSizeCM2;
-            FilterMax = drawObjectScope.MaxSizeCM2;
+            FilterMin = (drawObjectScope == null ? 0 : drawObjectScope.MinSizeCM2);
+            FilterMax = (drawObjectScope == null ? 1000 : drawObjectScope.MaxSizeCM2);
         }
     }
 
@@ -132,8 +133,8 @@ namespace SkyCombImage.DrawSpace
         public DrawHeatHistogram(DrawScope drawScope, DrawObjectScope drawObjectScope, CombObjList objs) :
             base(drawScope, objs.HistogramHeat(), objs.MinHeat, objs.MaxHeat)
         {
-            FilterMin = drawObjectScope.MinHeat;
-            FilterMax = drawObjectScope.MaxHeat;
+            FilterMin = (drawObjectScope == null ? 235 : drawObjectScope.MinHeat);
+            FilterMax = (drawObjectScope == null ? 255 : drawObjectScope.MaxHeat);
         }
     }
 
@@ -143,8 +144,8 @@ namespace SkyCombImage.DrawSpace
         public DrawRangeHistogram(DrawScope drawScope, DrawObjectScope drawObjectScope, CombObjList objs) :
             base(drawScope, objs.HistogramRangeM(), 0, objs.MaxRangeM)
         {
-            FilterMin = drawObjectScope.MinRangeM;
-            FilterMax = drawObjectScope.MaxRangeM;
+            FilterMin = (drawObjectScope == null ? 0 : drawObjectScope.MinRangeM);
+            FilterMax = (drawObjectScope == null ? 100 : drawObjectScope.MaxRangeM);
         }
     }
 }

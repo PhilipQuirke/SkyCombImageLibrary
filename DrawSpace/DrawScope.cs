@@ -16,11 +16,9 @@ namespace SkyCombImage.DrawSpace
         public CombProcessAll Process;
 
 
-
-
         // Drone encompassing box size in local coordinate system - NorthingM/EastingM
-        public override DroneLocation MinDroneLocnM { get { return ProcessScope.MinDroneLocnM; } }
-        public override DroneLocation MaxDroneLocnM { get { return ProcessScope.MaxDroneLocnM; } }
+        public override DroneLocation? MinDroneLocnM { get { return ProcessScope.MinDroneLocnM; } }
+        public override DroneLocation? MaxDroneLocnM { get { return ProcessScope.MaxDroneLocnM; } }
 
 
         // First millisecond of flight data drawn. Used on graphs with a time axis
@@ -41,7 +39,7 @@ namespace SkyCombImage.DrawSpace
         public override int LastRunStepId { get { return ProcessScope.LastRunStepId; } }
 
 
-        public override FlightStep CurrRunFlightStep { get { return ProcessScope.CurrRunFlightStep; } }
+        public override FlightStep? CurrRunFlightStep { get { return ProcessScope.CurrRunFlightStep; } }
         public override int CurrRunStepId { get { return ProcessScope.PSM.CurrRunStepId; } }
 
 
@@ -81,6 +79,7 @@ namespace SkyCombImage.DrawSpace
         public DrawScope(CombProcessAll process, ProcessScope scope, Drone drone) : base (drone)
         {
             Process = process;
+            ProcessScope = scope;
 
             Reset(scope, drone);
         }
