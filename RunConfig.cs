@@ -4,7 +4,6 @@ using Emgu.CV.Structure;
 using SkyCombDrone.DrawSpace;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
-using System.Diagnostics;
 
 
 namespace SkyCombImage.ProcessModel
@@ -54,14 +53,6 @@ namespace SkyCombImage.ProcessModel
             DroneConfig = new DroneConfigModel();
             ProcessConfig = new ProcessConfigModel();
             ImageConfig = new DrawImageConfig();
-        }
-
-
-        ~RunConfig()
-        {
-            DroneConfig = null;
-            ProcessConfig = null;
-            ImageConfig = null;
         }
 
 
