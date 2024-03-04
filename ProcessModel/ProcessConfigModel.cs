@@ -1,5 +1,5 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved.
-using Emgu.CV.ML;
+using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 
 
@@ -169,6 +169,26 @@ namespace SkyCombImage.ProcessModel
 
             if (MaxFeatureDistanceM > 250)
                 MaxFeatureDistanceM = 250;
+        }
+
+
+        // Horizontal field of view in degrees. Differs per manufacturer's camera.
+        public void SetCameraSpecifics(string cameraType)
+        {
+            switch (cameraType)
+            {
+                case VideoModel.DjiH20N:
+                    HeatThresholdValue = 180;
+                    break;
+
+                case VideoModel.DjiH20T:
+                    // PQR TBC. 
+                    break;
+
+                case VideoModel.DjiM3T:
+                    // PQR TBC. 
+                    break;
+            }
         }
 
 
