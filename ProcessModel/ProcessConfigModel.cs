@@ -186,7 +186,7 @@ namespace SkyCombImage.ProcessModel
                     break;
 
                 case VideoModel.DjiM3T:
-                    // PQR TBC. 
+                    HeatThresholdValue = 235;
                     break;
             }
         }
