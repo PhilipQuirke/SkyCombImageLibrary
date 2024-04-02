@@ -13,7 +13,7 @@ using System.Drawing;
 namespace SkyCombImage.DrawSpace
 {
     // Code to draw drone flight path with comb objects overlaid
-    public class DrawCombFlightPath : DrawPath
+    public class CombDrawPath : DroneDrawPath
     {
         // Pixels width when drawing feature locations as squares
         public int FeaturePixels = 4;
@@ -22,19 +22,19 @@ namespace SkyCombImage.DrawSpace
         public int ObjectPixels = 6;
 
 
-        public DrawScope DrawScope { get; }
+        public ProcessDrawScope ProcessDrawScope { get; }
         // Scope of objects to draw. May be null.
-        public DrawObjectScope ObjectScope { get; }
+        public ObjectDrawScope ObjectDrawScope { get; }
         // Scope of objects to draw. May be null.
         public CombObjList CombObjList { get; set; }
         // Object user has hovered mouse over. May be null.
         public CombObject? HoverObject { get; set; }
 
 
-        public DrawCombFlightPath(DrawScope drawScope, CombObjList combObjList, DrawObjectScope objectScope) : base(drawScope, true)
+        public CombDrawPath(ProcessDrawScope processDrawScope, CombObjList combObjList, ObjectDrawScope objectScope) : base(processDrawScope, true)
         {
-            DrawScope = drawScope;
-            ObjectScope = objectScope;
+            ProcessDrawScope = processDrawScope;
+            ObjectDrawScope = objectScope;
             CombObjList = combObjList;
             HoverObject = null;
         }
@@ -72,7 +72,7 @@ namespace SkyCombImage.DrawSpace
             {
                 base.CurrImage(ref image);
 
-                if (HasPathGraphTransform() && (DrawScope.Process != null))
+                if (HasPathGraphTransform() && (ProcessDrawScope.Process != null))
                 {
                     var inObjectBgr = DroneColors.InScopeObjectBgr;   // Red
                     var outObjectBgr = DroneColors.OutScopeObjectBgr; // Gray
@@ -86,8 +86,8 @@ namespace SkyCombImage.DrawSpace
                     var objList = CombObjList;
 
                     // Reduce list of objects by the user filter values.
-                    if((objList != null) && (ObjectScope != null))
-                        objList = CombObjList.FilterByObjectScope(ObjectScope);
+                    if((objList != null) && (ObjectDrawScope != null))
+                        objList = CombObjList.FilterByObjectScope(ObjectDrawScope);
 
                     if (objList != null)
                     {
@@ -100,7 +100,7 @@ namespace SkyCombImage.DrawSpace
                             foreach (var thisObject in objList)
                                 if (thisObject.Value.Significant &&
                                     (thisObject.Value.LocationM != null) &&
-                                    !thisObject.Value.InRunScope(DrawScope.ProcessScope))
+                                    !thisObject.Value.InRunScope(ProcessDrawScope.ProcessScope))
                                     DrawObject(thisObject.Value, ref image, outObjectBgr);
 
                             // Draw insignificant object features as yellow squares
@@ -114,7 +114,7 @@ namespace SkyCombImage.DrawSpace
                         foreach (var thisObject in objList)
                             if (thisObject.Value.Significant &&
                                 (thisObject.Value.LocationM != null) &&
-                                thisObject.Value.InRunScope(DrawScope.ProcessScope))
+                                thisObject.Value.InRunScope(ProcessDrawScope.ProcessScope))
                             {
                                 // Draw least important then more important stuff as the rectangles will overlap.
                                 if (showAllFeatures)
@@ -149,7 +149,7 @@ namespace SkyCombImage.DrawSpace
                     foreach (var thisObject in process.CombObjs.CombObjList)
                         if (thisObject.Value.Significant &&
                             (thisObject.Value.LocationM != null) &&
-                            thisObject.Value.InRunScope(DrawScope.ProcessScope))
+                            thisObject.Value.InRunScope(ProcessDrawScope.ProcessScope))
                         {
                             bool isFocusObject = (focusObject.ObjectId == thisObject.Value.ObjectId);
                             if (isFocusObject)

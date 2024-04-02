@@ -10,9 +10,9 @@ using System.Drawing;
 namespace SkyCombImage.DrawSpace
 {
     // Code to draw histogram
-    public class DrawHistogram : DrawGraph
+    public class DrawHistogram : DroneDrawGraph
     {
-        public DrawScope DrawScope { get; }
+        public ProcessDrawScope DrawScope { get; }
 
         private List<int> Values;
         private int MaxFreq;
@@ -24,7 +24,7 @@ namespace SkyCombImage.DrawSpace
         public int FilterMax { get; set; } = UnknownValue;
 
 
-        public DrawHistogram(DrawScope drawScope, List<int> values, int min, int max, int scale=1) : base(drawScope, true, true)
+        public DrawHistogram(ProcessDrawScope drawScope, List<int> values, int min, int max, int scale=1) : base(drawScope, true, true)
         {
             DrawScope = drawScope;
 
@@ -108,7 +108,7 @@ namespace SkyCombImage.DrawSpace
 
     public class DrawHeightHistogram : DrawHistogram
     {
-        public DrawHeightHistogram(DrawScope drawScope, DrawObjectScope drawObjectScope, CombObjList objs) :
+        public DrawHeightHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, CombObjList objs) :
             base(drawScope, objs.HistogramHeightM(), 0, (int)Math.Ceiling(objs.MaxHeightM))
         {
             FilterMin = (drawObjectScope == null ? 0 : drawObjectScope.MinHeightM);
@@ -119,7 +119,7 @@ namespace SkyCombImage.DrawSpace
 
     public class DrawSizeHistogram : DrawHistogram
     {
-        public DrawSizeHistogram(DrawScope drawScope, DrawObjectScope drawObjectScope, CombObjList objs) :
+        public DrawSizeHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, CombObjList objs) :
             base(drawScope, objs.HistogramSize1000Cm2(), 0, (int)Math.Ceiling(objs.MaxSizeCM2), 1000)
         {
             FilterMin = (drawObjectScope == null ? 0 : drawObjectScope.MinSizeCM2);
@@ -130,7 +130,7 @@ namespace SkyCombImage.DrawSpace
 
     public class DrawHeatHistogram : DrawHistogram
     {
-        public DrawHeatHistogram(DrawScope drawScope, DrawObjectScope drawObjectScope, CombObjList objs) :
+        public DrawHeatHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, CombObjList objs) :
             base(drawScope, objs.HistogramHeat(), objs.MinHeat, objs.MaxHeat)
         {
             FilterMin = (drawObjectScope == null ? 235 : drawObjectScope.MinHeat);
@@ -141,7 +141,7 @@ namespace SkyCombImage.DrawSpace
 
     public class DrawRangeHistogram : DrawHistogram
     {
-        public DrawRangeHistogram(DrawScope drawScope, DrawObjectScope drawObjectScope, CombObjList objs) :
+        public DrawRangeHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, CombObjList objs) :
             base(drawScope, objs.HistogramRangeM(), 0, objs.MaxRangeM)
         {
             FilterMin = (drawObjectScope == null ? 0 : drawObjectScope.MinRangeM);

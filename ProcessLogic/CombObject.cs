@@ -875,7 +875,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public CombObjList FilterByObjectScope(DrawObjectScope objectScope)
+        public CombObjList FilterByObjectScope(ObjectDrawScope objectScope)
         {
             CombObjList answer = new();
 

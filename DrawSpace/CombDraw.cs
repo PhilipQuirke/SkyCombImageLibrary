@@ -14,7 +14,7 @@ using System.Drawing;
 namespace SkyCombImage.DrawSpace
 {
      // Code to draw images on video frames based on hot spot data
-    public class DrawCombVideoFrames : Draw
+    public class CombDrawVideoFrames : Draw
     {
         // Draw the hot pixels
         public static void HotPixels(
@@ -235,13 +235,13 @@ namespace SkyCombImage.DrawSpace
 
 
     // Code to draw ground tree-top & drone alitudes against lineal meters, with comb objects overlaid
-    public class DrawCombAltitudeByLinealM : DrawAltitudeByLinealM
+    public class CombDrawAltitudeByLinealM : DrawAltitudeByLinealM
     {
         CombProcessAll Process { get; }
-        DrawScope DrawScope { get; }
+        ProcessDrawScope DrawScope { get; }
 
 
-        public DrawCombAltitudeByLinealM(CombProcessAll process, DrawScope drawScope) : base(drawScope)
+        public CombDrawAltitudeByLinealM(CombProcessAll process, ProcessDrawScope drawScope) : base(drawScope)
         {
             Process = process;
             DrawScope = drawScope;
@@ -327,13 +327,13 @@ namespace SkyCombImage.DrawSpace
 
 
     // Code to draw ground tree-top & drone altitudes against time, with comb objects overlaid
-    public class DrawCombAltitudeByTime : DrawAltitudeByTime
+    public class CombDrawAltitudeByTime : DrawAltitudeByTime
     {
         CombProcessAll Process { get; }
-        DrawScope DrawScope { get; }
+        ProcessDrawScope DrawScope { get; }
 
 
-        public DrawCombAltitudeByTime(CombProcessAll process, DrawScope drawScope) : base(drawScope)
+        public CombDrawAltitudeByTime(CombProcessAll process, ProcessDrawScope drawScope) : base(drawScope)
         {
             Process = process;
             DrawScope = drawScope;
@@ -436,9 +436,9 @@ namespace SkyCombImage.DrawSpace
 
 
     // Code to draw comb object height - including feature estimates
-    public class DrawCombObjectHeight : DrawAltitudeByTime
+    public class CombDrawObjectHeight : DrawAltitudeByTime
     {
-        public DrawCombObjectHeight(DrawScope drawScope) : base(drawScope)
+        public CombDrawObjectHeight(ProcessDrawScope drawScope) : base(drawScope)
         {
             Description +=
                 "Object & object feature height are shown.";

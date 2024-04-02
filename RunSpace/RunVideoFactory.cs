@@ -51,7 +51,7 @@ namespace SkyCombImage.RunSpace
                         break;
                     case RunProcessEnum.Comb:
                         answer = new RunVideoCombDrone(parent, config, dataStore, drone);
-                        answer.DrawScope.Process = answer.ProcessAll as CombProcessAll;
+                        answer.ProcessDrawScope.Process = answer.ProcessAll as CombProcessAll;
                         break;
                     default:
                         answer = new RunVideoStandard(parent, config, dataStore, drone);

@@ -33,15 +33,15 @@ namespace SkyCombImage.RunSpace
         public DroneDataStore DataStore { get; set; }
 
         // The processing model apply to to the video. 
-        public ProcessAll ProcessAll { get; set; }
+        public ProcessAll? ProcessAll { get; set; }
 
         public CategoryAll CategoryAll { get; set; }
 
         // Basic attributes of the input video
-        public VideoModel VideoBase = null;
+        public VideoModel? VideoBase = null;
 
         // Current input video frame image
-        public Image<Bgr, byte> CurrInputVideoFrame { get; set; } = null;
+        public Image<Bgr, byte>? CurrInputVideoFrame { get; set; } = null;
 
 
         // Has user requested we stop processing?
@@ -52,15 +52,15 @@ namespace SkyCombImage.RunSpace
 
 
         // How to draw various graphs and charts
-        public DrawScope DrawScope = null;
-        public DrawCombFlightPath DrawCombPath = null;
+        public ProcessDrawScope ProcessDrawScope;
+        public CombDrawPath CombDrawPath;
         //public DrawCombAltitudeByTime DrawCombAltitudeByTime = null;
-        public DrawCombAltitudeByLinealM DrawCombAltitudeByLinealM = null;
-        public DrawSpeed DrawSpeed = null;
-        public DrawPitch DrawPitch = null;
-        public DrawDeltaYaw DrawDeltaYaw = null;
-        public DrawRoll DrawRoll = null;
-        public DrawLeg DrawLeg = null;
+        public CombDrawAltitudeByLinealM DrawCombAltitudeByLinealM;
+        public DrawSpeed DrawSpeed;
+        public DrawPitch DrawPitch;
+        public DrawDeltaYaw DrawDeltaYaw;
+        public DrawRoll DrawRoll;
+        public DrawLeg DrawLeg;
 
 
         public RunVideo(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) : base()
@@ -74,11 +74,11 @@ namespace SkyCombImage.RunSpace
             CategoryAll = new();
 
             CombProcessAll combProcess = CombProcessIfAny();
-            DrawScope = new(combProcess, this, Drone);
+            ProcessDrawScope = new(combProcess, this, Drone);
 
             // What is the maximum scope of objects we draw?
-            CombObjList combObjList = null;
-            DrawObjectScope drawObjectScope = null;
+            CombObjList? combObjList = null;
+            ObjectDrawScope? drawObjectScope = null;
             if (combProcess != null)
             {
                 // Only consider objects in the current ProcessScope.
@@ -93,15 +93,15 @@ namespace SkyCombImage.RunSpace
                     drawObjectScope.SetObjectRange(combObjList);
                 }
             }
-            DrawCombPath = new(DrawScope, combObjList, drawObjectScope);
+            CombDrawPath = new(ProcessDrawScope, combObjList, drawObjectScope);
 
             //DrawCombAltitudeByTime = new(null, DrawScope);
-            DrawCombAltitudeByLinealM = new(null, DrawScope);
-            DrawSpeed = new(DrawScope);
-            DrawPitch = new(DrawScope);
-            DrawDeltaYaw = new(DrawScope);
-            DrawRoll = new(DrawScope);
-            DrawLeg = new(DrawScope);
+            DrawCombAltitudeByLinealM = new(null, ProcessDrawScope);
+            DrawSpeed = new(ProcessDrawScope);
+            DrawPitch = new(ProcessDrawScope);
+            DrawDeltaYaw = new(ProcessDrawScope);
+            DrawRoll = new(ProcessDrawScope);
+            DrawLeg = new(ProcessDrawScope);
 
             if (Drone != null)
                 VideoBase = Drone.InputVideo;
@@ -204,7 +204,7 @@ namespace SkyCombImage.RunSpace
         public virtual (Image<Bgr, byte>, Image<Bgr, byte>) DrawVideoFrames(ProcessBlockModel block, Image<Bgr, byte> inputFrame, Image<Bgr, byte> displayFrame)
         {
             (var modifiedInputFrame, var modifiedDisplayFrame) = 
-                DrawCombVideoFrames.Draw(
+                CombDrawVideoFrames.Draw(
                     RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, Drone,
                     block, CombProcessIfAny(), RunConfig.ProcessConfig.FocusObjectId,
                     inputFrame, displayFrame);
@@ -247,8 +247,8 @@ namespace SkyCombImage.RunSpace
             ProcessDurationMs = 0;
 
             ConfigureModelScope();
-            DrawScope.Reset(this, Drone);
-            DrawCombPath.Reset(DrawScope);
+            ProcessDrawScope.Reset(this, Drone);
+            CombDrawPath.Reset(ProcessDrawScope);
         }
 
 
@@ -259,8 +259,8 @@ namespace SkyCombImage.RunSpace
         {
             if (PSM.CurrBlockId == 1)
             {
-                DrawScope.Reset(this, Drone);
-                DrawCombPath.Reset(DrawScope);
+                ProcessDrawScope.Reset(this, Drone);
+                CombDrawPath.Reset(ProcessDrawScope);
             }
 
             RunParent.DrawUI(this, inputFrame, displayFrame);

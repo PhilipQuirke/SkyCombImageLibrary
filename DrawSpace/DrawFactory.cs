@@ -9,14 +9,14 @@ namespace SkyCombImage.DrawSpace
     // Code to draw stuff on images
     public class DrawFactory
     {
-        public static DrawGraph Create(string useCase, DrawScope drawScope, Size size)
+        public static DroneDrawGraph Create(string useCase, ProcessDrawScope drawScope, Size size)
         {
-            DrawGraph answer = null;
+            DroneDrawGraph answer = null;
 
             switch (useCase)
             {
-                case "altitudebytime": answer = new DrawCombAltitudeByTime(null, drawScope); break;
-                case "altitudebylinealm": answer = new DrawCombAltitudeByLinealM(null, drawScope); break;
+                case "altitudebytime": answer = new CombDrawAltitudeByTime(null, drawScope); break;
+                case "altitudebylinealm": answer = new CombDrawAltitudeByLinealM(null, drawScope); break;
                 case "speed": answer = new DrawSpeed(drawScope); break;
                 case "pitch": answer = new DrawPitch(drawScope); break;
                 case "deltayaw": answer = new DrawDeltaYaw(drawScope); break;

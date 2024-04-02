@@ -8,7 +8,7 @@ using SkyCombDrone.DrawSpace;
 namespace SkyCombImage.DrawSpace
 {
     // Code to draw images related to drone & process data in charts, graphs,etc.
-    public class DrawScope : DroneDrawScope
+    public class ProcessDrawScope : DroneDrawScope // : TardisDrawScope
     {
         // The Video, Drone & model scope of a processing run
         public ProcessScope ProcessScope;
@@ -76,7 +76,7 @@ namespace SkyCombImage.DrawSpace
         public override float MaxSpeedMps { get { return ProcessScope.MaxSpeedMps; } }
 
 
-        public DrawScope(CombProcessAll process, ProcessScope scope, Drone drone) : base (drone)
+        public ProcessDrawScope(CombProcessAll process, ProcessScope scope, Drone drone) : base (drone)
         {
             Process = process;
             ProcessScope = scope;
@@ -119,7 +119,7 @@ namespace SkyCombImage.DrawSpace
 
 
     // Code to draw images related to process object data in charts, graphs,etc.
-    public class DrawObjectScope : DrawScope
+    public class ObjectDrawScope : ProcessDrawScope // : DroneDrawScope : TardisDrawScope
     {
         // First millisecond object visible
         public int FirstObjectMs;
@@ -143,7 +143,7 @@ namespace SkyCombImage.DrawSpace
         public override int LastDrawMs { get { return LastObjectMs; } }
 
 
-        public DrawObjectScope(CombProcessAll process, ProcessScope scope, Drone drone) : base(process, scope, drone)
+        public ObjectDrawScope(CombProcessAll process, ProcessScope scope, Drone drone) : base(process, scope, drone)
         {
             Reset(scope, drone);
         }
