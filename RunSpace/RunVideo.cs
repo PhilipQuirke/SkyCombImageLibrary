@@ -63,7 +63,7 @@ namespace SkyCombImage.RunSpace
         public DrawLeg DrawLeg;
 
 
-        public RunVideo(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) : base()
+        public RunVideo(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) : base(drone)
         {
             RunParent = parent;
             RunConfig = config;
@@ -153,7 +153,6 @@ namespace SkyCombImage.RunSpace
         public void ConfigureModelScope()
         {
             ConfigureScope_SetFramePos(
-                Drone,
                 RunConfig.DroneConfig.RunVideoFromS,
                 RunConfig.DroneConfig.RunVideoToS);
 
@@ -359,7 +358,7 @@ namespace SkyCombImage.RunSpace
                         break;
 
                     // Convert the already loaded Mat(s) into Image(s)
-                    (var currInputImage, var currDisplayImage) = ConvertImages(Drone);
+                    (var currInputImage, var currDisplayImage) = ConvertImages();
 
                     if (prevLegId != PSM.CurrRunLegId)
                     {
@@ -373,7 +372,7 @@ namespace SkyCombImage.RunSpace
                         if (!Drone.HaveFrames())
                             break;
 
-                        (currInputImage, currDisplayImage) = ConvertImages(Drone);
+                        (currInputImage, currDisplayImage) = ConvertImages();
 
                         Assert(inputVideo.CurrFrameId == PSM.CurrInputFrameId, "RunVideo.Run: Bad FrameId 1");
 

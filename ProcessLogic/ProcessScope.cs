@@ -11,6 +11,8 @@ namespace SkyCombImage.ProcessLogic
     // The Video, Drone & model scope of a processing run
     public class ProcessScope : FlightStepSummaryModel
     {
+        public Drone Drone { get; }
+
         public ProcessScopeModel PSM { get; }
 
         // Current flight step to process
@@ -21,19 +23,28 @@ namespace SkyCombImage.ProcessLogic
         public int LastRunStepId { get { return MaxStepId; } }
 
 
-        public ProcessScope()
+        public ProcessScope(Drone drone = null)
         {
             PSM = new();
+            Drone = drone;
         }
         public ProcessScope(ProcessScope other)
         {
             PSM = new(other.PSM);
+            Drone = other.Drone;
             CurrRunFlightStep = other.CurrRunFlightStep;
             CopySteps(other);
         }
 
 
-        public void ResetScope(Drone drone, FlightStep fromStep, FlightStep toStep)
+        // Return the child FlightStep
+        public override TardisModel? GetTardisModel(int index)
+        {
+             return Drone == null ? null : Drone.FlightSteps.GetTardisModel(index);
+        }
+
+
+        public void ResetScope(FlightStep fromStep, FlightStep toStep)
         {
             ResetTardis();
 
@@ -44,12 +55,12 @@ namespace SkyCombImage.ProcessLogic
             var toStepId = UnknownStepId;
             if (toStep != null)
                 toStepId = toStep.StepId;
-            else if ((drone != null) && drone.HasFlightSteps)
+            else if ((Drone != null) && Drone.HasFlightSteps)
                 // Default to the full flight
-                toStepId = drone.FlightSteps.MaxStepId;
+                toStepId = Drone.FlightSteps.MaxStepId;
 
-            if ((drone != null) && drone.HasFlightSteps)
-                drone.FlightSteps.Steps.CalculateSettings_Summarise(this, fromStepId, toStepId);
+            if ((Drone != null) && Drone.HasFlightSteps)
+                Drone.FlightSteps.Steps.CalculateSettings_Summarise(this, fromStepId, toStepId);
             else
                 this.ResetSteps();
         }
@@ -90,62 +101,61 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Given Config.RunVideoFromS and Config.RunVideoToS, which input video frames will we process?
-        public void CalculateInputScope(Drone drone, float inputVideoFromS, float inputVideoToS)
+        public void CalculateInputScope(float inputVideoFromS, float inputVideoToS)
         {
             (PSM.FirstInputFrameId, PSM.LastInputFrameId, PSM.FirstVideoFrameMs, PSM.LastVideoFrameMs) =
-                drone.InputVideo.CalculateFromToS(inputVideoFromS, inputVideoToS);
+                Drone.InputVideo.CalculateFromToS(inputVideoFromS, inputVideoToS);
         }
 
 
-        public void ConfigureScope_SetFramePos(Drone drone,
-            float inputVideoFromS, float inputVideoToS)
+        public void ConfigureScope_SetFramePos( float inputVideoFromS, float inputVideoToS)
         {
-            drone.ResetCurrFrames();
+            Drone.ResetCurrFrames();
 
-            CalculateInputScope(drone, inputVideoFromS, inputVideoToS);
+            CalculateInputScope(inputVideoFromS, inputVideoToS);
 
-            drone.SetAndGetCurrFrames(PSM.FirstInputFrameId);
+            Drone.SetAndGetCurrFrames(PSM.FirstInputFrameId);
 
-            if (drone.HasFlightSteps)
+            if (Drone.HasFlightSteps)
             {
-                SetCurrRunStepAndLeg(drone.MsToNearestFlightStep(PSM.FirstVideoFrameMs));
+                SetCurrRunStepAndLeg(Drone.MsToNearestFlightStep(PSM.FirstVideoFrameMs));
 
-                var toStep = drone.MsToNearestFlightStep(PSM.LastVideoFrameMs);
-                ResetScope(drone, CurrRunFlightStep, toStep);
+                var toStep = Drone.MsToNearestFlightStep(PSM.LastVideoFrameMs);
+                ResetScope(CurrRunFlightStep, toStep);
             }
             else
             {
-                ResetScope(null, null, null);
+                ResetScope(null, null);
                 PSM.CurrRunLegId = 1;
             }
 
-            Assert(drone.InputVideo.CurrFrameId == PSM.FirstInputFrameId, "ProcessScope.ConfigureScope_SetFramePos: Bad FrameID");
+            Assert(Drone.InputVideo.CurrFrameId == PSM.FirstInputFrameId, "ProcessScope.ConfigureScope_SetFramePos: Bad FrameID");
 
             PSM.CurrBlockId = 1;
         }
 
 
-        public void CalculateSettings(Drone drone)
+        public void CalculateSettings()
         {
-            SetCurrVideoFrameData(drone.InputVideo, drone.DisplayVideo);
-            if (drone.HasFlightSteps)
-                SetCurrRunStepAndLeg(drone.MsToNearestFlightStep(PSM.CurrInputFrameMs));
+            SetCurrVideoFrameData(Drone.InputVideo, Drone.DisplayVideo);
+            if (Drone.HasFlightSteps)
+                SetCurrRunStepAndLeg(Drone.MsToNearestFlightStep(PSM.CurrInputFrameMs));
             else
                 PSM.CurrRunLegId = 1;
         }
 
 
         // Return current input video frame and corresponding display video frame (if any)
-        public (Image<Bgr, byte>? inputImage, Image<Bgr, byte>? displayImage) ConvertImages(Drone drone)
+        public (Image<Bgr, byte>? inputImage, Image<Bgr, byte>? displayImage) ConvertImages()
         {
             Image<Bgr, byte>? inputImage = null;
             Image<Bgr, byte>? displayImage = null;
 
-            if (drone.HaveFrames())
+            if (Drone.HaveFrames())
             {
-                (Mat inputMat, Mat displayMat) = drone.CurrFrames();
+                (Mat inputMat, Mat displayMat) = Drone.CurrFrames();
 
-                CalculateSettings(drone);
+                CalculateSettings();
 
                 inputImage = inputMat.ToImage<Bgr, byte>();
                 if (displayMat != null)
