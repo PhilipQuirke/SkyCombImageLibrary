@@ -17,8 +17,8 @@ namespace SkyCombImage.DrawSpace
 
 
         // Drone encompassing box size in local coordinate system - NorthingM/EastingM
-        public override DroneLocation? MinDroneLocnM { get { return ProcessScope.MinDroneLocnM; } }
-        public override DroneLocation? MaxDroneLocnM { get { return ProcessScope.MaxDroneLocnM; } }
+        public override DroneLocation? ScopeMinDroneLocnM { get { return ProcessScope.MinDroneLocnM; } }
+        public override DroneLocation? ScopeMaxDroneLocnM { get { return ProcessScope.MaxDroneLocnM; } }
 
 
         // First millisecond of flight data drawn. Used on graphs with a time axis
