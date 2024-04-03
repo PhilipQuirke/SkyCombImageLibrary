@@ -17,8 +17,8 @@ namespace SkyCombImage.DrawSpace
 
 
         // Drone encompassing box size in local coordinate system - NorthingM/EastingM
-        public override DroneLocation? ScopeMinDroneLocnM { get { return ProcessScope.MinDroneLocnM; } }
-        public override DroneLocation? ScopeMaxDroneLocnM { get { return ProcessScope.MaxDroneLocnM; } }
+        // public override DroneLocation? ScopeMinDroneLocnM { get { return ProcessScope.MinDroneLocnM; } }
+        // public override DroneLocation? ScopeMaxDroneLocnM { get { return ProcessScope.MaxDroneLocnM; } }
 
 
         // First millisecond of flight data drawn. Used on graphs with a time axis
@@ -76,21 +76,24 @@ namespace SkyCombImage.DrawSpace
         public override float MaxSpeedMps { get { return ProcessScope.MaxSpeedMps; } }
 
 
-        public ProcessDrawScope(CombProcessAll process, ProcessScope scope, Drone drone) : base (drone)
+        public ProcessDrawScope(CombProcessAll process, ProcessScope processScope, Drone drone) : base (drone)
         {
             Process = process;
-            ProcessScope = scope;
+            ProcessScope = processScope;
 
-            Reset(scope, drone);
+            Reset(processScope, drone);
         }
 
 
-        public virtual void Reset(ProcessScope scope, Drone drone)
+        public virtual void Reset(ProcessScope processScope, Drone drone)
         {
-            ProcessScope = scope;
-            Assert(ProcessScope != null, "Reset: Missing scope");
-
             Drone = drone;
+
+            ProcessScope = processScope;
+            Assert(ProcessScope != null, "Reset: Missing scope");
+            
+            // Constrain drawing to the process scope.
+            TardisSummary = processScope;
         }
 
 
