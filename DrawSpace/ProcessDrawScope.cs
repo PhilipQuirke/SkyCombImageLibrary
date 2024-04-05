@@ -1,8 +1,9 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved.
+﻿// Copyright SkyComb Limited 2024. All rights reserved.
 using SkyCombImage.ProcessLogic;
 using SkyCombDrone.DroneLogic;
-using SkyCombGround.CommonSpace;
 using SkyCombDrone.DrawSpace;
+using SkyCombGround.CommonSpace;
+using SkyCombImage.ProcessModel;
 
 
 namespace SkyCombImage.DrawSpace
@@ -142,6 +143,7 @@ namespace SkyCombImage.DrawSpace
         public int MaxRangeM;
 
         public int NumObjects;
+        public int NumFilteredObjects;
 
 
         public override int FirstDrawMs { get { return FirstObjectMs; } }
@@ -165,15 +167,17 @@ namespace SkyCombImage.DrawSpace
         {
             FirstObjectMs = UnknownValue;
             LastObjectMs = UnknownValue;
-            MinHeightM = UnknownValue;
-            MaxHeightM = UnknownValue;
+            MinHeightM = ProcessObjectModel.UnknownHeight;
+            MaxHeightM = ProcessObjectModel.UnknownHeight;
             MinSizeCM2 = UnknownValue;
             MaxSizeCM2 = UnknownValue;
             MinHeat = UnknownValue;
             MaxHeat = UnknownValue;
             MinRangeM = UnknownValue;
             MaxRangeM = UnknownValue;
+
             NumObjects = 0;
+            NumFilteredObjects = NumObjects;
         }
 
 
@@ -183,7 +187,7 @@ namespace SkyCombImage.DrawSpace
                 ResetMemberData();
             else
             {
-                MinHeightM = Math.Min(0, (int)Math.Floor(objList.MinHeightM)); // If we have negative heights show them
+                MinHeightM = (int)Math.Floor(objList.MinHeightM); // If we have negative heights show them
                 MaxHeightM = (int)Math.Ceiling(objList.MaxHeightM);
                 MinSizeCM2 = (int)Math.Floor(objList.MinSizeCM2);
                 MaxSizeCM2 = (int)Math.Ceiling(objList.MaxSizeCM2);
@@ -193,6 +197,7 @@ namespace SkyCombImage.DrawSpace
                 MaxRangeM = objList.MaxRangeM;
 
                 NumObjects = objList.Count;
+                NumFilteredObjects = NumObjects;
             }
         }
     }

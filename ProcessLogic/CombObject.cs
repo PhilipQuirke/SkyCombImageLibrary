@@ -792,8 +792,8 @@ namespace SkyCombImage.ProcessLogic
             MinLocationErrM = BaseConstants.UnknownValue;
             MaxLocationErrM = BaseConstants.UnknownValue;
             SumLocationErrM = 0;
-            MinHeightM = BaseConstants.UnknownValue;
-            MaxHeightM = BaseConstants.UnknownValue;
+            MinHeightM = ProcessObjectModel.UnknownHeight;
+            MaxHeightM = ProcessObjectModel.UnknownHeight;
             MinHeightErrM = BaseConstants.UnknownValue;
             MaxHeightErrM = BaseConstants.UnknownValue;
             SumHeightM = 0;
@@ -883,14 +883,14 @@ namespace SkyCombImage.ProcessLogic
             {
                 var theObj = theObject.Value;
 
-                if((theObj.HeightM != BaseConstants.UnknownValue) && (objectScope.MinHeightM != BaseConstants.UnknownValue))
+                if((objectScope.MinHeightM != BaseConstants.UnknownValue))
                 {
                     if (theObj.HeightM < objectScope.MinHeightM)
                         continue;
                     if (theObj.HeightM > objectScope.MaxHeightM)
                         continue;
                 }
-                if((theObj.AvgRangeM != BaseConstants.UnknownValue) && (objectScope.MinRangeM != BaseConstants.UnknownValue))
+                if((objectScope.MinRangeM != BaseConstants.UnknownValue))
                 {
                     if (theObj.AvgRangeM < objectScope.MinRangeM)
                         continue;
@@ -1007,13 +1007,13 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Return a histogram of the size of the objects in this list
-        public List<int> HistogramSize1000Cm2()
+        public List<int> HistogramSizeCm2(int scale)
         {
             var answer = new List<int>();
 
             foreach (var theObject in this)
             {
-                var metric = (int)(theObject.Value.SizeCM2 / 1000);
+                var metric = (int)(theObject.Value.SizeCM2 / scale) + 1;
                 if (metric >= 0)
                 {
                     var index = metric;
@@ -1034,7 +1034,7 @@ namespace SkyCombImage.ProcessLogic
 
             foreach (var theObject in this)
             {
-                var metric = theObject.Value.MaxHeat - this.MinHeat + 1;
+                var metric = theObject.Value.MaxHeat - this.MinHeat;
                 if (metric >= 0)
                 {
                     var index = metric;

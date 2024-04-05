@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved.
+﻿// Copyright SkyComb Limited 2024. All rights reserved.
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.CommonSpace;
@@ -6,7 +6,6 @@ using SkyCombDrone.DrawSpace;
 using SkyCombDrone.DroneLogic;
 using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
-using SkyCombGround.CommonSpace;
 using System.Drawing;
 
 
@@ -86,8 +85,11 @@ namespace SkyCombImage.DrawSpace
                     var objList = CombObjList;
 
                     // Reduce list of objects by the user filter values.
-                    if((objList != null) && (ObjectDrawScope != null))
+                    if ((objList != null) && (ObjectDrawScope != null))
+                    {
                         objList = CombObjList.FilterByObjectScope(ObjectDrawScope);
+                        ObjectDrawScope.NumFilteredObjects = objList.Count;
+                    }
 
                     if (objList != null)
                     {
@@ -179,7 +181,7 @@ namespace SkyCombImage.DrawSpace
             if (HoverObject != null)
             {
                 var objName = HoverObject.Name;
-                var objHeight = (HoverObject.HeightM == BaseConstants.UnknownValue ? "N/A" : Math.Round(HoverObject.HeightM,1).ToString() + " m");
+                var objHeight = (HoverObject.HeightM <= ProcessObjectModel.UnknownHeight ? "N/A" : Math.Round(HoverObject.HeightM,1).ToString() + " m");
                 var objSize = ((int)HoverObject.SizeCM2).ToString() + " cm2";
                 var objHeat = HoverObject.MaxHeat.ToString();
                 var objRange = HoverObject.AvgRangeM.ToString() + " m"; // Distance from drone to object
@@ -206,7 +208,9 @@ namespace SkyCombImage.DrawSpace
                     graphics.DrawString("Size", font, brush, leftPosition); leftPosition.Y += vertStep;
                     graphics.DrawString("Heat", font, brush, leftPosition); leftPosition.Y += vertStep;
                     graphics.DrawString("Range", font, brush, leftPosition); leftPosition.Y += vertStep;
-                    graphics.DrawString("At (m:s)", font, brush, leftPosition); leftPosition.Y += vertStep;
+                    graphics.DrawString("At", font, brush, leftPosition); leftPosition.Y += vertStep;
+
+                    objFromS = objFromS.Replace(":", "m") + "s";
 
                     // Draw the text data on the bitmap
                     graphics.DrawString(objName, font, brush, rightPosition); rightPosition.Y += vertStep;

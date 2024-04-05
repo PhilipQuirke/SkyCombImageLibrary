@@ -87,7 +87,7 @@ namespace SkyCombImage.ProcessModel
             Attributes = "";
             ObjectId = 0;
             LocationM = null;
-            HeightM = UnknownValue;
+            HeightM = ProcessObjectModel.UnknownHeight;
             HeightAlgorithm = "";
         }
 
@@ -103,7 +103,7 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        private int UnknownHeight = -2;
+        public const int UnknownHeight = -2;
 
         // One-based settings index values. Must align with GetSettings procedure below     
         public const int FeatureIdSetting = 1;
@@ -172,8 +172,6 @@ namespace SkyCombImage.ProcessModel
             LocationM = new DroneLocation(settings[NorthingMSetting - 1], settings[EastingMSetting - 1]);
 
             HeightM = StringToFloat(settings[HeightMSetting - 1]);
-            if (HeightM == UnknownHeight)
-                HeightM = UnknownValue;
             HeightAlgorithm = settings[ObjectIdSetting - 1];
 
             PixelBox = new Rectangle(

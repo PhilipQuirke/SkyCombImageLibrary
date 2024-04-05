@@ -4,6 +4,7 @@ using Emgu.CV.Structure;
 using SkyCombDrone.CommonSpace;
 using SkyCombDrone.DrawSpace;
 using SkyCombImage.ProcessLogic;
+using SkyCombImage.ProcessModel;
 using System.Drawing;
 
 
@@ -24,26 +25,23 @@ namespace SkyCombImage.DrawSpace
         public int FilterMax { get; set; } = UnknownValue;
 
 
-        public DrawHistogram(ProcessDrawScope drawScope, List<int> values, int min, int max, int scale=1) : base(drawScope, true, true)
+        public DrawHistogram(ProcessDrawScope drawScope, List<int> values, int min, int max, int scale = 1) : base(drawScope, true, true)
         {
             DrawScope = drawScope;
 
             Values = values;
             MaxFreq = (Values.Count == 0 ? 1 : Math.Max(1, Values.Max()));
 
-            MinHorizRaw = min;
-            MaxHorizRaw = max;
-
             VertBottomLabel = "";
             VertTopLabel = MaxFreq.ToString();
+
+            MinHorizRaw = min;
+            MaxHorizRaw = max;
 
             HorizLeftLabel = MinHorizRaw.ToString();
             HorizRightLabel = MaxHorizRaw.ToString();
 
-            MaxHorizRaw += 1; // Extra room needed to draw the last histogram bar width
-
             Scale = scale;
-
             TextFontSize = 8;
         }
 
@@ -52,9 +50,11 @@ namespace SkyCombImage.DrawSpace
         {
             base.Initialise(size);
 
-            CalculateStepWidthAndStride(MinHorizRaw, MaxHorizRaw);
+            MaxHorizRaw++;
+            CalculateStepWidthAndStride(MinHorizRaw, MaxHorizRaw, Scale);
+            MaxHorizRaw--;
 
-            if(BaseImage != null)
+            if (BaseImage != null)
                 DrawAxisesAndLabels(ref BaseImage);
         }
 
@@ -88,12 +88,10 @@ namespace SkyCombImage.DrawSpace
                             var thickness = -1; // If thickness is less than 1, the rectangle is filled up
 
                             var pxsDown = RawDataToHeightPixels(value, MaxFreq);
-                            var rect = new Rectangle(
-                                StepToWidth(horizValue) + 1,
-                                pxsDown,
-                                Math.Max(1, (int)StepWidthPxs - 2),
-                                OriginPixel.Y - pxsDown);
 
+                            var x = StepToWidth(horizValue) / Scale + 1;
+                            var width = Math.Max(1, (int)StepWidthPxs - 2);
+                            var rect = new Rectangle( x, pxsDown, width, OriginPixel.Y - pxsDown);
                             image.Draw(rect, theColor, thickness);
                         }
                     }
@@ -111,7 +109,7 @@ namespace SkyCombImage.DrawSpace
         public DrawHeightHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, CombObjList objs) :
             base(drawScope, objs.HistogramHeightM(), 0, (int)Math.Ceiling(objs.MaxHeightM))
         {
-            FilterMin = (drawObjectScope == null ? 0 : drawObjectScope.MinHeightM);
+            FilterMin = (drawObjectScope == null ? ProcessObjectModel.UnknownHeight : drawObjectScope.MinHeightM);
             FilterMax = (drawObjectScope == null ? 10 : drawObjectScope.MaxHeightM);
         }
     }
@@ -119,10 +117,12 @@ namespace SkyCombImage.DrawSpace
 
     public class DrawSizeHistogram : DrawHistogram
     {
+        public const int Scale = 500; // Each bar represents a 500cm2 increase in size
+
         public DrawSizeHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, CombObjList objs) :
-            base(drawScope, objs.HistogramSize1000Cm2(), 0, (int)Math.Ceiling(objs.MaxSizeCM2), 1000)
+            base(drawScope, objs.HistogramSizeCm2(Scale), 0, (int)Math.Ceiling(objs.MaxSizeCM2), Scale)
         {
-            FilterMin = (drawObjectScope == null ? 0 : drawObjectScope.MinSizeCM2);
+            FilterMin = 0;
             FilterMax = (drawObjectScope == null ? 1000 : drawObjectScope.MaxSizeCM2);
         }
     }
@@ -135,6 +135,11 @@ namespace SkyCombImage.DrawSpace
         {
             FilterMin = (drawObjectScope == null ? 235 : drawObjectScope.MinHeat);
             FilterMax = (drawObjectScope == null ? 255 : drawObjectScope.MaxHeat);
+        }
+
+        public override void CurrImage(ref Image<Bgr, byte> image)
+        {
+            base.CurrImage(ref image);
         }
     }
 

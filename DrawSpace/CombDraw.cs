@@ -279,7 +279,7 @@ namespace SkyCombImage.DrawSpace
                 if ((DroneDrawScope.Drone != null) && (process != null) && (process.CombObjs.CombObjList.Count > 0))
                 {
                     foreach (var thisObject in process.CombObjs.CombObjList)
-                        if (thisObject.Value.Significant && (thisObject.Value.HeightM != UnknownValue))
+                        if (thisObject.Value.Significant && (thisObject.Value.HeightM > ProcessObjectModel.UnknownHeight))
                         {
                             var avgHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.HeightM - MinVertRaw, VertRangeRaw));
                             var minHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.MinHeightM - MinVertRaw, VertRangeRaw));
@@ -499,7 +499,7 @@ namespace SkyCombImage.DrawSpace
 
                 // Draw the object features as orange or yellow crosses
                 foreach (var thisFeature in thisObject.Features)
-                    if ((thisFeature.Value.HeightM != UnknownValue) &&
+                    if ((thisFeature.Value.HeightM > ProcessObjectModel.UnknownHeight ) &&
                         (thisFeature.Value.BlockId <= DroneDrawScope.MaxFeatureBlockIdToDraw))
                     {
                         var theBgr = (thisFeature.Value.Type == CombFeatureTypeEnum.Real ? realBgr : unrealBgr);

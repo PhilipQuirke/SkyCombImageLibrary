@@ -96,9 +96,9 @@ namespace SkyCombImage.ProcessModel
             LocationM = new DroneLocation();
             LocationErrM = UnknownValue;
             AvgSumLinealM = UnknownValue;
-            HeightM = UnknownValue;
-            MinHeightM = UnknownValue;
-            MaxHeightM = UnknownValue;
+            HeightM = ProcessObjectModel.UnknownHeight;
+            MinHeightM = ProcessObjectModel.UnknownHeight;
+            MaxHeightM = ProcessObjectModel.UnknownHeight;
             HeightErrM = UnknownValue;
             SizeCM2 = 0;
             AvgRangeM = UnknownValue;
@@ -181,7 +181,7 @@ namespace SkyCombImage.ProcessModel
         public const int LocnErrPerFeatCMSetting = 35;
 
 
-        public int UnknownHeight = -2;
+        public const int UnknownHeight = -2;
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
@@ -228,10 +228,7 @@ namespace SkyCombImage.ProcessModel
             LocationErrM = StringToNonNegFloat(settings[i++]);
             AvgSumLinealM = StringToNonNegFloat(settings[i++]);
 
-            HeightM = StringToFloat(settings[i++]);
-            if (HeightM == UnknownHeight)
-                HeightM = UnknownValue;
-
+            HeightM = StringToFloat(settings[i++]); // Can be UnknownHeight that is -2
             MinHeightM = StringToFloat(settings[i++]);
             MaxHeightM = StringToFloat(settings[i++]);
             HeightErrM = StringToFloat(settings[i++]);
@@ -275,14 +272,14 @@ namespace SkyCombImage.ProcessModel
                 { "Object", Name },
                 { "Category", category },
                 { "Include", include },
-                { "Height (cm)", (HeightM==UnknownValue ? UnknownValue : HeightM * 100), 0 },
+                { "Height (cm)", (HeightM<0 ? UnknownValue : HeightM * 100), 0 },
                 { "Size (cm2)", SizeCM2, 0 },
                 { "From (m:ss)", VideoModel.DurationSecToString(RunFromVideoS, 1) },
                 { "For (s)", RunToVideoS - RunFromVideoS, 1 },
                 { "Location (m,m)", (LocationM != null ? LocationM.ToString() : "" ) },
                 { "Attributes", Attributes },
-                { "Location Err (cm)", (LocationErrM==UnknownValue ? UnknownValue : LocationErrM * 100), 0 },
-                { "Height Err (cm)", (HeightErrM==UnknownValue ? UnknownValue : HeightErrM * 100), 0 },
+                { "Location Err (cm)", (LocationErrM<0 ? UnknownValue : LocationErrM * 100), 0 },
+                { "Height Err (cm)", (HeightErrM<0 ? UnknownValue : HeightErrM * 100), 0 },
             };
         }
 
