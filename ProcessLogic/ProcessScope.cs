@@ -1,5 +1,6 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved. 
 using Emgu.CV;
+using Emgu.CV.Face;
 using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
@@ -11,7 +12,8 @@ namespace SkyCombImage.ProcessLogic
     // The Video, Drone & model scope of a processing run
     public class ProcessScope : FlightStepSummaryModel
     {
-        public Drone Drone { get; }
+        // All drone input data: video(definitely), flight(maybe) and ground(maybe) data
+        public Drone Drone { get; set; }
 
         public ProcessScopeModel PSM { get; }
 

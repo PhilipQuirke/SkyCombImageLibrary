@@ -27,7 +27,7 @@ namespace SkyCombImage.RunSpace
         public RunConfig RunConfig { get; set; }
 
         // All drone input data: video (definitely), flight (maybe) and ground (maybe) data 
-        public Drone Drone { get; set; }
+        // public Drone Drone { get; set; }
 
         // The data store (spreadsheet) that meta-data is saved to / read from. 
         public DroneDataStore DataStore { get; set; }

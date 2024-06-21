@@ -488,7 +488,7 @@ namespace SkyCombImage.ProcessLogic
             }
             catch (Exception ex)
             {
-                throw ThrowException("CombFeature.CalculateSettings_LocationM_HeightM_LineofSight", ex);
+                throw ThrowException("CombFeature.CalculateSettings_LocationM_HeightM_LineofSight " + phase.ToString(), ex);
             }
         }
 
