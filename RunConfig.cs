@@ -38,6 +38,9 @@ namespace SkyCombImage.ProcessModel
         // Directory path to store created (video and spreadsheet) files into. Can be blank. Trailing "\" (if any) is trimmed
         public string OutputDirectory { get; set; } = "";
 
+        // Directory path to load YOLOv8 model from. Can be just a directory path (in which case appends "\model.pt") or a file name path
+        public string ModelDirectory { get; set; } = "";
+
         // Name of main process to run: contour, distance, flow, gftt, comb, threshold, none. Lowercase.
         public RunProcessEnum RunProcess { get; set; } = RunProcessEnum.Comb;
 
@@ -140,6 +143,8 @@ namespace SkyCombImage.ProcessModel
                             GroundDirectory = setting.Value.TrimEnd('\\'); break;
                         case "outputdirectory":
                             OutputDirectory = setting.Value.TrimEnd('\\'); break;
+                        case "modeldirectory":
+                            ModelDirectory = setting.Value.TrimEnd('\\'); break;
                     }
             }
             catch (Exception ex)
