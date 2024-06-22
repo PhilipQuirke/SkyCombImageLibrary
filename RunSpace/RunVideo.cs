@@ -33,7 +33,7 @@ namespace SkyCombImage.RunSpace
         public DroneDataStore DataStore { get; set; }
 
         // The processing model apply to to the video. 
-        public ProcessAll? ProcessAll { get; set; }
+        public ProcessAll ProcessAll { get; set; }
 
         public CategoryAll CategoryAll { get; set; }
 
@@ -63,14 +63,14 @@ namespace SkyCombImage.RunSpace
         public DrawLeg DrawLeg;
 
 
-        public RunVideo(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) : base(drone)
+        public RunVideo(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone, ProcessAll processAll) : base(drone)
         {
             RunParent = parent;
             RunConfig = config;
             DataStore = dataStore;
             Drone = drone;
+            ProcessAll = processAll;
             VideoBase = null;
-            ProcessAll = null;
             CategoryAll = new();
 
             CombProcessAll combProcess = CombProcessIfAny();
@@ -520,9 +520,9 @@ namespace SkyCombImage.RunSpace
     // Video class that uses the ImageStandard techniques. No persistance of info between frames
     internal class RunVideoStandard : RunVideo
     {
-        public RunVideoStandard(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) : base(parent, config, dataStore, drone)
+        public RunVideoStandard(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
+            : base(parent, config, dataStore, drone, ProcessFactory.NewFlowProcessModel(config.ProcessConfig, drone))
         {
-            ProcessAll = ProcessFactory.NewFlowProcessModel(config.ProcessConfig, drone);
         }
 
 
@@ -578,7 +578,8 @@ namespace SkyCombImage.RunSpace
         protected Image<Gray, byte>? PrevGray = null;
 
 
-        public RunVideoPersist(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) : base(parent, config, dataStore, drone)
+        public RunVideoPersist(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone, ProcessAll processAll) 
+            : base(parent, config, dataStore, drone, processAll)
         {
         }
 

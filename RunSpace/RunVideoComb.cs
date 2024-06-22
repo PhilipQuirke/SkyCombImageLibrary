@@ -23,9 +23,10 @@ namespace SkyCombImage.RunSpace
     // The thermal flight data associated provides drone location, altitude, timestamp & speed information for each frame.
     public class RunVideoCombDrone : RunVideoPersist
     {
-        public RunVideoCombDrone(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) : base(parent, config, dataStore, drone)
+        public RunVideoCombDrone(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
+            : base(parent, config, dataStore, drone,
+                  ProcessFactory.NewCombProcessModel(config.ProcessConfig, drone.InputVideo, drone.GroundData, drone))
         {
-            ProcessAll = ProcessFactory.NewCombProcessModel(RunConfig.ProcessConfig, drone.InputVideo, drone.GroundData, drone);
         }
 
 

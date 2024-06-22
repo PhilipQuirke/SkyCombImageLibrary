@@ -16,9 +16,9 @@ namespace SkyCombImage.RunSpace
     // Class to implement the CalcOpticalFlowPyrLK method using GFTT method to detect features
     class RunVideoFlow : RunVideoPersist
     {
-        public RunVideoFlow(RunParent parent, RunConfig Config, DroneDataStore dataStore, Drone drone) : base(parent, Config, dataStore, drone)
+        public RunVideoFlow(RunParent parent, RunConfig Config, DroneDataStore dataStore, Drone drone) 
+            : base(parent, Config, dataStore, drone, ProcessFactory.NewFlowProcessModel(Config.ProcessConfig, drone))
         {
-            ProcessAll = ProcessFactory.NewFlowProcessModel(Config.ProcessConfig, drone);
         }
 
 

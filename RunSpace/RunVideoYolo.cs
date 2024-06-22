@@ -16,9 +16,9 @@ namespace SkyCombImage.RunSpace
     // Class to implement the YoloV8
     class RunVideoYolo : RunVideoPersist
     {
-        public RunVideoYolo(RunParent parent, RunConfig Config, DroneDataStore dataStore, Drone drone) : base(parent, Config, dataStore, drone)
+        public RunVideoYolo(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
+            : base(parent, config, dataStore, drone, ProcessFactory.NewFlowProcessModel(config.ProcessConfig, drone))
         {
-            ProcessAll = ProcessFactory.NewFlowProcessModel(Config.ProcessConfig, drone);
         }
 
 
