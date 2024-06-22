@@ -526,7 +526,7 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        public FlowProcessAll? FlowModel { get { return ProcessAll as FlowProcessAll; } }
+        public FlowProcessAll FlowModel { get { return ProcessAll as FlowProcessAll; } }
 
 
         public override void ProcessFlightLegChange(int prevLegId, int currLegId) { }

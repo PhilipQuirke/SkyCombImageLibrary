@@ -22,7 +22,7 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        public FlowProcessAll? FlowModel { get { return (FlowProcessAll)ProcessAll; } }
+        public FlowProcessAll FlowModel { get { return (FlowProcessAll)ProcessAll; } }
 
 
         // Add a block, transferring some flight data and process data into it

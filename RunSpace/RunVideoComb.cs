@@ -31,7 +31,7 @@ namespace SkyCombImage.RunSpace
 
 
         // The Comb model 
-        public CombProcessAll? CombProcess { get { return ProcessAll as CombProcessAll; } }
+        public CombProcessAll CombProcess { get { return ProcessAll as CombProcessAll; } }
 
 
         // The input video file name to process.
