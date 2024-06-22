@@ -13,10 +13,10 @@ using SkyCombImage.ProcessModel;
 // Some classes contain code that persists information between frames
 namespace SkyCombImage.RunSpace
 {
-    // Class to implement the CalcOpticalFlowPyrLK method using GFTT method to detect features
-    class RunVideoFlow : RunVideoPersist
+    // Class to implement the YoloV8
+    class RunVideoYolo : RunVideoPersist
     {
-        public RunVideoFlow(RunParent parent, RunConfig Config, DroneDataStore dataStore, Drone drone) : base(parent, Config, dataStore, drone)
+        public RunVideoYolo(RunParent parent, RunConfig Config, DroneDataStore dataStore, Drone drone) : base(parent, Config, dataStore, drone)
         {
             ProcessAll = ProcessFactory.NewFlowProcessModel(Config.ProcessConfig, drone);
         }
@@ -96,7 +96,7 @@ namespace SkyCombImage.RunSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("RunVideoFlow.ProcessInputVideoFrame", ex);
+                throw ThrowException("RunVideoYolo.ProcessInputVideoFrame", ex);
             }
         }
 

@@ -46,6 +46,9 @@ namespace SkyCombImage.RunSpace
                 RunVideo? answer = null; 
                 switch (theRunModel)
                 {
+                    case RunProcessEnum.Yolo:
+                        answer = new RunVideoYolo(parent, config, dataStore, drone);
+                        break;
                     case RunProcessEnum.Flow:
                         answer = new RunVideoFlow(parent, config, dataStore, drone);
                         break;
