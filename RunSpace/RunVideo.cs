@@ -336,8 +336,8 @@ namespace SkyCombImage.RunSpace
                 // Ensure we trigger a ProcessFlightLegChange start event on the first block (if needed)
                 PSM.CurrRunLegId = UnknownValue;
 
-                Image<Bgr, byte> modifiedInputImage = null;
-                Image<Bgr, byte> modifiedDisplayImage = null;
+                Image<Bgr, byte>? modifiedInputImage = null;
+                Image<Bgr, byte>? modifiedDisplayImage = null;
                 while (true)
                 {
                     int prevLegId = PSM.CurrRunLegId;
@@ -526,7 +526,7 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        public FlowProcessAll FlowModel { get { return ProcessAll as FlowProcessAll; } }
+        public FlowProcessAll? FlowModel { get { return ProcessAll as FlowProcessAll; } }
 
 
         public override void ProcessFlightLegChange(int prevLegId, int currLegId) { }
@@ -575,7 +575,7 @@ namespace SkyCombImage.RunSpace
     abstract public class RunVideoPersist : RunVideo
     {
         // Persisted information across many frames
-        protected Image<Gray, byte> PrevGray = null;
+        protected Image<Gray, byte>? PrevGray = null;
 
 
         public RunVideoPersist(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) : base(parent, config, dataStore, drone)

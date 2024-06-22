@@ -2,7 +2,6 @@
 using SkyCombDrone.DroneLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
-using Emgu.CV.XFeatures2D;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -10,7 +9,7 @@ namespace SkyCombImage.ProcessLogic
     // All processing models derive from this class.
     public class ProcessAll : BaseConstants
     {
-        public static ProcessConfigModel ProcessConfig = null;
+        public static ProcessConfigModel? ProcessConfig = null;
 
         // The main input video being processed
         public VideoData VideoData { get; }

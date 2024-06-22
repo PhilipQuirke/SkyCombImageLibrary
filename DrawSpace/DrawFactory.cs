@@ -9,9 +9,9 @@ namespace SkyCombImage.DrawSpace
     // Code to draw stuff on images
     public class DrawFactory
     {
-        public static DroneDrawGraph Create(string useCase, ProcessDrawScope drawScope, Size size)
+        public static DroneDrawGraph? Create(string useCase, ProcessDrawScope drawScope, Size size)
         {
-            DroneDrawGraph answer = null;
+            DroneDrawGraph? answer = null;
 
             switch (useCase)
             {

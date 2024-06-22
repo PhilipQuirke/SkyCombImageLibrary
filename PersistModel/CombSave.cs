@@ -22,7 +22,7 @@ namespace SkyCombImage.PersistModel
 
 
         // Save the Run & Model data to the dataStore
-        public void Comb(RunConfig runConfig, DataPairList effort, DataPairList settings, FlightStepSummaryModel summary, CombProcessAll combProcess, bool fullSave)
+        public void Comb(RunConfig runConfig, DataPairList effort, DataPairList settings, FlightStepSummaryModel summary, CombProcessAll? combProcess, bool fullSave)
         {
             try
             {

@@ -237,11 +237,11 @@ namespace SkyCombImage.DrawSpace
     // Code to draw ground tree-top & drone alitudes against lineal meters, with comb objects overlaid
     public class CombDrawAltitudeByLinealM : DrawAltitudeByLinealM
     {
-        CombProcessAll Process { get; }
+        CombProcessAll? Process { get; }
         ProcessDrawScope DrawScope { get; }
 
 
-        public CombDrawAltitudeByLinealM(CombProcessAll process, ProcessDrawScope drawScope) : base(drawScope)
+        public CombDrawAltitudeByLinealM(CombProcessAll? process, ProcessDrawScope drawScope) : base(drawScope)
         {
             Process = process;
             DrawScope = drawScope;
@@ -329,11 +329,11 @@ namespace SkyCombImage.DrawSpace
     // Code to draw ground tree-top & drone altitudes against time, with comb objects overlaid
     public class CombDrawAltitudeByTime : DrawAltitudeByTime
     {
-        CombProcessAll Process { get; }
+        CombProcessAll? Process { get; }
         ProcessDrawScope DrawScope { get; }
 
 
-        public CombDrawAltitudeByTime(CombProcessAll process, ProcessDrawScope drawScope) : base(drawScope)
+        public CombDrawAltitudeByTime(CombProcessAll? process, ProcessDrawScope drawScope) : base(drawScope)
         {
             Process = process;
             DrawScope = drawScope;

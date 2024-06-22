@@ -46,7 +46,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public void ResetScope(FlightStep fromStep, FlightStep toStep)
+        public void ResetScope(FlightStep? fromStep, FlightStep? toStep)
         {
             ResetTardis();
 

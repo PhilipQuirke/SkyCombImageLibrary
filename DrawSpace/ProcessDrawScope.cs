@@ -9,7 +9,7 @@ using SkyCombImage.ProcessModel;
 namespace SkyCombImage.DrawSpace
 {
     // Code to draw images related to drone & process data in charts, graphs,etc.
-    public class ProcessDrawScope : DroneDrawScope // : TardisDrawScope
+    public class ProcessDrawScope : DroneDrawScope  
     {
         // The Video, Drone & model scope of a processing run
         public ProcessScope ProcessScope;
@@ -83,11 +83,10 @@ namespace SkyCombImage.DrawSpace
 
         public virtual void Reset(ProcessScope processScope, Drone drone)
         {
-            Assert(processScope != null, "Reset: Missing scope");
-
+            ProcessScope = processScope;
             Drone = drone;
 
-            ProcessScope = processScope;
+            Assert(ProcessScope != null, "Reset: Missing scope");
 
             // We need to draw all the steps in the flight
             ProcessScope.TardisMaxKey = ProcessScope.LastRunStepId;

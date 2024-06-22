@@ -15,7 +15,7 @@ namespace SkyCombImage.PersistModel
     {
         Drone Drone { get; }
 
-        FlightStepSummaryModel Summary = null;
+        FlightStepSummaryModel? Summary = null;
 
 
         public BlockSave(Drone drone, DroneDataStore data)

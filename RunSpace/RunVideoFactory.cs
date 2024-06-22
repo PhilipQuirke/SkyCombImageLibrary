@@ -43,7 +43,7 @@ namespace SkyCombImage.RunSpace
                         config.ProcessConfig.SaveAnnotatedVideo = false;
 
                 // Create the appropriate VideoRunner object
-                RunVideo answer = null; 
+                RunVideo? answer = null; 
                 switch (theRunModel)
                 {
                     case RunProcessEnum.Flow:

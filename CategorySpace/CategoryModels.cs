@@ -1,4 +1,5 @@
 ﻿using SkyCombGround.CommonSpace;
+using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties.System;
 
 
 
@@ -28,6 +29,10 @@ namespace SkyCombImage.CategorySpace
         // Constructor used when loading objects from the datastore
         public CategoryModel(List<string>? settings)
         {
+            Category = "";
+            Include = true;
+            Notes = "";
+
             if (settings != null)
                 LoadSettings(settings);
         }
@@ -278,6 +283,8 @@ namespace SkyCombImage.CategorySpace
         // Constructor used when loading objects from the datastore
         public ObjectCategoryModel(List<string>? settings)
         {
+            ObjectName = "";
+
             if (settings != null)
                 LoadSettings(settings);
         }
@@ -329,7 +336,7 @@ namespace SkyCombImage.CategorySpace
 
 
         // Find an existing annotation object (if any) for the named object
-        public ObjectCategoryModel GetData(string objectName)
+        public ObjectCategoryModel? GetData(string objectName)
         {
             var theObjectName = objectName.ToUpper().Trim();
 
@@ -432,10 +439,10 @@ namespace SkyCombImage.CategorySpace
     public class CategoryAll
     {
         // Master list of object categories used for annotations
-        public MasterCategoryList MasterCategories { get; set; } = null;
+        public MasterCategoryList MasterCategories { get; set; } 
 
         // List of object-specific annotations added by user to detected objects
-        public ObjectCategoryList ObjectCategories { get; set; } = null;
+        public ObjectCategoryList ObjectCategories { get; set; } 
 
 
         public CategoryAll()
