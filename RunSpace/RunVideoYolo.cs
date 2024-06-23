@@ -1,4 +1,6 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved. 
+using Compunet.YoloV8.Data;
+using Compunet.YoloV8.Metadata;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
@@ -13,12 +15,14 @@ using SkyCombImage.ProcessModel;
 // Some classes contain code that persists information between frames
 namespace SkyCombImage.RunSpace
 {
-    // Class to implement the YoloV8
+    // YOLO (You only look once) V8 video processing.
     class RunVideoYolo : RunVideoPersist
     {
         public RunVideoYolo(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
             : base(parent, config, dataStore, drone, ProcessFactory.NewFlowProcessModel(config.ProcessConfig, drone))
         {
+            // YoloV8 Predictor class
+            FlowModel.YoloModel = new YoloV8(config.ModelDirectory);
         }
 
 
@@ -32,9 +36,6 @@ namespace SkyCombImage.RunSpace
 
             if (PSM.CurrRunStepId <= 0)
                 PSM.CurrRunStepId = currBlock.TardisId;
-
-            // When there is a big gap (e.g. DJI_088, section 477 jumps to 485) this assert fails.
-            // Assert(Math.Abs(this.CurrRunStepId - currBlock.TardisId ) <= 2, "RunVideoFlow.AddBlock: TardisId mismatch");
 
             return currBlock;
         }
@@ -57,40 +58,30 @@ namespace SkyCombImage.RunSpace
                 // We do not use Threshold or Smooth as we want to find as many GFTT features as possible.
                 var currGray = DrawImage.ToGrayScale(CurrInputVideoFrame);
 
-                int numSignificantFlowObjects = 0;
-
-                // For debugging. Place breakpoint on assignment. Value is overridden later.
-                if ((PSM.CurrBlockId >= 19) && (PSM.CurrBlockId <= 21))
-                    numSignificantFlowObjects = 5;
-
-                if (PSM.CurrBlockId == 1)
-                    // Detect new "Good features to track", then add them into the Flow model 
-                    numSignificantFlowObjects =
-                        FlowModel.ProcessNewGftt(
-                            DrawImage.Detect_GFTT(RunConfig.ProcessConfig, currGray),
-                            this);
-                else
+                var result = FlowModel.YoloModel.Detect(currGray.ToBitmap());
+                if( result.Result != null)
                 {
-                    // Use CalcOpticalFlowPyrLK (aka Optical Flow) process to detect
-                    // movements of the GFTT features between the images.
-                    numSignificantFlowObjects = FlowModel.ProcessBlock(this, PrevGray, currGray);
-
-                    thisBlock.CalculateFlowVelocities();
-
-                    // Features will flow off the side of the video, so periodically we add more GFTT features.
-                    if (numSignificantFlowObjects < 0.9 * RunConfig.ProcessConfig.GfttMaxCorners)
-                        // This will add new "corners" to get us up to or close to GfttMaxCorners 
-                        numSignificantFlowObjects =
-                            FlowModel.ProcessNewGftt(
-                                DrawImage.Detect_GFTT(RunConfig.ProcessConfig, currGray, RunConfig.ProcessConfig.GfttMaxCorners - thisBlock.NumSig),
-                                this);
+                    // Convert Boxes to FlowObjects
+                    foreach (var box in result.Result.Boxes)
+                    {
+                        /*
+                        FlowObject flowObject = new();
+                        flowObject.Location = new(box.Bounds.X, box.Bounds.Y);
+                        flowObject.Size = new(box.Bounds.Width, box.Bounds.Height);
+                        flowObject.Confidence = box.Confidence;
+                        flowObject.Class = box.Class.Name;
+                        flowObject.ClassId = box.Class.Id;
+                        flowObject.ClassColor = box.Class.Color;
+                        flowObject.ClassType = box.Class.Type;
+                        flowObject.ClassDescription = box.Class.Description;
+                        */
+                    }
                 }
-
 
                 // Update the persisted gray frame 
                 PrevGray = currGray.Clone();
 
-                thisBlock.NumSig = numSignificantFlowObjects;
+                thisBlock.NumSig = 0; // PQR TODO
 
                 return thisBlock;
             }

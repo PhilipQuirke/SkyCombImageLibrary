@@ -429,6 +429,9 @@ namespace SkyCombImage.ProcessModel
         public FlowObjectList FlowObjects;
         public FlowFeatureList FlowFeatures;
 
+        // YOLO (You only look once) V8 image processing
+        public YoloV8? YoloModel = null;
+
 
         public FlowProcessAll(ProcessConfigModel Config, Drone drone) : base(Config, drone.InputVideo, drone)
         {
