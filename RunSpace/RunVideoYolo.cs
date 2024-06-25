@@ -9,6 +9,7 @@ using SkyCombImage.DrawSpace;
 using SkyCombImage.PersistModel;
 using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
+using System.Drawing;
 
 
 // Namespace for processing of a video made up of multiple images (frames).
@@ -19,32 +20,33 @@ namespace SkyCombImage.RunSpace
     class RunVideoYolo : RunVideoPersist
     {
         public RunVideoYolo(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
-            : base(parent, config, dataStore, drone, ProcessFactory.NewFlowProcessModel(config.ProcessConfig, drone))
+            : base(parent, config, dataStore, drone, ProcessFactory.NewYoloProcessModel(config.ProcessConfig, drone, config.ModelDirectory))
         {
-            // YoloV8 Predictor class
-            FlowModel.YoloModel = new YoloV8(config.ModelDirectory);
+    
         }
 
 
-        public FlowProcessAll FlowModel { get { return (FlowProcessAll)ProcessAll; } }
+        public YoloProcessAll YoloModel { get { return (YoloProcessAll)ProcessAll; } }
 
 
         // Add a block, transferring some flight data and process data into it
-        private FlowBlock AddBlock()
+        private ProcessBlock AddBlock()
         {
-            FlowBlock currBlock = FlowModel.FlowBlocks.AddBlock(this, Drone);
+            var newBlock = ProcessFactory.NewBlock(this);
+
+            YoloModel.YoloBlocks.AddBlock(newBlock, this, Drone);
 
             if (PSM.CurrRunStepId <= 0)
-                PSM.CurrRunStepId = currBlock.TardisId;
+                PSM.CurrRunStepId = newBlock.TardisId;
 
-            return currBlock;
+            return newBlock;
         }
 
 
         // Process start &/or end of drone flight legs.
         public override void ProcessFlightLegChange(int prevLegId, int currLegId)
         {
-            FlowModel.ProcessFlightLegStartAndEnd(prevLegId, currLegId);
+            YoloModel.ProcessFlightLegStartAndEnd(prevLegId, currLegId);
         }
 
 
@@ -54,26 +56,32 @@ namespace SkyCombImage.RunSpace
             try
             {
                 var thisBlock = AddBlock();
+                int numSig = 0;
 
                 // We do not use Threshold or Smooth as we want to find as many GFTT features as possible.
                 var currGray = DrawImage.ToGrayScale(CurrInputVideoFrame);
 
-                var result = FlowModel.YoloModel.Detect(currGray.ToBitmap());
+                var result = YoloModel.YoloModel.Detect(currGray.ToBitmap());
                 if( result.Result != null)
                 {
-                    // Convert Boxes to FlowObjects
+                    numSig = result.Result.Boxes.Count();
+
+                    // Convert Boxes to YoloObjects
                     foreach (var box in result.Result.Boxes)
                     {
+                        // We have found a new feature/object
+                        var newFeature = YoloModel.YoloFeatures.AddFeature(thisBlock.BlockId, new Point(box.Bounds.X, box.Bounds.Y));
+                        var newObject = YoloModel.YoloObjects.AddObject(this, newFeature);
+                        YoloModel.ObjectClaimsNewFeature(thisBlock, newObject, newFeature);
+
                         /*
-                        FlowObject flowObject = new();
-                        flowObject.Location = new(box.Bounds.X, box.Bounds.Y);
-                        flowObject.Size = new(box.Bounds.Width, box.Bounds.Height);
-                        flowObject.Confidence = box.Confidence;
-                        flowObject.Class = box.Class.Name;
-                        flowObject.ClassId = box.Class.Id;
-                        flowObject.ClassColor = box.Class.Color;
-                        flowObject.ClassType = box.Class.Type;
-                        flowObject.ClassDescription = box.Class.Description;
+                        newObject.Size = new(box.Bounds.Width, box.Bounds.Height);
+                        newObject.Confidence = box.Confidence;
+                        newObject.Class = box.Class.Name;
+                        newObject.ClassId = box.Class.Id;
+                        newObject.ClassColor = box.Class.Color;
+                        newObject.ClassType = box.Class.Type;
+                        newObject.ClassDescription = box.Class.Description;
                         */
                     }
                 }
@@ -81,7 +89,7 @@ namespace SkyCombImage.RunSpace
                 // Update the persisted gray frame 
                 PrevGray = currGray.Clone();
 
-                thisBlock.NumSig = 0; // PQR TODO
+                thisBlock.NumSig = numSig; 
 
                 return thisBlock;
             }
@@ -95,19 +103,20 @@ namespace SkyCombImage.RunSpace
         // Describe the objects found
         public override string DescribeSignificantObjects()
         {
-            return "#Features=" + FlowModel.FlowObjects.Count;
+            return "#Features=" + YoloModel.YoloObjects.Count;
         }
 
 
-        // Draw a single frame for Optical Flow process as circles with tails
         public override (Image<Bgr, byte>, Image<Bgr, byte>) DrawVideoFrames(ProcessBlockModel block, Image<Bgr, byte> InputFrame, Image<Bgr, byte> DisplayFrame)
         {
             var modifiedInputFrame = InputFrame.Clone();
 
             DrawImage.Palette(RunConfig.ImageConfig, ref modifiedInputFrame);
 
-            DrawFlow.Draw(FlowModel, block.BlockId, ref modifiedInputFrame);
-
+/*
+ * PQR TODO
+            DrawYolo.Draw(YoloModel, block.BlockId, ref modifiedInputFrame);
+*/
             return (modifiedInputFrame.Clone(), DisplayFrame.Clone());
         }
 
@@ -115,8 +124,11 @@ namespace SkyCombImage.RunSpace
         // Do any final activity at the end processing of video
         public override void EndRunning()
         {
-            FlowSave dataWriter = new(Drone, DataStore);
-            dataWriter.Flow(RunConfig, GetEffort(), GetSettings(), this, FlowModel);
+            /*
+             * PQR TODO
+            YoloSave dataWriter = new(Drone, DataStore);
+            dataWriter.Yolo(RunConfig, GetEffort(), GetSettings(), this, YoloModel);
+            */
 
             base.EndRunning();
         }
@@ -125,10 +137,13 @@ namespace SkyCombImage.RunSpace
         // Save just the process settings to the DataStore
         public override void SaveProcessSettings()
         {
+            /*
+             * PQR TODO
             DataStore.Open();
-            FlowSave datawriter = new(Drone, DataStore);
-            datawriter.Flow(RunConfig, GetEffort(), GetSettings(), this, FlowModel);
+            YoloSave datawriter = new(Drone, DataStore);
+            datawriter.Yolo(RunConfig, GetEffort(), GetSettings(), this, YoloModel);
             DataStore.Close();
+            */
         }
     }
 }

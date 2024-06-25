@@ -14,7 +14,7 @@ namespace SkyCombImage.ProcessModel
     public class FlowBlock : ProcessBlock
     {
         // Static config data shared by all Flow blocks
-        public static ProcessConfigModel Config = null;
+        public static ProcessConfigModel Config;
 
 
         // Ground velocity/speed for this block in pixels per frame, based on 25% percentile.
@@ -265,7 +265,7 @@ namespace SkyCombImage.ProcessModel
         // This object claims this feature
         public void ClaimFeature(FlowFeature theFeature)
         {
-            Assert(theFeature.ObjectId <= 0, "CombObject.ClaimFeature: Feature is already owned.");
+            Assert(theFeature.ObjectId <= 0, "FlowObject.ClaimFeature: Feature is already owned.");
             theFeature.ObjectId = this.ObjectId;
 
             if (FirstFeature == null)
@@ -355,7 +355,7 @@ namespace SkyCombImage.ProcessModel
 
     public class FlowObjectList : List<FlowObject>
     {
-        public static ProcessConfigModel Config = null;
+        public static ProcessConfigModel Config;
 
 
         // We do not process objects below this index in the object array.
@@ -429,9 +429,6 @@ namespace SkyCombImage.ProcessModel
         public FlowObjectList FlowObjects;
         public FlowFeatureList FlowFeatures;
 
-        // YOLO (You only look once) V8 image processing
-        public YoloV8? YoloModel = null;
-
 
         public FlowProcessAll(ProcessConfigModel Config, Drone drone) : base(Config, drone.InputVideo, drone)
         {
@@ -461,7 +458,7 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        // For "Comb" process robustness, we want to process each leg independently.
+        // For process robustness, we want to process each leg independently.
         // So when a new drone flight leg starts, we "reset" the Gftt/OpticalFlow calculations.
         public override void ProcessFlightLegStart(int legId)
         {

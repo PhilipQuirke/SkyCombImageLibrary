@@ -33,6 +33,12 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        public static YoloProcessAll NewYoloProcessModel(ProcessConfigModel config, Drone drone, string modelDirectory)
+        {
+            return new YoloProcessAll(config, drone, modelDirectory);
+        }
+
+
         public static CombProcessAll NewCombProcessModel(ProcessConfigModel config, VideoData videoData, GroundData groundData, Drone drone)
         {
             return new CombProcessAll(config, videoData, groundData, drone);
