@@ -1,9 +1,6 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved. 
-using Compunet.YoloV8.Data;
-using Compunet.YoloV8.Metadata;
 using Emgu.CV;
 using Emgu.CV.Structure;
-using SixLabors.ImageSharp;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
 using SkyCombImage.DrawSpace;
@@ -115,7 +112,7 @@ namespace SkyCombImage.RunSpace
 
             DrawImage.Palette(RunConfig.ImageConfig, ref modifiedInputFrame);
 
-            DrawYolo.Draw(YoloModel, block.BlockId, ref modifiedInputFrame);
+            DrawYolo.Draw(RunConfig.ImageConfig, YoloModel, block.BlockId, ref modifiedInputFrame);
 
             return (modifiedInputFrame.Clone(), DisplayFrame.Clone());
         }
@@ -124,11 +121,8 @@ namespace SkyCombImage.RunSpace
         // Do any final activity at the end processing of video
         public override void EndRunning()
         {
-            /*
-             * PQR TODO
             YoloSave dataWriter = new(Drone, DataStore);
             dataWriter.Yolo(RunConfig, GetEffort(), GetSettings(), this, YoloModel);
-            */
 
             base.EndRunning();
         }
@@ -137,13 +131,10 @@ namespace SkyCombImage.RunSpace
         // Save just the process settings to the DataStore
         public override void SaveProcessSettings()
         {
-            /*
-             * PQR TODO
             DataStore.Open();
             YoloSave datawriter = new(Drone, DataStore);
             datawriter.Yolo(RunConfig, GetEffort(), GetSettings(), this, YoloModel);
             DataStore.Close();
-            */
         }
     }
 }

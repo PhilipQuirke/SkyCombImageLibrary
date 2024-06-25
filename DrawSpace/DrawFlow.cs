@@ -62,10 +62,8 @@ namespace SkyCombImage.DrawSpace
 
 
         // Draw the optical flow. Each feature is a circle with a tail
-        public static void Draw(FlowProcessAll flowData, int lastBlockId, ref Image<Bgr, byte> outputImg, int maxObjsToDraw = -1)
+        public static void Draw(FlowProcessAll flowData, int lastBlockId, ref Image<Bgr, byte> outputImg)
         {
-            bool isCombProcessDrawing = (maxObjsToDraw > 0);
-
             // Even if feature has been in the video image for 60 frames, we only draw a 20 block feature tail
             const int TailBlocks = 20;
             if (lastBlockId <= 1)
@@ -94,12 +92,8 @@ namespace SkyCombImage.DrawSpace
                 if ((theObject.LastFeature != null) && (theObject.LastFeature.BlockId >= lastBlockId))
                 {
                     objectsDrawn++;
-                    if (isCombProcessDrawing && (objectsDrawn > maxObjsToDraw))
-                        break;
 
                     var theColor = theObject.Color; // In Flow process, each feature is drawn in its own color
-                    if (isCombProcessDrawing)
-                        theColor = DroneColors.GreenBgr; // In Comb process, all flow features are drawn the same color
 
                     int prevX = UnknownValue;
                     int prevY = UnknownValue;
@@ -121,8 +115,7 @@ namespace SkyCombImage.DrawSpace
                             if (theFeature.BlockId == lastBlockId)
                             {
                                 Circle(ref outputImg, new Point(thisX, thisY), theColor, theThickness);
-                                if (!isCombProcessDrawing)
-                                    Text(ref outputImg, theObject.ObjectId.ToString(), new Point(thisX + 6 * theThickness, thisY), 0.5, theColor);
+                                Text(ref outputImg, theObject.ObjectId.ToString(), new Point(thisX + 6 * theThickness, thisY), 0.5, theColor);
                                 break;
                             }
 
