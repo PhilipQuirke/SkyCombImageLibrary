@@ -3,6 +3,7 @@ using Compunet.YoloV8.Data;
 using Compunet.YoloV8.Metadata;
 using Emgu.CV;
 using Emgu.CV.Structure;
+using SixLabors.ImageSharp;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
 using SkyCombImage.DrawSpace;
@@ -70,8 +71,9 @@ namespace SkyCombImage.RunSpace
                     foreach (var box in result.Result.Boxes)
                     {
                         // We have found a new feature/object
-                        var newFeature = YoloModel.YoloFeatures.AddFeature(thisBlock.BlockId, new Point(box.Bounds.X, box.Bounds.Y));
-                        var newObject = YoloModel.YoloObjects.AddObject(this, newFeature);
+                        var newFeature = YoloModel.YoloFeatures.AddFeature(thisBlock.BlockId, new System.Drawing.Point(box.Bounds.X, box.Bounds.Y));
+                        var newObject = YoloModel.YoloObjects.AddObject(this, newFeature, 
+                            box.Class.Name, System.Drawing.Color.Red, box.Confidence);
                         YoloModel.ObjectClaimsNewFeature(thisBlock, newObject, newFeature);
 
                         /*
@@ -113,10 +115,8 @@ namespace SkyCombImage.RunSpace
 
             DrawImage.Palette(RunConfig.ImageConfig, ref modifiedInputFrame);
 
-/*
- * PQR TODO
             DrawYolo.Draw(YoloModel, block.BlockId, ref modifiedInputFrame);
-*/
+
             return (modifiedInputFrame.Clone(), DisplayFrame.Clone());
         }
 

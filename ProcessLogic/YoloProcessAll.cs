@@ -40,15 +40,21 @@ namespace SkyCombImage.ProcessModel
     // A class to hold a Yolo object - layer over a sequence of Yolo features.
     public class YoloObject : ProcessObject
     {
-
+        public string ClassName { get; set; }
+        public Color ClassColor { get; set; }
+        public float ClassConfidence { get; set; }
+   
         // First feature claimed by this object
         public YoloFeature FirstFeature { get; set; }
         // Last feature claimed by this object
         public YoloFeature LastFeature { get; set; }
 
 
-        public YoloObject(ProcessScope scope, YoloFeature firstFeature) : base(scope)
+        public YoloObject(ProcessScope scope, YoloFeature firstFeature, string className, Color classColor, float classConfidence) : base(scope)
         {
+            ClassName = className;
+            ClassColor = classColor;
+            ClassConfidence = classConfidence;
             FirstFeature = firstFeature;
             LastFeature = firstFeature;
             Significant = true;
@@ -109,9 +115,9 @@ namespace SkyCombImage.ProcessModel
         public int LegFirstIndex;
 
 
-        public YoloObject AddObject(ProcessScope scope, YoloFeature firstFeature)
+        public YoloObject AddObject(ProcessScope scope, YoloFeature firstFeature, string className, Color classColor, float classConfidence)
         {
-            var answer = new YoloObject(scope, firstFeature);
+            var answer = new YoloObject(scope, firstFeature, className, classColor, classConfidence);
             Add(answer);
             return answer;
         }
@@ -166,7 +172,7 @@ namespace SkyCombImage.ProcessModel
         public YoloFeatureList YoloFeatures;
 
         // YOLO (You only look once) V8 image processing
-        public YoloV8 YoloModel;
+        public YoloDetect YoloModel;
 
 
         public YoloProcessAll(ProcessConfigModel config, Drone drone, string modelDirectory) : base(config, drone.InputVideo, drone)
@@ -181,7 +187,7 @@ namespace SkyCombImage.ProcessModel
 
             YoloObjects.LegFirstIndex = 0;
 
-            YoloModel = new YoloV8(modelDirectory);
+            YoloModel = new YoloDetect(modelDirectory);
         }
 
 

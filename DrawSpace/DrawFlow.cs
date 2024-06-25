@@ -62,7 +62,7 @@ namespace SkyCombImage.DrawSpace
 
 
         // Draw the optical flow. Each feature is a circle with a tail
-        public static void Draw(FlowProcessAll FlowData, int lastBlockId, ref Image<Bgr, byte> outputImg, int maxObjsToDraw = -1)
+        public static void Draw(FlowProcessAll flowData, int lastBlockId, ref Image<Bgr, byte> outputImg, int maxObjsToDraw = -1)
         {
             bool isCombProcessDrawing = (maxObjsToDraw > 0);
 
@@ -79,7 +79,7 @@ namespace SkyCombImage.DrawSpace
 
             // For speed, find index of first Feature to (later) consider drawing
             int firstFeatureIndex = UnknownValue;
-            foreach (var theFeature in FlowData.FlowFeatures)
+            foreach (var theFeature in flowData.FlowFeatures)
                 if (theFeature.BlockId >= firstBlockId)
                 {
                     firstFeatureIndex = theFeature.FeatureId;
@@ -89,7 +89,7 @@ namespace SkyCombImage.DrawSpace
                 return;
 
             int objectsDrawn = 0;
-            foreach (var theObject in FlowData.FlowObjects)
+            foreach (var theObject in flowData.FlowObjects)
             {
                 if ((theObject.LastFeature != null) && (theObject.LastFeature.BlockId >= lastBlockId))
                 {
@@ -107,9 +107,9 @@ namespace SkyCombImage.DrawSpace
                     if ((theObject.ObjectId == 71) && (lastBlockId >= 20))
                         prevX = UnknownValue;
 
-                    for (int i = firstFeatureIndex; i < FlowData.FlowFeatures.Count; i++)
+                    for (int i = firstFeatureIndex; i < flowData.FlowFeatures.Count; i++)
                     {
-                        var theFeature = FlowData.FlowFeatures[i];
+                        var theFeature = flowData.FlowFeatures[i];
                         if (theFeature.ObjectId == theObject.ObjectId)
                         {
                             var thisX = (int)theFeature.LocationM.EastingM;
@@ -134,7 +134,7 @@ namespace SkyCombImage.DrawSpace
             }
 
             // Draw the estimated ground velocity (aka opposite of drone velocity) as arrow and text 
-            PointOfViewVelocity(ref outputImg, new Point(40, 40), FlowData.FlowBlocks[lastBlockId] as FlowBlock, DroneColors.WhiteBgr);
+            PointOfViewVelocity(ref outputImg, new Point(40, 40), flowData.FlowBlocks[lastBlockId] as FlowBlock, DroneColors.WhiteBgr);
         }
 
     }

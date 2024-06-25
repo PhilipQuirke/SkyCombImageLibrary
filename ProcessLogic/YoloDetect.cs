@@ -31,14 +31,14 @@ namespace SkyCombImage.ProcessLogic
     }
 
 
-    // YOLO (You only look once) V8 image processing.
+    // YOLO (You only look once) V8 image object detector.
     // Uses a SkyComb-specific pre-trained model to detect objects in an image.
-    public class YoloV8 : BaseConstants
+    public class YoloDetect : BaseConstants
     {
-        YoloV8Predictor? DetectPredictor = null;
+        YoloV8Predictor? Detector = null;
 
 
-        public YoloV8(string modelDirectory)
+        public YoloDetect(string modelDirectory)
         {
             Assert(modelDirectory != "", "modelDirectory is not specified");
 
@@ -54,11 +54,11 @@ namespace SkyCombImage.ProcessLogic
             try
             {
                 // Load the model
-                DetectPredictor = YoloV8Predictor.Create(modelDirectory);
+                Detector = YoloV8Predictor.Create(modelDirectory);
             }
             catch (Exception ex)
             {
-                DetectPredictor = null;
+                Detector = null;
                 throw ThrowException("YoloV8.Constructor failed: " + ex.Message);
             }
         }
@@ -82,7 +82,7 @@ namespace SkyCombImage.ProcessLogic
 
         async Task<SixLabors.ImageSharp.Image?> AsyncGetImage(DetectionResult result, System.Drawing.Image raw_image)
         {
-            if (DetectPredictor == null)
+            if (Detector == null)
                 return null;
 
             try
@@ -104,7 +104,7 @@ namespace SkyCombImage.ProcessLogic
 
         SixLabors.ImageSharp.Image? GetImage(DetectionResult result, System.Drawing.Image raw_image)
         {
-            if (DetectPredictor == null)
+            if (Detector == null)
                 return null;
 
             try
@@ -126,18 +126,18 @@ namespace SkyCombImage.ProcessLogic
 
         public async Task<YoloResult> AsyncDetect(System.Drawing.Image raw_image)
         {
-            if (DetectPredictor == null)
+            if (Detector == null)
                 return new YoloResult();
 
             try
             {
                 using SixLabors.ImageSharp.Image image = ConvertToImageSharp(raw_image);
 
-                DetectionResult? result = await DetectPredictor.DetectAsync(image);
+                DetectionResult? result = await Detector.DetectAsync(image);
                 if (result is null)
                     return new YoloResult();
 
-                Console.WriteLine($"Task:   {DetectPredictor.Metadata.Task}");
+                Console.WriteLine($"Task:   {Detector.Metadata.Task}");
                 Console.WriteLine($"Image:  {image}");
                 Console.WriteLine($"Result: {result}");
                 Console.WriteLine($"Speed:  {result.Speed}");
@@ -155,18 +155,18 @@ namespace SkyCombImage.ProcessLogic
 
         public YoloResult Detect(System.Drawing.Image raw_image)
         {
-            if (DetectPredictor == null)
+            if (Detector == null)
                 return new YoloResult();
 
             try
             {
                 using SixLabors.ImageSharp.Image image = ConvertToImageSharp(raw_image);
 
-                DetectionResult? result = DetectPredictor.Detect(image);
+                DetectionResult? result = Detector.Detect(image);
                 if (result is null)
                     return new YoloResult();
 
-                Console.WriteLine($"Task:   {DetectPredictor.Metadata.Task}");
+                Console.WriteLine($"Task:   {Detector.Metadata.Task}");
                 Console.WriteLine($"Image:  {image}");
                 Console.WriteLine($"Result: {result}");
                 Console.WriteLine($"Speed:  {result.Speed}");
