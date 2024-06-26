@@ -17,7 +17,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Parent process model
-        private CombProcessAll? Model { get; } = null;
+        private CombProcess? Model { get; } = null;
 
         // A Comb feature is associated 1-1 with a Block
         public ProcessBlock? Block { get; set; } = null;
@@ -26,7 +26,7 @@ namespace SkyCombImage.ProcessLogic
         public PixelHeatList? Pixels { get; set; } = null;
 
 
-        public CombFeature(CombProcessAll model, ProcessBlock block, CombFeatureTypeEnum type) : base(block.BlockId, type)
+        public CombFeature(CombProcess model, ProcessBlock block, CombFeatureTypeEnum type) : base(block.BlockId, type)
         {
             if (type != CombFeatureTypeEnum.Unreal)
                 Pixels = new();
@@ -38,7 +38,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Constructor used when loaded objects from the datastore
-        public CombFeature(CombProcessAll model, List<string> settings) : base(settings)
+        public CombFeature(CombProcess model, List<string> settings) : base(settings)
         {
             Model = model;
             Block = Model.Blocks[BlockId];
@@ -668,7 +668,7 @@ namespace SkyCombImage.ProcessLogic
         //          - Add search area rectangle, hot pixel count, max heat, min heat, and hotPixels list into a results list.  
         //  - Repeat for next location where inputSearched[y,x] = 0                   
         public void CreateFeaturesFromImage(
-            CombProcessAll model,
+            CombProcess model,
             ProcessBlock block,
             Image<Bgr, byte> imgOriginal,
             Image<Gray, byte> imgThreshold)

@@ -53,13 +53,13 @@ namespace SkyCombImage.ProcessLogic
 
             try
             {
-                // Load the model
+                // Load the model. Takes a few seconds.
                 Detector = YoloV8Predictor.Create(modelDirectory);
             }
             catch (Exception ex)
             {
                 Detector = null;
-                throw ThrowException("YoloV8.Constructor failed: " + ex.Message);
+                throw ThrowException("YoloDetect.Constructor failed: " + ex.Message);
             }
         }
 
@@ -97,7 +97,7 @@ namespace SkyCombImage.ProcessLogic
             }
             catch (Exception ex)
             {
-                throw ThrowException("YoloV8.AsyncGetImage failed: " + ex.Message);
+                throw ThrowException("YoloDetect.AsyncGetImage failed: " + ex.Message);
             }
         }
 
@@ -119,7 +119,7 @@ namespace SkyCombImage.ProcessLogic
             }
             catch (Exception ex)
             {
-                throw ThrowException("YoloV8.GetImage failed: " + ex.Message);
+                throw ThrowException("YoloDetect.GetImage failed: " + ex.Message);
             }
         }
 
@@ -148,7 +148,7 @@ namespace SkyCombImage.ProcessLogic
             }
             catch (Exception ex)
             {
-                throw ThrowException("YoloV8.AsyncDetect failed: " + ex.Message);
+                throw ThrowException("YoloDetect.AsyncDetect failed: " + ex.Message);
             }
         }
 
@@ -177,7 +177,7 @@ namespace SkyCombImage.ProcessLogic
             }
             catch (Exception ex)
             {
-                throw ThrowException("YoloV8.Detect failed: " + ex.Message);
+                throw ThrowException("YoloDetect.Detect failed: " + ex.Message);
             }
         }
     }

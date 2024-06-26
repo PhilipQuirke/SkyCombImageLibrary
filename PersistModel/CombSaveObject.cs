@@ -25,7 +25,7 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        public void SaveObjectList(CombProcessAll model, bool saveAll)
+        public void SaveObjectList(CombProcess model, bool saveAll)
         {
             Data.SelectOrAddWorksheet(Objects1TabName);
             int objectRow = 0;
@@ -300,7 +300,7 @@ namespace SkyCombImage.PersistModel
 
 
         // Save population summary data, pivots and graphs
-        public void SavePopulation(CombProcessAll combProcess)
+        public void SavePopulation(CombProcess combProcess)
         {
             try
             {

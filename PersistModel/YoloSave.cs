@@ -19,7 +19,7 @@ namespace SkyCombImage.PersistModel
 
 
         // Save the Run & Model data to the dataStore
-        public void Yolo(RunConfig runConfig, DataPairList effort, DataPairList settings, FlightStepSummaryModel summary, YoloProcessAll yoloProcess)
+        public void Yolo(RunConfig runConfig, DataPairList effort, DataPairList settings, FlightStepSummaryModel summary, YoloProcess yoloProcess)
         {
             try
             {

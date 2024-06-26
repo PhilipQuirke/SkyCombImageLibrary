@@ -31,7 +31,7 @@ namespace SkyCombImage.RunSpace
 
 
         // The Comb model 
-        public CombProcessAll CombProcess { get { return ProcessAll as CombProcessAll; } }
+        public CombProcess CombProcess { get { return ProcessAll as CombProcess; } }
 
 
         // The input video file name to process.
@@ -147,8 +147,7 @@ namespace SkyCombImage.RunSpace
         // Return the data to show in the ObjectGrid in the Main Form
         public override List<object[]> GetObjectGridData(bool mainForm)
         {
-            var combModel = CombProcess;
-            return combModel.CombObjs.GetObjectGridData(this, mainForm, CategoryAll.ObjectCategories, RunConfig.ProcessConfig.FocusObjectId);
+            return CombProcess.CombObjs.GetObjectGridData(this, mainForm, CategoryAll.ObjectCategories, RunConfig.ProcessConfig.FocusObjectId);
         }
 
 

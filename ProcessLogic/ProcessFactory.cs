@@ -27,21 +27,21 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public static FlowProcessAll NewFlowProcessModel(ProcessConfigModel config, Drone drone)
+        public static FlowProcess NewFlowProcessModel(ProcessConfigModel config, Drone drone)
         {
-            return new FlowProcessAll(config, drone);
+            return new FlowProcess(config, drone);
         }
 
 
-        public static YoloProcessAll NewYoloProcessModel(ProcessConfigModel config, Drone drone, string modelDirectory)
+        public static YoloProcess NewYoloProcessModel(ProcessConfigModel config, Drone drone, string modelDirectory)
         {
-            return new YoloProcessAll(config, drone, modelDirectory);
+            return new YoloProcess(config, drone, modelDirectory);
         }
 
 
-        public static CombProcessAll NewCombProcessModel(ProcessConfigModel config, VideoData videoData, GroundData groundData, Drone drone)
+        public static CombProcess NewCombProcessModel(ProcessConfigModel config, VideoData videoData, GroundData groundData, Drone drone)
         {
-            return new CombProcessAll(config, videoData, groundData, drone);
+            return new CombProcess(config, videoData, groundData, drone);
         }
 
 
@@ -51,25 +51,25 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public static CombFeature NewCombFeature(CombProcessAll model, List<string> settings)
+        public static CombFeature NewCombFeature(CombProcess model, List<string> settings)
         {
             return new CombFeature(model, settings);
         }
 
 
-        public static CombObject NewCombObject(CombProcessAll model, List<string> settings)
+        public static CombObject NewCombObject(CombProcess model, List<string> settings)
         {
             return new CombObject(model, settings);
         }
 
 
-        public static CombObject NewCombObject(ProcessScope scope, CombProcessAll model, CombFeature firstFeature)
+        public static CombObject NewCombObject(ProcessScope scope, CombProcess model, CombFeature firstFeature)
         {
             return new CombObject(scope, model, firstFeature);
         }
 
 
-        public static CombSpan NewCombSpan(CombProcessAll model, int legId, List<string>? settings = null)
+        public static CombSpan NewCombSpan(CombProcess model, int legId, List<string>? settings = null)
         {
              return new CombSpan(model, legId, settings);
         }

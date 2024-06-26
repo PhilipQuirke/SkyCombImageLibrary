@@ -24,7 +24,7 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        public YoloProcessAll YoloModel { get { return (YoloProcessAll)ProcessAll; } }
+        public YoloProcess YoloProcess { get { return (YoloProcess)ProcessAll; } }
 
 
         // Add a block, transferring some flight data and process data into it
@@ -32,7 +32,7 @@ namespace SkyCombImage.RunSpace
         {
             var newBlock = ProcessFactory.NewBlock(this);
 
-            YoloModel.YoloBlocks.AddBlock(newBlock, this, Drone);
+            YoloProcess.YoloBlocks.AddBlock(newBlock, this, Drone);
 
             if (PSM.CurrRunStepId <= 0)
                 PSM.CurrRunStepId = newBlock.TardisId;
@@ -44,7 +44,7 @@ namespace SkyCombImage.RunSpace
         // Process start &/or end of drone flight legs.
         public override void ProcessFlightLegChange(int prevLegId, int currLegId)
         {
-            YoloModel.ProcessFlightLegStartAndEnd(prevLegId, currLegId);
+            YoloProcess.ProcessFlightLegStartAndEnd(prevLegId, currLegId);
         }
 
 
@@ -59,31 +59,9 @@ namespace SkyCombImage.RunSpace
                 // We do not use Threshold or Smooth as we want to find as many GFTT features as possible.
                 var currGray = DrawImage.ToGrayScale(CurrInputVideoFrame);
 
-                var result = YoloModel.YoloModel.Detect(currGray.ToBitmap());
-                if( result.Result != null)
-                {
-                    numSig = result.Result.Boxes.Count();
+                var result = YoloProcess.YoloDetect.Detect(currGray.ToBitmap());
 
-                    // Convert Boxes to YoloObjects
-                    foreach (var box in result.Result.Boxes)
-                    {
-                        // We have found a new feature/object
-                        var newFeature = YoloModel.YoloFeatures.AddFeature(thisBlock.BlockId, new System.Drawing.Point(box.Bounds.X, box.Bounds.Y));
-                        var newObject = YoloModel.YoloObjects.AddObject(this, newFeature, 
-                            box.Class.Name, System.Drawing.Color.Red, box.Confidence);
-                        YoloModel.ObjectClaimsNewFeature(thisBlock, newObject, newFeature);
-
-                        /*
-                        newObject.Size = new(box.Bounds.Width, box.Bounds.Height);
-                        newObject.Confidence = box.Confidence;
-                        newObject.Class = box.Class.Name;
-                        newObject.ClassId = box.Class.Id;
-                        newObject.ClassColor = box.Class.Color;
-                        newObject.ClassType = box.Class.Type;
-                        newObject.ClassDescription = box.Class.Description;
-                        */
-                    }
-                }
+                numSig = YoloProcess.ProcessBlock(this, PrevGray, currGray, result);
 
                 // Update the persisted gray frame 
                 PrevGray = currGray.Clone();
@@ -102,7 +80,7 @@ namespace SkyCombImage.RunSpace
         // Describe the objects found
         public override string DescribeSignificantObjects()
         {
-            return "#Features=" + YoloModel.YoloObjects.Count;
+            return "#Features=" + YoloProcess.YoloObjects.Count;
         }
 
 
@@ -112,7 +90,7 @@ namespace SkyCombImage.RunSpace
 
             DrawImage.Palette(RunConfig.ImageConfig, ref modifiedInputFrame);
 
-            DrawYolo.Draw(RunConfig.ImageConfig, YoloModel, block.BlockId, ref modifiedInputFrame);
+            DrawYolo.Draw(RunConfig.ImageConfig, YoloProcess, block.BlockId, ref modifiedInputFrame);
 
             return (modifiedInputFrame.Clone(), DisplayFrame.Clone());
         }
@@ -122,7 +100,7 @@ namespace SkyCombImage.RunSpace
         public override void EndRunning()
         {
             YoloSave dataWriter = new(Drone, DataStore);
-            dataWriter.Yolo(RunConfig, GetEffort(), GetSettings(), this, YoloModel);
+            dataWriter.Yolo(RunConfig, GetEffort(), GetSettings(), this, YoloProcess);
 
             base.EndRunning();
         }
@@ -133,7 +111,7 @@ namespace SkyCombImage.RunSpace
         {
             DataStore.Open();
             YoloSave datawriter = new(Drone, DataStore);
-            datawriter.Yolo(RunConfig, GetEffort(), GetSettings(), this, YoloModel);
+            datawriter.Yolo(RunConfig, GetEffort(), GetSettings(), this, YoloProcess);
             DataStore.Close();
         }
     }

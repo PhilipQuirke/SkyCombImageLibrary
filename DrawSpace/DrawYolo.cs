@@ -13,7 +13,7 @@ namespace SkyCombImage.DrawSpace
     public class DrawYolo : Draw
     {
         // Draw the yolo objects 
-        public static void Draw( DrawImageConfig config, YoloProcessAll yolodata, int thisBlockId, ref Image<Bgr, byte> outputImg)
+        public static void Draw( DrawImageConfig config, YoloProcess yolodata, int thisBlockId, ref Image<Bgr, byte> outputImg)
         {
             // Thickness of lines and circles.
             int theThickness = 1;
@@ -25,11 +25,16 @@ namespace SkyCombImage.DrawSpace
                 if ((theObject.LastFeature != null) && (theObject.LastFeature.BlockId == thisBlockId))
                 {
                     var theColor = theObject.ClassColor;
-                    var theBox = theObject.LastFeature.PixelBox;
+                    var theObjectBox = theObject.LastFeature.PixelBox;
                     var the_title = theObject.ClassName + "(" + theObject.ObjectId.ToString() + ")";
 
-                    BoundingRectangle(config, ref outputImg, theBox, theColor, theThickness);
-                    Text(ref outputImg, the_title, new Point(theBox.X + 6 * theThickness, theBox.Y), 0.5, DroneColors.ColorToBgr(theColor));
+                    // Draw hollow bounding box
+                    BoundingRectangle(config, ref outputImg, theObjectBox, theColor, theThickness);
+
+                    // Draw solid box and title text inside it
+                    var theTitleBox = new Rectangle(theObjectBox.X, theObjectBox.Y - 10, theObjectBox.Width, 40);
+                    BoundingRectangle(config, ref outputImg, theTitleBox, theColor, 0);
+                    Text(ref outputImg, the_title, new Point(theTitleBox.X + 2, theObjectBox.Y + 2), 0.5, DroneColors.WhiteBgr);
                 }
             }
         }

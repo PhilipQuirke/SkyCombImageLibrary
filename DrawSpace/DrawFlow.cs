@@ -62,7 +62,7 @@ namespace SkyCombImage.DrawSpace
 
 
         // Draw the optical flow. Each feature is a circle with a tail
-        public static void Draw(FlowProcessAll flowData, int lastBlockId, ref Image<Bgr, byte> outputImg)
+        public static void Draw(FlowProcess flowData, int lastBlockId, ref Image<Bgr, byte> outputImg)
         {
             // Even if feature has been in the video image for 60 frames, we only draw a 20 block feature tail
             const int TailBlocks = 20;

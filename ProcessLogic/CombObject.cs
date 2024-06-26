@@ -13,7 +13,7 @@ namespace SkyCombImage.ProcessLogic
     public class CombObject : ProcessObject
     {
         // Parent process model
-        private CombProcessAll Model { get; }
+        private CombProcess Model { get; }
 
 
         public CombObjectModel COM { get; set; }
@@ -28,7 +28,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Constructor used processing video 
-        public CombObject(ProcessScope scope, CombProcessAll model, CombFeature firstFeature) : base(scope)
+        public CombObject(ProcessScope scope, CombProcess model, CombFeature firstFeature) : base(scope)
         {
             Model = model;
             ResetMemberData();
@@ -42,7 +42,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Constructor used when loaded objects from the datastore
-        public CombObject(CombProcessAll model, List<string> settings) : base(null)
+        public CombObject(CombProcess model, List<string> settings) : base(null)
         {
             Model = model;
             ResetMemberData();
@@ -1122,12 +1122,12 @@ namespace SkyCombImage.ProcessLogic
     // A list of Comb objects
     public class CombObjs
     {
-        private readonly CombProcessAll Model;
+        private readonly CombProcess Model;
 
         public CombObjList CombObjList;
 
 
-        public CombObjs(CombProcessAll model)
+        public CombObjs(CombProcess model)
         {
             Model = model;
             CombObjList = new();

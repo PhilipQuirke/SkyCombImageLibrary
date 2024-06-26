@@ -96,7 +96,7 @@ namespace SkyCombImage.PersistModel
 
 
         // Save the Optical Flow video run & model data to the dataStore
-        public void Flow(RunConfig runConfig, DataPairList effort, DataPairList settings, FlightStepSummaryModel summary, FlowProcessAll model)
+        public void Flow(RunConfig runConfig, DataPairList effort, DataPairList settings, FlightStepSummaryModel summary, FlowProcess model)
         {
             try
             {

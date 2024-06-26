@@ -16,7 +16,7 @@ namespace SkyCombImage.PersistModel
         
 
         // Load all Block Objects from the datastore
-        public void BlockObjects(CombProcessAll model, Drone drone)
+        public void BlockObjects(CombProcess model, Drone drone)
         {
             int row = 2;
             try

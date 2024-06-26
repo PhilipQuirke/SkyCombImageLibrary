@@ -73,7 +73,7 @@ namespace SkyCombImage.RunSpace
             VideoBase = null;
             CategoryAll = new();
 
-            CombProcessAll combProcess = CombProcessIfAny();
+            CombProcess combProcess = CombProcessIfAny();
             ProcessDrawScope = new(combProcess, this, Drone);
 
             // What is the maximum scope of objects we draw?
@@ -193,9 +193,9 @@ namespace SkyCombImage.RunSpace
 
 
         // Return ProcessModel as CombProcessModel if that is possible
-        public CombProcessAll CombProcessIfAny()
+        public CombProcess CombProcessIfAny()
         {
-            return (ProcessAll is CombProcessAll ? ProcessAll as CombProcessAll : null);
+            return (ProcessAll is CombProcess ? ProcessAll as CombProcess : null);
         }
 
 
@@ -526,7 +526,7 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        public FlowProcessAll FlowModel { get { return ProcessAll as FlowProcessAll; } }
+        public FlowProcess FlowProcess { get { return ProcessAll as FlowProcess; } }
 
 
         public override void ProcessFlightLegChange(int prevLegId, int currLegId) { }
@@ -537,7 +537,7 @@ namespace SkyCombImage.RunSpace
         {
             try
             {
-                var thisBlock = FlowModel.FlowBlocks.AddBlock(this, Drone);
+                var thisBlock = FlowProcess.FlowBlocks.AddBlock(this, Drone);
 
                 var inputImage = CurrInputVideoFrame.Clone();
                 RunConfig.Run(RunConfig, ref inputImage);
@@ -555,7 +555,7 @@ namespace SkyCombImage.RunSpace
         public override void EndRunning()
         {
             FlowSave dataWriter = new(Drone, DataStore);
-            dataWriter.Flow(RunConfig, GetEffort(), GetSettings(), this, FlowModel);
+            dataWriter.Flow(RunConfig, GetEffort(), GetSettings(), this, FlowProcess);
             base.EndRunning();
         }
 
@@ -565,7 +565,7 @@ namespace SkyCombImage.RunSpace
         {
             DataStore.Open();
             FlowSave datawriter = new(Drone, DataStore);
-            datawriter.Flow(RunConfig, GetEffort(), GetSettings(), this, FlowModel);
+            datawriter.Flow(RunConfig, GetEffort(), GetSettings(), this, FlowProcess);
             DataStore.Close();
         }
     };

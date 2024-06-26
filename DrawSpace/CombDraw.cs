@@ -115,7 +115,7 @@ namespace SkyCombImage.DrawSpace
         public static void CombImage(
             DrawImageConfig drawConfig, ProcessConfigModel processConfig,
             int focusObjectId, ref Image<Bgr, byte> outputImg,
-            CombProcessAll process, ProcessBlockModel block, Transform transform)
+            CombProcess process, ProcessBlockModel block, Transform transform)
         {
             try
             {
@@ -184,7 +184,7 @@ namespace SkyCombImage.DrawSpace
         public static (Image<Bgr, byte>?, Image<Bgr, byte>?) Draw(
             RunProcessEnum runProcess,
             ProcessConfigModel processConfig, DrawImageConfig drawConfig, Drone drone,
-            ProcessBlockModel block, CombProcessAll combProcess, int focusObjectId,
+            ProcessBlockModel block, CombProcess combProcess, int focusObjectId,
             Image<Bgr, byte> inputFrame, Image<Bgr, byte> displayFrame)
         {
             try
@@ -237,11 +237,11 @@ namespace SkyCombImage.DrawSpace
     // Code to draw ground tree-top & drone alitudes against lineal meters, with comb objects overlaid
     public class CombDrawAltitudeByLinealM : DrawAltitudeByLinealM
     {
-        CombProcessAll? Process { get; }
+        CombProcess? Process { get; }
         ProcessDrawScope DrawScope { get; }
 
 
-        public CombDrawAltitudeByLinealM(CombProcessAll? process, ProcessDrawScope drawScope) : base(drawScope)
+        public CombDrawAltitudeByLinealM(CombProcess? process, ProcessDrawScope drawScope) : base(drawScope)
         {
             Process = process;
             DrawScope = drawScope;
@@ -251,7 +251,7 @@ namespace SkyCombImage.DrawSpace
 
 
         // Draw altitude data dependant on Drone/GroundSpace data
-        public void Initialise(CombProcessAll process, Size size)
+        public void Initialise(CombProcess process, Size size)
         {
             try
             {
@@ -272,7 +272,7 @@ namespace SkyCombImage.DrawSpace
 
 
         // Draw object at best estimate of height, location with error bars
-        public void GraphObjects(ref Image<Bgr, byte> currImage, CombProcessAll process)
+        public void GraphObjects(ref Image<Bgr, byte> currImage, CombProcess process)
         {
             try
             {
@@ -329,11 +329,11 @@ namespace SkyCombImage.DrawSpace
     // Code to draw ground tree-top & drone altitudes against time, with comb objects overlaid
     public class CombDrawAltitudeByTime : DrawAltitudeByTime
     {
-        CombProcessAll? Process { get; }
+        CombProcess? Process { get; }
         ProcessDrawScope DrawScope { get; }
 
 
-        public CombDrawAltitudeByTime(CombProcessAll? process, ProcessDrawScope drawScope) : base(drawScope)
+        public CombDrawAltitudeByTime(CombProcess? process, ProcessDrawScope drawScope) : base(drawScope)
         {
             Process = process;
             DrawScope = drawScope;
@@ -343,7 +343,7 @@ namespace SkyCombImage.DrawSpace
 
 
         // Draw altitude data dependant on Drone/GroundSpace data (but not RunSpace data)
-        public void Initialise(CombProcessAll process, Size size)
+        public void Initialise(CombProcess process, Size size)
         {
             try
             {
@@ -368,7 +368,7 @@ namespace SkyCombImage.DrawSpace
         // Draw object at best estimate of height and center of period seen
         // Draw object "visible duration" as horizontally-stretched H
         // Draw object "height error" as vertically-stretched H
-        public void GraphObjects(ref Image<Bgr, byte> currImage, CombProcessAll process)
+        public void GraphObjects(ref Image<Bgr, byte> currImage, CombProcess process)
         {
             try
             {
@@ -445,7 +445,7 @@ namespace SkyCombImage.DrawSpace
         }
 
 
-        public void Initialise(CombProcessAll process, Size size, ProcessObject focusObject)
+        public void Initialise(CombProcess process, Size size, ProcessObject focusObject)
         {
             try
             {
@@ -477,7 +477,7 @@ namespace SkyCombImage.DrawSpace
         }
 
 
-        public void CurrImage(ref Image<Bgr, byte> image, CombProcessAll process, CombObject thisObject)
+        public void CurrImage(ref Image<Bgr, byte> image, CombProcess process, CombObject thisObject)
         {
             try
             {

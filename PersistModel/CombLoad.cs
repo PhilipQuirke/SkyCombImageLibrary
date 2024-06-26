@@ -21,7 +21,7 @@ namespace SkyCombImage.PersistModel
 
 
         // Load all Comb Objects from the datastore
-        public void CombObjects(CombProcessAll model)
+        public void CombObjects(CombProcess model)
         {
             int row = 2;
 
@@ -56,7 +56,7 @@ namespace SkyCombImage.PersistModel
 
 
         // Load all Comb Features from the datastore
-        public void CombFeatures(CombProcessAll model)
+        public void CombFeatures(CombProcess model)
         {
             int row = 2;
 
@@ -91,7 +91,7 @@ namespace SkyCombImage.PersistModel
 
 
         // Load all Comb Spans from the datastore
-        public void CombSpans(CombProcessAll model, Drone drone)
+        public void CombSpans(CombProcess model, Drone drone)
         {
             int row = 2;
 

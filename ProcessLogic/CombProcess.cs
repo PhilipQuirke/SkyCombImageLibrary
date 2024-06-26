@@ -8,7 +8,7 @@ using SkyCombImage.ProcessModel;
 namespace SkyCombImage.ProcessLogic
 {
     // A class to hold all feature data and Block data associated with a video
-    public class CombProcessAll : ProcessAll
+    public class CombProcess : ProcessAll
     {
         // Ground (DEM, DSM and Swathe) data under the drone flight path
         public GroundData GroundData { get; set; }
@@ -42,7 +42,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public CombProcessAll(ProcessConfigModel config, VideoData video, GroundData groundData, Drone drone) : base(config, video, drone)
+        public CombProcess(ProcessConfigModel config, VideoData video, GroundData groundData, Drone drone) : base(config, video, drone)
         {
             CombFeature.Config = config;
             CombObject.Config = config;

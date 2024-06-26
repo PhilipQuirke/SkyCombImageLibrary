@@ -423,14 +423,14 @@ namespace SkyCombImage.ProcessModel
 
 
     // A class to hold all Optical Flow feature and block data associated with a video
-    public class FlowProcessAll : ProcessAll
+    public class FlowProcess : ProcessAll
     {
         public FlowBlockList FlowBlocks;
         public FlowObjectList FlowObjects;
         public FlowFeatureList FlowFeatures;
 
 
-        public FlowProcessAll(ProcessConfigModel Config, Drone drone) : base(Config, drone.InputVideo, drone)
+        public FlowProcess(ProcessConfigModel Config, Drone drone) : base(Config, drone.InputVideo, drone)
         {
             FlowBlock.Config = Config;
             FlowObject.Config = Config;

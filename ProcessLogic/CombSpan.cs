@@ -13,10 +13,10 @@ namespace SkyCombImage.ProcessLogic
     public class CombSpan : CombSpanModel
     {
         // Parent process
-        private CombProcessAll Process { get; }
+        private CombProcess Process { get; }
 
 
-        public CombSpan(CombProcessAll process, int spanId, List<string>? settings = null) : base(settings)
+        public CombSpan(CombProcess process, int spanId, List<string>? settings = null) : base(settings)
         {
             Process = process;
             CombSpanId = spanId;

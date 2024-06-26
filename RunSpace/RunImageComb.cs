@@ -17,7 +17,7 @@ namespace SkyCombImage.RunSpace
         // Analyse input image using Comb specific approach, to generate a list of features.
         public static CombFeatureList Process(
             RunConfig config,
-            CombProcessAll model,
+            CombProcess model,
             ProcessBlock block,
             Image<Bgr, byte> imgOriginal)
         {

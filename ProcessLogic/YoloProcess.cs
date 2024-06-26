@@ -165,17 +165,17 @@ namespace SkyCombImage.ProcessModel
 
 
     // A class to hold all Yolo feature and block data associated with a video
-    public class YoloProcessAll : ProcessAll
+    public class YoloProcess : ProcessAll
     {
         public ProcessBlockList YoloBlocks;
         public YoloObjectList YoloObjects;
         public YoloFeatureList YoloFeatures;
 
         // YOLO (You only look once) V8 image processing
-        public YoloDetect YoloModel;
+        public YoloDetect YoloDetect;
 
 
-        public YoloProcessAll(ProcessConfigModel config, Drone drone, string modelDirectory) : base(config, drone.InputVideo, drone)
+        public YoloProcess(ProcessConfigModel config, Drone drone, string modelDirectory) : base(config, drone.InputVideo, drone)
         {
             YoloObject.Config = config;
             YoloObjectList.Config = config;
@@ -187,7 +187,7 @@ namespace SkyCombImage.ProcessModel
 
             YoloObjects.LegFirstIndex = 0;
 
-            YoloModel = new YoloDetect(modelDirectory);
+            YoloDetect = new YoloDetect(modelDirectory);
         }
 
 
@@ -226,19 +226,46 @@ namespace SkyCombImage.ProcessModel
             }
         }
 
+
         public int ProcessBlock(
             ProcessScope scope,
-            Image<Gray, byte> PrevGray,
-            Image<Gray, byte> CurrGray)
+            Image<Gray, byte> prevGray,
+            Image<Gray, byte> currGray,
+            YoloResult? result)
         {
             try
             {
-                var numSignificantObjects = 0;
-  
-                // PQR TODO
+                var numSig = 0;
+
+                if((result != null) && (result.Result != null))
+                {
+                    numSig = result.Result.Boxes.Count();
+
+                    var thisBlock = YoloBlocks.LastBlock;
+
+                    // Convert Boxes to YoloObjects
+                    foreach (var box in result.Result.Boxes)
+                    {
+                        // We have found a new feature/object
+                        var newFeature = this.YoloFeatures.AddFeature(thisBlock.BlockId, new System.Drawing.Point(box.Bounds.X, box.Bounds.Y));
+                        var newObject = this.YoloObjects.AddObject(scope, newFeature,
+                            box.Class.Name, System.Drawing.Color.Red, box.Confidence);
+                        this.ObjectClaimsNewFeature(thisBlock, newObject, newFeature);
+
+                        /*
+                        newObject.Size = new(box.Bounds.Width, box.Bounds.Height);
+                        newObject.Confidence = box.Confidence;
+                        //newObject.Class = box.Class.Name;
+                        newObject.ClassId = box.Class.Id;
+                        //newObject.ClassColor = box.Class.Color;
+                        newObject.ClassType = box.Class.Type;
+                        newObject.ClassDescription = box.Class.Description;
+                        */
+                    }
+                }
 
 
-                return numSignificantObjects;
+                return numSig;
             }
             catch (Exception ex)
             {
