@@ -16,4 +16,8 @@
     <ProjectReference Include="..\SkyCombGroundLibrary\SkyCombGroundLibrary.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include=".github\dependabot.yml" />
+  </ItemGroup>
+
 </Project>
