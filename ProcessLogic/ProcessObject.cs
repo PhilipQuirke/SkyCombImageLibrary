@@ -9,15 +9,18 @@ namespace SkyCombImage.ProcessLogic
     public class ProcessObject : ProcessObjectModel
     {
         // Static config data shared by all objects
-        public static ProcessConfigModel Config = null;
+        public static ProcessConfigModel ProcessConfig;
+
         // Static NextObjectID shared by all objects
         public static int NextObjectId = 0;
         // Static random number generator
         protected static readonly RNG Rng = new();
 
 
-        public ProcessObject(ProcessScope scope) : base()
+        public ProcessObject(ProcessConfigModel processConfig, ProcessScope scope) : base()
         {
+            ProcessConfig = processConfig;
+
             ObjectId = ++NextObjectId;
             if (scope != null)
             {

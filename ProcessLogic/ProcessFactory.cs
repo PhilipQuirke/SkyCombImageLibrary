@@ -21,9 +21,9 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public static FlowBlock NewFlowBlock(ProcessScope scope)
+        public static FlowBlock NewFlowBlock(FlowProcess flowProcess, ProcessScope scope)
         {
-            return new FlowBlock(scope);
+            return new FlowBlock(flowProcess, scope);
         }
 
 
@@ -33,9 +33,9 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public static YoloProcess NewYoloProcessModel(ProcessConfigModel config, Drone drone, string modelDirectory)
+        public static YoloProcess NewYoloProcessModel(ProcessConfigModel config, Drone drone, string yoloDirectory)
         {
-            return new YoloProcess(config, drone, modelDirectory);
+            return new YoloProcess(config, drone, yoloDirectory);
         }
 
 
@@ -45,9 +45,9 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public static CombFeatureList NewCombFeatureList()
+        public static CombFeatureList NewCombFeatureList(ProcessConfigModel config)
         {
-            return new CombFeatureList();
+            return new CombFeatureList(config);
         }
 
 

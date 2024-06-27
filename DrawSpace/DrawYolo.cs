@@ -26,15 +26,14 @@ namespace SkyCombImage.DrawSpace
                 {
                     var theColor = theObject.ClassColor;
                     var theObjectBox = theObject.LastFeature.PixelBox;
-                    var the_title = theObject.ClassName + "(" + theObject.ObjectId.ToString() + ")";
+                    var the_title = "#" + theObject.ObjectId.ToString();
 
                     // Draw hollow bounding box
                     BoundingRectangle(config, ref outputImg, theObjectBox, theColor, theThickness);
 
-                    // Draw solid box and title text inside it
-                    var theTitleBox = new Rectangle(theObjectBox.X, theObjectBox.Y - 10, theObjectBox.Width, 40);
-                    BoundingRectangle(config, ref outputImg, theTitleBox, theColor, 0);
-                    Text(ref outputImg, the_title, new Point(theTitleBox.X + 2, theObjectBox.Y + 2), 0.5, DroneColors.WhiteBgr);
+                    // Draw the title text 
+                    var theTitlePt = new Point(theObjectBox.X, theObjectBox.Y - 10);
+                    Text(ref outputImg, the_title, theTitlePt, 0.5, DroneColors.ColorToBgr(theColor));
                 }
             }
         }

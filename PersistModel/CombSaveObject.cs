@@ -43,10 +43,10 @@ namespace SkyCombImage.PersistModel
             Data.SetColumnColor(ProcessObjectModel.CenterBlockSetting, objectRow, Color.Blue);
 
             // Highlight cells in green/red to show their accuracy
-            Data.AddConditionalRuleGood(ProcessObjectModel.LocationErrMSetting, objectRow, ProcessAll.ProcessConfig.GoodLocationErrM);
-            Data.AddConditionalRuleBad(ProcessObjectModel.LocationErrMSetting, objectRow, ProcessAll.ProcessConfig.BadLocationErrM);
-            Data.AddConditionalRuleGood(ProcessObjectModel.HeightErrMSetting, objectRow, ProcessAll.ProcessConfig.GoodHeightErrM);
-            Data.AddConditionalRuleBad(ProcessObjectModel.HeightErrMSetting, objectRow, ProcessAll.ProcessConfig.BadHeightErrM);
+            Data.AddConditionalRuleGood(ProcessObjectModel.LocationErrMSetting, objectRow, model.ProcessConfig.GoodLocationErrM);
+            Data.AddConditionalRuleBad(ProcessObjectModel.LocationErrMSetting, objectRow, model.ProcessConfig.BadLocationErrM);
+            Data.AddConditionalRuleGood(ProcessObjectModel.HeightErrMSetting, objectRow, model.ProcessConfig.GoodHeightErrM);
+            Data.AddConditionalRuleBad(ProcessObjectModel.HeightErrMSetting, objectRow, model.ProcessConfig.BadHeightErrM);
 
             Data.SetLastUpdateDateTime(Objects1TabName);
         }

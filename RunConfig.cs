@@ -39,7 +39,7 @@ namespace SkyCombImage.ProcessModel
         public string OutputDirectory { get; set; } = "";
 
         // Directory path/file to load YOLOv8 model from. If is a bare directory path, code appends "\model.onnx"
-        public string ModelDirectory { get; set; } = "";
+        public string YoloDirectory { get; set; } = "";
 
         // Name of main process to run: contour, distance, flow, gftt, comb, threshold, none. Lowercase.
         public RunProcessEnum RunProcess { get; set; } = RunProcessEnum.Comb;
@@ -143,8 +143,8 @@ namespace SkyCombImage.ProcessModel
                             GroundDirectory = setting.Value.TrimEnd('\\'); break;
                         case "outputdirectory":
                             OutputDirectory = setting.Value.TrimEnd('\\'); break;
-                        case "modeldirectory":
-                            ModelDirectory = setting.Value.TrimEnd('\\'); break;
+                        case "yolodirectory":
+                            YoloDirectory = setting.Value.TrimEnd('\\'); break;
                     }
             }
             catch (Exception ex)

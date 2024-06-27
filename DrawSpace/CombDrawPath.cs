@@ -78,7 +78,8 @@ namespace SkyCombImage.DrawSpace
                     var realBgr = DroneColors.RealFeatureBgr;         // Orange
                     var unrealBgr = DroneColors.UnrealFeatureBgr;     // Yellow
 
-                    bool showAllFeatures = (ProcessObject.Config.SaveObjectData == SaveObjectDataEnum.All);
+                    bool showAllFeatures = (ProcessObject.ProcessConfig != null && 
+                        (ProcessObject.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All));
 
 
                     // This of objects in process scope

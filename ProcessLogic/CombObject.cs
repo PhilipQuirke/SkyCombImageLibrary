@@ -15,7 +15,6 @@ namespace SkyCombImage.ProcessLogic
         // Parent process model
         private CombProcess Model { get; }
 
-
         public CombObjectModel COM { get; set; }
 
         // List of features that make up this object
@@ -28,7 +27,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Constructor used processing video 
-        public CombObject(ProcessScope scope, CombProcess model, CombFeature firstFeature) : base(scope)
+        public CombObject(ProcessScope scope, CombProcess model, CombFeature firstFeature) : base(model.ProcessConfig, scope)
         {
             Model = model;
             ResetMemberData();
@@ -42,7 +41,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Constructor used when loaded objects from the datastore
-        public CombObject(CombProcess model, List<string> settings) : base(null)
+        public CombObject(CombProcess model, List<string> settings) : base(model.ProcessConfig, null)
         {
             Model = model;
             ResetMemberData();
@@ -57,7 +56,7 @@ namespace SkyCombImage.ProcessLogic
         {
             base.ResetMemberData();
 
-            Features = new();
+            Features = new(ProcessConfig);
 
             COM = new();
             COM.ResetMemberData();
@@ -102,7 +101,7 @@ namespace SkyCombImage.ProcessLogic
         // How long has this object been seen for in Config.ObjectMinDurationMs units?
         public double SeenForMinDurations()
         {
-            var minDuration = Config.ObjectMinDurationMs; // Say 500ms
+            var minDuration = ProcessConfig.ObjectMinDurationMs; // Say 500ms
             var timeSeenMs = (1000.0F * NumRealFeatures()) / Model.VideoData.Fps;
             return (timeSeenMs / minDuration);
         }
@@ -128,10 +127,10 @@ namespace SkyCombImage.ProcessLogic
                 {
                     // Yes, this is worth tracking.
                 }
-                else if (Config.ObjectMaxUnrealBlocks > 0)
+                else if (ProcessConfig.ObjectMaxUnrealBlocks > 0)
                 {
                     // Are we still on the persistance window?
-                    COM.BeingTracked = (LastFeature().Block.BlockId - LastRealFeature().Block.BlockId < Config.ObjectMaxUnrealBlocks);
+                    COM.BeingTracked = (LastFeature().Block.BlockId - LastRealFeature().Block.BlockId < ProcessConfig.ObjectMaxUnrealBlocks);
                 }
                 else
                     COM.BeingTracked = false;
@@ -163,20 +162,20 @@ namespace SkyCombImage.ProcessLogic
             try
             {
                 // Debugging - Set breakpoint on assignment. Assignment value is overridden later in this proc.
-                if (ObjectId == Config.FocusObjectId)
+                if (ObjectId == ProcessConfig.FocusObjectId)
                     if (Model.Blocks.Count >= 17)
                         Significant = false;
 
                 // COUNT
                 // Maximum pixel count per real feature
                 var maxCount = COM.MaxRealHotPixels;
-                var countOk = (maxCount > Config.ObjectMinPixelsPerBlock); // Say 5 pixels / Block
-                var countGood = (maxCount > 2 * Config.ObjectMinPixelsPerBlock); // Say 10 pixels / Block
-                var countGreat = (maxCount > 4 * Config.ObjectMinPixelsPerBlock); // Say 20 pixels / Block
+                var countOk = (maxCount > ProcessConfig.ObjectMinPixelsPerBlock); // Say 5 pixels / Block
+                var countGood = (maxCount > 2 * ProcessConfig.ObjectMinPixelsPerBlock); // Say 10 pixels / Block
+                var countGreat = (maxCount > 4 * ProcessConfig.ObjectMinPixelsPerBlock); // Say 20 pixels / Block
 
                 // DENSITY
                 // Average pixel density based on encompassing pixel block of each real feature.
-                var minDensity = Config.ObjectMinDensityPerc / 100.0F;
+                var minDensity = ProcessConfig.ObjectMinDensityPerc / 100.0F;
                 var density = RealDensityPx();
                 var densityOk = (density > minDensity); // Say 33%
                 var densityGood = (density > 1.5 * minDensity); // Say 50%
@@ -233,10 +232,10 @@ namespace SkyCombImage.ProcessLogic
             // COUNT
             // Maximum pixel count per real feature
             var maxCount = COM.MaxRealHotPixels;
-            var maxCountOk = (maxCount > Config.ObjectMinPixelsPerBlock); // Say 5 pixels / Block
+            var maxCountOk = (maxCount > ProcessConfig.ObjectMinPixelsPerBlock); // Say 5 pixels / Block
 
             // Density
-            var minDensity = Config.ObjectMinDensityPerc / 100.0F;
+            var minDensity = ProcessConfig.ObjectMinDensityPerc / 100.0F;
             var density = RealDensityPx();
             var densityOk = (density > minDensity); // Say 20%
 
@@ -370,7 +369,7 @@ namespace SkyCombImage.ProcessLogic
                 theFeature.ObjectId = this.ObjectId;
 
                 // Debugging - Set breakpoint on assignment. (Value is unchanged by assignment)
-                if (ObjectId == Config.FocusObjectId)
+                if (ObjectId == ProcessConfig.FocusObjectId)
                     theFeature.ObjectId = this.ObjectId;
 
                 bool wasSignificant = Significant;
@@ -434,7 +433,7 @@ namespace SkyCombImage.ProcessLogic
                         feature.Value.Significant = true;
 
                 // Debugging - Set breakpoint on assignment. 
-                if (ObjectId == Config.FocusObjectId)
+                if (ObjectId == ProcessConfig.FocusObjectId)
                     if ((theFeature.FeatureId == 41) || (theFeature.FeatureId == 59))
                         LastFeature().Attributes = this.Attributes + ".";
 
@@ -450,11 +449,11 @@ namespace SkyCombImage.ProcessLogic
         // Object will claim ownership of this feature extending the objects lifetime and improving its "Significant" score.
         // In rare cases, object can claim multiple features from a single block (e.g. a tree branch bisects a heat spot into two features) 
         // But only if the object reamins viable after claiming feature (e.g. doesn't get too big or density too low).
-        public bool MaybeClaimFeature(CombFeature feature, Rectangle expectedObjectLocation)
+        public bool MaybeClaimFeature(CombFeature feature, Rectangle objectExpectedPixelBox)
         {
             if (feature.ObjectId == 0) // Not claimed yet
                 if (feature.Significant || this.Significant)
-                    if (feature.SignificantIntersection(expectedObjectLocation))
+                    if (feature.SignificantPixelBoxIntersection(objectExpectedPixelBox))
                         // Object will claim feature if the object remains viable after claiming feature
                         return ClaimFeature(feature);
 
@@ -1199,7 +1198,7 @@ namespace SkyCombImage.ProcessLogic
                 if (annotations != null)
                     annotation = annotations.GetData(theObject.Value.Name);
 
-                answer.Add(theObject.Value.GetObjectGridData(ProcessAll.ProcessConfig, mainForm, annotation));
+                answer.Add(theObject.Value.GetObjectGridData(Model.ProcessConfig, mainForm, annotation));
             }
 
             return answer;

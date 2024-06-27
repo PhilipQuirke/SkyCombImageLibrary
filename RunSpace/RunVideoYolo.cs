@@ -18,7 +18,7 @@ namespace SkyCombImage.RunSpace
     class RunVideoYolo : RunVideoPersist
     {
         public RunVideoYolo(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
-            : base(parent, config, dataStore, drone, ProcessFactory.NewYoloProcessModel(config.ProcessConfig, drone, config.ModelDirectory))
+            : base(parent, config, dataStore, drone, ProcessFactory.NewYoloProcessModel(config.ProcessConfig, drone, config.YoloDirectory))
         {
     
         }
@@ -54,14 +54,13 @@ namespace SkyCombImage.RunSpace
             try
             {
                 var thisBlock = AddBlock();
-                int numSig = 0;
 
                 // We do not use Threshold or Smooth as we want to find as many GFTT features as possible.
                 var currGray = DrawImage.ToGrayScale(CurrInputVideoFrame);
 
                 var result = YoloProcess.YoloDetect.Detect(currGray.ToBitmap());
 
-                numSig = YoloProcess.ProcessBlock(this, PrevGray, currGray, result);
+                int numSig = YoloProcess.ProcessBlock(this, PrevGray, currGray, result);
 
                 // Update the persisted gray frame 
                 PrevGray = currGray.Clone();

@@ -117,13 +117,13 @@ namespace SkyCombImage.PersistModel
 
 
                 // Save the Feature data 
-                if (ProcessAll.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None && model.FlowFeatures.Count > 0)
+                if (model.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None && model.FlowFeatures.Count > 0)
                 {
                     Data.SelectOrAddWorksheet(FeaturesTabName);
 
                     int row = 0;
                     foreach (var feature in model.FlowFeatures)
-                        if (ProcessAll.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All || feature.Significant)
+                        if (model.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All || feature.Significant)
                             Data.SetDataListRowKeysAndValues(ref row, feature.GetSettings());
 
                     Data.SetLastUpdateDateTime(FeaturesTabName);
@@ -131,12 +131,12 @@ namespace SkyCombImage.PersistModel
 
 
                 // Save the Object data 
-                if (ProcessAll.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None && model.FlowObjects.Count > 0)
+                if (model.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None && model.FlowObjects.Count > 0)
                 {
                     Data.SelectOrAddWorksheet(Objects1TabName);
                     int row = 0;
                     foreach (var theObject in model.FlowObjects)
-                        if (ProcessAll.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All || theObject.Significant)
+                        if (model.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All || theObject.Significant)
                             Data.SetDataListRowKeysAndValues(ref row, theObject.GetSettings());
 
                     Data.SetNumberColumnNdp(6, PixelNdp);

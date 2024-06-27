@@ -12,12 +12,8 @@ namespace SkyCombImage.ProcessLogic
     // A Comb feature, is a dense cluster of hot pixels, associated 1-1 with a Block
     public class CombFeature : ProcessFeatureModel
     {
-        // Static config data shared by all Comb features
-        public static ProcessConfigModel? Config = null;
-
-
         // Parent process model
-        private CombProcess? Model { get; } = null;
+        private CombProcess Model { get; }
 
         // A Comb feature is associated 1-1 with a Block
         public ProcessBlock? Block { get; set; } = null;
@@ -26,7 +22,7 @@ namespace SkyCombImage.ProcessLogic
         public PixelHeatList? Pixels { get; set; } = null;
 
 
-        public CombFeature(CombProcess model, ProcessBlock block, CombFeatureTypeEnum type) : base(block.BlockId, type)
+        public CombFeature( CombProcess model, ProcessBlock block, CombFeatureTypeEnum type) : base(block.BlockId, type)
         {
             if (type != CombFeatureTypeEnum.Unreal)
                 Pixels = new();
@@ -63,40 +59,22 @@ namespace SkyCombImage.ProcessLogic
 
         // Is this feature's hot pixel density percentage above the minimum?
         public bool PixelDensityGood { get {
-            return DensityPerc >= Config.FeatureMinDensityPerc;
+            return DensityPerc >= Model.ProcessConfig.FeatureMinDensityPerc;
         } }
 
 
         // Is this feature larger than the largest allowed?
         public bool FeatureOverSized { get {
             return
-                (PixelBox.Width > Config.FeatureMaxSize) ||
-                (PixelBox.Height > Config.FeatureMaxSize);
+                (PixelBox.Width > Model.ProcessConfig.FeatureMaxSize) ||
+                (PixelBox.Height > Model.ProcessConfig.FeatureMaxSize);
         } }
 
 
-        // Does this Feature's rectangles and the specified object's rectangle overlap significantly?
-        public bool SignificantIntersection(Rectangle objectExpectedLocation)
+        // Does this Feature's PixleBox and the specified object's rectangle overlap significantly?
+        public bool SignificantPixelBoxIntersection(Rectangle objectExpectedPixelBox)
         {
-            var intersection = Rectangle.Intersect(PixelBox, objectExpectedLocation);
-
-            // Refer https://stackoverflow.com/questions/9324339/how-much-do-two-rectangles-overlap
-            // SI = Max(0, Min(XA2, XB2) - Max(XA1, XB1)) * Max(0, Min(YA2, YB2) - Max(YA1, YB1))
-            // SU = SA + SB - SI
-            // OverlapFraction = SI / SU
-            var sizeIntersection = intersection.Width * intersection.Height;
-
-            var sizeA = PixelBox.Width * PixelBox.Height;
-            var sizeB = objectExpectedLocation.Width * objectExpectedLocation.Height;
-
-            var resultA = 1.0F * sizeIntersection / sizeA;
-            var resultB = 1.0F * sizeIntersection / sizeB;
-
-            var minOverlap = Config.FeatureMinOverlapPerc / 100.0F;
-
-            return
-                resultA >= minOverlap ||   // 25% overlap of rectA
-                resultB >= minOverlap;     // 25% overlap of rectB
+            return base.SignificantPixelBoxIntersection(objectExpectedPixelBox, Model.ProcessConfig.FeatureMinOverlapPerc);
         }
 
 
@@ -212,7 +190,7 @@ namespace SkyCombImage.ProcessLogic
                 }
 
                 // Is this feature significant?
-                bool sizeOk = (NumHotPixels >= Config.FeatureMinPixels);
+                bool sizeOk = (NumHotPixels >= Model.ProcessConfig.FeatureMinPixels);
                 bool densityOk = PixelDensityGood;
                 Significant = sizeOk && densityOk;
                 if (Significant)
@@ -628,6 +606,15 @@ namespace SkyCombImage.ProcessLogic
     // A list of Comb features bound to a specific Block
     public class CombFeatureList : SortedList<int, CombFeature>
     {
+        private static ProcessConfigModel Config;
+
+
+        public CombFeatureList(ProcessConfigModel config)
+        {
+            CombFeatureList.Config = config;
+        }   
+
+
         public void AddFeature(CombFeature feature)
         {
             BaseConstants.Assert(feature != null, "AddFeature: Feature not specified.");
@@ -648,7 +635,7 @@ namespace SkyCombImage.ProcessLogic
 
         public CombFeatureList Clone()
         {
-            var answer = new CombFeatureList();
+            var answer = new CombFeatureList(Config);
 
             foreach (var feature in this)
                 answer.AddFeature(feature.Value);

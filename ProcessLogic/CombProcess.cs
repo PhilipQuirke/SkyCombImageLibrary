@@ -44,14 +44,11 @@ namespace SkyCombImage.ProcessLogic
 
         public CombProcess(ProcessConfigModel config, VideoData video, GroundData groundData, Drone drone) : base(config, video, drone)
         {
-            CombFeature.Config = config;
-            CombObject.Config = config;
-
             CombFeature.NextFeatureId = 0;
 
             GroundData = groundData;
             Blocks = new();
-            CombFeatures = new();
+            CombFeatures = new(config);
             CombObjs = new(this);
             CombSpans = new();
             FlightLeg_SigObjects = 0;

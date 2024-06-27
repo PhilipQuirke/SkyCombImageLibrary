@@ -14,7 +14,7 @@ namespace SkyCombImage.ProcessModel
     public class FlowBlock : ProcessBlock
     {
         // Static config data shared by all Flow blocks
-        public static ProcessConfigModel Config;
+        private static FlowProcess FlowProcess;
 
 
         // Ground velocity/speed for this block in pixels per frame, based on 25% percentile.
@@ -45,10 +45,11 @@ namespace SkyCombImage.ProcessModel
         private List<int> FeatDeltaY;
 
 
-        public FlowBlock(ProcessScope scope) : base(scope)
+        public FlowBlock(FlowProcess flowProcess, ProcessScope scope) : base(scope)
         {
             FeatDeltaX = new();
             FeatDeltaY = new();
+            FlowProcess = flowProcess;
         }
 
 
@@ -174,9 +175,18 @@ namespace SkyCombImage.ProcessModel
 
     public class FlowBlockList : ProcessBlockList
     {
+        private FlowProcess FlowProcess;
+
+
+        public FlowBlockList(FlowProcess flowProcess) 
+        {
+            FlowProcess = flowProcess;
+        }
+
+
         public FlowBlock AddBlock(ProcessScope scope, Drone drone)
         {
-            var newBlock = ProcessFactory.NewFlowBlock(scope);
+            var newBlock = ProcessFactory.NewFlowBlock(FlowProcess, scope);
             AddBlock(newBlock, scope, drone);
             return newBlock;
         }
@@ -197,7 +207,14 @@ namespace SkyCombImage.ProcessModel
 
     public class FlowFeatureList : List<FlowFeature>
     {
-        public static ProcessConfigModel Config = null;
+        private static ProcessConfigModel Config;
+
+
+        public FlowFeatureList(ProcessConfigModel config)
+        {
+            Config = config;
+        }
+
 
         public FlowFeature AddFeature(int blockId, Point location)
         {
@@ -233,14 +250,14 @@ namespace SkyCombImage.ProcessModel
         public float PrevPointX = UnknownValue;
 
 
-        public FlowObject(ProcessScope scope) : base(scope)
+        public FlowObject(FlowProcess flowProcess, ProcessScope scope) : base(flowProcess.ProcessConfig, scope)
         {
             int r = rng.Uniform(0, 256);
             int g = rng.Uniform(0, 256);
             int b = rng.Uniform(0, 256);
             this.Color = new Bgr(b, g, r);
 
-            if (this.ObjectId == Config.FocusObjectId)
+            if (this.ObjectId == ProcessConfig.FocusObjectId)
                 this.Color = new Bgr(0, 0, 255);
 
             Significant = true;
@@ -258,7 +275,7 @@ namespace SkyCombImage.ProcessModel
             return
                 Math.Pow(lastEntry.EastingM - theX, 2) +
                 Math.Pow(lastEntry.NorthingM - theY, 2) <
-                Config.GfttMinDistance * Config.GfttMinDistance;
+                ProcessConfig.GfttMinDistance * ProcessConfig.GfttMinDistance;
         }
 
 
@@ -355,16 +372,22 @@ namespace SkyCombImage.ProcessModel
 
     public class FlowObjectList : List<FlowObject>
     {
-        public static ProcessConfigModel Config;
+        private FlowProcess FlowProcess;
 
 
         // We do not process objects below this index in the object array.
         public int LegFirstIndex;
 
 
+        public FlowObjectList(FlowProcess flowProcess)
+        {
+            FlowProcess = flowProcess;
+        }
+
+
         public FlowObject AddObject(ProcessScope scope)
         {
-            var answer = new FlowObject(scope);
+            var answer = new FlowObject(FlowProcess, scope);
             Add(answer);
             return answer;
         }
@@ -396,7 +419,7 @@ namespace SkyCombImage.ProcessModel
         // Return the list of features that are currently significant
         public FlowObjectList SignificantList()
         {
-            FlowObjectList answer = new();
+            FlowObjectList answer = new(FlowProcess);
 
             for (int index = LegFirstIndex; index < Count; index++)
             {
@@ -430,16 +453,11 @@ namespace SkyCombImage.ProcessModel
         public FlowFeatureList FlowFeatures;
 
 
-        public FlowProcess(ProcessConfigModel Config, Drone drone) : base(Config, drone.InputVideo, drone)
+        public FlowProcess(ProcessConfigModel config, Drone drone) : base(config, drone.InputVideo, drone)
         {
-            FlowBlock.Config = Config;
-            FlowObject.Config = Config;
-            FlowObjectList.Config = Config;
-            FlowFeatureList.Config = Config;
-
-            FlowBlocks = new();
-            FlowObjects = new();
-            FlowFeatures = new();
+            FlowBlocks = new(this);
+            FlowObjects = new(this);
+            FlowFeatures = new(config);
 
             FlowObjects.LegFirstIndex = 0;
         }

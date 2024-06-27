@@ -6,6 +6,8 @@ using SkyCombDrone.DroneLogic;
 using SkyCombImage.ProcessLogic;
 using SkyCombGround.CommonSpace;
 using System.Drawing;
+using Compunet.YoloV8.Data;
+
 
 
 namespace SkyCombImage.ProcessModel
@@ -15,22 +17,41 @@ namespace SkyCombImage.ProcessModel
     // A Yolo feature 
     public class YoloFeature : ProcessFeatureModel
     {
-        public YoloFeature(int blockId, Point location) : base(blockId, CombFeatureTypeEnum.Real)
+        // Static data shared by all Yolo features
+        private static YoloProcess YoloProcess;
+
+
+        public YoloFeature(YoloProcess yoloProcess, int blockId, Rectangle imagePixelBox) : base(blockId, CombFeatureTypeEnum.Real)
         {
             ResetMemberData();
-            LocationM = new DroneLocation(location.Y,location.X);
+            PixelBox = imagePixelBox;
             Significant = true;
+            YoloProcess = yoloProcess;
+        }
+
+
+        // Does this Feature's PixleBox and the specified object's rectangle overlap significantly?
+        public bool SignificantPixelBoxIntersection(Rectangle objectExpectedPixelBox)
+        {
+            return base.SignificantPixelBoxIntersection(objectExpectedPixelBox, YoloProcess.ProcessConfig.FeatureMinOverlapPerc);
         }
     };
 
 
     public class YoloFeatureList : List<YoloFeature>
     {
-        public static ProcessConfigModel Config;
+        private YoloProcess YoloProcess;
 
-        public YoloFeature AddFeature(int blockId, Point location)
+
+        public YoloFeatureList(YoloProcess yoloProcess)
         {
-            var answer = new YoloFeature(blockId, location);
+            YoloProcess = yoloProcess;
+        }
+
+
+        public YoloFeature AddFeature(int blockId, Rectangle imagePixelBox)
+        {
+            var answer = new YoloFeature(YoloProcess, blockId, imagePixelBox);
             this.Add(answer);
             return answer;
         }
@@ -50,7 +71,7 @@ namespace SkyCombImage.ProcessModel
         public YoloFeature LastFeature { get; set; }
 
 
-        public YoloObject(ProcessScope scope, YoloFeature firstFeature, string className, Color classColor, float classConfidence) : base(scope)
+        public YoloObject(YoloProcess yoloProcess, ProcessScope scope, YoloFeature firstFeature, string className, Color classColor, float classConfidence) : base(yoloProcess.ProcessConfig, scope)
         {
             ClassName = className;
             ClassColor = classColor;
@@ -58,21 +79,6 @@ namespace SkyCombImage.ProcessModel
             FirstFeature = firstFeature;
             LastFeature = firstFeature;
             Significant = true;
-        }
-
-
-        // Does the last feature occupy the same block & location as the params?
-        public bool LastFeatureIntersects(int blockId, int theY, int theX)
-        {
-            if (LastFeature.BlockId < blockId)
-                return false;
-
-            // Euclidian distance test without use of slow square root function.
-            var lastEntry = LastFeature.LocationM;
-            return
-                Math.Pow(lastEntry.EastingM - theX, 2) +
-                Math.Pow(lastEntry.NorthingM - theY, 2) <
-                Config.GfttMinDistance * Config.GfttMinDistance;
         }
 
 
@@ -108,30 +114,23 @@ namespace SkyCombImage.ProcessModel
 
     public class YoloObjectList : List<YoloObject>
     {
-        public static ProcessConfigModel Config;
+        private YoloProcess YoloProcess;
 
 
         // We do not process objects below this index in the object array.
         public int LegFirstIndex;
 
 
-        public YoloObject AddObject(ProcessScope scope, YoloFeature firstFeature, string className, Color classColor, float classConfidence)
+        public YoloObjectList(YoloProcess yoloProcess)
         {
-            var answer = new YoloObject(scope, firstFeature, className, classColor, classConfidence);
-            Add(answer);
-            return answer;
+            YoloProcess = yoloProcess;
         }
 
 
-        // Return the list of features that are significant
-        public int SignificantCount()
+        public YoloObject AddObject(ProcessScope scope, YoloFeature firstFeature, string className, Color classColor, float classConfidence)
         {
-            int answer = 0;
-
-            foreach (var theObject in this)
-                if (theObject.Significant)
-                    answer++;
-
+            var answer = new YoloObject(YoloProcess, scope, firstFeature, className, classColor, classConfidence);
+            Add(answer);
             return answer;
         }
 
@@ -143,22 +142,6 @@ namespace SkyCombImage.ProcessModel
                 theObject.Significant = false;
 
             LegFirstIndex = Count;
-        }
-
-
-        // Return the list of features that are currently significant
-        public YoloObjectList SignificantList()
-        {
-            YoloObjectList answer = new();
-
-            for (int index = LegFirstIndex; index < Count; index++)
-            {
-                var theObject = this[index];
-                if (theObject.Significant)
-                    answer.Add(theObject);
-            }
-
-            return answer;
         }
     };
 
@@ -175,19 +158,14 @@ namespace SkyCombImage.ProcessModel
         public YoloDetect YoloDetect;
 
 
-        public YoloProcess(ProcessConfigModel config, Drone drone, string modelDirectory) : base(config, drone.InputVideo, drone)
+        public YoloProcess(ProcessConfigModel config, Drone drone, string yoloDirectory) : base(config, drone.InputVideo, drone)
         {
-            YoloObject.Config = config;
-            YoloObjectList.Config = config;
-            YoloFeatureList.Config = config;
-
             YoloBlocks = new();
-            YoloObjects = new();
-            YoloFeatures = new();
-
+            YoloObjects = new(this);
+            YoloFeatures = new(this);
             YoloObjects.LegFirstIndex = 0;
 
-            YoloDetect = new YoloDetect(modelDirectory);
+            YoloDetect = new YoloDetect(yoloDirectory);
         }
 
 
@@ -231,23 +209,24 @@ namespace SkyCombImage.ProcessModel
             ProcessScope scope,
             Image<Gray, byte> prevGray,
             Image<Gray, byte> currGray,
-            YoloResult? result)
+            DetectionResult? result)
         {
             try
             {
                 var numSig = 0;
 
-                if((result != null) && (result.Result != null))
+                if(result != null) 
                 {
-                    numSig = result.Result.Boxes.Count();
+                    numSig = result.Boxes.Count();
 
                     var thisBlock = YoloBlocks.LastBlock;
 
                     // Convert Boxes to YoloObjects
-                    foreach (var box in result.Result.Boxes)
+                    foreach (var box in result.Boxes)
                     {
                         // We have found a new feature/object
-                        var newFeature = this.YoloFeatures.AddFeature(thisBlock.BlockId, new System.Drawing.Point(box.Bounds.X, box.Bounds.Y));
+                        var imagePixelBox = new Rectangle(box.Bounds.Left, box.Bounds.Top, box.Bounds.Width, box.Bounds.Height);
+                        var newFeature = this.YoloFeatures.AddFeature(thisBlock.BlockId, imagePixelBox);
                         var newObject = this.YoloObjects.AddObject(scope, newFeature,
                             box.Class.Name, System.Drawing.Color.Red, box.Confidence);
                         this.ObjectClaimsNewFeature(thisBlock, newObject, newFeature);

@@ -17,20 +17,6 @@ using System.Drawing;
 
 namespace SkyCombImage.ProcessLogic
 {
-    public class YoloResult
-    {
-        public DetectionResult? Result { get; }
-
-        public SixLabors.ImageSharp.Image? Image { get; }
-
-        public YoloResult(DetectionResult? result = null, SixLabors.ImageSharp.Image? image = null)
-        {
-            Result = result;
-            Image = image;
-        }
-    }
-
-
     // YOLO (You only look once) V8 image object detector.
     // Uses a SkyComb-specific pre-trained model to detect objects in an image.
     public class YoloDetect : BaseConstants
@@ -38,23 +24,23 @@ namespace SkyCombImage.ProcessLogic
         YoloV8Predictor? Detector = null;
 
 
-        public YoloDetect(string modelDirectory)
+        public YoloDetect(string yoloDirectory)
         {
-            Assert(modelDirectory != "", "modelDirectory is not specified");
+            Assert(yoloDirectory != "", "yoloDirectory is not specified");
 
             // If modelDirectory doesnt end in ".onnx" append "\model.onnx" or "model.onnx"
-            if (!modelDirectory.EndsWith(".onnx"))
+            if (!yoloDirectory.EndsWith(".onnx"))
             {
-                if (modelDirectory.EndsWith("\\") || modelDirectory.EndsWith("/"))
-                    modelDirectory += "model.onnx";
+                if (yoloDirectory.EndsWith("\\") || yoloDirectory.EndsWith("/"))
+                    yoloDirectory += "yolo_v8_model.onnx";
                 else
-                    modelDirectory += "\\model.onnx";
+                    yoloDirectory += "\\yolyolo_v8_modelo_model.onnx";
             }
 
             try
             {
                 // Load the model. Takes a few seconds.
-                Detector = YoloV8Predictor.Create(modelDirectory);
+                Detector = YoloV8Predictor.Create(yoloDirectory);
             }
             catch (Exception ex)
             {
@@ -124,27 +110,18 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public async Task<YoloResult> AsyncDetect(System.Drawing.Image raw_image)
+        public async Task<DetectionResult?> AsyncDetect(System.Drawing.Image raw_image)
         {
             if (Detector == null)
-                return new YoloResult();
+                return null;
 
             try
             {
                 using SixLabors.ImageSharp.Image image = ConvertToImageSharp(raw_image);
 
                 DetectionResult? result = await Detector.DetectAsync(image);
-                if (result is null)
-                    return new YoloResult();
 
-                Console.WriteLine($"Task:   {Detector.Metadata.Task}");
-                Console.WriteLine($"Image:  {image}");
-                Console.WriteLine($"Result: {result}");
-                Console.WriteLine($"Speed:  {result.Speed}");
-
-                using var plotted = await AsyncGetImage(result, raw_image);
-
-                return new YoloResult( result, plotted );
+                return result;
             }
             catch (Exception ex)
             {
@@ -153,27 +130,16 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public YoloResult Detect(System.Drawing.Image raw_image)
+        public DetectionResult? Detect(System.Drawing.Image raw_image)
         {
             if (Detector == null)
-                return new YoloResult();
+                return null;
 
             try
             {
                 using SixLabors.ImageSharp.Image image = ConvertToImageSharp(raw_image);
 
-                DetectionResult? result = Detector.Detect(image);
-                if (result is null)
-                    return new YoloResult();
-
-                Console.WriteLine($"Task:   {Detector.Metadata.Task}");
-                Console.WriteLine($"Image:  {image}");
-                Console.WriteLine($"Result: {result}");
-                Console.WriteLine($"Speed:  {result.Speed}");
-
-                using var plotted = GetImage(result, raw_image);
-
-                return new YoloResult(result, plotted);
+                return Detector.Detect(image);
             }
             catch (Exception ex)
             {

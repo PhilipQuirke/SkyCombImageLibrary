@@ -10,6 +10,7 @@ namespace SkyCombImage.ProcessModel
     // A logical object derived from overlapping features over successive frames. 
     public class ProcessObjectModel : ConfigBase
     {
+
         // Unique identifier
         public int ObjectId { get; set; }
         // Defaults to ObjectId (e.g. #15), but for signficant objects

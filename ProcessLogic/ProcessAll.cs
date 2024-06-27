@@ -9,7 +9,7 @@ namespace SkyCombImage.ProcessLogic
     // All processing models derive from this class.
     public class ProcessAll : BaseConstants
     {
-        public static ProcessConfigModel? ProcessConfig = null;
+        public ProcessConfigModel ProcessConfig;
 
         // The main input video being processed
         public VideoData VideoData { get; }
