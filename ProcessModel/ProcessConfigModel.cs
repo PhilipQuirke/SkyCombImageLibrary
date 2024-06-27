@@ -177,6 +177,22 @@ namespace SkyCombImage.ProcessModel
         }
 
 
+        public void ValidateYolo()
+        {
+            if (YoloConfidence < 0.1f)
+                YoloConfidence = 0.1f;
+
+            if (YoloConfidence > 0.99f)
+                YoloConfidence = 0.99f;
+
+            if (YoloIoU < 0.1f)
+                YoloIoU = 0.1f;
+
+            if (YoloIoU > 0.99f)
+                YoloIoU = 0.99f;
+        }
+
+
         // Horizontal field of view in degrees. Differs per manufacturer's camera.
         public void SetCameraSpecifics(string cameraType)
         {

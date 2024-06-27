@@ -148,6 +148,7 @@ namespace SkyCombImage.ProcessModel
 
 
     // A class to hold all Yolo feature and block data associated with a video
+    // Ignores thermal threshold.
     public class YoloProcess : ProcessAll
     {
         public ProcessBlockList YoloBlocks;
