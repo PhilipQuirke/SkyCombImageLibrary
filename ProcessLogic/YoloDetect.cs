@@ -1,4 +1,6 @@
-﻿// Refer https://github.com/dme-compunet/YOLOv8
+﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+
+// Refer https://github.com/dme-compunet/YOLOv8
 using Compunet.YoloV8;
 using Compunet.YoloV8.Data;
 using Compunet.YoloV8.Plotting;
@@ -11,8 +13,7 @@ using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.PixelFormats;
 
 using SkyCombGround.CommonSpace;
-using System.Configuration;
-using System.Drawing;
+
 
 
 namespace SkyCombImage.ProcessLogic
@@ -22,9 +23,10 @@ namespace SkyCombImage.ProcessLogic
     public class YoloDetect : BaseConstants
     {
         YoloV8Predictor? Detector = null;
+        YoloV8Configuration DetectorConfig;
 
 
-        public YoloDetect(string yoloDirectory)
+        public YoloDetect(string yoloDirectory, float confidence, float iou)
         {
             Assert(yoloDirectory != "", "yoloDirectory is not specified");
 
@@ -47,6 +49,10 @@ namespace SkyCombImage.ProcessLogic
                 Detector = null;
                 throw ThrowException("YoloDetect.Constructor failed: " + ex.Message);
             }
+
+            DetectorConfig = new YoloV8Configuration();
+            DetectorConfig.Confidence = confidence;
+            DetectorConfig.IoU = iou; 
         }
 
 
@@ -139,7 +145,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 using SixLabors.ImageSharp.Image image = ConvertToImageSharp(raw_image);
 
-                return Detector.Detect(image);
+                return Detector.Detect(image, DetectorConfig);
             }
             catch (Exception ex)
             {

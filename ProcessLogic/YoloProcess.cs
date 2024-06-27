@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved. 
+﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
@@ -158,14 +158,14 @@ namespace SkyCombImage.ProcessModel
         public YoloDetect YoloDetect;
 
 
-        public YoloProcess(ProcessConfigModel config, Drone drone, string yoloDirectory) : base(config, drone.InputVideo, drone)
+        public YoloProcess(ProcessConfigModel processConfig, Drone drone, string yoloDirectory) : base(processConfig, drone.InputVideo, drone)
         {
             YoloBlocks = new();
             YoloObjects = new(this);
             YoloFeatures = new(this);
             YoloObjects.LegFirstIndex = 0;
 
-            YoloDetect = new YoloDetect(yoloDirectory);
+            YoloDetect = new YoloDetect(yoloDirectory, processConfig.YoloConfidence, processConfig.YoloIoU);
         }
 
 

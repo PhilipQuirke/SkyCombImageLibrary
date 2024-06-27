@@ -1,5 +1,4 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved. 
-using Emgu.CV.Ocl;
 using SkyCombGround.CommonSpace;
 using System.Drawing;
 

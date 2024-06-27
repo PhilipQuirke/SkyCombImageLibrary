@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved. 
+﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombImage.ProcessModel;
@@ -606,12 +606,12 @@ namespace SkyCombImage.ProcessLogic
     // A list of Comb features bound to a specific Block
     public class CombFeatureList : SortedList<int, CombFeature>
     {
-        private static ProcessConfigModel Config;
+        private static ProcessConfigModel ProcessConfig;
 
 
         public CombFeatureList(ProcessConfigModel config)
         {
-            CombFeatureList.Config = config;
+            CombFeatureList.ProcessConfig = config;
         }   
 
 
@@ -635,7 +635,7 @@ namespace SkyCombImage.ProcessLogic
 
         public CombFeatureList Clone()
         {
-            var answer = new CombFeatureList(Config);
+            var answer = new CombFeatureList(ProcessConfig);
 
             foreach (var feature in this)
                 answer.AddFeature(feature.Value);

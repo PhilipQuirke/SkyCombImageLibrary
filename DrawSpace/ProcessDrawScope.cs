@@ -46,19 +46,19 @@ namespace SkyCombImage.DrawSpace
 
         public override float FloorMinPitchDeg { get { return ProcessScope.FloorMinPitchDeg; } }
         public override float CeilingMaxPitchDeg { get { return ProcessScope.CeilingMaxPitchDeg; } }
-        public override string DescribePitch { get { return ProcessScope.DescribePitch(Drone.Config); } }
+        public override string DescribePitch { get { return ProcessScope.DescribePitch(Drone.DroneConfig); } }
         public override DataPairList GetSettings_Pitch { get { return ProcessScope.GetSettings_Pitch(); } }
 
 
         public override float FloorMinDeltaYawDeg { get { return ProcessScope.FloorMinDeltaYawDeg; } }
         public override float CeilingMaxDeltaYawDeg { get { return ProcessScope.CeilingMaxDeltaYawDeg; } }
-        public override string DescribeDeltaYaw { get { return ProcessScope.DescribeDeltaYaw(Drone.Config); } }
+        public override string DescribeDeltaYaw { get { return ProcessScope.DescribeDeltaYaw(Drone.DroneConfig); } }
         public override DataPairList GetSettings_DeltaYaw { get { return ProcessScope.GetSettings_DeltaYaw(); } }
 
 
         public override float FloorMinRollDeg { get { return ProcessScope.FloorMinRollDeg; } }
         public override float CeilingMaxRollDeg { get { return ProcessScope.CeilingMaxRollDeg; } }
-        public override string DescribeRoll { get { return ProcessScope.DescribeRoll(Drone.Config); } }
+        public override string DescribeRoll { get { return ProcessScope.DescribeRoll(Drone.DroneConfig); } }
         public override DataPairList GetSettings_Roll { get { return ProcessScope.GetSettings_Roll(); } }
 
 

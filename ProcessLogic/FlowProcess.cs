@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved. 
+﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
@@ -207,12 +207,12 @@ namespace SkyCombImage.ProcessModel
 
     public class FlowFeatureList : List<FlowFeature>
     {
-        private static ProcessConfigModel Config;
+        private static ProcessConfigModel ProcessConfig;
 
 
         public FlowFeatureList(ProcessConfigModel config)
         {
-            Config = config;
+            ProcessConfig = config;
         }
 
 

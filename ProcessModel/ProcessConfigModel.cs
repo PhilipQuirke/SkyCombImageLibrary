@@ -108,6 +108,11 @@ namespace SkyCombImage.ProcessModel
         public int FlowSearchWindow { get; set; } = 15;
 
 
+        // Yolo process:
+        public float YoloConfidence { get; set; } = 0.3f;
+        public float YoloIoU { get; set; } = 0.45f;
+
+
         // --------------------- Saving Output --------------------- 
         // Create annotated video file as output
         public bool SaveAnnotatedVideo { get; set; } = true;
@@ -225,6 +230,8 @@ namespace SkyCombImage.ProcessModel
                 { "Flow Min Eig Threshold", FlowMinEigThreshold.ToString() },
                 { "Flow Max Iterations", FlowMaxIterations },
                 { "Flow Search Window", FlowSearchWindow },
+                { "Yolo Confidence", YoloConfidence, 2 },
+                { "Yolo IoU", YoloIoU, 2 },
             };
         }
 
@@ -262,6 +269,8 @@ namespace SkyCombImage.ProcessModel
             FlowMinEigThreshold = StringToDouble(settings[i++]);
             FlowMaxIterations = StringToNonNegInt(settings[i++]);
             FlowSearchWindow = StringToNonNegInt(settings[i++]);
+            YoloConfidence = StringToFloat(settings[i++]);
+            YoloIoU = StringToFloat(settings[i++]);
         }
 
 

@@ -54,9 +54,9 @@ namespace SkyCombImage.PersistModel
                 Data.SetColumnColor(ProcessBlockModel.DemMSetting, blockRow, Color.Blue);
 
                 // Highlight in red any blocks where the DeltaYawDeg exceeds FlightConfig.MaxLegStepDeltaYawDeg. This implies not part of a leg.
-                Data.AddConditionalRuleBad(TardisModel.DeltaYawDegSetting, blockRow, Drone.Config.MaxLegStepDeltaYawDeg);
+                Data.AddConditionalRuleBad(TardisModel.DeltaYawDegSetting, blockRow, Drone.DroneConfig.MaxLegStepDeltaYawDeg);
                 // Highlight in red any blocks where the PitchDeg exceeds FlightConfig.MaxLegStepPitchDeg. This implies not part of a leg.
-                Data.AddConditionalRuleBad(TardisModel.PitchDegSetting, blockRow, Drone.Config.MaxLegStepPitchDeg);
+                Data.AddConditionalRuleBad(TardisModel.PitchDegSetting, blockRow, Drone.DroneConfig.MaxLegStepPitchDeg);
 
                 Data.SetLastUpdateDateTime(Blocks1TabName);
             }
