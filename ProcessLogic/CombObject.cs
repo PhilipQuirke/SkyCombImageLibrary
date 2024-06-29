@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved. 
+﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.CategorySpace;

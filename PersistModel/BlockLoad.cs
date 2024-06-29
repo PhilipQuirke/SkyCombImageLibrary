@@ -1,4 +1,5 @@
-﻿using SkyCombDrone.DroneLogic;
+﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombDrone.PersistModel;
 using SkyCombImage.ProcessLogic;

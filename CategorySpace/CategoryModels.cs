@@ -1,6 +1,5 @@
-﻿using SkyCombGround.CommonSpace;
-using static Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties.System;
-
+﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+using SkyCombGround.CommonSpace;
 
 
 // Models are used in-memory and to persist/load data to/from the datastore
