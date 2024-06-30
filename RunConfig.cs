@@ -41,7 +41,7 @@ namespace SkyCombImage.ProcessModel
         // Directory path/file to load YOLOv8 model from. If is a bare directory path, code appends "\model.onnx"
         public string YoloDirectory { get; set; } = "";
 
-        // Name of main process to run: contour, distance, flow, gftt, comb, threshold, none. Lowercase.
+        // Name of main process to run: contour, distance, yolo, gftt, comb, threshold, none. Lowercase.
         public RunProcessEnum RunProcess { get; set; } = RunProcessEnum.Comb;
 
         // Between processing blocks, do we pause (slows down processing). That values max, fast, medium, slow. 

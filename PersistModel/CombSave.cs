@@ -11,7 +11,7 @@ using System.Drawing;
 namespace SkyCombImage.PersistModel
 {
     // Save Comb processing model data to a datastore
-    public class CombSave : FlowSave
+    public class CombSave : StandardSave
     {
         CombSaveObject SaveObject;
 

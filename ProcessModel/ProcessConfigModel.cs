@@ -91,23 +91,6 @@ namespace SkyCombImage.ProcessModel
         public double GfttK { get; set; } = 0.04;
 
 
-        // Optical flow - Implements sparse iterative version of Lucas-Kanade optical flow in pyramids ([Bouguet00]). 
-        //
-        // FlowMaxPyramid:
-        // Maximal pyramid level number.If 0, pyramids are not used (single level), if 1, two levels are used, etc.
-        public int FlowMaxPyramid { get; set; } = 4;
-        // MinEigThreshold:
-        // The algorithm calculates the minimum eigen value of a 2x2 normal matrix of optical
-        // flow equations (this matrix is called a spatial gradient matrix in [Bouguet00]),
-        // divided by number of pixels in a window; if this value is less than minEigThreshold,
-        // then a corresponding feature is filtered out and its flow is not processed, so
-        // it allows to remove bad points and get a performance boost.
-        public double FlowMinEigThreshold { get; set; } = 0.0001;
-        public int FlowMaxIterations { get; set; } = 1;
-        // Size of the search window of each pyramid level.
-        public int FlowSearchWindow { get; set; } = 15;
-
-
         // Yolo process:
         public float YoloConfidence { get; set; } = 0.3f;
         public float YoloIoU { get; set; } = 0.45f;
@@ -242,10 +225,6 @@ namespace SkyCombImage.ProcessModel
                 { "Gftt Block Size", GfttBlockSize },
                 { "Gftt Use Harris", GfttUseHarris.ToString() },
                 { "Gftt K", GfttK.ToString() },
-                { "Flow Max Pyramid", FlowMaxPyramid },
-                { "Flow Min Eig Threshold", FlowMinEigThreshold.ToString() },
-                { "Flow Max Iterations", FlowMaxIterations },
-                { "Flow Search Window", FlowSearchWindow },
                 { "Yolo Confidence", YoloConfidence, 2 },
                 { "Yolo IoU", YoloIoU, 2 },
             };
@@ -281,10 +260,6 @@ namespace SkyCombImage.ProcessModel
             GfttBlockSize = StringToNonNegInt(settings[i++]);
             GfttUseHarris = StringToBool(settings[i++]);
             GfttK = StringToDouble(settings[i++]);
-            FlowMaxPyramid = StringToNonNegInt(settings[i++]);
-            FlowMinEigThreshold = StringToDouble(settings[i++]);
-            FlowMaxIterations = StringToNonNegInt(settings[i++]);
-            FlowSearchWindow = StringToNonNegInt(settings[i++]);
             YoloConfidence = StringToFloat(settings[i++]);
             YoloIoU = StringToFloat(settings[i++]);
         }

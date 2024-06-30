@@ -552,7 +552,7 @@ namespace SkyCombImage.RunSpace
         // Do any final activity at the end processing of video
         public override void EndRunning()
         {
-            FlowSave dataWriter = new(Drone, DataStore);
+            StandardSave dataWriter = new(Drone, DataStore);
             dataWriter.StandardProcess(RunConfig, GetEffort(), GetSettings(), this, ProcessAll);
             base.EndRunning();
         }
@@ -562,7 +562,7 @@ namespace SkyCombImage.RunSpace
         public override void SaveProcessSettings()
         {
             DataStore.Open();
-            FlowSave datawriter = new(Drone, DataStore);
+            StandardSave datawriter = new(Drone, DataStore);
             datawriter.StandardProcess(RunConfig, GetEffort(), GetSettings(), this, ProcessAll);
             DataStore.Close();
         }

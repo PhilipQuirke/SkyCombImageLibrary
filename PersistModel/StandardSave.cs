@@ -12,10 +12,10 @@ using System.Drawing.Imaging;
 
 namespace SkyCombImage.PersistModel
 {
-    // Save Flow processing model data to a datastore
-    public class FlowSave : BlockSave
+    // Save processing model data to a datastore
+    public class StandardSave : BlockSave
     {
-        public FlowSave(Drone drone, DroneDataStore data) : base(drone, data)
+        public StandardSave(Drone drone, DroneDataStore data) : base(drone, data)
         {
         }
 
@@ -54,7 +54,7 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // Save data shared by the Flow and the Comb models.
+        // Save common model data
         public void SaveCommonSummaryAndClearDetail(RunConfig runConfig, DataPairList effort, DataPairList settings)
         {
             Data.SelectOrAddWorksheet(ProcessTabName);
@@ -76,7 +76,7 @@ namespace SkyCombImage.PersistModel
             Data.SetTitleAndDataListColumn(ModelFlightStepSummaryTitle, ModelTitleRow, RhsColOffset, settings);
 
 
-            // We may be swapping from Flow to Comb process or vica versa, so clear all existing "detail" model tabs
+            // We may be swapping from Yolo to Comb process or vica versa, so clear all existing "detail" model tabs
             if (Data.SelectWorksheet(Blocks1TabName))
                 Data.ClearWorksheet();
             if (Data.SelectWorksheet(Blocks2TabName))
@@ -94,7 +94,7 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // Save the Optical Flow video run & model data to the dataStore
+        // Save the video run & model data to the dataStore
         public void StandardProcess(RunConfig runConfig, DataPairList effort, DataPairList settings, FlightStepSummaryModel summary, ProcessAll model)
         {
             try
@@ -110,64 +110,16 @@ namespace SkyCombImage.PersistModel
                 AddBlockList(model.Blocks);
 
 
-                // Flow has no Pixel data 
+                // No Pixel data 
                 if (Data.SelectWorksheet(PixelsTabName))
                     Data.ClearWorksheet();
-
-/*
-                // Save the Feature data 
-                if (model.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None && model.Features.Count > 0)
-                {
-                    Data.SelectOrAddWorksheet(FeaturesTabName);
-
-                    int row = 0;
-                    foreach (var feature in model.Features)
-                        if (model.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All || feature.Significant)
-                            Data.SetDataListRowKeysAndValues(ref row, feature.GetSettings());
-
-                    Data.SetLastUpdateDateTime(FeaturesTabName);
-                }
-
-
-                // Save the Object data 
-                if (model.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None && model.Objects.Count > 0)
-                {
-                    Data.SelectOrAddWorksheet(Objects1TabName);
-                    int row = 0;
-                    foreach (var theObject in model.Objects)
-                        if (model.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All || theObject.Significant)
-                            Data.SetDataListRowKeysAndValues(ref row, theObject.GetSettings());
-
-                    Data.SetNumberColumnNdp(6, PixelNdp);
-                    Data.SetNumberColumnNdp(7, PixelNdp);
-                    Data.SetNumberColumnNdp(8, PixelVelNdp);
-                    Data.SetNumberColumnNdp(9, PixelVelNdp);
-                    Data.SetNumberColumnNdp(10, PixelNdp);
-                    Data.SetNumberColumnNdp(11, PixelNdp);
-                    Data.SetNumberColumnNdp(12, PixelNdp);
-                    Data.SetNumberColumnNdp(13, PixelNdp);
-                    Data.SetNumberColumnNdp(14, PixelNdp);
-                    Data.SetNumberColumnNdp(15, PixelNdp);
-
-                    Data.SetLastUpdateDateTime(Objects1TabName);
-                }
-
-
-                // Add the Flow model charts
-                AddBlocks2Tab(summary);
-*/
-
-
-                // Clear the Comb model charts
-                Data.SelectOrAddWorksheet(Objects2TabName);
-                Data.Worksheet.Drawings.Clear();
 
 
                 Save();
             }
             catch (Exception ex)
             {
-                throw ThrowException("RunSave.Flow", ex);
+                throw ThrowException("RunSave.StandardProcess", ex);
             }
         }
     }

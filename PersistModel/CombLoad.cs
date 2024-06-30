@@ -7,7 +7,7 @@ using SkyCombGround.CommonSpace;
 namespace SkyCombImage.PersistModel
 {
     // Load run and process data about a previous processing run from a datastore
-    public class CombLoad : FlowLoad
+    public class CombLoad : StandardLoad
     {
         public CombLoad(DroneDataStore data) : base(data)
         {

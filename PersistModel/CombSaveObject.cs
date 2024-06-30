@@ -25,11 +25,11 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        public void SaveObjectList(CombProcess model, bool saveAll)
+        public void SaveObjectList(CombProcess combProcess, bool saveAll)
         {
             Data.SelectOrAddWorksheet(Objects1TabName);
             int objectRow = 0;
-            foreach (var theObject in model.CombObjs.CombObjList)
+            foreach (var theObject in combProcess.CombObjs.CombObjList)
                 if (saveAll || theObject.Value.NumSigBlocks > 0)
                     Data.SetDataListRowKeysAndValues(ref objectRow, theObject.Value.GetSettings());
 
@@ -43,10 +43,10 @@ namespace SkyCombImage.PersistModel
             Data.SetColumnColor(ProcessObjectModel.CenterBlockSetting, objectRow, Color.Blue);
 
             // Highlight cells in green/red to show their accuracy
-            Data.AddConditionalRuleGood(ProcessObjectModel.LocationErrMSetting, objectRow, model.ProcessConfig.GoodLocationErrM);
-            Data.AddConditionalRuleBad(ProcessObjectModel.LocationErrMSetting, objectRow, model.ProcessConfig.BadLocationErrM);
-            Data.AddConditionalRuleGood(ProcessObjectModel.HeightErrMSetting, objectRow, model.ProcessConfig.GoodHeightErrM);
-            Data.AddConditionalRuleBad(ProcessObjectModel.HeightErrMSetting, objectRow, model.ProcessConfig.BadHeightErrM);
+            Data.AddConditionalRuleGood(ProcessObjectModel.LocationErrMSetting, objectRow, combProcess.ProcessConfig.GoodLocationErrM);
+            Data.AddConditionalRuleBad(ProcessObjectModel.LocationErrMSetting, objectRow, combProcess.ProcessConfig.BadLocationErrM);
+            Data.AddConditionalRuleGood(ProcessObjectModel.HeightErrMSetting, objectRow, combProcess.ProcessConfig.GoodHeightErrM);
+            Data.AddConditionalRuleBad(ProcessObjectModel.HeightErrMSetting, objectRow, combProcess.ProcessConfig.BadHeightErrM);
 
             Data.SetLastUpdateDateTime(Objects1TabName);
         }

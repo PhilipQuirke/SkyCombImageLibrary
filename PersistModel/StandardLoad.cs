@@ -4,9 +4,9 @@
 namespace SkyCombImage.PersistModel
 {
     // Load run and model data about a previous processing run from a datastore
-    public class FlowLoad : DataStoreAccessor
+    public class StandardLoad : DataStoreAccessor
     {
-        public FlowLoad(DroneDataStore data) : base(data)
+        public StandardLoad(DroneDataStore data) : base(data)
         {
         }
 

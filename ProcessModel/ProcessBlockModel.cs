@@ -49,7 +49,7 @@ namespace SkyCombImage.ProcessModel
         public int MaxFeatureId { get; set; }
 
 
-        // Number of significant objects in the block. Only used by Flow process. 
+        // Number of significant objects in the block. 
         public int NumSig { get; set; }
 
 
