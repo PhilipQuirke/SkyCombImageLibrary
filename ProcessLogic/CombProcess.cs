@@ -13,9 +13,6 @@ namespace SkyCombImage.ProcessLogic
         // Ground (DEM, DSM and Swathe) data under the drone flight path
         public GroundData GroundData { get; set; }
 
-        // List of Blocks (aka frames processed)  
-        public ProcessBlockList Blocks { get; set; }
-
         // List of comb features found. Each feature is a cluster of hot pixels, with a bounding retangle
         public CombFeatureList CombFeatures { get; set; }
 
@@ -47,7 +44,6 @@ namespace SkyCombImage.ProcessLogic
             CombFeature.NextFeatureId = 0;
 
             GroundData = groundData;
-            Blocks = new();
             CombFeatures = new(config);
             CombObjs = new(this);
             CombSpans = new();
@@ -63,7 +59,6 @@ namespace SkyCombImage.ProcessLogic
             FlightLeg_SigObjects = 0;
             ResetCombSpanData();
 
-            Blocks.Clear();
             CombFeatures.Clear();
             CombObjs.CombObjList.Clear();
             CombSpans.Clear();
@@ -150,7 +145,7 @@ namespace SkyCombImage.ProcessLogic
         {
             var theBlock = Blocks.LastBlock;
 
-            CombFeature theFeature = new(this, theBlock, CombFeatureTypeEnum.Unreal);
+            CombFeature theFeature = new(this, theBlock, FeatureTypeEnum.Unreal);
             theFeature.PixelBox = theObject.ExpectedLocationThisBlock();
             CombFeatures.AddFeature(theFeature);
 
@@ -237,8 +232,8 @@ namespace SkyCombImage.ProcessLogic
                 CombObjList inScopeObjects = new();
                 CombObjList availObjects = new();
                 foreach (var theObject in CombObjs.CombObjList)
-                    if ((theObject.Value.LastFeature() != null) &&
-                        (theObject.Value.LastFeature().Block.BlockId == blockID - 1) &&
+                    if ((theObject.Value.LastFeature != null) &&
+                        (theObject.Value.LastFeature.Block.BlockId == blockID - 1) &&
                         theObject.Value.VaguelySignificant())
                     {
                         inScopeObjects.AddObject(theObject.Value);
@@ -258,9 +253,9 @@ namespace SkyCombImage.ProcessLogic
                 for (int pass = 0; pass < 2; pass++)
                     foreach (var theObject in inScopeObjects)
                     {
-                        var lastFeat = theObject.Value.LastFeature();
+                        var lastFeat = theObject.Value.LastFeature;
                         if ((lastFeat.Block.BlockId == blockID - 1) &&
-                            (pass == 0 ? lastFeat.Type == CombFeatureTypeEnum.Real : lastFeat.Type != CombFeatureTypeEnum.Unreal))
+                            (pass == 0 ? lastFeat.Type == FeatureTypeEnum.Real : lastFeat.Type != FeatureTypeEnum.Unreal))
                         {
                             // If one or more features overlaps the object's expected location,
                             // claim ownership of the feature(s), and mark them as Significant.
@@ -314,7 +309,7 @@ namespace SkyCombImage.ProcessLogic
                 foreach (var theObject in inScopeObjects)
                     if (theObject.Value.COM.BeingTracked &&
                        (theObject.Value.COM.LastRealFeatureIndex != UnknownValue) &&
-                       (theObject.Value.LastRealFeature().Block.BlockId < blockID) &&
+                       (theObject.Value.LastRealFeature.Block.BlockId < blockID) &&
                        theObject.Value.KeepTracking(blockID))
                         // ... persist this object another Block. Create an unreal feature, with no pixels, with a rectangle   
                         // calculated from the object's last bounding rectangle and the average frame movement.
@@ -380,7 +375,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public DataPairList GetSettings()
+        override public DataPairList GetSettings()
         {
             int numPixels = 0;
             foreach (var feature in CombFeatures)

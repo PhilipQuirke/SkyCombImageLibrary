@@ -22,11 +22,11 @@ namespace SkyCombImage.DrawSpace
 
             foreach (var theObject in yolodata.YoloObjects)
             {
-                if ((theObject.LastFeature != null) && (theObject.LastFeature.BlockId == thisBlockId))
+                if ((theObject.Value.LastFeature != null) && (theObject.Value.LastFeature.BlockId == thisBlockId))
                 {
-                    var theColor = theObject.ClassColor;
-                    var theObjectBox = theObject.LastFeature.PixelBox;
-                    var the_title = "#" + theObject.ObjectId.ToString();
+                    var theColor = theObject.Value.ClassColor;
+                    var theObjectBox = theObject.Value.LastFeature.PixelBox;
+                    var the_title = "#" + theObject.Value.ObjectId.ToString();
 
                     // Draw hollow bounding box
                     BoundingRectangle(config, ref outputImg, theObjectBox, theColor, theThickness);

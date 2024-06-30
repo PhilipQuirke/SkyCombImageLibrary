@@ -30,8 +30,7 @@ namespace SkyCombImage.RunSpace
         private ProcessBlock AddBlock()
         {
             var newBlock = ProcessFactory.NewBlock(this);
-
-            YoloProcess.YoloBlocks.AddBlock(newBlock, this, Drone);
+            YoloProcess.Blocks.AddBlock(newBlock, this, Drone);
 
             if (PSM.CurrRunStepId <= 0)
                 PSM.CurrRunStepId = newBlock.TardisId;

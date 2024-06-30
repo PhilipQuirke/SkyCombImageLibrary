@@ -53,7 +53,7 @@ namespace SkyCombImage.ProcessLogic
                 foreach (var theFeature in objectFeatures)
                 {
                     theFeature.Value.ResetMemberData();
-                    theFeature.Value.CalculateSettings_LocationM_FlatGround(theObject.Value.LastRealFeature());
+                    theFeature.Value.CalculateSettings_LocationM_FlatGround(theObject.Value.LastRealFeature);
                     theFeature.Value.CalculateSettings_LocationM_HeightM_LineofSight();
 
                     theObject.Value.ClaimFeature(theFeature.Value);
@@ -251,8 +251,8 @@ namespace SkyCombImage.ProcessLogic
                             CombObject theObject;
                             if (allObjs.TryGetValue(objectId, out theObject))
                             {
-                                var firstFeat = theObject.FirstFeature();
-                                var lastFeat = theObject.LastRealFeature();
+                                var firstFeat = theObject.FirstFeature;
+                                var lastFeat = theObject.LastRealFeature;
                                 if ((firstFeat != null) && (lastFeat != null))
                                 {
                                     var firstStepId = firstFeat.Block.FlightStepId;

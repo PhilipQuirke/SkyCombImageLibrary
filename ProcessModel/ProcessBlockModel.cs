@@ -53,10 +53,6 @@ namespace SkyCombImage.ProcessModel
         public int NumSig { get; set; }
 
 
-
-
-
-
         public ProcessBlockModel(ProcessScopeModel scope) : base(scope.CurrBlockId)
         {
             FlightStepId = UnknownValue;
@@ -89,6 +85,18 @@ namespace SkyCombImage.ProcessModel
                 MaxFeatureId = featureToAdd.FeatureId;
         }
         public void AddFeatureList(CombFeatureList featuresToAdd)
+        {
+            if (featuresToAdd != null)
+            {
+                var count = featuresToAdd.Count;
+                if (count > 0)
+                {
+                    MinFeatureId = featuresToAdd.Keys[0];
+                    MaxFeatureId = featuresToAdd.Keys[count - 1];
+                }
+            }
+        }
+        public void AddFeatureList(YoloFeatureList featuresToAdd)
         {
             if (featuresToAdd != null)
             {

@@ -40,7 +40,7 @@ namespace SkyCombImage.DrawSpace
 
 
         // Draw object features as crosses (often orange)
-        private void DrawObjectFeatures(CombObject thisObject, ref Image<Bgr, byte> image, CombFeatureTypeEnum type, Bgr color)
+        private void DrawObjectFeatures(CombObject thisObject, ref Image<Bgr, byte> image, FeatureTypeEnum type, Bgr color)
         {
             foreach (var thisFeature in thisObject.Features)
                 if ((thisFeature.Value.LocationM != null) &&
@@ -110,7 +110,7 @@ namespace SkyCombImage.DrawSpace
                             foreach (var thisObject in objList)
                                 if (!thisObject.Value.Significant &&
                                     (thisObject.Value.LocationM != null))
-                                    DrawObjectFeatures(thisObject.Value, ref image, CombFeatureTypeEnum.Real, unrealBgr);
+                                    DrawObjectFeatures(thisObject.Value, ref image, FeatureTypeEnum.Real, unrealBgr);
                         }
 
                         // Draw significant in-scope objects as red boxes with orange & yellow features
@@ -121,8 +121,8 @@ namespace SkyCombImage.DrawSpace
                             {
                                 // Draw least important then more important stuff as the rectangles will overlap.
                                 if (showAllFeatures)
-                                    DrawObjectFeatures(thisObject.Value, ref image, CombFeatureTypeEnum.Unreal, unrealBgr);
-                                DrawObjectFeatures(thisObject.Value, ref image, CombFeatureTypeEnum.Real, realBgr);
+                                    DrawObjectFeatures(thisObject.Value, ref image, FeatureTypeEnum.Unreal, unrealBgr);
+                                DrawObjectFeatures(thisObject.Value, ref image, FeatureTypeEnum.Real, realBgr);
                                 DrawObject(thisObject.Value, ref image, inObjectBgr);
                             }
                     }
@@ -158,7 +158,7 @@ namespace SkyCombImage.DrawSpace
                             if (isFocusObject)
                             {
                                 // Draw least important then more important stuff as the rectangles will overlap.
-                                DrawObjectFeatures(thisObject.Value, ref image, CombFeatureTypeEnum.Real, realBgr);
+                                DrawObjectFeatures(thisObject.Value, ref image, FeatureTypeEnum.Real, realBgr);
                                 DrawObject(thisObject.Value, ref image, inObjectBgr);
                             }
                             else

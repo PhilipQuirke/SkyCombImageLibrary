@@ -94,9 +94,8 @@ namespace SkyCombImage.PersistModel
         }
 
 
-
         // Save the Optical Flow video run & model data to the dataStore
-        public void Flow(RunConfig runConfig, DataPairList effort, DataPairList settings, FlightStepSummaryModel summary, FlowProcess model)
+        public void StandardProcess(RunConfig runConfig, DataPairList effort, DataPairList settings, FlightStepSummaryModel summary, ProcessAll model)
         {
             try
             {
@@ -108,21 +107,21 @@ namespace SkyCombImage.PersistModel
 
 
                 // Save the Block data
-                AddBlockList(model.FlowBlocks);
+                AddBlockList(model.Blocks);
 
 
                 // Flow has no Pixel data 
                 if (Data.SelectWorksheet(PixelsTabName))
                     Data.ClearWorksheet();
 
-
+/*
                 // Save the Feature data 
-                if (model.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None && model.FlowFeatures.Count > 0)
+                if (model.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None && model.Features.Count > 0)
                 {
                     Data.SelectOrAddWorksheet(FeaturesTabName);
 
                     int row = 0;
-                    foreach (var feature in model.FlowFeatures)
+                    foreach (var feature in model.Features)
                         if (model.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All || feature.Significant)
                             Data.SetDataListRowKeysAndValues(ref row, feature.GetSettings());
 
@@ -131,11 +130,11 @@ namespace SkyCombImage.PersistModel
 
 
                 // Save the Object data 
-                if (model.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None && model.FlowObjects.Count > 0)
+                if (model.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None && model.Objects.Count > 0)
                 {
                     Data.SelectOrAddWorksheet(Objects1TabName);
                     int row = 0;
-                    foreach (var theObject in model.FlowObjects)
+                    foreach (var theObject in model.Objects)
                         if (model.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All || theObject.Significant)
                             Data.SetDataListRowKeysAndValues(ref row, theObject.GetSettings());
 
@@ -156,6 +155,7 @@ namespace SkyCombImage.PersistModel
 
                 // Add the Flow model charts
                 AddBlocks2Tab(summary);
+*/
 
 
                 // Clear the Comb model charts

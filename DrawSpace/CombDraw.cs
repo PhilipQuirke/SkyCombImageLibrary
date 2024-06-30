@@ -77,9 +77,9 @@ namespace SkyCombImage.DrawSpace
                 var theColor = Color.White;
                 if (focusObjectId > 0)
                     theColor = (feature.ObjectId == focusObjectId ? DroneColors.InScopeObjectColor : DroneColors.RealFeatureColor);
-                else if (feature.Type == CombFeatureTypeEnum.Unreal)
+                else if (feature.Type == FeatureTypeEnum.Unreal)
                     theColor = config.DrawUnrealFeatureColor;
-                else if (feature.Type == CombFeatureTypeEnum.Real)
+                else if (feature.Type == FeatureTypeEnum.Real)
                     theColor = feature.Significant ? DroneColors.InScopeObjectColor : config.DrawRealFeatureColor;
 
                 if (theColor != Color.White)
@@ -502,7 +502,7 @@ namespace SkyCombImage.DrawSpace
                     if ((thisFeature.Value.HeightM > ProcessObjectModel.UnknownHeight ) &&
                         (thisFeature.Value.BlockId <= DroneDrawScope.MaxFeatureBlockIdToDraw))
                     {
-                        var theBgr = (thisFeature.Value.Type == CombFeatureTypeEnum.Real ? realBgr : unrealBgr);
+                        var theBgr = (thisFeature.Value.Type == FeatureTypeEnum.Real ? realBgr : unrealBgr);
                         var thisHeightPxs = TrimHeight(RawDataToHeightPixels(thisFeature.Value.HeightM - MinVertRaw, VertRangeRaw));
                         var thisWidthPxs = StepToWidth(thisFeature.Value.Block.SumTimeMs, firstMs);
 

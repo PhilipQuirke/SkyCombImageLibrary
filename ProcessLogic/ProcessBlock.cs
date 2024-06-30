@@ -250,7 +250,7 @@ namespace SkyCombImage.ProcessLogic
 
         public ProcessBlock? LastBlock { get {
             if (Count > 0)
-                return this.Last().Value; // this[Keys[Count-1]];
+                return this.Last().Value;  
 
             return null;
         } }

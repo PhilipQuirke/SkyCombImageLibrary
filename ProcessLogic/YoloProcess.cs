@@ -12,148 +12,16 @@ using Compunet.YoloV8.Data;
 
 namespace SkyCombImage.ProcessModel
 {
-
-
-    // A Yolo feature 
-    public class YoloFeature : ProcessFeatureModel
-    {
-        // Static data shared by all Yolo features
-        private static YoloProcess YoloProcess;
-
-
-        public YoloFeature(YoloProcess yoloProcess, int blockId, Rectangle imagePixelBox) : base(blockId, CombFeatureTypeEnum.Real)
-        {
-            ResetMemberData();
-            PixelBox = imagePixelBox;
-            Significant = true;
-            YoloProcess = yoloProcess;
-        }
-
-
-        // Does this Feature's PixleBox and the specified object's rectangle overlap significantly?
-        public bool SignificantPixelBoxIntersection(Rectangle objectExpectedPixelBox)
-        {
-            return base.SignificantPixelBoxIntersection(objectExpectedPixelBox, YoloProcess.ProcessConfig.FeatureMinOverlapPerc);
-        }
-    };
-
-
-    public class YoloFeatureList : List<YoloFeature>
-    {
-        private YoloProcess YoloProcess;
-
-
-        public YoloFeatureList(YoloProcess yoloProcess)
-        {
-            YoloProcess = yoloProcess;
-        }
-
-
-        public YoloFeature AddFeature(int blockId, Rectangle imagePixelBox)
-        {
-            var answer = new YoloFeature(YoloProcess, blockId, imagePixelBox);
-            this.Add(answer);
-            return answer;
-        }
-    };
-
-
-    // A class to hold a Yolo object - layer over a sequence of Yolo features.
-    public class YoloObject : ProcessObject
-    {
-        public string ClassName { get; set; }
-        public Color ClassColor { get; set; }
-        public float ClassConfidence { get; set; }
-   
-        // First feature claimed by this object
-        public YoloFeature FirstFeature { get; set; }
-        // Last feature claimed by this object
-        public YoloFeature LastFeature { get; set; }
-
-
-        public YoloObject(YoloProcess yoloProcess, ProcessScope scope, YoloFeature firstFeature, string className, Color classColor, float classConfidence) : base(yoloProcess.ProcessConfig, scope)
-        {
-            ClassName = className;
-            ClassColor = classColor;
-            ClassConfidence = classConfidence;
-            FirstFeature = firstFeature;
-            LastFeature = firstFeature;
-            Significant = true;
-        }
-
-
-        // This object claims this feature
-        public void ClaimFeature(YoloFeature theFeature)
-        {
-            Assert(theFeature.ObjectId <= 0, "YoloObject.ClaimFeature: Feature is already owned.");
-            Assert(FirstFeature != null, "YoloObject.ClaimFeature: FirstFeature is null.");
-
-            LastFeature = theFeature;
-
-            NumSigBlocks = LastFeature.BlockId - FirstFeature.BlockId + 1;
-        }
-
-
-        // Get the class's settings as datapairs (e.g. for saving to the datastore)
-        override public DataPairList GetSettings()
-        {
-            return new DataPairList
-            {
-                { "Object", ObjectId },
-                { "FromS", RunFromVideoS, SecondsNdp },
-                { "ToS", RunToVideoS, SecondsNdp },
-                { "Attributes", Attributes },
-                { "Significant", Significant },
-                { "#SigBlocks", NumSigBlocks },
-                { "FirstFeat", (FirstFeature == null) ? -1 : FirstFeature.FeatureId },
-                { "LastFeat", (LastFeature == null) ? -1 : LastFeature.FeatureId },
-            };
-        }
-    };
-
-
-    public class YoloObjectList : List<YoloObject>
-    {
-        private YoloProcess YoloProcess;
-
-
-        // We do not process objects below this index in the object array.
-        public int LegFirstIndex;
-
-
-        public YoloObjectList(YoloProcess yoloProcess)
-        {
-            YoloProcess = yoloProcess;
-        }
-
-
-        public YoloObject AddObject(ProcessScope scope, YoloFeature firstFeature, string className, Color classColor, float classConfidence)
-        {
-            var answer = new YoloObject(YoloProcess, scope, firstFeature, className, classColor, classConfidence);
-            Add(answer);
-            return answer;
-        }
-
-
-        // No existing objects should be live at the start of a new leg
-        public void ProcessLegStart()
-        {
-            foreach (var theObject in this)
-                theObject.Significant = false;
-
-            LegFirstIndex = Count;
-        }
-    };
-
-
-
     // A class to hold all Yolo feature and block data associated with a video
     // Ignores thermal threshold.
     public class YoloProcess : ProcessAll
     {
-        public ProcessBlockList YoloBlocks;
+        //public ProcessBlockList YoloBlocks;
         public YoloObjectList YoloObjects;
         public YoloFeatureList YoloFeatures;
+
+        // If UseFlightLegs, how many significant objects have been found in this FlightLeg?
+        public int FlightLeg_SigObjects { get; set; }
 
         // YOLO (You only look once) V8 image processing
         public YoloDetect YoloDetect;
@@ -161,11 +29,11 @@ namespace SkyCombImage.ProcessModel
 
         public YoloProcess(ProcessConfigModel processConfig, Drone drone, string yoloDirectory) : base(processConfig, drone.InputVideo, drone)
         {
-            YoloBlocks = new();
+            //YoloBlocks = new();
             YoloObjects = new(this);
             YoloFeatures = new(this);
             YoloObjects.LegFirstIndex = 0;
-
+            FlightLeg_SigObjects = 0;
             YoloDetect = new YoloDetect(yoloDirectory, processConfig.YoloConfidence, processConfig.YoloIoU);
         }
 
@@ -173,11 +41,12 @@ namespace SkyCombImage.ProcessModel
         // Reset any internal state of the model, so it can be re-used in another run immediately
         public override void ResetModel()
         {
-            YoloBlocks.Clear();
+            //YoloBlocks.Clear();
             YoloFeatures.Clear();
             YoloObjects.Clear();
 
             YoloObjects.LegFirstIndex = 0;
+            FlightLeg_SigObjects = 0;
 
             base.ResetModel();
         }
@@ -188,6 +57,7 @@ namespace SkyCombImage.ProcessModel
         {
             // No existing objects should be live at the start of a new leg
             YoloObjects.ProcessLegStart();
+            FlightLeg_SigObjects = 0;
         }
 
 
@@ -212,36 +82,154 @@ namespace SkyCombImage.ProcessModel
             Image<Gray, byte> currGray,
             DetectionResult? result)
         {
+            int Phase = 0;
+
             try
             {
-                var numSig = 0;
+                if (result == null)
+                    return 0;
+                var numSig = result.Boxes.Count();
 
-                if(result != null) 
+                Phase = 1;
+                var currBlock = Blocks.LastBlock;
+                int blockID = currBlock.BlockId;
+
+                // Convert Boxes to YoloFeatures
+                YoloFeatureList featuresInBlock = new(this);
+                foreach (var box in result.Boxes)
                 {
-                    numSig = result.Boxes.Count();
+                    // We have found a new feature/object
+                    var imagePixelBox = new Rectangle(box.Bounds.Left, box.Bounds.Top, box.Bounds.Width, box.Bounds.Height);
+                    featuresInBlock.AddFeature(currBlock.BlockId, imagePixelBox, box);
+                }
 
-                    var thisBlock = YoloBlocks.LastBlock;
 
-                    // Convert Boxes to YoloObjects
-                    foreach (var box in result.Boxes)
+                // We only want to consider objects that are active.
+                // For long flights most objects will have become inactive seconds or minutes ago.
+                Phase = 2;
+                YoloObjectList inScopeObjects = new(this);
+                YoloObjectList availObjects = new(this);
+                foreach (var theObject in YoloObjects)
+                    if ((theObject.Value.LastFeature != null) &&
+                        (theObject.Value.LastFeature.Block.BlockId == blockID - 1))
                     {
-                        // We have found a new feature/object
-                        var imagePixelBox = new Rectangle(box.Bounds.Left, box.Bounds.Top, box.Bounds.Width, box.Bounds.Height);
-                        var newFeature = this.YoloFeatures.AddFeature(thisBlock.BlockId, imagePixelBox);
-                        var newObject = this.YoloObjects.AddObject(scope, newFeature,
-                            box.Class.Name, System.Drawing.Color.Red, box.Confidence);
-                        this.ObjectClaimsNewFeature(thisBlock, newObject, newFeature);
-
-                        /*
-                        newObject.Size = new(box.Bounds.Width, box.Bounds.Height);
-                        newObject.Confidence = box.Confidence;
-                        //newObject.Class = box.Class.Name;
-                        newObject.ClassId = box.Class.Id;
-                        //newObject.ClassColor = box.Class.Color;
-                        newObject.ClassType = box.Class.Type;
-                        newObject.ClassDescription = box.Class.Description;
-                        */
+                        inScopeObjects.AddObject(theObject.Value);
+                        availObjects.AddObject(theObject.Value);
                     }
+
+                // Each feature can only be claimed once
+                YoloFeatureList availFeatures = featuresInBlock.Clone();
+
+
+                // For each active object, consider each feature (significant or not)
+                // found in this frame to see if it overlaps.
+                // This priviledges objects with multiple real features,
+                // as they can more accurately estimate their expected location.
+                // We priviledge objects with a "real" last feature over objects with a "unreal" last feature.
+                Phase = 3;
+                for (int pass = 0; pass < 2; pass++)
+                    foreach (var theObject in inScopeObjects)
+                    {
+                        var lastFeat = theObject.Value.LastFeature;
+                        if ((lastFeat.Block.BlockId == blockID - 1) &&
+                            (pass == 0 ? lastFeat.Type == FeatureTypeEnum.Real : lastFeat.Type != FeatureTypeEnum.Unreal))
+                        {
+                            // If one or more features overlaps the object's expected location,
+                            // claim ownership of the feature(s), and mark them as Significant.
+                            var expectedObjectLocation = theObject.Value.ExpectedLocationThisBlock();
+
+                            bool claimedFeatures = false;
+                            foreach (var feature in featuresInBlock)
+                                // Object will claim feature if the object remains viable after claiming feature
+                                if (theObject.Value.MaybeClaimFeature(feature.Value, expectedObjectLocation))
+                                {
+                                    availFeatures.Remove(feature.Value.FeatureId);
+                                    claimedFeatures = true;
+                                }
+                            if (claimedFeatures)
+                                availObjects.Remove(theObject.Value.ObjectId);
+                        }
+                    }
+
+                // An active object with exactly one real feature can't estimate its expected location at all.
+                // An active object with two features has a lot of wobble in its expected movement/location.
+                // If the object is moving in the image quickly, the object location
+                // and feature location will not overlap. Instead the feature will (usually)
+                // be vertically below the object estimated location.
+                Phase = 4;
+                foreach (var theObject in availObjects)
+                    if (theObject.Value.NumRealFeatures() <= 2)
+                    {
+                        // If one or more features overlaps the object's expected location,
+                        // claim ownership of the feature(s), and mark them as Significant.
+                        var expectedObjectLocation = theObject.Value.ExpectedLocationThisBlock();
+
+                        // Search higher in the image 
+                        expectedObjectLocation = new System.Drawing.Rectangle(
+                            expectedObjectLocation.X,
+                            expectedObjectLocation.Y + 20, // Higher
+                            expectedObjectLocation.Width,
+                            expectedObjectLocation.Height);
+
+                        foreach (var feature in availFeatures)
+                            theObject.Value.MaybeClaimFeature(feature.Value, expectedObjectLocation);
+                    }
+
+
+                Phase = 5;
+                currBlock.AddFeatureList(featuresInBlock);
+                YoloFeatures.AddFeatureList(featuresInBlock);
+
+/*
+                // For each active object, where the above code did not find an 
+                // overlapping feature in this Block, if it is worth continuing tracking...
+                Phase = 6;
+                foreach (var theObject in inScopeObjects)
+                    if (theObject.Value.COM.BeingTracked &&
+                        (theObject.Value.COM.LastRealFeatureIndex != UnknownValue) &&
+                        (theObject.Value.LastRealFeature().Block.BlockId < blockID) &&
+                        theObject.Value.KeepTracking(blockID))
+                        // ... persist this object another Block. Create an unreal feature, with no pixels, with a rectangle   
+                        // calculated from the object's last bounding rectangle and the average frame movement.
+                        AddPersistFeature(theObject.Value);
+*/
+
+
+ //               // All active features have passed the min pixels and min density tests, and are worth tracking.
+                // For all unowned active features in this frame, create a new object to own the feature.
+                Phase = 7;
+                foreach (var feature in availFeatures)
+                    if (feature.Value.ObjectId == 0)
+                    {
+                        YoloObjects.AddObject(scope, feature.Value );
+                        if (blockID >= 2)
+                        {
+                            // TODO: Consider claiming overship of overlapping inactive features from the previous Block(s).
+                        }
+                    }
+
+
+                if (Drone.UseFlightLegs)
+                {
+                    // Ensure each significant object in this leg has a "significant" name e.g. C5
+                    // Needs to be done ASAP so the "C5" name can be drawn on video frames.
+                    // Note: Some objects never become significant.
+                    Phase = 8;
+                    foreach (var theObject in inScopeObjects)
+                        if ((theObject.Value.FlightLegId > 0) &&
+                            ((scope.CurrRunFlightStep == null) || (theObject.Value.FlightLegId == scope.CurrRunFlightStep.FlightLegId)) &&
+                            (theObject.Value.Significant) &&
+                            (theObject.Value.Name == ""))
+                        {
+                            FlightLeg_SigObjects++;
+                            theObject.Value.SetName(FlightLeg_SigObjects);
+                        }
+                }
+                else
+                {
+                    // Track data related to a CombSpan (not a FlightLeg)
+                    Phase = 9;
+                    // PQR TODO ProcessObjectsFlightSteps(inScopeObjects, currBlock);
                 }
 
 
@@ -251,16 +239,17 @@ namespace SkyCombImage.ProcessModel
             {
                 throw ThrowException("YoloProcessModel.ProcessBlock" +
                     "(CurrBlockId=" + scope.PSM.CurrBlockId +
-                    ",LastBlockId=" + scope.PSM.LastBlockId + ")", ex);
+                    ",LastBlockId=" + scope.PSM.LastBlockId + 
+                    ",Phase=" + Phase + ")", ex);
             }
         }
 
 
-        public DataPairList GetSettings()
+        override public DataPairList GetSettings()
         {
             return new DataPairList
             {
-                { "# Blocks", YoloBlocks.Count },
+                { "# Blocks", Blocks.Count },
                 { "# Features", YoloFeatures.Count},
                 { "# Objects", YoloObjects.Count},
             };

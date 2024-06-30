@@ -8,7 +8,7 @@ using SkyCombGround.CommonSpace;
 
 namespace SkyCombImage.ProcessModel
 {
-    public enum RunProcessEnum { Comb, Yolo, Threshold, Flow, GFTT, None };
+    public enum RunProcessEnum { Comb, Yolo, Threshold, GFTT, None };
 
     public enum RunSpeedEnum { Max, Fast, Medium, Slow };
 

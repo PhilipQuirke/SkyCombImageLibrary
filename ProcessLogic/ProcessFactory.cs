@@ -20,16 +20,9 @@ namespace SkyCombImage.ProcessLogic
             return new ProcessBlock(blockId, settings, drone);
         }
 
-
-        public static FlowBlock NewFlowBlock(FlowProcess flowProcess, ProcessScope scope)
+        public static ProcessAll NewProcessModel(ProcessConfigModel config, Drone drone)
         {
-            return new FlowBlock(flowProcess, scope);
-        }
-
-
-        public static FlowProcess NewFlowProcessModel(ProcessConfigModel config, Drone drone)
-        {
-            return new FlowProcess(config, drone);
+            return new ProcessAll(config, drone.InputVideo, drone);
         }
 
 

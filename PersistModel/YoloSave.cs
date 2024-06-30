@@ -32,7 +32,7 @@ namespace SkyCombImage.PersistModel
 
                 // Save the Block data 
                 // Changing OnGroundAt or CameraDownDeg changes the Step data values like AltitudeM that are copied to block settings
-                AddBlockList(yoloProcess.YoloBlocks);
+                AddBlockList(yoloProcess.Blocks);
 
                 // Add the Block charts
                 AddBlocks2Tab(summary);
@@ -46,8 +46,8 @@ namespace SkyCombImage.PersistModel
                     Data.SelectOrAddWorksheet(FeaturesTabName);
                     int featureRow = 0;
                     foreach (var feature in yoloProcess.YoloFeatures)
-                        if (runConfig.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All || feature.Significant)
-                            Data.SetDataListRowKeysAndValues(ref featureRow, feature.GetSettings());
+                        if (runConfig.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All || feature.Value.Significant)
+                            Data.SetDataListRowKeysAndValues(ref featureRow, feature.Value.GetSettings());
 
                     Data.SetColumnWidth(ProcessFeatureModel.NotesSetting, 20);
 

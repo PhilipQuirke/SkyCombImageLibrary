@@ -10,7 +10,7 @@ namespace SkyCombImage.ProcessModel
     // - Real (containing hot pixels), 
     // - Unreal (Persistance search feature, no hot pixels), or
     // - Consumed (was Real once but now eaten by another Real feature in the same block).
-    public enum CombFeatureTypeEnum { Real, Unreal, Consumed };
+    public enum FeatureTypeEnum { Real, Unreal, Consumed };
 
 
     // A class to hold a significant feature 
@@ -44,7 +44,7 @@ namespace SkyCombImage.ProcessModel
         public int MaxHeat { get; set; } = 0;
 
         // Is the feature Real, Unreal or Consumed.
-        public CombFeatureTypeEnum Type { get; set; }
+        public FeatureTypeEnum Type { get; set; }
 
         // Rectangular box that bounds the hot pixels. Origin is top (Y=0) left (X=0) of image.
         // Note that y = 0 is the top of the image, but the furtherest pixel from the drone 
@@ -59,7 +59,7 @@ namespace SkyCombImage.ProcessModel
         public string HeightAlgorithm { get; set; } = "";
 
 
-        public ProcessFeatureModel(int blockId, CombFeatureTypeEnum type)
+        public ProcessFeatureModel(int blockId, FeatureTypeEnum type)
         {
             NextFeatureId++;
 
@@ -193,7 +193,7 @@ namespace SkyCombImage.ProcessModel
             ObjectId = StringToNonNegInt(settings[ObjectIdSetting-1]);
 
             BlockId = StringToNonNegInt(settings[BlockIdSetting - 1]);
-            Type = (CombFeatureTypeEnum)Enum.Parse(typeof(CombFeatureTypeEnum), settings[TypeSetting - 1]);
+            Type = (FeatureTypeEnum)Enum.Parse(typeof(FeatureTypeEnum), settings[TypeSetting - 1]);
             LocationM = new DroneLocation(settings[NorthingMSetting - 1], settings[EastingMSetting - 1]);
 
             HeightM = StringToFloat(settings[HeightMSetting - 1]);

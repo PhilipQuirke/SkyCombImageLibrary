@@ -521,12 +521,9 @@ namespace SkyCombImage.RunSpace
     internal class RunVideoStandard : RunVideo
     {
         public RunVideoStandard(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
-            : base(parent, config, dataStore, drone, ProcessFactory.NewFlowProcessModel(config.ProcessConfig, drone))
+            : base(parent, config, dataStore, drone, ProcessFactory.NewProcessModel(config.ProcessConfig, drone))
         {
         }
-
-
-        public FlowProcess FlowProcess { get { return ProcessAll as FlowProcess; } }
 
 
         public override void ProcessFlightLegChange(int prevLegId, int currLegId) { }
@@ -537,7 +534,8 @@ namespace SkyCombImage.RunSpace
         {
             try
             {
-                var thisBlock = FlowProcess.FlowBlocks.AddBlock(this, Drone);
+                var thisBlock = ProcessFactory.NewBlock(this);
+                ProcessAll.Blocks.AddBlock(thisBlock, this, Drone);
 
                 var inputImage = CurrInputVideoFrame.Clone();
                 RunConfig.Run(RunConfig, ref inputImage);
@@ -555,7 +553,7 @@ namespace SkyCombImage.RunSpace
         public override void EndRunning()
         {
             FlowSave dataWriter = new(Drone, DataStore);
-            dataWriter.Flow(RunConfig, GetEffort(), GetSettings(), this, FlowProcess);
+            dataWriter.StandardProcess(RunConfig, GetEffort(), GetSettings(), this, ProcessAll);
             base.EndRunning();
         }
 
@@ -565,7 +563,7 @@ namespace SkyCombImage.RunSpace
         {
             DataStore.Open();
             FlowSave datawriter = new(Drone, DataStore);
-            datawriter.Flow(RunConfig, GetEffort(), GetSettings(), this, FlowProcess);
+            datawriter.StandardProcess(RunConfig, GetEffort(), GetSettings(), this, ProcessAll);
             DataStore.Close();
         }
     };

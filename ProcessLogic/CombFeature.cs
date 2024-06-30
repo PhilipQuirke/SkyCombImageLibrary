@@ -9,35 +9,56 @@ using System.Drawing;
 
 namespace SkyCombImage.ProcessLogic
 {
-    // A Comb feature, is a dense cluster of hot pixels, associated 1-1 with a Block
-    public class CombFeature : ProcessFeatureModel
+    // A process feature combines the stored data and some logic
+    public class ProcessFeature : ProcessFeatureModel
     {
         // Parent process model
-        private CombProcess Model { get; }
+        protected ProcessAll ProcessAll { get; }
 
-        // A Comb feature is associated 1-1 with a Block
-        public ProcessBlock? Block { get; set; } = null;
+        // A feature is associated 1-1 with a Block
+        public ProcessBlock Block { get; set; }
+
+
+        public ProcessFeature(ProcessAll processAll, int blockId, FeatureTypeEnum type) : base(blockId, type)
+        {
+            ResetMemberData();
+
+            ProcessAll = processAll;
+            Block = processAll.Blocks[blockId];
+        }
+
+
+        // Constructor used when loaded objects from the datastore
+        public ProcessFeature(ProcessAll processAll, List<string> settings) : base(settings)
+        {
+            ProcessAll = processAll;
+            Block = ProcessAll.Blocks[BlockId];
+        }
+    }
+
+
+
+    // A Comb feature, is a dense cluster of hot pixels, associated 1-1 with a Block
+    public class CombFeature : ProcessFeature
+    {
+        // Parent process model
+        protected CombProcess CombProcess { get { return ProcessAll as CombProcess; } }
 
         // Location of hot pixels in this feature.
         public PixelHeatList? Pixels { get; set; } = null;
 
 
-        public CombFeature( CombProcess model, ProcessBlock block, CombFeatureTypeEnum type) : base(block.BlockId, type)
+        public CombFeature( CombProcess combProcess, ProcessBlock block, FeatureTypeEnum type) : base(combProcess, block.BlockId, type)
         {
-            if (type != CombFeatureTypeEnum.Unreal)
+            if (type != FeatureTypeEnum.Unreal)
                 Pixels = new();
             ResetMemberData();
-
-            Model = model;
-            Block = block;
         }
 
 
         // Constructor used when loaded objects from the datastore
-        public CombFeature(CombProcess model, List<string> settings) : base(settings)
+        public CombFeature(CombProcess combProcess, List<string> settings) : base(combProcess, settings)
         {
-            Model = model;
-            Block = Model.Blocks[BlockId];
         }
 
 
@@ -59,22 +80,22 @@ namespace SkyCombImage.ProcessLogic
 
         // Is this feature's hot pixel density percentage above the minimum?
         public bool PixelDensityGood { get {
-            return DensityPerc >= Model.ProcessConfig.FeatureMinDensityPerc;
+            return DensityPerc >= CombProcess.ProcessConfig.FeatureMinDensityPerc;
         } }
 
 
         // Is this feature larger than the largest allowed?
         public bool FeatureOverSized { get {
             return
-                (PixelBox.Width > Model.ProcessConfig.FeatureMaxSize) ||
-                (PixelBox.Height > Model.ProcessConfig.FeatureMaxSize);
+                (PixelBox.Width > CombProcess.ProcessConfig.FeatureMaxSize) ||
+                (PixelBox.Height > CombProcess.ProcessConfig.FeatureMaxSize);
         } }
 
 
         // Does this Feature's PixleBox and the specified object's rectangle overlap significantly?
         public bool SignificantPixelBoxIntersection(Rectangle objectExpectedPixelBox)
         {
-            return base.SignificantPixelBoxIntersection(objectExpectedPixelBox, Model.ProcessConfig.FeatureMinOverlapPerc);
+            return base.SignificantPixelBoxIntersection(objectExpectedPixelBox, CombProcess.ProcessConfig.FeatureMinOverlapPerc);
         }
 
 
@@ -113,7 +134,7 @@ namespace SkyCombImage.ProcessLogic
                 int rectRight = startX + toX - 1;
 
                 // Search down the image
-                for (currY = startY; currY < Model.VideoData.ImageHeight; currY++)
+                for (currY = startY; currY < CombProcess.VideoData.ImageHeight; currY++)
                 {
                     int hotPixelsInRow = 0;
 
@@ -124,10 +145,10 @@ namespace SkyCombImage.ProcessLogic
                     while ((imgThreshold.Data[currY, startX + fromX, 0] != 0) && (startX + fromX > 0))
                         fromX--;
 
-                    for (currX = startX + fromX; (currX < startX + toX) && (currX < Model.VideoData.ImageWidth); currX++)
+                    for (currX = startX + fromX; (currX < startX + toX) && (currX < CombProcess.VideoData.ImageWidth); currX++)
                     {
                         // Set inputSearched[y,x] = true
-                        inputSearched[currY * Model.VideoData.ImageWidth + currX] = true;
+                        inputSearched[currY * CombProcess.VideoData.ImageWidth + currX] = true;
 
                         // If imgInputGray[y,x] is a hot pixel
                         var currPixelIsHot = (imgThreshold.Data[currY, currX, 0] != 0);
@@ -190,7 +211,7 @@ namespace SkyCombImage.ProcessLogic
                 }
 
                 // Is this feature significant?
-                bool sizeOk = (NumHotPixels >= Model.ProcessConfig.FeatureMinPixels);
+                bool sizeOk = (NumHotPixels >= CombProcess.ProcessConfig.FeatureMinPixels);
                 bool densityOk = PixelDensityGood;
                 Significant = sizeOk && densityOk;
                 if (Significant)
@@ -233,7 +254,7 @@ namespace SkyCombImage.ProcessLogic
             otherFeature.Attributes = "";
             otherFeature.Significant = false;
             otherFeature.IsTracked = false;
-            otherFeature.Type = CombFeatureTypeEnum.Consumed;
+            otherFeature.Type = FeatureTypeEnum.Consumed;
         }
 
 
@@ -248,10 +269,10 @@ namespace SkyCombImage.ProcessLogic
             double yCenterPixels = PixelBox.Y + PixelBox.Height / 2.0;
 
             // Calculate position of center of feature as fraction of drone image area.
-            double xFraction = xCenterPixels / Model.VideoData.ImageWidth;
+            double xFraction = xCenterPixels / CombProcess.VideoData.ImageWidth;
             // With image pixels, y = 0 is the top of the image. 
             // Here we change the "sign" of Y, so that y = 0 is the bottom of the image.
-            double yFraction = (Model.VideoData.ImageHeight - yCenterPixels) / Model.VideoData.ImageHeight;
+            double yFraction = (CombProcess.VideoData.ImageHeight - yCenterPixels) / CombProcess.VideoData.ImageHeight;
 
             return (xFraction, yFraction);
         }
@@ -272,7 +293,7 @@ namespace SkyCombImage.ProcessLogic
             (var _, var yImageFrac) = this.CentroidImageFractions();
 
             // Calculation is based on physical parameters of the camera.
-            double fullVertFoVDeg = Model.VideoData.VFOVDeg; // Say 32 degrees
+            double fullVertFoVDeg = CombProcess.VideoData.VFOVDeg; // Say 32 degrees
             double halfVertFoVDeg = fullVertFoVDeg / 2; // Say 16 degrees
 
             // Calculate the angle to object, in direction of flight (forward), to the vertical, in degrees
@@ -310,7 +331,7 @@ namespace SkyCombImage.ProcessLogic
                     return;
                 var flightStep = Block.FlightStep;
 
-                if ((Type == CombFeatureTypeEnum.Unreal) && (lastRealFeature != null))
+                if ((Type == FeatureTypeEnum.Unreal) && (lastRealFeature != null))
                 {
                     // For unreal features, just copy the last real feature's location
                     LocationM = lastRealFeature.LocationM?.Clone();
@@ -363,7 +384,7 @@ namespace SkyCombImage.ProcessLogic
             try
             {
                 phase = 1;
-                if ((Model == null) || (Block.FlightStep == null) || (Block.FlightStep.InputImageCenter == null))
+                if ((CombProcess == null) || (Block.FlightStep == null) || (Block.FlightStep.InputImageCenter == null))
                     return;
                 var flightStep = Block.FlightStep;
 
@@ -375,10 +396,10 @@ namespace SkyCombImage.ProcessLogic
                     return;
 
                 phase = 3;
-                if ((LocationM == null) || (Model.GroundData == null))
+                if ((LocationM == null) || (CombProcess.GroundData == null))
                     return;
                 var flatLandLocationM = LocationM;
-                var groundModel = Model.GroundData.HasDsmModel ? Model.GroundData.DsmModel : Model.GroundData.DemModel;
+                var groundModel = CombProcess.GroundData.HasDsmModel ? CombProcess.GroundData.DsmModel : CombProcess.GroundData.DemModel;
                 if (groundModel == null)
                     return;
 
@@ -427,10 +448,10 @@ namespace SkyCombImage.ProcessLogic
                         // Drone line of sight has intersected the surface layer
                         phase = 8;
                         LocationM = testLocnM;
-                        if (Model.GroundData.HasDemModel)
+                        if (CombProcess.GroundData.HasDemModel)
                         {
                             phase = 9;
-                            var testDemM = Model.GroundData.DemModel.GetElevationByDroneLocn(testLocnM);
+                            var testDemM = CombProcess.GroundData.DemModel.GetElevationByDroneLocn(testLocnM);
                             if (testDemM != UnknownValue)
                             {
                                 phase = 10;
@@ -684,7 +705,7 @@ namespace SkyCombImage.ProcessLogic
                             var currPixelIsHot = (imgThreshold.Data[y, x, 0] != 0);
                             if (currPixelIsHot)
                             {
-                                var feature = new CombFeature(model, block, CombFeatureTypeEnum.Real);
+                                var feature = new CombFeature(model, block, FeatureTypeEnum.Real);
 
                                 feature.PixelNeighborSearch(
                                     ref inputSearched,
@@ -747,7 +768,7 @@ namespace SkyCombImage.ProcessLogic
 
                 foreach (var feature in this)
                     if ((feature.Value.LocationM != null) &&
-                        (feature.Value.Type == CombFeatureTypeEnum.Real))
+                        (feature.Value.Type == FeatureTypeEnum.Real))
                     {
                         sumCount++;
                         sumLocation.NorthingM += feature.Value.LocationM.NorthingM;
@@ -761,7 +782,7 @@ namespace SkyCombImage.ProcessLogic
                     double sumDist = 0;
                     foreach (var feature in this)
                         if ((feature.Value.LocationM != null) &&
-                            (feature.Value.Type == CombFeatureTypeEnum.Real))
+                            (feature.Value.Type == FeatureTypeEnum.Real))
                             sumDist += RelativeLocation.DistanceM(feature.Value.LocationM, theLocationM);
                     var theLocationErrM = (float)(sumDist / sumCount);
 
@@ -791,7 +812,7 @@ namespace SkyCombImage.ProcessLogic
             float lastBLHeight = BaseConstants.UnknownValue;
             foreach (var feature in this)
                 if ((feature.Value.LocationM != null) &&
-                    (feature.Value.Type == CombFeatureTypeEnum.Real))
+                    (feature.Value.Type == FeatureTypeEnum.Real))
                 {
                     var featureHeight = feature.Value.HeightM;
                     if (featureHeight != BaseConstants.UnknownValue)
@@ -830,7 +851,7 @@ namespace SkyCombImage.ProcessLogic
 
             foreach (var feature in this)
             {
-                if (feature.Value.Type == CombFeatureTypeEnum.Real)
+                if (feature.Value.Type == FeatureTypeEnum.Real)
                 {
                     var step = feature.Value.Block.FlightStep;
                     if (step != null)

@@ -13,28 +13,28 @@ namespace SkyCombImage.ProcessLogic
     public class CombObject : ProcessObject
     {
         // Parent process model
-        private CombProcess Model { get; }
+        private CombProcess CombProcess { get; }
 
         public CombObjectModel COM { get; set; }
 
         // List of features that make up this object
         public CombFeatureList Features { get; set; }
         // First (Real) feature claimed by this object. 
-        public CombFeature FirstFeature() { return (Features.Count == 0 ? null : Features.Values[0]); }
-        public CombFeature LastRealFeature() { return (COM.LastRealFeatureIndex == UnknownValue ? null : Features.Values[COM.LastRealFeatureIndex]); }
+        public CombFeature FirstFeature { get { return (Features.Count == 0 ? null : Features.Values[0]); } }
+        public CombFeature LastRealFeature { get { return (COM.LastRealFeatureIndex == UnknownValue ? null : Features.Values[COM.LastRealFeatureIndex]); } }
         // Last (Real or UnReal) feature claimed by this object. May be null.
-        public CombFeature LastFeature() { return (Features.Count == 0 ? null : Features.Values[^1]); }
+        public CombFeature LastFeature { get { return (Features.Count == 0 ? null : Features.Values[^1]); } }
 
 
         // Constructor used processing video 
         public CombObject(ProcessScope scope, CombProcess model, CombFeature firstFeature) : base(model.ProcessConfig, scope)
         {
-            Model = model;
+            CombProcess = model;
             ResetMemberData();
 
             if (firstFeature != null)
             {
-                Assert(firstFeature.Type == CombFeatureTypeEnum.Real, "Initial feature must be Real");
+                Assert(firstFeature.Type == FeatureTypeEnum.Real, "Initial feature must be Real");
                 ClaimFeature(firstFeature);
             }
         }
@@ -43,7 +43,7 @@ namespace SkyCombImage.ProcessLogic
         // Constructor used when loaded objects from the datastore
         public CombObject(CombProcess model, List<string> settings) : base(model.ProcessConfig, null)
         {
-            Model = model;
+            CombProcess = model;
             ResetMemberData();
 
             LoadSettings(settings);
@@ -71,7 +71,7 @@ namespace SkyCombImage.ProcessLogic
             if (COM.LastRealFeatureIndex >= 0)
                 // Rarely, the object may have a sequence of real, then unreal, then real features.
                 foreach (var feature in Features)
-                    if (feature.Value.Type == CombFeatureTypeEnum.Real)
+                    if (feature.Value.Type == FeatureTypeEnum.Real)
                         answer++;
 
             return answer;
@@ -102,7 +102,7 @@ namespace SkyCombImage.ProcessLogic
         public double SeenForMinDurations()
         {
             var minDuration = ProcessConfig.ObjectMinDurationMs; // Say 500ms
-            var timeSeenMs = (1000.0F * NumRealFeatures()) / Model.VideoData.Fps;
+            var timeSeenMs = (1000.0F * NumRealFeatures()) / CombProcess.VideoData.Fps;
             return (timeSeenMs / minDuration);
         }
 
@@ -123,14 +123,14 @@ namespace SkyCombImage.ProcessLogic
             // Once inactive, a Comb object stops being tracked permanently.
             if (COM.BeingTracked)
             {
-                if (LastRealFeature().Block.BlockId >= BlockId)
+                if (LastRealFeature.Block.BlockId >= BlockId)
                 {
                     // Yes, this is worth tracking.
                 }
                 else if (ProcessConfig.ObjectMaxUnrealBlocks > 0)
                 {
                     // Are we still on the persistance window?
-                    COM.BeingTracked = (LastFeature().Block.BlockId - LastRealFeature().Block.BlockId < ProcessConfig.ObjectMaxUnrealBlocks);
+                    COM.BeingTracked = (LastFeature.Block.BlockId - LastRealFeature.Block.BlockId < ProcessConfig.ObjectMaxUnrealBlocks);
                 }
                 else
                     COM.BeingTracked = false;
@@ -163,7 +163,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 // Debugging - Set breakpoint on assignment. Assignment value is overridden later in this proc.
                 if (ObjectId == ProcessConfig.FocusObjectId)
-                    if (Model.Blocks.Count >= 17)
+                    if (CombProcess.Blocks.Count >= 17)
                         Significant = false;
 
                 // COUNT
@@ -249,8 +249,8 @@ namespace SkyCombImage.ProcessLogic
         {
             try
             {
-                COM.FirstFwdDownDeg = (float)FirstFeature().Calculate_Image_FwdDeg();
-                COM.LastFwdDownDeg = (float)LastRealFeature().Calculate_Image_FwdDeg();
+                COM.FirstFwdDownDeg = (float)FirstFeature.Calculate_Image_FwdDeg();
+                COM.LastFwdDownDeg = (float)LastRealFeature.Calculate_Image_FwdDeg();
 
                 // First estimate of OBJECT location (centroid) as average over all real features.
                 // The feature locations are based on where in the drone's field of image the object was detected,
@@ -272,7 +272,7 @@ namespace SkyCombImage.ProcessLogic
                 // calculated using trigonometry and first/last real feature camera-view-angles.
                 // Only works if the drone has moved horizontally some distance. Works at 1m. Better at 5m
                 // May override CalculateSettings_LocationM_HeightM_LineofSight
-                var lastFeature = LastFeature();
+                var lastFeature = LastFeature;
                 if ((SeenForMinDurations() >= 1) && HasMoved())
                 {
                     // Estimate last FEATURE height above ground based on distance down from drone
@@ -281,9 +281,9 @@ namespace SkyCombImage.ProcessLogic
                     // Object at the left/right edge of the image are slightly further from the drone
                     // than objects directly under the drone.
                     // If drone is not moving now, calculated HeightM will be the same as last feature (within Gimbal wobble). 
-                    if (lastFeature.Type == CombFeatureTypeEnum.Real) // PQR    && is moving now.
+                    if (lastFeature.Type == FeatureTypeEnum.Real) // PQR    && is moving now.
                         lastFeature.Calculate_HeightM_BaseLineMovement(
-                                FirstFeature(),
+                                FirstFeature,
                                 DemM,
                                 Features.AverageFlightStepFixedAltitudeM());
                 }
@@ -331,7 +331,7 @@ namespace SkyCombImage.ProcessLogic
             Assert(feature.ObjectId == ObjectId, "SetLinksAfterLoad: Feature not for this object.");
 
             Features.AddFeature(feature);
-            if (feature.Type == CombFeatureTypeEnum.Real)
+            if (feature.Type == FeatureTypeEnum.Real)
                 COM.LastRealFeatureIndex = Features.Count - 1;
         }
 
@@ -343,8 +343,8 @@ namespace SkyCombImage.ProcessLogic
         {
             try
             {
-                var lastFeature = LastFeature();
-                if ((theFeature.Type == CombFeatureTypeEnum.Real) && (lastFeature != null))
+                var lastFeature = LastFeature;
+                if ((theFeature.Type == FeatureTypeEnum.Real) && (lastFeature != null))
                 {
                     // To get here, theFeature overlaps this object significantly.
                     // But claiming theFeature can make this object exceed FeatureMaxSize
@@ -358,7 +358,7 @@ namespace SkyCombImage.ProcessLogic
                     // ToDo: This approach allows one bad block before it stops growth. Bad. May make object insignificant.
                     if (lastFeature.FeatureOverSized)
                         return false;
-                    if ((lastFeature.Type == CombFeatureTypeEnum.Real) && // Unreal features have no density
+                    if ((lastFeature.Type == FeatureTypeEnum.Real) && // Unreal features have no density
                         !lastFeature.PixelDensityGood)
                         return false;
                 }
@@ -375,19 +375,19 @@ namespace SkyCombImage.ProcessLogic
                 bool wasSignificant = Significant;
 
                 // Is object a real feature?
-                if (theFeature.Type == CombFeatureTypeEnum.Real)
+                if (theFeature.Type == FeatureTypeEnum.Real)
                 {
                     theFeature.IsTracked = true;
                     COM.MaxRealHotPixels = Math.Max(COM.MaxRealHotPixels, theFeature.NumHotPixels);
 
                     var theBlock = theFeature.Block;
 
-                    if ((LastRealFeature() == null) || (LastRealFeature().Block.BlockId < theBlock.BlockId))
+                    if ((LastRealFeature == null) || (LastRealFeature.Block.BlockId < theBlock.BlockId))
                     {
                         // First real feature claimed by this object for THIS block
                         Features.AddFeature(theFeature);
                         COM.LastRealFeatureIndex = Features.Count - 1;
-                        RunToVideoS = (float)(LastRealFeature().Block.InputFrameMs / 1000.0);
+                        RunToVideoS = (float)(LastRealFeature.Block.InputFrameMs / 1000.0);
 
                         COM.MaxRealPixelWidth = Math.Max(COM.MaxRealPixelWidth, theFeature.PixelBox.Width);
                         COM.MaxRealPixelHeight = Math.Max(COM.MaxRealPixelHeight, theFeature.PixelBox.Height);
@@ -399,31 +399,31 @@ namespace SkyCombImage.ProcessLogic
                         // For better visualisation we want to combine all features in this block into one.
 
                         // The first real feature for the last block consumes theFeature, leaving theFeature empty.
-                        LastRealFeature().Consume(theFeature);
+                        LastRealFeature.Consume(theFeature);
                         theFeature.ObjectId = UnknownValue;
 
-                        COM.MaxRealPixelWidth = Math.Max(COM.MaxRealPixelWidth, LastRealFeature().PixelBox.Width);
-                        COM.MaxRealPixelHeight = Math.Max(COM.MaxRealPixelHeight, LastRealFeature().PixelBox.Height);
+                        COM.MaxRealPixelWidth = Math.Max(COM.MaxRealPixelWidth, LastRealFeature.PixelBox.Width);
+                        COM.MaxRealPixelHeight = Math.Max(COM.MaxRealPixelHeight, LastRealFeature.PixelBox.Height);
                     }
 
                     // Calculate the simple member data (int, float, VelocityF, etc) of this real object.
                     // Calculates DemM, LocationM, LocationErrM, HeightM, HeightErrM, AvgSumLinealM, etc.
                     Calculate_RealObject_SimpleMemberData();
                 }
-                else if (theFeature.Type == CombFeatureTypeEnum.Unreal)
+                else if (theFeature.Type == FeatureTypeEnum.Unreal)
                 {
                     // theFeature is unreal - it is a persistance object
                     Features.AddFeature(theFeature);
 
-                    LastFeature().HeightM = HeightM;
-                    LastFeature().HeightAlgorithm = CombFeature.UnrealCopyHeightAlgorithm;
+                    LastFeature.HeightM = HeightM;
+                    LastFeature.HeightAlgorithm = CombFeature.UnrealCopyHeightAlgorithm;
                 }
 
 
                 // Copy these details to the feature to be saved in the DataStore.
                 // Useful for understanding the feature by feature progression of values that are refined over time.
-                LastFeature().Significant = Significant & (LastFeature().Type == CombFeatureTypeEnum.Real);
-                LastFeature().Attributes = Attributes;
+                LastFeature.Significant = Significant & (LastFeature.Type == FeatureTypeEnum.Real);
+                LastFeature.Attributes = Attributes;
                 if (Significant && !wasSignificant)
                     // This object has just become significant. Two use cases:
                     // - After 5 real features, enough time has based for object to become significant on 6th real feature.
@@ -435,7 +435,7 @@ namespace SkyCombImage.ProcessLogic
                 // Debugging - Set breakpoint on assignment. 
                 if (ObjectId == ProcessConfig.FocusObjectId)
                     if ((theFeature.FeatureId == 41) || (theFeature.FeatureId == 59))
-                        LastFeature().Attributes = this.Attributes + ".";
+                        LastFeature.Attributes = this.Attributes + ".";
 
                 return true;
             }
@@ -464,8 +464,8 @@ namespace SkyCombImage.ProcessLogic
         // Calculate the drone SumLinealM distance corrsponding to the centroid of the object
         private void Calculate_AvgSumLinealM()
         {
-            var firstFeat = FirstFeature();
-            var lastFeat = LastRealFeature();
+            var firstFeat = FirstFeature;
+            var lastFeat = LastRealFeature;
 
             if ((firstFeat != null) &&
                (firstFeat.Block != null) &&
@@ -500,11 +500,11 @@ namespace SkyCombImage.ProcessLogic
         // Only uses camera physics and hot-object position in image data.
         private double Calculate_Image_AvgSidewaysRads()
         {
-            (var xFracFirst, var _) = FirstFeature().CentroidImageFractions();
-            (var xFracLast, var _) = LastFeature().CentroidImageFractions();
+            (var xFracFirst, var _) = FirstFeature.CentroidImageFractions();
+            (var xFracLast, var _) = LastFeature.CentroidImageFractions();
 
             // Calculation is based on physical parameters of the thermal camera.
-            double fullHorizFoVRadians = Model.VideoData.HFOVRad;
+            double fullHorizFoVRadians = CombProcess.VideoData.HFOVRad;
             double halfHorizFoVRadians = fullHorizFoVRadians / 2;
 
             // Calculate the average angle to object, at right angles to the direction of flight (sideways), to the vertical, in radians
@@ -534,8 +534,8 @@ namespace SkyCombImage.ProcessLogic
         {
             // Drone moved from point A to point B (base-line distance L) in metres.
             double baselineM = RelativeLocation.DistanceM(
-                FirstFeature().Block.DroneLocnM,
-                LastRealFeature().Block.DroneLocnM);
+                FirstFeature.Block.DroneLocnM,
+                LastRealFeature.Block.DroneLocnM);
             // If drone has not moved enough this method will be very inaccurate.
             return (baselineM >= 2);
         }
@@ -552,12 +552,12 @@ namespace SkyCombImage.ProcessLogic
         // Based on MAXIMUM number of hot pixels in any real feature.
         private void Calculate_SizeCM2()
         {
-            if ((Model == null) || (Model.VideoData == null))
+            if ((CombProcess == null) || (CombProcess.VideoData == null))
                 return;
 
-            var lastFeature = LastFeature();
+            var lastFeature = LastFeature;
             if ((lastFeature == null) ||
-                (lastFeature.Type != CombFeatureTypeEnum.Real) ||
+                (lastFeature.Type != FeatureTypeEnum.Real) ||
                 (lastFeature.Block == null) ||
                 (lastFeature.Block.FlightStep == null) ||
                 (lastFeature.Block.FlightStep.InputImageSizeM == null))
@@ -570,7 +570,7 @@ namespace SkyCombImage.ProcessLogic
             float imageAreaM2 = lastFeature.Block.FlightStep.InputImageSizeM.AreaM2();
 
             // Calculate the number of pixels in the video image
-            float framePixels = Model.VideoData.ImageWidth * Model.VideoData.ImageHeight;
+            float framePixels = CombProcess.VideoData.ImageWidth * CombProcess.VideoData.ImageHeight;
 
             // Calculate the size of the object in this frame in square centimeters
             float thisSizeM2 = imageAreaM2 * hotPixels / framePixels;
@@ -585,8 +585,8 @@ namespace SkyCombImage.ProcessLogic
         // Relies on object.LocationM already being calculated.
         private void Calculate_AvgRangeM()
         {
-            var firstFeature = FirstFeature();
-            var lastRealFeature = LastRealFeature();
+            var firstFeature = FirstFeature;
+            var lastRealFeature = LastRealFeature;
             if ((firstFeature == null) ||
                 (firstFeature.Block == null) ||
                 (firstFeature.Block.FlightStep == null) ||
@@ -615,11 +615,11 @@ namespace SkyCombImage.ProcessLogic
         // Get the object's DEM at the OBJECT'S location.
         private void Calculate_DemM()
         {
-            if ((LocationM == null) || (Model.GroundData == null) || (Model.GroundData.DemModel == null))
+            if ((LocationM == null) || (CombProcess.GroundData == null) || (CombProcess.GroundData.DemModel == null))
                 return;
 
             // Most accurate method. Nearly always works.
-            var newDemM = Model.GroundData.DemModel.GetElevationByDroneLocn(LocationM);
+            var newDemM = CombProcess.GroundData.DemModel.GetElevationByDroneLocn(LocationM);
             if (newDemM != UnknownValue)
             {
                 DemM = newDemM;
@@ -629,7 +629,7 @@ namespace SkyCombImage.ProcessLogic
             // In rare cases, we have an object just outside ground datum grid.
             // Object may be say 10m to left and 40m ahead of the drone's location.
             // Forced to use less progressively less accurate methods.
-            var firstFeat = FirstFeature();
+            var firstFeat = FirstFeature;
             var firstStep = firstFeat.Block.FlightStep;
             if (firstStep == null)
                 return;
@@ -647,8 +647,8 @@ namespace SkyCombImage.ProcessLogic
         {
             Rectangle answer;
 
-            var firstFeat = FirstFeature();
-            var lastFeat = LastFeature();
+            var firstFeat = FirstFeature;
+            var lastFeat = LastFeature;
 
             var firstBox = firstFeat.PixelBox;
             var lastBox = lastFeat.PixelBox;
@@ -687,7 +687,7 @@ namespace SkyCombImage.ProcessLogic
                     lastWidth,
                     lastHeight);
 
-            if(lastFeat.Type == CombFeatureTypeEnum.Real)
+            if(lastFeat.Type == FeatureTypeEnum.Real)
                 // We don't want a drone wobble to break the object feature sequence
                 // So we inflate the expected location by 5 pixels in each direction.
                 answer.Inflate(5, 5);
@@ -701,9 +701,9 @@ namespace SkyCombImage.ProcessLogic
         {
             var answer = base.GetSettings();
 
-            var firstBlock = (FirstFeature() != null ? FirstFeature().Block.BlockId : 0);
-            var lastRealBlock = (LastRealFeature() != null ? LastRealFeature().Block.BlockId : 0);
-            var lastBlock = (LastFeature() != null ? LastFeature().Block.BlockId : 0);
+            var firstBlock = (FirstFeature != null ? FirstFeature.Block.BlockId : 0);
+            var lastRealBlock = (LastRealFeature != null ? LastRealFeature.Block.BlockId : 0);
+            var lastBlock = (LastFeature != null ? LastFeature.Block.BlockId : 0);
             var centerBlock = (firstBlock + lastRealBlock + 1) / 2; // The +1 rounds upward.
 
             answer.Add("FirstBlock", firstBlock);
@@ -939,7 +939,7 @@ namespace SkyCombImage.ProcessLogic
             int answer = 9999999;
             foreach (var theObject in this)
             {
-                var firstFeat = theObject.Value.FirstFeature();
+                var firstFeat = theObject.Value.FirstFeature;
                 if (firstFeat != null)
                     answer = Math.Min(answer, firstFeat.Block.FlightStepId);
             }

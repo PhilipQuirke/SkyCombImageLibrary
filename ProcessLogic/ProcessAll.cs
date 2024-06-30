@@ -11,6 +11,9 @@ namespace SkyCombImage.ProcessLogic
     {
         public ProcessConfigModel ProcessConfig;
 
+        // List of Blocks (aka frames processed)  
+        public ProcessBlockList Blocks { get; set; }
+
         // The main input video being processed
         public VideoData VideoData { get; }
 
@@ -20,6 +23,7 @@ namespace SkyCombImage.ProcessLogic
         public ProcessAll(ProcessConfigModel config, VideoData video, Drone drone)
         {
             ProcessConfig = config;
+            Blocks = new();
             VideoData = video;
             Drone = drone;
 
@@ -30,6 +34,7 @@ namespace SkyCombImage.ProcessLogic
         // Reset any internal state of the model, so it can be re-used in another run immediately
         public virtual void ResetModel()
         {
+            Blocks.Clear();
             ProcessObject.NextObjectId = 0;
         }
 
@@ -54,6 +59,15 @@ namespace SkyCombImage.ProcessLogic
 
             if ((currLegId > 0) && (prevLegId != currLegId))
                 ProcessFlightLegStart(currLegId);
+        }
+
+
+        virtual public DataPairList GetSettings()
+        {
+            return new DataPairList
+            {
+                { "# Blocks", Blocks.Count },
+            };
         }
     };
 

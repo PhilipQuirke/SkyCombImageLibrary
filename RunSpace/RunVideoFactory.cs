@@ -49,9 +49,6 @@ namespace SkyCombImage.RunSpace
                     case RunProcessEnum.Yolo:
                         answer = new RunVideoYolo(parent, config, dataStore, drone);
                         break;
-                    case RunProcessEnum.Flow:
-                        answer = new RunVideoFlow(parent, config, dataStore, drone);
-                        break;
                     case RunProcessEnum.Comb:
                         answer = new RunVideoCombDrone(parent, config, dataStore, drone);
                         answer.ProcessDrawScope.Process = answer.ProcessAll as CombProcess;
