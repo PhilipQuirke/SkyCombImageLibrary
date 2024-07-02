@@ -52,10 +52,13 @@ namespace SkyCombImage.PersistModel
                         int row = 0;
                         foreach (var feature in combProcess.CombFeatures)
                             if (runConfig.ProcessConfig.SavePixels == SavePixelsEnum.All || feature.Value.Significant)
-                                if (feature.Value.Pixels != null)
-                                    foreach (var pixel in feature.Value.Pixels)
+                            {
+                                var combFeature = feature.Value as CombFeature;
+                                if (combFeature.Pixels != null)
+                                    foreach (var pixel in combFeature.Pixels)
                                         if (runConfig.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All || feature.Value.Significant)
                                             Data.SetDataListRowKeysAndValues(ref row, pixel.GetSettings());
+                            }
 
                         Data.SetLastUpdateDateTime(PixelsTabName);
                     }

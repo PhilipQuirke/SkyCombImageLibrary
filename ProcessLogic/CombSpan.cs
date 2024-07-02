@@ -52,11 +52,12 @@ namespace SkyCombImage.ProcessLogic
                 // Recalc each feature - which will have a slightly different location
                 foreach (var theFeature in objectFeatures)
                 {
-                    theFeature.Value.ResetMemberData();
-                    theFeature.Value.CalculateSettings_LocationM_FlatGround(theObject.Value.LastRealFeature);
-                    theFeature.Value.CalculateSettings_LocationM_HeightM_LineofSight();
+                    var combFeature = theFeature.Value as CombFeature;
+                    combFeature.ResetMemberData();
+                    combFeature.CalculateSettings_LocationM_FlatGround(theObject.Value.LastRealFeature);
+                    combFeature.CalculateSettings_LocationM_HeightM_LineofSight();
 
-                    theObject.Value.ClaimFeature(theFeature.Value);
+                    theObject.Value.ClaimFeature(combFeature);
                 }
             }
 

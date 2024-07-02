@@ -70,7 +70,7 @@ namespace SkyCombImage.RunSpace
                 // Link each object to its features
                 foreach (var feature in CombProcess.CombFeatures)
                     if (feature.Value.ObjectId >= 0)
-                        CombProcess.CombObjs.SetLinksAfterLoad(feature.Value);
+                        CombProcess.CombObjs.SetLinksAfterLoad(feature.Value as CombFeature);
             }
             catch (Exception ex)
             {
@@ -115,8 +115,9 @@ namespace SkyCombImage.RunSpace
 
                 foreach (var feature in featuresInBlock)
                 {
-                    feature.Value.CalculateSettings_LocationM_FlatGround(null);
-                    feature.Value.CalculateSettings_LocationM_HeightM_LineofSight();
+                    var combFeature = feature.Value as CombFeature;
+                    combFeature.CalculateSettings_LocationM_FlatGround(null);
+                    combFeature.CalculateSettings_LocationM_HeightM_LineofSight();
                 }
 
                 // Unless legs are not used, we only do comb processing during "legs". 

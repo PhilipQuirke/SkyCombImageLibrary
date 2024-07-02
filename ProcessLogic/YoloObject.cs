@@ -10,9 +10,6 @@ namespace SkyCombImage.ProcessModel
     // A class to hold a Yolo object - layer over a sequence of Yolo features.
     public class YoloObject : ProcessObject
     {
-        // Parent process model
-        private YoloProcess YoloProcess { get; }
-
         public string ClassName { get; set; }
         public Color ClassColor { get; set; }
         public float ClassConfidence { get; set; }
@@ -20,15 +17,14 @@ namespace SkyCombImage.ProcessModel
         // List of features that make up this object
         public YoloFeatureList Features { get; set; }
         // First (Real) feature claimed by this object. 
-        public YoloFeature FirstFeature { get { return (Features.Count == 0 ? null : Features.Values[0]); } }
+        public YoloFeature? FirstFeature { get { return Features.FirstFeature as YoloFeature; } }
         // Last (Real or UnReal) feature claimed by this object. May be null.
-        public YoloFeature LastFeature { get { return (Features.Count == 0 ? null : Features.Values[^1]); } }
+        public YoloFeature? LastFeature { get { return Features.LastFeature as YoloFeature; } }
 
 
         public YoloObject(YoloProcess yoloProcess, ProcessScope scope, YoloFeature firstFeature, string className, Color classColor, float classConfidence) : base(yoloProcess.ProcessConfig, scope)
         {
             ResetMemberData();
-            YoloProcess = yoloProcess;
             ClassName = className;
             ClassColor = classColor;
             ClassConfidence = classConfidence;
@@ -48,7 +44,7 @@ namespace SkyCombImage.ProcessModel
             ClassColor = Color.Black;
             ClassConfidence = 0.66f;
 
-            Features = new(YoloProcess);
+            Features = new(ProcessConfig);
         }
 
 

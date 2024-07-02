@@ -9,35 +9,6 @@ using System.Drawing;
 
 namespace SkyCombImage.ProcessLogic
 {
-    // A process feature combines the stored data and some logic
-    public class ProcessFeature : ProcessFeatureModel
-    {
-        // Parent process model
-        protected ProcessAll ProcessAll { get; }
-
-        // A feature is associated 1-1 with a Block
-        public ProcessBlock Block { get; set; }
-
-
-        public ProcessFeature(ProcessAll processAll, int blockId, FeatureTypeEnum type) : base(blockId, type)
-        {
-            ResetMemberData();
-
-            ProcessAll = processAll;
-            Block = processAll.Blocks[blockId];
-        }
-
-
-        // Constructor used when loaded objects from the datastore
-        public ProcessFeature(ProcessAll processAll, List<string> settings) : base(settings)
-        {
-            ProcessAll = processAll;
-            Block = ProcessAll.Blocks[BlockId];
-        }
-    }
-
-
-
     // A Comb feature, is a dense cluster of hot pixels, associated 1-1 with a Block
     public class CombFeature : ProcessFeature
     {
@@ -625,43 +596,17 @@ namespace SkyCombImage.ProcessLogic
 
 
     // A list of Comb features bound to a specific Block
-    public class CombFeatureList : SortedList<int, CombFeature>
+    public class CombFeatureList : ProcessFeatureList
     {
-        private static ProcessConfigModel ProcessConfig;
 
-
-        public CombFeatureList(ProcessConfigModel config)
+        public CombFeatureList(ProcessConfigModel config) : base(config)
         {
-            CombFeatureList.ProcessConfig = config;
-        }   
-
-
-        public void AddFeature(CombFeature feature)
-        {
-            BaseConstants.Assert(feature != null, "AddFeature: Feature not specified.");
-            BaseConstants.Assert(feature.FeatureId > 0, "AddFeature: No Id");
-
-            this.Add(feature.FeatureId, feature);
         }
 
 
-        // Add the feature list for a new block into this CombFeatureListList 
-        public void AddFeatureList(CombFeatureList featuresToAdd)
+        protected override ProcessFeatureList Create(ProcessConfigModel config)
         {
-            if (featuresToAdd != null)
-                foreach (var feature in featuresToAdd)
-                    AddFeature(feature.Value);
-        }
-
-
-        public CombFeatureList Clone()
-        {
-            var answer = new CombFeatureList(ProcessConfig);
-
-            foreach (var feature in this)
-                answer.AddFeature(feature.Value);
-
-            return answer;
+            return new CombFeatureList(config);
         }
 
 
@@ -726,20 +671,6 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Return the number of significant features in this list
-        public int NumSig
-        {
-            get
-            {
-                int numSig = 0;
-                foreach (var theFeature in this)
-                    if (theFeature.Value.Significant)
-                        numSig++;
-                return numSig;
-            }
-        }
-
-
         public (int minHeat, int maxHeat, int maxPixels) HeatSummary()
         {
             int maxHeat = 0;
@@ -747,10 +678,11 @@ namespace SkyCombImage.ProcessLogic
             int maxPixels = 0;
             foreach (var feature in this)
             {
-                maxHeat = Math.Max(maxHeat, feature.Value.MaxHeat);
+                var combFeature = feature.Value as CombFeature;
+                maxHeat = Math.Max(maxHeat, combFeature.MaxHeat);
                 if (feature.Value.MinHeat > 0)
-                    minHeat = Math.Min(minHeat, feature.Value.MinHeat);
-                maxPixels = Math.Max(maxPixels, feature.Value.NumHotPixels);
+                    minHeat = Math.Min(minHeat, combFeature.MinHeat);
+                maxPixels = Math.Max(maxPixels, combFeature.NumHotPixels);
             }
 
             return (minHeat, maxHeat, maxPixels);

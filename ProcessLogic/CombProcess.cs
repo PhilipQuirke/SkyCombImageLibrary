@@ -163,7 +163,7 @@ namespace SkyCombImage.ProcessLogic
                 foreach (var theObject in CombObjs.CombObjList)
                     if (theObject.Value.FlightLegId <= 0)
                         foreach (var feature in theObject.Value.Features)
-                            feature.Value.Pixels?.Clear();
+                            (feature.Value as CombFeature).Pixels?.Clear();
         }
 
 
@@ -241,7 +241,7 @@ namespace SkyCombImage.ProcessLogic
                     }
 
                 // Each feature can only be claimed once
-                CombFeatureList availFeatures = featuresInBlock.Clone();
+                CombFeatureList availFeatures = featuresInBlock.Clone() as CombFeatureList;
 
 
                 // For each active object, consider each feature (significant or not)
@@ -264,7 +264,7 @@ namespace SkyCombImage.ProcessLogic
                             bool claimedFeatures = false;
                             foreach (var feature in featuresInBlock)
                                 // Object will claim feature if the object remains viable after claiming feature
-                                if (theObject.Value.MaybeClaimFeature(feature.Value, expectedObjectLocation))
+                                if (theObject.Value.MaybeClaimFeature(feature.Value as CombFeature, expectedObjectLocation))
                                 {
                                     availFeatures.Remove(feature.Value.FeatureId);
                                     claimedFeatures = true;
@@ -295,7 +295,7 @@ namespace SkyCombImage.ProcessLogic
                             expectedObjectLocation.Height);
 
                         foreach (var feature in availFeatures)
-                            theObject.Value.MaybeClaimFeature(feature.Value, expectedObjectLocation);
+                            theObject.Value.MaybeClaimFeature(feature.Value as CombFeature, expectedObjectLocation);
                     }
 
 
@@ -322,7 +322,7 @@ namespace SkyCombImage.ProcessLogic
                 foreach (var feature in availFeatures)
                     if (feature.Value.IsTracked && (feature.Value.ObjectId == 0))
                     {
-                        CombObjs.Add(scope, feature.Value);
+                        CombObjs.Add(scope, feature.Value as CombFeature);
                         if (blockID >= 2)
                         {
                             // TODO: Consider claiming overship of overlapping inactive features from the previous Block(s).
@@ -379,8 +379,11 @@ namespace SkyCombImage.ProcessLogic
         {
             int numPixels = 0;
             foreach (var feature in CombFeatures)
-                if (feature.Value.Pixels != null)
-                    numPixels += feature.Value.Pixels.Count;
+            {
+                var combFeature = feature.Value as CombFeature;
+                if (combFeature.Pixels != null)
+                    numPixels += combFeature.Pixels.Count;
+            }
 
             return new DataPairList
             {

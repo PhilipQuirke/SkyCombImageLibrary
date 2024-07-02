@@ -142,13 +142,13 @@ namespace SkyCombImage.DrawSpace
                             Assert(feature.BlockId == block.BlockId, "CombImage: Bad logic");
 
                             // Draw all hot pixels for the current block 
-                            HotPixels(drawConfig, processConfig, ref outputImg, feature, transform);
+                            HotPixels(drawConfig, processConfig, ref outputImg, feature as CombFeature, transform);
 
                             // Draw the bounding rectangle of the owned feature
                             CombObject? theObject = null;
                             if (feature.ObjectId > 0)
                                 theObject = process.CombObjs.CombObjList[feature.ObjectId];
-                            ObjectFeatures(drawConfig, focusObjectId, ref outputImg, feature, theObject, transform);
+                            ObjectFeatures(drawConfig, focusObjectId, ref outputImg, feature as CombFeature, theObject, transform);
                         }
                     }
                 }

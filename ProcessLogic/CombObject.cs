@@ -20,10 +20,10 @@ namespace SkyCombImage.ProcessLogic
         // List of features that make up this object
         public CombFeatureList Features { get; set; }
         // First (Real) feature claimed by this object. 
-        public CombFeature FirstFeature { get { return (Features.Count == 0 ? null : Features.Values[0]); } }
-        public CombFeature LastRealFeature { get { return (COM.LastRealFeatureIndex == UnknownValue ? null : Features.Values[COM.LastRealFeatureIndex]); } }
+        public CombFeature? FirstFeature { get { return Features.FirstFeature as CombFeature; } }
+        public CombFeature? LastRealFeature { get { return (COM.LastRealFeatureIndex == UnknownValue ? null : Features.Values[COM.LastRealFeatureIndex] as CombFeature); } }
         // Last (Real or UnReal) feature claimed by this object. May be null.
-        public CombFeature LastFeature { get { return (Features.Count == 0 ? null : Features.Values[^1]); } }
+        public CombFeature? LastFeature { get { return Features.LastFeature as CombFeature; } }
 
 
         // Constructor used processing video 

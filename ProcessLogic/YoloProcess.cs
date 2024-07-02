@@ -31,7 +31,7 @@ namespace SkyCombImage.ProcessModel
         {
             //YoloBlocks = new();
             YoloObjects = new(this);
-            YoloFeatures = new(this);
+            YoloFeatures = new(processConfig);
             YoloObjects.LegFirstIndex = 0;
             FlightLeg_SigObjects = 0;
             YoloDetect = new YoloDetect(yoloDirectory, processConfig.YoloConfidence, processConfig.YoloIoU);
@@ -95,12 +95,12 @@ namespace SkyCombImage.ProcessModel
                 int blockID = currBlock.BlockId;
 
                 // Convert Boxes to YoloFeatures
-                YoloFeatureList featuresInBlock = new(this);
+                YoloFeatureList featuresInBlock = new(this.ProcessConfig);
                 foreach (var box in result.Boxes)
                 {
                     // We have found a new feature/object
                     var imagePixelBox = new Rectangle(box.Bounds.Left, box.Bounds.Top, box.Bounds.Width, box.Bounds.Height);
-                    featuresInBlock.AddFeature(currBlock.BlockId, imagePixelBox, box);
+                    featuresInBlock.AddFeature(this, currBlock.BlockId, imagePixelBox, box);
                 }
 
 
@@ -118,7 +118,7 @@ namespace SkyCombImage.ProcessModel
                     }
 
                 // Each feature can only be claimed once
-                YoloFeatureList availFeatures = featuresInBlock.Clone();
+                YoloFeatureList availFeatures = featuresInBlock.Clone() as YoloFeatureList;
 
 
                 // For each active object, consider each feature (significant or not)
@@ -141,7 +141,7 @@ namespace SkyCombImage.ProcessModel
                             bool claimedFeatures = false;
                             foreach (var feature in featuresInBlock)
                                 // Object will claim feature if the object remains viable after claiming feature
-                                if (theObject.Value.MaybeClaimFeature(feature.Value, expectedObjectLocation))
+                                if (theObject.Value.MaybeClaimFeature(feature.Value as YoloFeature, expectedObjectLocation))
                                 {
                                     availFeatures.Remove(feature.Value.FeatureId);
                                     claimedFeatures = true;
@@ -172,7 +172,7 @@ namespace SkyCombImage.ProcessModel
                             expectedObjectLocation.Height);
 
                         foreach (var feature in availFeatures)
-                            theObject.Value.MaybeClaimFeature(feature.Value, expectedObjectLocation);
+                            theObject.Value.MaybeClaimFeature(feature.Value as YoloFeature, expectedObjectLocation);
                     }
 
 
@@ -201,7 +201,7 @@ namespace SkyCombImage.ProcessModel
                 foreach (var feature in availFeatures)
                     if (feature.Value.ObjectId == 0)
                     {
-                        YoloObjects.AddObject(scope, feature.Value );
+                        YoloObjects.AddObject(scope, feature.Value as YoloFeature );
                         if (blockID >= 2)
                         {
                             // TODO: Consider claiming overship of overlapping inactive features from the previous Block(s).

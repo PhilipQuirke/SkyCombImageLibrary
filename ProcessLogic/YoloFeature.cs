@@ -36,46 +36,23 @@ namespace SkyCombImage.ProcessModel
     };
 
 
-    public class YoloFeatureList : SortedList<int, YoloFeature>
+    public class YoloFeatureList : ProcessFeatureList
     {
-        private YoloProcess YoloProcess;
-
-
-        public YoloFeatureList(YoloProcess yoloProcess)
+        public YoloFeatureList(ProcessConfigModel config) : base(config)
         {
-            YoloProcess = yoloProcess;
         }
 
 
-        public YoloFeature AddFeature(YoloFeature feature)
+        protected override ProcessFeatureList Create(ProcessConfigModel config)
         {
-            BaseConstants.Assert(feature.FeatureId > 0, "AddFeature: No Id");
-            this.Add(feature.FeatureId, feature);
+            return new YoloFeatureList(config);
+        }
+
+        public YoloFeature AddFeature(YoloProcess yoloProcess, int blockId, Rectangle imagePixelBox, BoundingBox? boundingBox)
+        {
+            var feature = new YoloFeature(yoloProcess, blockId, imagePixelBox, boundingBox);
+            AddFeature(feature);
             return feature;
-        }
-        public YoloFeature AddFeature(int blockId, Rectangle imagePixelBox, BoundingBox? boundingBox)
-        {
-            return AddFeature(new YoloFeature(YoloProcess, blockId, imagePixelBox, boundingBox));
-        }
-
-
-        // Add the feature list for a new block into this YoloFeatureListList 
-        public void AddFeatureList(YoloFeatureList featuresToAdd)
-        {
-            if (featuresToAdd != null)
-                foreach (var feature in featuresToAdd)
-                    AddFeature(feature.Value);
-        }
-
-
-        public YoloFeatureList Clone()
-        {
-            var answer = new YoloFeatureList(YoloProcess);
-
-            foreach (var feature in this)
-                answer.AddFeature(feature.Value);
-
-            return answer;
         }
     };
 
