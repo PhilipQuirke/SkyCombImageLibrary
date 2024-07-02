@@ -3,6 +3,7 @@ using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
+using System.Runtime.InteropServices.Marshalling;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -161,9 +162,12 @@ namespace SkyCombImage.ProcessLogic
         {
             if (ProcessConfig.SavePixels == SavePixelsEnum.None)
                 foreach (var theObject in CombObjs.CombObjList)
-                    if (theObject.Value.FlightLegId <= 0)
-                        foreach (var feature in theObject.Value.Features)
+                {
+                    var combObject = theObject.Value as CombObject;
+                    if (combObject.FlightLegId <= 0)
+                        foreach (var feature in combObject.Features)
                             (feature.Value as CombFeature).Pixels?.Clear();
+                }
         }
 
 
@@ -232,13 +236,16 @@ namespace SkyCombImage.ProcessLogic
                 CombObjList inScopeObjects = new();
                 CombObjList availObjects = new();
                 foreach (var theObject in CombObjs.CombObjList)
-                    if ((theObject.Value.LastFeature != null) &&
-                        (theObject.Value.LastFeature.Block.BlockId == blockID - 1) &&
-                        theObject.Value.VaguelySignificant())
+                {
+                    var combObject = theObject.Value as CombObject;
+                    if ((combObject.LastFeature != null) &&
+                        (combObject.LastFeature.Block.BlockId == blockID - 1) &&
+                        combObject.VaguelySignificant())
                     {
-                        inScopeObjects.AddObject(theObject.Value);
-                        availObjects.AddObject(theObject.Value);
+                        inScopeObjects.AddObject(combObject);
+                        availObjects.AddObject(combObject);
                     }
+                }
 
                 // Each feature can only be claimed once
                 CombFeatureList availFeatures = featuresInBlock.Clone() as CombFeatureList;
@@ -253,24 +260,25 @@ namespace SkyCombImage.ProcessLogic
                 for (int pass = 0; pass < 2; pass++)
                     foreach (var theObject in inScopeObjects)
                     {
-                        var lastFeat = theObject.Value.LastFeature;
+                        var combObject = theObject.Value as CombObject;
+                        var lastFeat = combObject.LastFeature;
                         if ((lastFeat.Block.BlockId == blockID - 1) &&
                             (pass == 0 ? lastFeat.Type == FeatureTypeEnum.Real : lastFeat.Type != FeatureTypeEnum.Unreal))
                         {
                             // If one or more features overlaps the object's expected location,
                             // claim ownership of the feature(s), and mark them as Significant.
-                            var expectedObjectLocation = theObject.Value.ExpectedLocationThisBlock();
+                            var expectedObjectLocation = combObject.ExpectedLocationThisBlock();
 
                             bool claimedFeatures = false;
                             foreach (var feature in featuresInBlock)
                                 // Object will claim feature if the object remains viable after claiming feature
-                                if (theObject.Value.MaybeClaimFeature(feature.Value as CombFeature, expectedObjectLocation))
+                                if (combObject.MaybeClaimFeature(feature.Value as CombFeature, expectedObjectLocation))
                                 {
                                     availFeatures.Remove(feature.Value.FeatureId);
                                     claimedFeatures = true;
                                 }
                             if (claimedFeatures)
-                                availObjects.Remove(theObject.Value.ObjectId);
+                                availObjects.Remove(combObject.ObjectId);
                         }
                     }
 
@@ -281,11 +289,13 @@ namespace SkyCombImage.ProcessLogic
                 // be vertically below the object estimated location.
                 Phase = 4;
                 foreach (var theObject in availObjects)
-                    if (theObject.Value.NumRealFeatures() <= 2)
+                {
+                    var combObject = theObject.Value as CombObject;
+                    if (combObject.NumRealFeatures() <= 2)
                     {
                         // If one or more features overlaps the object's expected location,
                         // claim ownership of the feature(s), and mark them as Significant.
-                        var expectedObjectLocation = theObject.Value.ExpectedLocationThisBlock();
+                        var expectedObjectLocation = combObject.ExpectedLocationThisBlock();
 
                         // Search higher in the image 
                         expectedObjectLocation = new System.Drawing.Rectangle(
@@ -295,9 +305,9 @@ namespace SkyCombImage.ProcessLogic
                             expectedObjectLocation.Height);
 
                         foreach (var feature in availFeatures)
-                            theObject.Value.MaybeClaimFeature(feature.Value as CombFeature, expectedObjectLocation);
+                            combObject.MaybeClaimFeature(feature.Value as CombFeature, expectedObjectLocation);
                     }
-
+                }
 
                 Phase = 5;
                 currBlock.AddFeatureList(featuresInBlock);
@@ -307,14 +317,16 @@ namespace SkyCombImage.ProcessLogic
                 // overlapping feature in this Block, if it is worth continuing tracking...
                 Phase = 6;
                 foreach (var theObject in inScopeObjects)
-                    if (theObject.Value.COM.BeingTracked &&
-                       (theObject.Value.COM.LastRealFeatureIndex != UnknownValue) &&
-                       (theObject.Value.LastRealFeature.Block.BlockId < blockID) &&
-                       theObject.Value.KeepTracking(blockID))
+                {
+                    var combObject = theObject.Value as CombObject;
+                    if (combObject.COM.BeingTracked &&
+                       (combObject.COM.LastRealFeatureIndex != UnknownValue) &&
+                       (combObject.LastRealFeature.Block.BlockId < blockID) &&
+                       combObject.KeepTracking(blockID))
                         // ... persist this object another Block. Create an unreal feature, with no pixels, with a rectangle   
                         // calculated from the object's last bounding rectangle and the average frame movement.
-                        AddPersistFeature(theObject.Value);
-
+                        AddPersistFeature(combObject);
+                }
 
                 // All active features have passed the min pixels and min density tests, and are worth tracking.
                 // For all unowned active features in this frame, create a new object to own the feature.

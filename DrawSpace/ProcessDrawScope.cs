@@ -180,7 +180,7 @@ namespace SkyCombImage.DrawSpace
         }
 
 
-        public void SetObjectRange(CombObjList objList)
+        public void SetObjectRange(ProcessObjList objList)
         {
             if (objList == null)
                 ResetMemberData();

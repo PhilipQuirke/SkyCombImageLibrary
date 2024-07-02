@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved.
+﻿// Copyright SkyComb Limited 2024. All rights reserved.
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
@@ -147,7 +147,7 @@ namespace SkyCombImage.DrawSpace
                             // Draw the bounding rectangle of the owned feature
                             CombObject? theObject = null;
                             if (feature.ObjectId > 0)
-                                theObject = process.CombObjs.CombObjList[feature.ObjectId];
+                                theObject = process.CombObjs.CombObjList[feature.ObjectId] as CombObject;
                             ObjectFeatures(drawConfig, focusObjectId, ref outputImg, feature as CombFeature, theObject, transform);
                         }
                     }

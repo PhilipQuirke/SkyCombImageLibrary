@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved. 
+﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.DrawSpace;
@@ -77,7 +77,7 @@ namespace SkyCombImage.RunSpace
             ProcessDrawScope = new(combProcess, this, Drone);
 
             // What is the maximum scope of objects we draw?
-            CombObjList? combObjList = null;
+            ProcessObjList? combObjList = null;
             ObjectDrawScope? drawObjectScope = null;
             if (combProcess != null)
             {

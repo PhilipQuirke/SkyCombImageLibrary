@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved.
+﻿// Copyright SkyComb Limited 2024. All rights reserved.
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.CommonSpace;
@@ -106,7 +106,7 @@ namespace SkyCombImage.DrawSpace
 
     public class DrawHeightHistogram : DrawHistogram
     {
-        public DrawHeightHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, CombObjList objs) :
+        public DrawHeightHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, ProcessObjList objs) :
             base(drawScope, objs.HistogramHeightM(), 0, (int)Math.Ceiling(objs.MaxHeightM))
         {
             FilterMin = (drawObjectScope == null ? ProcessObjectModel.UnknownHeight : drawObjectScope.MinHeightM);
@@ -119,7 +119,7 @@ namespace SkyCombImage.DrawSpace
     {
         public const int Scale = 500; // Each bar represents a 500cm2 increase in size
 
-        public DrawSizeHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, CombObjList objs) :
+        public DrawSizeHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, ProcessObjList objs) :
             base(drawScope, objs.HistogramSizeCm2(Scale), 0, (int)Math.Ceiling(objs.MaxSizeCM2), Scale)
         {
             FilterMin = 0;
@@ -130,7 +130,7 @@ namespace SkyCombImage.DrawSpace
 
     public class DrawHeatHistogram : DrawHistogram
     {
-        public DrawHeatHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, CombObjList objs) :
+        public DrawHeatHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, ProcessObjList objs) :
             base(drawScope, objs.HistogramHeat(), objs.MinHeat, objs.MaxHeat)
         {
             FilterMin = (drawObjectScope == null ? 235 : drawObjectScope.MinHeat);
@@ -146,7 +146,7 @@ namespace SkyCombImage.DrawSpace
 
     public class DrawRangeHistogram : DrawHistogram
     {
-        public DrawRangeHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, CombObjList objs) :
+        public DrawRangeHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, ProcessObjList objs) :
             base(drawScope, objs.HistogramRangeM(), 0, objs.MaxRangeM)
         {
             FilterMin = (drawObjectScope == null ? 0 : drawObjectScope.MinRangeM);

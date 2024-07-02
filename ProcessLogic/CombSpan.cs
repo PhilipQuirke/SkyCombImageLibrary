@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved. 
+﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using MathNet.Numerics.LinearRegression;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
@@ -35,7 +35,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Apply FixAltM to theSteps and on to the CombObjects and their CombFeatures
-        public bool CalculateSettings_ApplyFixAltM(float fixAltM, FlightStepList theSteps, CombObjList combObjs)
+        public bool CalculateSettings_ApplyFixAltM(float fixAltM, FlightStepList theSteps, ProcessObjList combObjs)
         {
             // The image associated with each leg step now covers a slightly different area
             // Recalculate InputImageCenter Dem and Dsm based on fixAltM
@@ -43,21 +43,22 @@ namespace SkyCombImage.ProcessLogic
 
             foreach (var theObject in combObjs)
             {
+                var combObject = theObject.Value as CombObject;
                 // Copy the list of features claimed by the object
-                var objectFeatures = theObject.Value.Features.Clone();
+                var objectFeatures = combObject.Features.Clone();
 
                 // Eliminate all object summary data.
-                theObject.Value.ResetMemberData();
+                combObject.ResetMemberData();
 
                 // Recalc each feature - which will have a slightly different location
                 foreach (var theFeature in objectFeatures)
                 {
                     var combFeature = theFeature.Value as CombFeature;
                     combFeature.ResetMemberData();
-                    combFeature.CalculateSettings_LocationM_FlatGround(theObject.Value.LastRealFeature);
+                    combFeature.CalculateSettings_LocationM_FlatGround(combObject.LastRealFeature);
                     combFeature.CalculateSettings_LocationM_HeightM_LineofSight();
 
-                    theObject.Value.ClaimFeature(combFeature);
+                    combObject.ClaimFeature(combFeature);
                 }
             }
 
@@ -80,7 +81,7 @@ namespace SkyCombImage.ProcessLogic
         // Apply various "FixAltM" trial values to the FlightSteps, CombFeatures & CombObjects.
         // For each trial, measure the sum of the object location errors.
         // Lock in the legSteps.FixAltM value that reduces the error most.
-        public void CalculateSettings_FixAltM(FlightStepList theSteps, CombObjList combObjs)
+        public void CalculateSettings_FixAltM(FlightStepList theSteps, ProcessObjList combObjs)
         {
             try
             {
@@ -249,11 +250,12 @@ namespace SkyCombImage.ProcessLogic
                         CombObjList combObjs = new();
                         for (int objectId = allObjs.Last().Key; objectId >= 0; objectId--)
                         {
-                            CombObject theObject;
+                            ProcessObject theObject;
                             if (allObjs.TryGetValue(objectId, out theObject))
                             {
-                                var firstFeat = theObject.FirstFeature;
-                                var lastFeat = theObject.LastRealFeature;
+                                var combObject = theObject as CombObject;
+                                var firstFeat = combObject.FirstFeature;
+                                var lastFeat = combObject.LastRealFeature;
                                 if ((firstFeat != null) && (lastFeat != null))
                                 {
                                     var firstStepId = firstFeat.Block.FlightStepId;

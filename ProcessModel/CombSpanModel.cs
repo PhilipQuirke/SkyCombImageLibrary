@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved. 
+﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessLogic;
@@ -59,7 +59,7 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        protected void SetBest(float fixAltM, CombObjList combObjs)
+        protected void SetBest(float fixAltM, ProcessObjList combObjs)
         {
             BestFixAltM = fixAltM;
             BestSumLocnErrM = combObjs.SumLocationErrM;
