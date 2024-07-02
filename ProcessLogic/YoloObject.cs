@@ -3,8 +3,6 @@ using SkyCombDrone.DroneLogic;
 using SkyCombImage.ProcessLogic;
 using SkyCombGround.CommonSpace;
 using System.Drawing;
-using Emgu.CV.Dnn;
-
 
 
 namespace SkyCombImage.ProcessModel
@@ -48,7 +46,7 @@ namespace SkyCombImage.ProcessModel
             base.ResetMemberData();
             ClassName = "";
             ClassColor = Color.Black;
-            ClassConfidence = 0.9f;
+            ClassConfidence = 0.66f;
 
             Features = new(YoloProcess);
         }
@@ -210,12 +208,9 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        // No existing objects should be live at the start of a new leg
+        // No existing objects should be tracked at the start of a new leg
         public void ProcessLegStart()
         {
-            foreach (var theObject in this)
-                theObject.Value.Significant = false;
-
             LegFirstIndex = Count;
         }
     };

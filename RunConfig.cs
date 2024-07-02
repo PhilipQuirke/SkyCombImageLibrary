@@ -38,7 +38,8 @@ namespace SkyCombImage.ProcessModel
         // Directory path to store created (video and spreadsheet) files into. Can be blank. Trailing "\" (if any) is trimmed
         public string OutputDirectory { get; set; } = "";
 
-        // Directory path/file to load YOLOv8 model from. If is a bare directory path, code appends "\model.onnx"
+        // Directory path/file to load YOLOv8 model from. If is a bare directory path, code appends "\yolo_v8_s_e100.onnx"
+        // yolo_v8_s_e100.onnx was generated in and exported from Supervisely.
         public string YoloDirectory { get; set; } = "";
 
         // Name of main process to run: contour, distance, yolo, gftt, comb, threshold, none. Lowercase.

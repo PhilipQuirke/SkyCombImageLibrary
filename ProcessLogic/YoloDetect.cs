@@ -30,13 +30,14 @@ namespace SkyCombImage.ProcessLogic
         {
             Assert(yoloDirectory != "", "yoloDirectory is not specified");
 
-            // If modelDirectory doesnt end in ".onnx" append "\model.onnx" or "model.onnx"
+            // If modelDirectory doesnt end in ".onnx" append suffix
             if (!yoloDirectory.EndsWith(".onnx"))
             {
+                // First SkyComb-specific model was trained in Supervisely in June 2024 by fine-tuning a YOLO COCO V8 "medium" model
                 if (yoloDirectory.EndsWith("\\") || yoloDirectory.EndsWith("/"))
-                    yoloDirectory += "yolo_v8_model.onnx";
+                    yoloDirectory += "yolo_v8_s_e100.onnx";
                 else
-                    yoloDirectory += "\\yolyolo_v8_modelo_model.onnx";
+                    yoloDirectory += "\\yolo_v8_s_e100.onnx";
             }
 
             try

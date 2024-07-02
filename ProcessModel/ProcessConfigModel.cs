@@ -92,8 +92,8 @@ namespace SkyCombImage.ProcessModel
 
 
         // Yolo process:
-        public float YoloConfidence { get; set; } = 0.3f;
-        public float YoloIoU { get; set; } = 0.45f;
+        public float YoloConfidence { get; set; } = 0.66f; 
+        public float YoloIoU { get; set; } = 0.5f; // Typically 0.3 to 0.7
 
 
         // --------------------- Saving Output --------------------- 
@@ -162,17 +162,11 @@ namespace SkyCombImage.ProcessModel
 
         public void ValidateYolo()
         {
-            if (YoloConfidence < 0.1f)
-                YoloConfidence = 0.1f;
+            if((YoloConfidence < 0.1f) || (YoloConfidence > 0.9f))
+               YoloConfidence = 0.66f;
 
-            if (YoloConfidence > 0.99f)
-                YoloConfidence = 0.99f;
-
-            if (YoloIoU < 0.1f)
-                YoloIoU = 0.1f;
-
-            if (YoloIoU > 0.99f)
-                YoloIoU = 0.99f;
+            if((YoloIoU < 0.1f) || (YoloIoU > 0.9f))
+                YoloIoU = 0.5f;
         }
 
 
