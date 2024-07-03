@@ -18,6 +18,9 @@ namespace SkyCombImage.ProcessLogic
         // A feature is associated 1-1 with a Block
         public ProcessBlock Block { get; set; }
 
+        // Location of hot pixels in this feature.
+        public PixelHeatList? Pixels { get; set; } = null;
+
 
         public ProcessFeature(ProcessAll processAll, int blockId, FeatureTypeEnum type) : base(blockId, type)
         {
@@ -34,6 +37,80 @@ namespace SkyCombImage.ProcessLogic
             ProcessAll = processAll;
             Block = ProcessAll.Blocks[BlockId];
         }
+
+
+        // Number of hot pixels inside the PixelBox
+        public int NumHotPixels
+        {
+            get
+            {
+                if (Pixels != null)
+                    return Pixels.Count;
+                return 0;
+            }
+        }
+
+
+        // Percentage of PixelBox which is hot pixels
+        public int DensityPerc
+        {
+            get
+            {
+                if (Pixels != null)
+                    return (int)((100.0f * Pixels.Count) / (PixelBox.Width * PixelBox.Height));
+                return 0;
+            }
+        }
+
+
+        // Is this feature's hot pixel density percentage above the minimum?
+        public bool PixelDensityGood
+        {
+            get
+            {
+                return DensityPerc >= ProcessConfig.FeatureMinDensityPerc;
+            }
+        }
+
+
+        // Is this feature larger than the largest allowed?
+        public bool FeatureOverSized
+        {
+            get
+            {
+                return
+                    (PixelBox.Width > ProcessConfig.FeatureMaxSize) ||
+                    (PixelBox.Height > ProcessConfig.FeatureMaxSize);
+            }
+        }
+
+
+        // Does this Feature's PixelBox and the specified object's rectangle overlap significantly?
+        public bool SignificantPixelBoxIntersection(Rectangle objectExpectedLocation)
+        {
+            int featureMinOverlapPerc = ProcessConfig.FeatureMinOverlapPerc;
+            var intersection = Rectangle.Intersect(PixelBox, objectExpectedLocation);
+
+            // Refer https://stackoverflow.com/questions/9324339/how-much-do-two-rectangles-overlap
+            // SI = Max(0, Min(XA2, XB2) - Max(XA1, XB1)) * Max(0, Min(YA2, YB2) - Max(YA1, YB1))
+            // SU = SA + SB - SI
+            // OverlapFraction = SI / SU
+            var sizeIntersection = intersection.Width * intersection.Height;
+
+            var sizeA = PixelBox.Width * PixelBox.Height;
+            var sizeB = objectExpectedLocation.Width * objectExpectedLocation.Height;
+
+            var resultA = 1.0F * sizeIntersection / sizeA;
+            var resultB = 1.0F * sizeIntersection / sizeB;
+
+            var minOverlap = featureMinOverlapPerc / 100.0F;
+
+            return
+                resultA >= minOverlap ||   // 25% overlap of rectA
+                resultB >= minOverlap;     // 25% overlap of rectB
+        }
+
+
 
 
         // This feature consumes/absorbs/takes-hot-pixels-from the otherFeature, leaving otherFeature empty.
@@ -566,6 +643,23 @@ namespace SkyCombImage.ProcessLogic
                 answer = BaseConstants.UnknownValue;
 
             return answer;
+        }
+
+        public  (int minHeat, int maxHeat, int maxPixels) HeatSummary()
+        {
+            int maxHeat = 0;
+            int minHeat = 255;
+            int maxPixels = 0;
+            foreach (var feature in this)
+            {
+                var combFeature = feature.Value;
+                maxHeat = Math.Max(maxHeat, combFeature.MaxHeat);
+                if (feature.Value.MinHeat > 0)
+                    minHeat = Math.Min(minHeat, combFeature.MinHeat);
+                maxPixels = Math.Max(maxPixels, combFeature.NumHotPixels);
+            }
+
+            return (minHeat, maxHeat, maxPixels);
         }
     };
 }

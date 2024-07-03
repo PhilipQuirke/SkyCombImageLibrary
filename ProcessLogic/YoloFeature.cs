@@ -23,13 +23,6 @@ namespace SkyCombImage.ProcessModel
             Significant = true;
             BoundingBox = boundingBox;
         }
-
-
-        // Does this Feature's PixleBox and the specified object's rectangle overlap significantly?
-        public bool SignificantPixelBoxIntersection(Rectangle objectExpectedPixelBox)
-        {
-            return base.SignificantPixelBoxIntersection(objectExpectedPixelBox, ProcessAll.ProcessConfig.FeatureMinOverlapPerc);
-        }
     };
 
 }

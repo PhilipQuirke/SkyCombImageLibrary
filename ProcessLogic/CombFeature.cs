@@ -15,9 +15,6 @@ namespace SkyCombImage.ProcessLogic
         // Parent process model
         protected CombProcess CombProcess { get { return ProcessAll as CombProcess; } }
 
-        // Location of hot pixels in this feature.
-        public PixelHeatList? Pixels { get; set; } = null;
-
 
         public CombFeature( CombProcess combProcess, ProcessBlock block, FeatureTypeEnum type) : base(combProcess, block.BlockId, type)
         {
@@ -30,43 +27,6 @@ namespace SkyCombImage.ProcessLogic
         // Constructor used when loaded objects from the datastore
         public CombFeature(CombProcess combProcess, List<string> settings) : base(combProcess, settings)
         {
-        }
-
-
-        // Number of hot pixels inside the PixelBox
-        public int NumHotPixels { get {
-            if (Pixels != null)
-                return Pixels.Count;
-            return 0;
-        } }
-
-
-        // Percentage of PixelBox which is hot pixels
-        public int DensityPerc { get {
-            if (Pixels != null)
-                return (int)((100.0f * Pixels.Count) / (PixelBox.Width * PixelBox.Height));
-            return 0;
-        } }
-
-
-        // Is this feature's hot pixel density percentage above the minimum?
-        public bool PixelDensityGood { get {
-            return DensityPerc >= CombProcess.ProcessConfig.FeatureMinDensityPerc;
-        } }
-
-
-        // Is this feature larger than the largest allowed?
-        public bool FeatureOverSized { get {
-            return
-                (PixelBox.Width > CombProcess.ProcessConfig.FeatureMaxSize) ||
-                (PixelBox.Height > CombProcess.ProcessConfig.FeatureMaxSize);
-        } }
-
-
-        // Does this Feature's PixleBox and the specified object's rectangle overlap significantly?
-        public bool SignificantPixelBoxIntersection(Rectangle objectExpectedPixelBox)
-        {
-            return base.SignificantPixelBoxIntersection(objectExpectedPixelBox, CombProcess.ProcessConfig.FeatureMinOverlapPerc);
         }
 
 
@@ -314,22 +274,5 @@ namespace SkyCombImage.ProcessLogic
             }
         }
 
-
-        public static (int minHeat, int maxHeat, int maxPixels) HeatSummary(ProcessFeatureList features)
-        {
-            int maxHeat = 0;
-            int minHeat = 255;
-            int maxPixels = 0;
-            foreach (var feature in features)
-            {
-                var combFeature = feature.Value as CombFeature;
-                maxHeat = Math.Max(maxHeat, combFeature.MaxHeat);
-                if (feature.Value.MinHeat > 0)
-                    minHeat = Math.Min(minHeat, combFeature.MinHeat);
-                maxPixels = Math.Max(maxPixels, combFeature.NumHotPixels);
-            }
-
-            return (minHeat, maxHeat, maxPixels);
-        }
     };
 }

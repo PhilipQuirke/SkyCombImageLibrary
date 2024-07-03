@@ -24,6 +24,11 @@ namespace SkyCombImage.ProcessLogic
 
 
         public ProcessFeatureList ProcessFeatures;
+        // First (Real) feature claimed by this object. 
+        public ProcessFeature? FirstFeature { get { return ProcessFeatures.FirstFeature; } }
+        public ProcessFeature? LastRealFeature { get { return (LastRealFeatureIndex == UnknownValue ? null : ProcessFeatures.Values[LastRealFeatureIndex]); } }
+        // Last (Real or UnReal) feature claimed by this object. May be null.
+        public ProcessFeature? LastFeature { get { return ProcessFeatures.LastFeature; } }
 
 
         public ProcessObject(ProcessAll processAll, ProcessScope scope) : base()
@@ -59,6 +64,28 @@ namespace SkyCombImage.ProcessLogic
                     answer++;
 
             return answer;
+        }
+
+        // Is this object still worth tracking in specified block?
+        public bool KeepTracking(int BlockId)
+        {
+            // Once inactive, an object stops being tracked permanently.
+            if (BeingTracked)
+            {
+                if (LastRealFeature.Block.BlockId >= BlockId)
+                {
+                    // Yes, this is worth tracking.
+                }
+                else if (ProcessConfig.ObjectMaxUnrealBlocks > 0)
+                {
+                    // Are we still on the persistance window?
+                    BeingTracked = (LastFeature.Block.BlockId - LastRealFeature.Block.BlockId < ProcessConfig.ObjectMaxUnrealBlocks);
+                }
+                else
+                    BeingTracked = false;
+            }
+
+            return BeingTracked;
         }
 
 
@@ -178,6 +205,252 @@ namespace SkyCombImage.ProcessLogic
                 answer.Inflate(5, 5);
 
             return answer;
+        }
+
+
+        // After loading data from a previous run from the data store
+        // we have blocks, features and objects, but the links between them are not set.
+        public void SetLinksAfterLoad(ProcessFeature feature)
+        {
+            Assert(feature != null, "SetLinksAfterLoad: Feature not provided.");
+            Assert(feature.ObjectId == ObjectId, "SetLinksAfterLoad: Feature not for this object.");
+
+            ProcessFeatures.AddFeature(feature);
+            if (feature.Type == FeatureTypeEnum.Real)
+                LastRealFeatureIndex = ProcessFeatures.Count - 1;
+        }
+
+
+        // Calculate the drone SumLinealM distance corrsponding to the centroid of the object
+        protected void Calculate_AvgSumLinealM()
+        {
+            var firstFeat = FirstFeature;
+            var lastFeat = LastRealFeature;
+
+            if ((firstFeat != null) &&
+               (firstFeat.Block != null) &&
+               (firstFeat.Block.FlightStep != null) &&
+               (lastFeat != null) &&
+               (lastFeat.Block != null) &&
+               (lastFeat.Block.FlightStep != null))
+            {
+                var firstSumLinealM = firstFeat.Block.FlightStep.SumLinealM;
+                var lastSumLinealM = lastFeat.Block.FlightStep.SumLinealM;
+                if (firstSumLinealM == UnknownValue)
+                    AvgSumLinealM = lastSumLinealM;
+                else if (lastSumLinealM != UnknownValue)
+                    AvgSumLinealM = (firstSumLinealM + lastSumLinealM) / 2;
+            }
+        }
+
+
+        // Calculate object's location (centroid) as average of real feature's locations.
+        // The feature locations are based on where in the drone's field of image the object was detected. 
+        // Calculate location error, a measure of real feature dispersion,
+        // as average distance from object location (centroid).
+        // Refer https://stats.stackexchange.com/questions/13272/2d-analog-of-standard-deviation for rationale.
+        protected void Calculate_LocationM_and_LocationErrM()
+        {
+            (LocationM, LocationErrM) = ProcessFeatures.Calculate_Avg_LocationM_and_LocationErrM();
+        }
+
+
+        protected bool HasMoved()
+        {
+            // Drone moved from point A to point B (base-line distance L) in metres.
+            double baselineM = RelativeLocation.DistanceM(
+                FirstFeature.Block.DroneLocnM,
+                LastRealFeature.Block.DroneLocnM);
+            // If drone has not moved enough this method will be very inaccurate.
+            return (baselineM >= 2);
+        }
+
+
+        // Calculate object height and object height error by averaging the feature data.
+        protected void Calculate_HeightM_and_HeightErrM()
+        {
+            (HeightM, HeightErrM, MinHeightM, MaxHeightM) = ProcessFeatures.Calculate_Avg_HeightM_and_HeightErrM();
+        }
+
+
+        // Calculate the average horizontal range of the object from the drone in meters.
+        // Relies on object.LocationM already being calculated.
+        protected void Calculate_AvgRangeM()
+        {
+            var firstFeature = FirstFeature;
+            var lastRealFeature = LastRealFeature;
+            if ((firstFeature == null) ||
+                (firstFeature.Block == null) ||
+                (firstFeature.Block.FlightStep == null) ||
+                (lastRealFeature == null) ||
+                (lastRealFeature.Block == null) ||
+                (lastRealFeature.Block.FlightStep == null))
+                return;
+
+            AvgRangeM = (int)(
+                (RelativeLocation.DistanceM(LocationM, firstFeature.Block.FlightStep.DroneLocnM) +
+                 RelativeLocation.DistanceM(LocationM, lastRealFeature.Block.FlightStep.DroneLocnM)) / 2.0);
+        }
+
+
+        // Returns the average sideways-down-angles (right angles to the direction of flight)
+        // of the object in the first image detected and the last image detected.
+        // Only uses camera physics and hot-object position in image data.
+        protected double Calculate_Image_AvgSidewaysRads()
+        {
+            (var xFracFirst, var _) = FirstFeature.CentroidImageFractions();
+            (var xFracLast, var _) = LastFeature.CentroidImageFractions();
+
+            // Calculation is based on physical parameters of the thermal camera.
+            double fullHorizFoVRadians = ProcessAll.VideoData.HFOVRad;
+            double halfHorizFoVRadians = fullHorizFoVRadians / 2;
+
+            // Calculate the average angle to object, at right angles to the direction of flight (sideways), to the vertical, in radians
+            //      If PixelBox.X = 0 then object is at the very left of the image => SideRads is -horizFoVRadians/2
+            //      If PixelBox.X = ImageWidth/2 then object is in the middle of the image => SideRads is 0
+            //      If PixelBox.X = ImageWidth then object is at the very right of the image => SideRads is +horizFoVRadians/2
+            // Assumes drone is moving forward (not sidewards or backwards) or is stationary.
+            double firstSideFraction = xFracFirst * 2 - 1;
+            Assert(firstSideFraction >= -1 && firstSideFraction <= 1, "Calculate_Image_AvgSidewaysRads: firstSideFraction out of range");
+
+            double firstSideRads = halfHorizFoVRadians * firstSideFraction;
+            Assert(Math.Abs(firstSideRads) <= halfHorizFoVRadians, "Calculate_Image_AvgSidewaysRads: firstSideRads out of range");
+
+            double lastSideFraction = xFracLast * 2 - 1;
+            Assert(lastSideFraction >= -1 && firstSideFraction <= 1, "Calculate_Image_AvgSidewaysRads: lastSideFraction out of range");
+
+            double lastSideRads = halfHorizFoVRadians * lastSideFraction;
+            Assert(Math.Abs(lastSideRads) <= halfHorizFoVRadians + 0.005, "Calculate_Image_AvgSidewaysRads: lastSideRads out of range");
+
+            Assert(Math.Abs(lastSideRads - firstSideRads) < fullHorizFoVRadians, "Calculate_Image_AvgSidewaysRads: Bad From/to side range");
+
+            return (firstSideRads + lastSideRads) / 2;
+        }
+
+
+        // Calculate the size of the object in square centimeters.
+        // Based on MAXIMUM number of hot pixels in any real feature.
+        protected void Calculate_SizeCM2()
+        {
+            if ((ProcessAll == null) || (ProcessAll.VideoData == null))
+                return;
+
+            var lastFeature = LastFeature as CombFeature;
+            if ((lastFeature == null) ||
+                (lastFeature.Type != FeatureTypeEnum.Real) ||
+                (lastFeature.Block == null) ||
+                (lastFeature.Block.FlightStep == null) ||
+                (lastFeature.Block.FlightStep.InputImageSizeM == null))
+                return;
+
+            // The number of hot pixels in the last (real) feature.
+            float hotPixels = lastFeature.NumHotPixels;
+
+            // Grab the drone input image area
+            float imageAreaM2 = lastFeature.Block.FlightStep.InputImageSizeM.AreaM2();
+
+            // Calculate the number of pixels in the video image
+            float framePixels = ProcessAll.VideoData.ImageWidth * ProcessAll.VideoData.ImageHeight;
+
+            // Calculate the size of the object in this frame in square centimeters
+            float thisSizeM2 = imageAreaM2 * hotPixels / framePixels;
+
+            var thisSizeCM2 = (int)(thisSizeM2 * 100 * 100);
+
+            SizeCM2 = Math.Max(SizeCM2, thisSizeCM2);
+        }
+
+
+        // Calculate the maximum heat value of any pixel in this object in any frame 
+        protected void Calculate_MaxHeat()
+        {
+            (int _, int maxHeat, int _) = ProcessFeatures.HeatSummary();
+            MaxHeat = maxHeat;
+        }
+
+        // Maximum density of the object across real features.
+        // Assumes that the maximum hot pixels occurred when the object was at its maximum size.
+        // Measured in hot pixels in rectangular area so <= 1. Example value 0.5
+        public double RealDensityPx()
+        {
+            if ((MaxRealPixelWidth <= 0) || (MaxRealPixelHeight <= 0))
+                return 0;
+
+            var pixelArea = 1.0f * MaxRealPixelWidth * MaxRealPixelHeight;
+
+            // Density is measured as # hot pixels within an area.
+            // pixelArea, as calculated above, is rectangular.
+            // Assuming hotspot is a circular object contained in rectangle,
+            // the circular object covers 78.5 % of the rectangle, so decrease pixelArea. 
+            pixelArea *= 0.785f;
+
+            return (1.0f * MaxRealHotPixels) / pixelArea;
+        }
+
+
+        // Calculate the simple (int, float, VelocityF, etc) member-data of this real object.
+        // Calculates LocationM, LocationErrM, HeightM, HeightErrM, etc.
+        public virtual void Calculate_RealObject_SimpleMemberData_Core()
+        {
+            try
+            {
+                FirstFwdDownDeg = (float)FirstFeature.Calculate_Image_FwdDeg();
+                LastFwdDownDeg = (float)LastRealFeature.Calculate_Image_FwdDeg();
+
+                // First estimate of OBJECT location (centroid) as average over all real features.
+                // The feature locations are based on where in the drone's field of image the object was detected,
+                // and takes into account ground undulations. The object's location is further refined later.
+                Calculate_LocationM_and_LocationErrM();
+
+                // Estimate the OBJECT's DEM at the object's location
+                // (which could be say 20m left of the drone's flight path).
+                Calculate_DemM();
+
+                // In RunVideoCombDrone.AddBlockAndProcessInputVideoFrame, a new CombFeature is created
+                // and these "one-feature" function calls are made (before the feature is assigned to an object):
+                //    FEATURE.CalculateSettings_LocationM_FlatGround();           // Assumes flat ground & feature is on ground
+                //    FEATURE.CalculateSettings_LocationM_HeightM_LineofSight();  // Works if CameraFwdDeg between 10 and 80.
+                // Later a CombObject consumes/claims the new feature.
+                // The new feature may be the 10th feature of the object we call:
+                //    FEATURE.Calculate_HeightM_BaseLineMovement();           // Works if drone has moved horizontally
+                // Which estimates object height above ground based on distance down from drone
+                // calculated using trigonometry and first/last real feature camera-view-angles.
+                // Only works if the drone has moved horizontally some distance. Works at 1m. Better at 5m
+                // May override CalculateSettings_LocationM_HeightM_LineofSight
+                var lastFeature = LastFeature;
+                if ((SeenForMinDurations() >= 1) && HasMoved())
+                {
+                    // Estimate last FEATURE height above ground based on distance down from drone
+                    // calculated using trigonometry and first/last real feature camera-view-angles.
+                    // This is a "look down" trig method. Accuracy limited by the accuracy of the drone altitude.
+                    // Object at the left/right edge of the image are slightly further from the drone
+                    // than objects directly under the drone.
+                    // If drone is not moving now, calculated HeightM will be the same as last feature (within Gimbal wobble). 
+                    if (lastFeature.Type == FeatureTypeEnum.Real) // PQR    && is moving now.
+                        lastFeature.Calculate_HeightM_BaseLineMovement(
+                                FirstFeature,
+                                DemM,
+                                ProcessFeatures.AverageFlightStepFixedAltitudeM());
+                }
+                else
+                    lastFeature.SetHeightAlgorithmError("BL_TooShort"); // Either in time or distance.
+
+                // Calculate OBJECT height and object height error (as average over real features).
+                Calculate_HeightM_and_HeightErrM();
+
+                // Calculate OBJECT size in square centimeters (based on maximum # hot pixels over real features).
+                Calculate_SizeCM2();
+
+                // Calculate the range of the OBJECT from the drone in meters (as average over real features).
+                Calculate_AvgRangeM();
+
+                // Calculate the OBJECT maximum heat value (of any pixel over real features).
+                Calculate_MaxHeat();
+            }
+            catch (Exception ex)
+            {
+                throw ThrowException("ProcessObject.Calculate_RealObject_SimpleMemberData_Core", ex);
+            }
         }
 
     }

@@ -14,11 +14,6 @@ namespace SkyCombImage.ProcessModel
         public Color ClassColor { get; set; }
         public float ClassConfidence { get; set; }
 
-        // First (Real) feature claimed by this object. 
-        public YoloFeature? FirstFeature { get { return ProcessFeatures.FirstFeature as YoloFeature; } }
-        // Last (Real or UnReal) feature claimed by this object. May be null.
-        public YoloFeature? LastFeature { get { return ProcessFeatures.LastFeature as YoloFeature; } }
-
 
         public YoloObject(YoloProcess yoloProcess, ProcessScope scope, YoloFeature firstFeature, string className, Color classColor, float classConfidence) : base(yoloProcess, scope)
         {

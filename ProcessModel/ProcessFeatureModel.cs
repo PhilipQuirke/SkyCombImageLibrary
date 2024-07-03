@@ -92,31 +92,6 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        public bool SignificantPixelBoxIntersection(Rectangle objectExpectedLocation, int featureMinOverlapPerc)
-        {
-            var intersection = Rectangle.Intersect(PixelBox, objectExpectedLocation);
-
-            // Refer https://stackoverflow.com/questions/9324339/how-much-do-two-rectangles-overlap
-            // SI = Max(0, Min(XA2, XB2) - Max(XA1, XB1)) * Max(0, Min(YA2, YB2) - Max(YA1, YB1))
-            // SU = SA + SB - SI
-            // OverlapFraction = SI / SU
-            var sizeIntersection = intersection.Width * intersection.Height;
-
-            var sizeA = PixelBox.Width * PixelBox.Height;
-            var sizeB = objectExpectedLocation.Width * objectExpectedLocation.Height;
-
-            var resultA = 1.0F * sizeIntersection / sizeA;
-            var resultB = 1.0F * sizeIntersection / sizeB;
-
-            var minOverlap = featureMinOverlapPerc / 100.0F;
-
-            return
-                resultA >= minOverlap ||   // 25% overlap of rectA
-                resultB >= minOverlap;     // 25% overlap of rectB
-        }
-
-
-
         // Set the HeightAlgorithm value to an error value - unless it is already set to a success value.
         // There a few height algorithms. If one succeeds, we retain that success value
         public void SetHeightAlgorithmError(string theCase)
