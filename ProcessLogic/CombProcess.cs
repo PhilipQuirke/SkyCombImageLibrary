@@ -3,7 +3,6 @@ using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
-using System.Runtime.InteropServices.Marshalling;
 
 
 namespace SkyCombImage.ProcessLogic

@@ -4,6 +4,7 @@ using SkyCombDrone.PersistModel;
 using SkyCombImage.PersistModel;
 using SkyCombImage.ProcessModel;
 using SkyCombImage.ProcessLogic;
+using System.Diagnostics;
 
 
 // Continuation of RunVideo.cs, contains both Skycomb-specific runners
@@ -117,7 +118,7 @@ namespace SkyCombImage.RunSpace
                 {
                     var combFeature = feature.Value as CombFeature;
                     combFeature.CalculateSettings_LocationM_FlatGround(null);
-                    combFeature.CalculateSettings_LocationM_HeightM_LineofSight();
+                    combFeature.CalculateSettings_LocationM_HeightM_LineofSight(CombProcess.GroundData);
                 }
 
                 // Unless legs are not used, we only do comb processing during "legs". 

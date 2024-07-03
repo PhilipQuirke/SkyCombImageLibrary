@@ -56,7 +56,7 @@ namespace SkyCombImage.ProcessLogic
                     var combFeature = theFeature.Value as CombFeature;
                     combFeature.ResetMemberData();
                     combFeature.CalculateSettings_LocationM_FlatGround(combObject.LastRealFeature);
-                    combFeature.CalculateSettings_LocationM_HeightM_LineofSight();
+                    combFeature.CalculateSettings_LocationM_HeightM_LineofSight(Process.GroundData);
 
                     combObject.ClaimFeature(combFeature);
                 }
