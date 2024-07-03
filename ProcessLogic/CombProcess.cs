@@ -392,7 +392,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 { "# Blocks", Blocks.Count },
                 { "# Objects", CombObjs.CombObjList.Count },
-                { "# Significant Objects", CombObjs.NumSig },
+                { "# Significant Objects", CombObjs.NumEverSignificantObjects },
                 { "# Features", ProcessFeatures.Count },
                 { "# Significant Features", ProcessFeatures.NumSig },
                 { "# Pixels", numPixels },

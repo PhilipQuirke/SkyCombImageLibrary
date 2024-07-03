@@ -545,6 +545,28 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Number of objects that have ever been significant. 
+        // Not same as num objs significant in the current Block, as objects can become insignificant. 
+        public int NumEverSignificantObjects
+        {
+            get
+            {
+                int numSig = 0;
+                foreach (var theObject in this)
+                    if (theObject.Value.NumSigBlocks > 0)
+                        numSig++;
+                return numSig;
+            }
+        }
+
+
+        public void StopTracking()
+        {
+            foreach (var theObject in this)
+                theObject.Value.BeingTracked = false;
+        }
+
+
         public int GetObjectIdByName(string objectName)
         {
             foreach (var theObj in this)

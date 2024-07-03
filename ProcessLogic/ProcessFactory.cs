@@ -20,6 +20,7 @@ namespace SkyCombImage.ProcessLogic
             return new ProcessBlock(blockId, settings, drone);
         }
 
+
         public static ProcessAll NewProcessModel(ProcessConfigModel config, Drone drone)
         {
             return new ProcessAll(null, drone.InputVideo, drone, config);
