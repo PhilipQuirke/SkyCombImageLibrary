@@ -771,6 +771,23 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Get the minimum StepId of all objects
+        public int GetMinStepId()
+        {
+            if (Count == 0)
+                return BaseConstants.UnknownValue;
+
+            int answer = 9999999;
+            foreach (var theObject in this)
+            {
+                var firstFeat = theObject.Value.FirstFeature;
+                if (firstFeat != null)
+                    answer = Math.Min(answer, firstFeat.Block.FlightStepId);
+            }
+            return answer;
+        }
+
+
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
         public virtual DataPairList GetSettings()
         {
