@@ -75,6 +75,24 @@ namespace SkyCombImage.ProcessModel
         public int FlightLegId { get; set; }
         public string FlightLegName { get { return IdToLetter(FlightLegId); } }
 
+        // Last Real feature claimed by this object (excluding Consumed features).
+        public int LastRealFeatureIndex { get; set; }
+
+        // Is this object still being actively tracked?
+        public bool BeingTracked { get; set; }
+
+        // Maximum NumHotPixels associated with real features claimed by this object.
+        public int MaxRealHotPixels { get; set; }
+        // Maximum Width of the object pixel box over real Features
+        public int MaxRealPixelWidth { get; set; }
+        // Maximum Height of the object pixel box over real Features
+        public int MaxRealPixelHeight { get; set; }
+
+        // First angle down from horizon to object in degrees
+        public float FirstFwdDownDeg { get; set; } = UnknownValue;
+        // Last angle down from horizon to object in degrees
+        public float LastFwdDownDeg { get; set; } = UnknownValue;
+
 
         public ProcessObjectModel()
         {
@@ -109,6 +127,14 @@ namespace SkyCombImage.ProcessModel
             Significant = false;
             NumSigBlocks = 0;
             // LegId
+
+            LastRealFeatureIndex = UnknownValue;
+            BeingTracked = true;
+            MaxRealHotPixels = 0;
+            MaxRealPixelWidth = 0;
+            MaxRealPixelHeight = 0;
+            FirstFwdDownDeg = UnknownValue;
+            LastFwdDownDeg = UnknownValue;
         }
 
 
@@ -212,6 +238,13 @@ namespace SkyCombImage.ProcessModel
                 { "Attributes", Attributes },
                 { "Significant", Significant },
                 { "# Sig Blocks", NumSigBlocks },
+
+                { "Max Real Hot Pxs", MaxRealHotPixels },
+                { "Max Real Px Width", MaxRealPixelWidth },
+                { "Max Real Px Height", MaxRealPixelHeight },
+                { "First Fwd Down Deg", FirstFwdDownDeg, DegreesNdp },
+                { "Last Fwd Down Deg", LastFwdDownDeg, DegreesNdp },
+                { "Range Fwd Down Deg", FirstFwdDownDeg - LastFwdDownDeg, DegreesNdp },
             };
         }
 
@@ -243,6 +276,13 @@ namespace SkyCombImage.ProcessModel
             Attributes = settings[i++];
             Significant = (settings[i++] == "true");
             NumSigBlocks = StringToNonNegInt(settings[i++]);
+
+            MaxRealHotPixels = StringToInt(settings[ProcessObjectModel.MaxRealHotPixelsSetting - 1]);
+            MaxRealPixelWidth = StringToInt(settings[ProcessObjectModel.MaxRealPixelWidthSetting - 1]);
+            MaxRealPixelHeight = StringToInt(settings[ProcessObjectModel.MaxRealPixelHeightSetting - 1]);
+            FirstFwdDownDeg = StringToFloat(settings[ProcessObjectModel.FirstFwdDownDegSetting - 1]);
+            LastFwdDownDeg = StringToFloat(settings[ProcessObjectModel.LastFwdDownDegSetting - 1]);
+            // RangeFwdDownDeg = setting[ProcessObjectModel.RangeFwdDownDegSetting-1]
         }
 
 

@@ -10,12 +10,6 @@ namespace SkyCombImage.ProcessLogic
     // A class to hold all feature data and Block data associated with a video
     public class CombProcess : ProcessAll
     {
-        // Ground (DEM, DSM and Swathe) data under the drone flight path
-        public GroundData GroundData { get; set; }
-
-        // List of comb features found. Each feature is a cluster of hot pixels, with a bounding retangle
-        public ProcessFeatureList ProcessFeatures { get; set; }
-
         // List of comb objects found. Each is a logical object derived from overlapping features over successive frames. 
         public CombObjs CombObjs { get; set; }
 
@@ -39,12 +33,10 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public CombProcess(ProcessConfigModel config, VideoData video, GroundData groundData, Drone drone) : base(config, video, drone)
+        public CombProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config) : base(ground, video, drone, config)
         {
             CombFeature.NextFeatureId = 0;
 
-            GroundData = groundData;
-            ProcessFeatures = new(config);
             CombObjs = new(this);
             CombSpans = new();
             FlightLeg_SigObjects = 0;
@@ -318,8 +310,8 @@ namespace SkyCombImage.ProcessLogic
                 foreach (var theObject in inScopeObjects)
                 {
                     var combObject = theObject.Value as CombObject;
-                    if (combObject.COM.BeingTracked &&
-                       (combObject.COM.LastRealFeatureIndex != UnknownValue) &&
+                    if (combObject.BeingTracked &&
+                       (combObject.LastRealFeatureIndex != UnknownValue) &&
                        (combObject.LastRealFeature.Block.BlockId < blockID) &&
                        combObject.KeepTracking(blockID))
                         // ... persist this object another Block. Create an unreal feature, with no pixels, with a rectangle   

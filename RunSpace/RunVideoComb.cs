@@ -26,7 +26,7 @@ namespace SkyCombImage.RunSpace
     {
         public RunVideoCombDrone(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
             : base(parent, config, dataStore, drone,
-                  ProcessFactory.NewCombProcessModel(config.ProcessConfig, drone.InputVideo, drone.GroundData, drone))
+                  ProcessFactory.NewCombProcessModel(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig ))
         {
         }
 

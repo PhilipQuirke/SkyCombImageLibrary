@@ -3,6 +3,7 @@ using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
+using SkyCombGround.GroundLogic;
 using SkyCombImage.DrawSpace;
 using SkyCombImage.PersistModel;
 using SkyCombImage.ProcessLogic;
@@ -17,7 +18,7 @@ namespace SkyCombImage.RunSpace
     class RunVideoYolo : RunVideoPersist
     {
         public RunVideoYolo(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
-            : base(parent, config, dataStore, drone, ProcessFactory.NewYoloProcessModel(config.ProcessConfig, drone, config.YoloDirectory))
+            : base(parent, config, dataStore, drone, ProcessFactory.NewYoloProcessModel(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig, config.YoloDirectory))
         {
     
         }

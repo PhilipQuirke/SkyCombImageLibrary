@@ -13,13 +13,9 @@ namespace SkyCombImage.ProcessLogic
         // Parent process model
         private CombProcess CombProcess { get; }
 
-        public CombObjectModel COM { get; set; }
-
-        // List of features that make up this object
-        public CombFeatureLogic Features { get; set; }
         // First (Real) feature claimed by this object. 
         public CombFeature? FirstFeature { get { return ProcessFeatures.FirstFeature as CombFeature; } }
-        public CombFeature? LastRealFeature { get { return (COM.LastRealFeatureIndex == UnknownValue ? null : ProcessFeatures.Values[COM.LastRealFeatureIndex] as CombFeature); } }
+        public CombFeature? LastRealFeature { get { return (LastRealFeatureIndex == UnknownValue ? null : ProcessFeatures.Values[LastRealFeatureIndex] as CombFeature); } }
         // Last (Real or UnReal) feature claimed by this object. May be null.
         public CombFeature? LastFeature { get { return ProcessFeatures.LastFeature as CombFeature; } }
 
@@ -48,21 +44,10 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Reset member data to mirror a newly created object.
-        // Used in experimentation to allow repeated calculation run against this object.
-        public override void ResetMemberData()
-        {
-            base.ResetMemberData();
-
-            COM = new();
-            COM.ResetMemberData();
-        }
-
-
         // Number of real features owned by this object.
         public override int NumRealFeatures()
         {
-            if (COM.LastRealFeatureIndex >= 0)
+            if (LastRealFeatureIndex >= 0)
                 return base.NumRealFeatures();
 
             return 0;
@@ -74,10 +59,10 @@ namespace SkyCombImage.ProcessLogic
         // Measured in hot pixels in rectangular area so <= 1. Example value 0.5
         public double RealDensityPx()
         {
-            if ((COM.MaxRealPixelWidth <= 0) || (COM.MaxRealPixelHeight <= 0))
+            if ((MaxRealPixelWidth <= 0) || (MaxRealPixelHeight <= 0))
                 return 0;
 
-            var pixelArea = 1.0f * COM.MaxRealPixelWidth * COM.MaxRealPixelHeight;
+            var pixelArea = 1.0f * MaxRealPixelWidth * MaxRealPixelHeight;
 
             // Density is measured as # hot pixels within an area.
             // pixelArea, as calculated above, is rectangular.
@@ -85,7 +70,7 @@ namespace SkyCombImage.ProcessLogic
             // the circular object covers 78.5 % of the rectangle, so decrease pixelArea. 
             pixelArea *= 0.785f;
 
-            return (1.0f * COM.MaxRealHotPixels) / pixelArea;
+            return (1.0f * MaxRealHotPixels) / pixelArea;
         }
 
 
@@ -93,7 +78,7 @@ namespace SkyCombImage.ProcessLogic
         public bool KeepTracking(int BlockId)
         {
             // Once inactive, a Comb object stops being tracked permanently.
-            if (COM.BeingTracked)
+            if (BeingTracked)
             {
                 if (LastRealFeature.Block.BlockId >= BlockId)
                 {
@@ -102,13 +87,13 @@ namespace SkyCombImage.ProcessLogic
                 else if (ProcessConfig.ObjectMaxUnrealBlocks > 0)
                 {
                     // Are we still on the persistance window?
-                    COM.BeingTracked = (LastFeature.Block.BlockId - LastRealFeature.Block.BlockId < ProcessConfig.ObjectMaxUnrealBlocks);
+                    BeingTracked = (LastFeature.Block.BlockId - LastRealFeature.Block.BlockId < ProcessConfig.ObjectMaxUnrealBlocks);
                 }
                 else
-                    COM.BeingTracked = false;
+                    BeingTracked = false;
             }
 
-            return COM.BeingTracked;
+            return BeingTracked;
         }
 
 
@@ -140,7 +125,7 @@ namespace SkyCombImage.ProcessLogic
 
                 // COUNT
                 // Maximum pixel count per real feature
-                var maxCount = COM.MaxRealHotPixels;
+                var maxCount = MaxRealHotPixels;
                 var countOk = (maxCount > ProcessConfig.ObjectMinPixelsPerBlock); // Say 5 pixels / Block
                 var countGood = (maxCount > 2 * ProcessConfig.ObjectMinPixelsPerBlock); // Say 10 pixels / Block
                 var countGreat = (maxCount > 4 * ProcessConfig.ObjectMinPixelsPerBlock); // Say 20 pixels / Block
@@ -203,7 +188,7 @@ namespace SkyCombImage.ProcessLogic
         {
             // COUNT
             // Maximum pixel count per real feature
-            var maxCount = COM.MaxRealHotPixels;
+            var maxCount = MaxRealHotPixels;
             var maxCountOk = (maxCount > ProcessConfig.ObjectMinPixelsPerBlock); // Say 5 pixels / Block
 
             // Density
@@ -221,8 +206,8 @@ namespace SkyCombImage.ProcessLogic
         {
             try
             {
-                COM.FirstFwdDownDeg = (float)FirstFeature.Calculate_Image_FwdDeg();
-                COM.LastFwdDownDeg = (float)LastRealFeature.Calculate_Image_FwdDeg();
+                FirstFwdDownDeg = (float)FirstFeature.Calculate_Image_FwdDeg();
+                LastFwdDownDeg = (float)LastRealFeature.Calculate_Image_FwdDeg();
 
                 // First estimate of OBJECT location (centroid) as average over all real features.
                 // The feature locations are based on where in the drone's field of image the object was detected,
@@ -304,7 +289,7 @@ namespace SkyCombImage.ProcessLogic
 
             ProcessFeatures.AddFeature(feature);
             if (feature.Type == FeatureTypeEnum.Real)
-                COM.LastRealFeatureIndex = ProcessFeatures.Count - 1;
+                LastRealFeatureIndex = ProcessFeatures.Count - 1;
         }
 
 
@@ -350,7 +335,7 @@ namespace SkyCombImage.ProcessLogic
                 if (theFeature.Type == FeatureTypeEnum.Real)
                 {
                     theFeature.IsTracked = true;
-                    COM.MaxRealHotPixels = Math.Max(COM.MaxRealHotPixels, theFeature.NumHotPixels);
+                    MaxRealHotPixels = Math.Max(MaxRealHotPixels, theFeature.NumHotPixels);
 
                     var theBlock = theFeature.Block;
 
@@ -358,11 +343,11 @@ namespace SkyCombImage.ProcessLogic
                     {
                         // First real feature claimed by this object for THIS block
                         ProcessFeatures.AddFeature(theFeature);
-                        COM.LastRealFeatureIndex = ProcessFeatures.Count - 1;
+                        LastRealFeatureIndex = ProcessFeatures.Count - 1;
                         RunToVideoS = (float)(LastRealFeature.Block.InputFrameMs / 1000.0);
 
-                        COM.MaxRealPixelWidth = Math.Max(COM.MaxRealPixelWidth, theFeature.PixelBox.Width);
-                        COM.MaxRealPixelHeight = Math.Max(COM.MaxRealPixelHeight, theFeature.PixelBox.Height);
+                        MaxRealPixelWidth = Math.Max(MaxRealPixelWidth, theFeature.PixelBox.Width);
+                        MaxRealPixelHeight = Math.Max(MaxRealPixelHeight, theFeature.PixelBox.Height);
                     }
                     else
                     {
@@ -374,8 +359,8 @@ namespace SkyCombImage.ProcessLogic
                         LastRealFeature.Consume(theFeature);
                         theFeature.ObjectId = UnknownValue;
 
-                        COM.MaxRealPixelWidth = Math.Max(COM.MaxRealPixelWidth, LastRealFeature.PixelBox.Width);
-                        COM.MaxRealPixelHeight = Math.Max(COM.MaxRealPixelHeight, LastRealFeature.PixelBox.Height);
+                        MaxRealPixelWidth = Math.Max(MaxRealPixelWidth, LastRealFeature.PixelBox.Width);
+                        MaxRealPixelHeight = Math.Max(MaxRealPixelHeight, LastRealFeature.PixelBox.Height);
                     }
 
                     // Calculate the simple member data (int, float, VelocityF, etc) of this real object.
@@ -576,14 +561,11 @@ namespace SkyCombImage.ProcessLogic
         // Calculate the maximum heat value of any pixel in this object in any frame 
         private void Calculate_MaxHeat()
         {
-            if (Features == null)
-                return;
-
             (int _, int maxHeat, int _) = CombFeatureLogic.HeatSummary(ProcessFeatures);
             MaxHeat = maxHeat;
         }
 
-
+/*
         // Get the object's DEM at the OBJECT'S location.
         private void Calculate_DemM()
         {
@@ -634,8 +616,8 @@ namespace SkyCombImage.ProcessLogic
                 // In DJI_0118 leg 3, Object 1 starts large but fades
                 // so that LastFeature().PixelBox is very small.
                 // The expected location should use the maximum object size.
-                int addWidth = Math.Max(0, COM.MaxRealPixelWidth - lastWidth);
-                int addHeight = Math.Max(0, COM.MaxRealPixelHeight - lastHeight);
+                int addWidth = Math.Max(0, MaxRealPixelWidth - lastWidth);
+                int addHeight = Math.Max(0, MaxRealPixelHeight - lastHeight);
 
                 // We have multiple features. Use their difference in location.
                 var distanceX = 1.0F * lastBox.X + lastBox.Width / 2.0F - firstBox.X - lastBox.Width / 2.0F;
@@ -666,7 +648,7 @@ namespace SkyCombImage.ProcessLogic
 
             return answer;
         }
-
+*/
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore)
         public override DataPairList GetSettings()
@@ -683,8 +665,6 @@ namespace SkyCombImage.ProcessLogic
             answer.Add("LastRealBlock", lastRealBlock);
             answer.Add("LastBlock", lastBlock);
 
-            COM.GetSettings(answer);
-
             answer.Add("#RealFeats", NumRealFeatures());
             answer.Add("RealDensityPx", RealDensityPx(), AreaM2Ndp);
             answer.Add("LocnErrPerFeatCM", LocationErrPerFeatureM() * 100, LocationNdp);
@@ -694,16 +674,6 @@ namespace SkyCombImage.ProcessLogic
 
 
             return answer;
-        }
-
-
-        // Load this object's settings from strings (loaded from a spreadsheet)
-        // This function must align to the above GetSettings function.
-        protected override void LoadSettings(List<string> settings)
-        {
-            base.LoadSettings(settings);
-
-            COM.LoadSettings(settings);
         }
     };
 
@@ -793,7 +763,7 @@ namespace SkyCombImage.ProcessLogic
         public void StopTracking()
         {
             foreach (var theObject in CombObjList)
-                (theObject.Value as CombObject).COM.BeingTracked = false;
+                theObject.Value.BeingTracked = false;
         }
 
 

@@ -2,6 +2,7 @@
 using SkyCombDrone.DroneLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
+using SkyCombGround.GroundLogic;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -9,10 +10,8 @@ namespace SkyCombImage.ProcessLogic
     // All processing models derive from this class.
     public class ProcessAll : BaseConstants
     {
-        public ProcessConfigModel ProcessConfig;
-
-        // List of Blocks (aka frames processed)  
-        public ProcessBlockList Blocks { get; set; }
+        // Ground (DEM, DSM and Swathe) data under the drone flight path
+        public GroundData GroundData { get; set; }
 
         // The main input video being processed
         public VideoData VideoData { get; }
@@ -20,12 +19,25 @@ namespace SkyCombImage.ProcessLogic
         public Drone Drone { get; }
 
 
-        public ProcessAll(ProcessConfigModel config, VideoData video, Drone drone)
+        public ProcessConfigModel ProcessConfig;
+
+        // List of Blocks (aka frames processed)  
+        public ProcessBlockList Blocks { get; set; }
+
+        // List of comb features found. Each feature is a cluster of hot pixels, with a bounding retangle
+        public ProcessFeatureList ProcessFeatures { get; set; }
+
+
+
+        public ProcessAll(GroundData groundData, VideoData video, Drone drone, ProcessConfigModel config)
         {
-            ProcessConfig = config;
-            Blocks = new();
+            GroundData = groundData;
             VideoData = video;
             Drone = drone;
+
+            ProcessConfig = config;
+            Blocks = new();
+            ProcessFeatures = new(config);
 
             ProcessObject.NextObjectId = 0;
         }
@@ -35,6 +47,7 @@ namespace SkyCombImage.ProcessLogic
         public virtual void ResetModel()
         {
             Blocks.Clear();
+            ProcessFeatures = new(ProcessConfig);
             ProcessObject.NextObjectId = 0;
         }
 

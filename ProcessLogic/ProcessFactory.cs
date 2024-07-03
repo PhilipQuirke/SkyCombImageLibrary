@@ -22,19 +22,19 @@ namespace SkyCombImage.ProcessLogic
 
         public static ProcessAll NewProcessModel(ProcessConfigModel config, Drone drone)
         {
-            return new ProcessAll(config, drone.InputVideo, drone);
+            return new ProcessAll(null, drone.InputVideo, drone, config);
         }
 
 
-        public static YoloProcess NewYoloProcessModel(ProcessConfigModel config, Drone drone, string yoloDirectory)
+        public static YoloProcess NewYoloProcessModel(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config, string yoloDirectory)
         {
-            return new YoloProcess(config, drone, yoloDirectory);
+            return new YoloProcess(ground, video, drone, config, yoloDirectory);
         }
 
 
-        public static CombProcess NewCombProcessModel(ProcessConfigModel config, VideoData videoData, GroundData groundData, Drone drone)
+        public static CombProcess NewCombProcessModel(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config )
         {
-            return new CombProcess(config, videoData, groundData, drone);
+            return new CombProcess(ground, video, drone, config);
         }
 
 

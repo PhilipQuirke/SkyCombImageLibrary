@@ -7,6 +7,7 @@ using SkyCombImage.ProcessLogic;
 using SkyCombGround.CommonSpace;
 using System.Drawing;
 using Compunet.YoloV8.Data;
+using SkyCombGround.GroundLogic;
 
 
 
@@ -18,7 +19,6 @@ namespace SkyCombImage.ProcessModel
     {
         //public ProcessBlockList YoloBlocks;
         public YoloObjectList YoloObjects;
-        public ProcessFeatureList YoloFeatures;
 
         // If UseFlightLegs, how many significant objects have been found in this FlightLeg?
         public int FlightLeg_SigObjects { get; set; }
@@ -27,22 +27,18 @@ namespace SkyCombImage.ProcessModel
         public YoloDetect YoloDetect;
 
 
-        public YoloProcess(ProcessConfigModel processConfig, Drone drone, string yoloDirectory) : base(processConfig, drone.InputVideo, drone)
+        public YoloProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config, string yoloDirectory) : base(ground, video, drone, config)
         {
-            //YoloBlocks = new();
             YoloObjects = new(this);
-            YoloFeatures = new(processConfig);
             YoloObjects.LegFirstIndex = 0;
             FlightLeg_SigObjects = 0;
-            YoloDetect = new YoloDetect(yoloDirectory, processConfig.YoloConfidence, processConfig.YoloIoU);
+            YoloDetect = new YoloDetect(yoloDirectory, config.YoloConfidence, config.YoloIoU);
         }
 
 
         // Reset any internal state of the model, so it can be re-used in another run immediately
         public override void ResetModel()
         {
-            //YoloBlocks.Clear();
-            YoloFeatures.Clear();
             YoloObjects.Clear();
 
             YoloObjects.LegFirstIndex = 0;
@@ -179,7 +175,7 @@ namespace SkyCombImage.ProcessModel
 
                 Phase = 5;
                 currBlock.AddFeatureList(featuresInBlock);
-                YoloFeatures.AddFeatureList(featuresInBlock);
+                ProcessFeatures.AddFeatureList(featuresInBlock);
 
 /*
                 // For each active object, where the above code did not find an 
@@ -251,7 +247,7 @@ namespace SkyCombImage.ProcessModel
             return new DataPairList
             {
                 { "# Blocks", Blocks.Count },
-                { "# Features", YoloFeatures.Count},
+                { "# Features", ProcessFeatures.Count},
                 { "# Objects", YoloObjects.Count},
             };
         }

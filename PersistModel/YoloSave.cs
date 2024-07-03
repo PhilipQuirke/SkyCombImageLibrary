@@ -42,11 +42,11 @@ namespace SkyCombImage.PersistModel
                 var saveAllObjects = (runConfig.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All);
 
                 // Save the Feature data 
-                if ((runConfig.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None) && (yoloProcess.YoloFeatures.Count > 0))
+                if ((runConfig.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None) && (yoloProcess.ProcessFeatures.Count > 0))
                 {
                     Data.SelectOrAddWorksheet(FeaturesTabName);
                     int featureRow = 0;
-                    foreach (var feature in yoloProcess.YoloFeatures)
+                    foreach (var feature in yoloProcess.ProcessFeatures)
                         if (runConfig.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All || feature.Value.Significant)
                             Data.SetDataListRowKeysAndValues(ref featureRow, feature.Value.GetSettings());
 
