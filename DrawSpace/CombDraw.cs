@@ -136,9 +136,9 @@ namespace SkyCombImage.DrawSpace
 
                     for (int featureId = block.MinFeatureId; featureId <= block.MaxFeatureId; featureId++)
                     {
-                        if (process.CombFeatures.ContainsKey(featureId))
+                        if (process.ProcessFeatures.ContainsKey(featureId))
                         {
-                            var feature = process.CombFeatures[featureId];
+                            var feature = process.ProcessFeatures[featureId];
                             Assert(feature.BlockId == block.BlockId, "CombImage: Bad logic");
 
                             // Draw all hot pixels for the current block 
@@ -498,7 +498,7 @@ namespace SkyCombImage.DrawSpace
                     inObjectBgr, NormalThickness, NormalThickness * 10);
 
                 // Draw the object features as orange or yellow crosses
-                foreach (var thisFeature in thisObject.Features)
+                foreach (var thisFeature in thisObject.ProcessFeatures)
                     if ((thisFeature.Value.HeightM > ProcessObjectModel.UnknownHeight ) &&
                         (thisFeature.Value.BlockId <= DroneDrawScope.MaxFeatureBlockIdToDraw))
                     {

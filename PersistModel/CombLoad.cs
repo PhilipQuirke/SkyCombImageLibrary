@@ -73,7 +73,7 @@ namespace SkyCombImage.PersistModel
 
                         // Load the non-blank cells in this row into a CombFeature
                         var settings = Data.GetRowSettings(row, 1);
-                        model.CombFeatures.AddFeature(
+                        model.ProcessFeatures.AddFeature(
                             ProcessFactory.NewCombFeature(model, settings));
 
                         row++;
@@ -85,7 +85,7 @@ namespace SkyCombImage.PersistModel
             {
                 // Suppress the error and any objects loaded
                 System.Diagnostics.Debug.WriteLine("Suppressed CombLoad.CombFeatures failure: " + ex.ToString());
-                model.CombFeatures.Clear();
+                model.ProcessFeatures.Clear();
             }
         }
 

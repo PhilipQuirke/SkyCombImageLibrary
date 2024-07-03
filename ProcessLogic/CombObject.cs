@@ -18,12 +18,12 @@ namespace SkyCombImage.ProcessLogic
         public CombObjectModel COM { get; set; }
 
         // List of features that make up this object
-        public CombFeatureList Features { get; set; }
+        public CombFeatureLogic Features { get; set; }
         // First (Real) feature claimed by this object. 
-        public CombFeature? FirstFeature { get { return Features.FirstFeature as CombFeature; } }
-        public CombFeature? LastRealFeature { get { return (COM.LastRealFeatureIndex == UnknownValue ? null : Features.Values[COM.LastRealFeatureIndex] as CombFeature); } }
+        public CombFeature? FirstFeature { get { return ProcessFeatures.FirstFeature as CombFeature; } }
+        public CombFeature? LastRealFeature { get { return (COM.LastRealFeatureIndex == UnknownValue ? null : ProcessFeatures.Values[COM.LastRealFeatureIndex] as CombFeature); } }
         // Last (Real or UnReal) feature claimed by this object. May be null.
-        public CombFeature? LastFeature { get { return Features.LastFeature as CombFeature; } }
+        public CombFeature? LastFeature { get { return ProcessFeatures.LastFeature as CombFeature; } }
 
 
         // Constructor used processing video 
@@ -56,8 +56,6 @@ namespace SkyCombImage.ProcessLogic
         {
             base.ResetMemberData();
 
-            Features = new(ProcessConfig);
-
             COM = new();
             COM.ResetMemberData();
         }
@@ -70,7 +68,7 @@ namespace SkyCombImage.ProcessLogic
 
             if (COM.LastRealFeatureIndex >= 0)
                 // Rarely, the object may have a sequence of real, then unreal, then real features.
-                foreach (var feature in Features)
+                foreach (var feature in ProcessFeatures)
                     if (feature.Value.Type == FeatureTypeEnum.Real)
                         answer++;
 
@@ -285,7 +283,7 @@ namespace SkyCombImage.ProcessLogic
                         lastFeature.Calculate_HeightM_BaseLineMovement(
                                 FirstFeature,
                                 DemM,
-                                Features.AverageFlightStepFixedAltitudeM());
+                                CombFeatureLogic.AverageFlightStepFixedAltitudeM(ProcessFeatures));
                 }
                 else
                     lastFeature.SetHeightAlgorithmError("BL_TooShort"); // Either in time or distance.
@@ -330,9 +328,9 @@ namespace SkyCombImage.ProcessLogic
             Assert(feature != null, "SetLinksAfterLoad: Feature not provided.");
             Assert(feature.ObjectId == ObjectId, "SetLinksAfterLoad: Feature not for this object.");
 
-            Features.AddFeature(feature);
+            ProcessFeatures.AddFeature(feature);
             if (feature.Type == FeatureTypeEnum.Real)
-                COM.LastRealFeatureIndex = Features.Count - 1;
+                COM.LastRealFeatureIndex = ProcessFeatures.Count - 1;
         }
 
 
@@ -385,8 +383,8 @@ namespace SkyCombImage.ProcessLogic
                     if ((LastRealFeature == null) || (LastRealFeature.Block.BlockId < theBlock.BlockId))
                     {
                         // First real feature claimed by this object for THIS block
-                        Features.AddFeature(theFeature);
-                        COM.LastRealFeatureIndex = Features.Count - 1;
+                        ProcessFeatures.AddFeature(theFeature);
+                        COM.LastRealFeatureIndex = ProcessFeatures.Count - 1;
                         RunToVideoS = (float)(LastRealFeature.Block.InputFrameMs / 1000.0);
 
                         COM.MaxRealPixelWidth = Math.Max(COM.MaxRealPixelWidth, theFeature.PixelBox.Width);
@@ -413,7 +411,7 @@ namespace SkyCombImage.ProcessLogic
                 else if (theFeature.Type == FeatureTypeEnum.Unreal)
                 {
                     // theFeature is unreal - it is a persistance object
-                    Features.AddFeature(theFeature);
+                    ProcessFeatures.AddFeature(theFeature);
 
                     LastFeature.HeightM = HeightM;
                     LastFeature.HeightAlgorithm = CombFeature.UnrealCopyHeightAlgorithm;
@@ -429,7 +427,7 @@ namespace SkyCombImage.ProcessLogic
                     // - After 5 real features, enough time has based for object to become significant on 6th real feature.
                     // - Object had 20 real features, then 5 unreal features, then another 1 real features.
                     // Mark all (real and unreal) features associated with this object as significant.
-                    foreach (var feature in Features)
+                    foreach (var feature in ProcessFeatures)
                         feature.Value.Significant = true;
 
                 // Debugging - Set breakpoint on assignment. 
@@ -491,7 +489,7 @@ namespace SkyCombImage.ProcessLogic
         // Refer https://stats.stackexchange.com/questions/13272/2d-analog-of-standard-deviation for rationale.
         private void Calculate_LocationM_and_LocationErrM()
         {
-            (LocationM, LocationErrM) = Features.Calculate_Avg_LocationM_and_LocationErrM();
+            (LocationM, LocationErrM) = CombFeatureLogic.Calculate_Avg_LocationM_and_LocationErrM(ProcessFeatures);
         }
 
 
@@ -544,7 +542,7 @@ namespace SkyCombImage.ProcessLogic
         // Calculate object height and object height error by averaging the feature data.
         private void Calculate_HeightM_and_HeightErrM()
         {
-            (HeightM, HeightErrM, MinHeightM, MaxHeightM) = Features.Calculate_Avg_HeightM_and_HeightErrM();
+            (HeightM, HeightErrM, MinHeightM, MaxHeightM) = CombFeatureLogic.Calculate_Avg_HeightM_and_HeightErrM(ProcessFeatures);
         }
 
 
@@ -607,7 +605,7 @@ namespace SkyCombImage.ProcessLogic
             if (Features == null)
                 return;
 
-            (int _, int maxHeat, int _) = Features.HeatSummary();
+            (int _, int maxHeat, int _) = CombFeatureLogic.HeatSummary(ProcessFeatures);
             MaxHeat = maxHeat;
         }
 

@@ -39,7 +39,7 @@ namespace SkyCombImage.ProcessLogic
 
 
     // A list of Comb features bound to a specific Block
-    abstract public class ProcessFeatureList : SortedList<int, ProcessFeature>
+    public class ProcessFeatureList : SortedList<int, ProcessFeature>
     {
         private static ProcessConfigModel ProcessConfig;
 
@@ -72,12 +72,9 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        protected abstract ProcessFeatureList Create(ProcessConfigModel config);
-
-
         public ProcessFeatureList Clone()
         {
-            var answer = Create(ProcessConfig);
+            var answer = new ProcessFeatureList(ProcessConfig);
 
             foreach (var feature in this)
                 answer.AddFeature(feature.Value);

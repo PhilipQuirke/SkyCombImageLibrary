@@ -38,9 +38,9 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public static CombFeatureList NewCombFeatureList(ProcessConfigModel config)
+        public static ProcessFeatureList NewProcessFeatureList(ProcessConfigModel config)
         {
-            return new CombFeatureList(config);
+            return new ProcessFeatureList(config);
         }
 
 

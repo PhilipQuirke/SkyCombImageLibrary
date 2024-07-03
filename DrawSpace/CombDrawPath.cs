@@ -42,7 +42,7 @@ namespace SkyCombImage.DrawSpace
         // Draw object features as crosses (often orange)
         private void DrawObjectFeatures(CombObject thisObject, ref Image<Bgr, byte> image, FeatureTypeEnum type, Bgr color)
         {
-            foreach (var thisFeature in thisObject.Features)
+            foreach (var thisFeature in thisObject.ProcessFeatures)
                 if ((thisFeature.Value.LocationM != null) &&
                     (thisFeature.Value.Type == type) &&
                     (thisFeature.Value.BlockId <= DroneDrawScope.MaxFeatureBlockIdToDraw))

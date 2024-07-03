@@ -13,16 +13,19 @@ namespace SkyCombImage.ProcessLogic
     {
         // Static config data shared by all objects
         public static ProcessConfigModel ProcessConfig;
-
         // Static NextObjectID shared by all objects
         public static int NextObjectId = 0;
         // Static random number generator
         protected static readonly RNG Rng = new();
 
 
+        public ProcessFeatureList ProcessFeatures;
+
+
         public ProcessObject(ProcessConfigModel processConfig, ProcessScope scope) : base()
         {
             ProcessConfig = processConfig;
+            ProcessFeatures = new ProcessFeatureList(ProcessConfig);
 
             ObjectId = ++NextObjectId;
             if (scope != null)
@@ -31,6 +34,13 @@ namespace SkyCombImage.ProcessLogic
                 RunFromVideoS = (float)(scope.PSM.CurrInputFrameMs / 1000.0);
                 RunToVideoS = RunFromVideoS;
             }
+        }
+
+
+        public override void ResetMemberData()
+        {
+            base.ResetMemberData();
+            ProcessFeatures = new(ProcessConfig);
         }
 
 

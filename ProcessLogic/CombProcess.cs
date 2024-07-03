@@ -15,7 +15,7 @@ namespace SkyCombImage.ProcessLogic
         public GroundData GroundData { get; set; }
 
         // List of comb features found. Each feature is a cluster of hot pixels, with a bounding retangle
-        public CombFeatureList CombFeatures { get; set; }
+        public ProcessFeatureList ProcessFeatures { get; set; }
 
         // List of comb objects found. Each is a logical object derived from overlapping features over successive frames. 
         public CombObjs CombObjs { get; set; }
@@ -45,7 +45,7 @@ namespace SkyCombImage.ProcessLogic
             CombFeature.NextFeatureId = 0;
 
             GroundData = groundData;
-            CombFeatures = new(config);
+            ProcessFeatures = new(config);
             CombObjs = new(this);
             CombSpans = new();
             FlightLeg_SigObjects = 0;
@@ -60,7 +60,7 @@ namespace SkyCombImage.ProcessLogic
             FlightLeg_SigObjects = 0;
             ResetCombSpanData();
 
-            CombFeatures.Clear();
+            ProcessFeatures.Clear();
             CombObjs.CombObjList.Clear();
             CombSpans.Clear();
 
@@ -148,7 +148,7 @@ namespace SkyCombImage.ProcessLogic
 
             CombFeature theFeature = new(this, theBlock, FeatureTypeEnum.Unreal);
             theFeature.PixelBox = theObject.ExpectedLocationThisBlock();
-            CombFeatures.AddFeature(theFeature);
+            ProcessFeatures.AddFeature(theFeature);
 
             Assert(Blocks.Count == theFeature.Block.BlockId, "AddPersistFeature: Bad Blocks count");
 
@@ -165,7 +165,7 @@ namespace SkyCombImage.ProcessLogic
                 {
                     var combObject = theObject.Value as CombObject;
                     if (combObject.FlightLegId <= 0)
-                        foreach (var feature in combObject.Features)
+                        foreach (var feature in combObject.ProcessFeatures)
                             (feature.Value as CombFeature).Pixels?.Clear();
                 }
         }
@@ -219,7 +219,7 @@ namespace SkyCombImage.ProcessLogic
         // Process the features found in the current block/frame, which is part of a leg,
         // by preference adding them to existing objects (created in previous blocks/frames),
         // else creating new objects to hold the features.
-        public void ProcessBlockForObjects(ProcessScope scope, CombFeatureList featuresInBlock)
+        public void ProcessBlockForObjects(ProcessScope scope, ProcessFeatureList featuresInBlock)
         {
             int Phase = 0;
 
@@ -248,7 +248,7 @@ namespace SkyCombImage.ProcessLogic
                 }
 
                 // Each feature can only be claimed once
-                CombFeatureList availFeatures = featuresInBlock.Clone() as CombFeatureList;
+                ProcessFeatureList availFeatures = featuresInBlock.Clone();
 
 
                 // For each active object, consider each feature (significant or not)
@@ -311,7 +311,7 @@ namespace SkyCombImage.ProcessLogic
 
                 Phase = 5;
                 currBlock.AddFeatureList(featuresInBlock);
-                CombFeatures.AddFeatureList(featuresInBlock);
+                ProcessFeatures.AddFeatureList(featuresInBlock);
 
                 // For each active object, where the above code did not find an 
                 // overlapping feature in this Block, if it is worth continuing tracking...
@@ -374,7 +374,7 @@ namespace SkyCombImage.ProcessLogic
 
         // Process the features found in the current block/frame, which is NOT in a leg.
         // We store the features so we can draw them on the video frame later.
-        public void ProcessBlockForFeatures(CombFeatureList featuresInBlock)
+        public void ProcessBlockForFeatures(ProcessFeatureList featuresInBlock)
         {
             foreach (var feature in featuresInBlock)
             {
@@ -383,14 +383,14 @@ namespace SkyCombImage.ProcessLogic
             }
 
             Blocks.LastBlock.AddFeatureList(featuresInBlock);
-            CombFeatures.AddFeatureList(featuresInBlock);
+            ProcessFeatures.AddFeatureList(featuresInBlock);
         }
 
 
         override public DataPairList GetSettings()
         {
             int numPixels = 0;
-            foreach (var feature in CombFeatures)
+            foreach (var feature in ProcessFeatures)
             {
                 var combFeature = feature.Value as CombFeature;
                 if (combFeature.Pixels != null)
@@ -402,8 +402,8 @@ namespace SkyCombImage.ProcessLogic
                 { "# Blocks", Blocks.Count },
                 { "# Objects", CombObjs.CombObjList.Count },
                 { "# Significant Objects", CombObjs.NumSig },
-                { "# Features", CombFeatures.Count },
-                { "# Significant Features", CombFeatures.NumSig },
+                { "# Features", ProcessFeatures.Count },
+                { "# Significant Features", ProcessFeatures.NumSig },
                 { "# Pixels", numPixels },
             };
         }

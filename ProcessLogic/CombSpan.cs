@@ -45,7 +45,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 var combObject = theObject.Value as CombObject;
                 // Copy the list of features claimed by the object
-                var objectFeatures = combObject.Features.Clone();
+                var objectFeatures = combObject.ProcessFeatures.Clone();
 
                 // Eliminate all object summary data.
                 combObject.ResetMemberData();

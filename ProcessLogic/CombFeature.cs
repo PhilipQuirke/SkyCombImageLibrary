@@ -2,6 +2,7 @@
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombImage.ProcessModel;
+using SkyCombImage.ProcessLogic;
 using SkyCombGround.CommonSpace;
 using System.Drawing;
 
@@ -596,20 +597,8 @@ namespace SkyCombImage.ProcessLogic
 
 
     // A list of Comb features bound to a specific Block
-    public class CombFeatureList : ProcessFeatureList
+    public class CombFeatureLogic 
     {
-
-        public CombFeatureList(ProcessConfigModel config) : base(config)
-        {
-        }
-
-
-        protected override ProcessFeatureList Create(ProcessConfigModel config)
-        {
-            return new CombFeatureList(config);
-        }
-
-
         // Analyse input image using Comb specific approach:
         // - PreReq: Convert image to gray scale, smooth and threshold => imgThreshold
         // - Create an Array[y,x] of bools set to 0 called inputSearched
@@ -620,8 +609,9 @@ namespace SkyCombImage.ProcessLogic
         //          - PixelNeighborSearch, minimum 3 x 3 search, adding hot pixels to hotPixels, until all edges finds zero hot pixels.
         //          - Add search area rectangle, hot pixel count, max heat, min heat, and hotPixels list into a results list.  
         //  - Repeat for next location where inputSearched[y,x] = 0                   
-        public void CreateFeaturesFromImage(
+        public static void CreateFeaturesFromImage(
             CombProcess model,
+            ProcessFeatureList featuresInBlock,
             ProcessBlock block,
             Image<Bgr, byte> imgOriginal,
             Image<Gray, byte> imgThreshold)
@@ -657,7 +647,7 @@ namespace SkyCombImage.ProcessLogic
                                     imgOriginal, imgThreshold,
                                     y, x);
 
-                                AddFeature(feature);
+                                featuresInBlock.AddFeature(feature);
                             }
                         }
                     }
@@ -671,12 +661,12 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public (int minHeat, int maxHeat, int maxPixels) HeatSummary()
+        public static (int minHeat, int maxHeat, int maxPixels) HeatSummary(ProcessFeatureList features)
         {
             int maxHeat = 0;
             int minHeat = 255;
             int maxPixels = 0;
-            foreach (var feature in this)
+            foreach (var feature in features)
             {
                 var combFeature = feature.Value as CombFeature;
                 maxHeat = Math.Max(maxHeat, combFeature.MaxHeat);
@@ -691,14 +681,14 @@ namespace SkyCombImage.ProcessLogic
 
         // Calculate object's location (centroid) as average of real feature's locations, using real features.
         // Also calculate the average error in location relative to the centroid.
-        public (DroneLocation, float) Calculate_Avg_LocationM_and_LocationErrM()
+        public static (DroneLocation, float) Calculate_Avg_LocationM_and_LocationErrM(ProcessFeatureList features)
         {
-            if (Count >= 2)
+            if (features.Count >= 2)
             {
                 int sumCount = 0;
                 DroneLocation sumLocation = new();
 
-                foreach (var feature in this)
+                foreach (var feature in features)
                     if ((feature.Value.LocationM != null) &&
                         (feature.Value.Type == FeatureTypeEnum.Real))
                     {
@@ -712,7 +702,7 @@ namespace SkyCombImage.ProcessLogic
                     var theLocationM = sumLocation.Multiply(1.0f / sumCount);
 
                     double sumDist = 0;
-                    foreach (var feature in this)
+                    foreach (var feature in features)
                         if ((feature.Value.LocationM != null) &&
                             (feature.Value.Type == FeatureTypeEnum.Real))
                             sumDist += RelativeLocation.DistanceM(feature.Value.LocationM, theLocationM);
@@ -721,9 +711,9 @@ namespace SkyCombImage.ProcessLogic
                     return (theLocationM.Clone(), theLocationErrM);
                 }
             }
-            else if (Count == 1)
+            else if (features.Count == 1)
             {
-                var firstFeat = this.Values[0];
+                var firstFeat = features.Values[0];
                 if (firstFeat.LocationM != null)
                     return (firstFeat.LocationM.Clone(), 0);
             }
@@ -735,14 +725,14 @@ namespace SkyCombImage.ProcessLogic
         // Calculate object height and object height error, using real features.
         // With the BaseLine calculation algorithm the last value is most accurate.
         // With the LineOfSight calculation algorithm every value is equally accurate.
-        public (float heightM, float heightErrM, float minHeight, float maxHeight) Calculate_Avg_HeightM_and_HeightErrM()
+        public static (float heightM, float heightErrM, float minHeight, float maxHeight) Calculate_Avg_HeightM_and_HeightErrM(ProcessFeatureList features)
         {
             int countLOS = 0;
             float sumLOSHeight = 0;
             float minHeight = 9999;
             float maxHeight = BaseConstants.UnknownValue;
             float lastBLHeight = BaseConstants.UnknownValue;
-            foreach (var feature in this)
+            foreach (var feature in features)
                 if ((feature.Value.LocationM != null) &&
                     (feature.Value.Type == FeatureTypeEnum.Real))
                 {
@@ -776,12 +766,12 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Return the average altitude of the drone over the object features.
-        public float AverageFlightStepFixedAltitudeM()
+        public static float AverageFlightStepFixedAltitudeM(ProcessFeatureList features)
         {
             float answer = 0;
             int count = 0;
 
-            foreach (var feature in this)
+            foreach (var feature in features)
             {
                 if (feature.Value.Type == FeatureTypeEnum.Real)
                 {

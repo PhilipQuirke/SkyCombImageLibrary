@@ -14,12 +14,10 @@ namespace SkyCombImage.ProcessModel
         public Color ClassColor { get; set; }
         public float ClassConfidence { get; set; }
 
-        // List of features that make up this object
-        public YoloFeatureList Features { get; set; }
         // First (Real) feature claimed by this object. 
-        public YoloFeature? FirstFeature { get { return Features.FirstFeature as YoloFeature; } }
+        public YoloFeature? FirstFeature { get { return ProcessFeatures.FirstFeature as YoloFeature; } }
         // Last (Real or UnReal) feature claimed by this object. May be null.
-        public YoloFeature? LastFeature { get { return Features.LastFeature as YoloFeature; } }
+        public YoloFeature? LastFeature { get { return ProcessFeatures.LastFeature as YoloFeature; } }
 
 
         public YoloObject(YoloProcess yoloProcess, ProcessScope scope, YoloFeature firstFeature, string className, Color classColor, float classConfidence) : base(yoloProcess.ProcessConfig, scope)
@@ -43,8 +41,6 @@ namespace SkyCombImage.ProcessModel
             ClassName = "";
             ClassColor = Color.Black;
             ClassConfidence = 0.66f;
-
-            Features = new(ProcessConfig);
         }
 
 
@@ -54,7 +50,7 @@ namespace SkyCombImage.ProcessModel
             int answer = 0;
 
             // Rarely, the object may have a sequence of real, then unreal, then real features.
-            foreach (var feature in Features)
+            foreach (var feature in ProcessFeatures)
                 if (feature.Value.Type == FeatureTypeEnum.Real)
                     answer++;
 
@@ -125,7 +121,7 @@ namespace SkyCombImage.ProcessModel
             Assert(theFeature.ObjectId <= 0, "YoloObject.ClaimFeature: Feature is already owned");
 
             theFeature.ObjectId = this.ObjectId;
-            Features.AddFeature(theFeature);
+            ProcessFeatures.AddFeature(theFeature);
 
             NumSigBlocks = LastFeature.BlockId - FirstFeature.BlockId + 1;
         }

@@ -46,11 +46,11 @@ namespace SkyCombImage.PersistModel
                     var saveAllObjects = (runConfig.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All);
 
                     // Save the Pixel data 
-                    if ((runConfig.ProcessConfig.SavePixels != SavePixelsEnum.None) && (combProcess.CombFeatures.Count > 0))
+                    if ((runConfig.ProcessConfig.SavePixels != SavePixelsEnum.None) && (combProcess.ProcessFeatures.Count > 0))
                     {
                         Data.SelectOrAddWorksheet(PixelsTabName);
                         int row = 0;
-                        foreach (var feature in combProcess.CombFeatures)
+                        foreach (var feature in combProcess.ProcessFeatures)
                             if (runConfig.ProcessConfig.SavePixels == SavePixelsEnum.All || feature.Value.Significant)
                             {
                                 var combFeature = feature.Value as CombFeature;
@@ -65,11 +65,11 @@ namespace SkyCombImage.PersistModel
 
 
                     // Save the Feature data 
-                    if ((runConfig.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None) && (combProcess.CombFeatures.Count > 0))
+                    if ((runConfig.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None) && (combProcess.ProcessFeatures.Count > 0))
                     {
                         Data.SelectOrAddWorksheet(FeaturesTabName);
                         int featureRow = 0;
-                        foreach (var feature in combProcess.CombFeatures)
+                        foreach (var feature in combProcess.ProcessFeatures)
                             if (runConfig.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All || feature.Value.Significant)
                                 Data.SetDataListRowKeysAndValues(ref featureRow, feature.Value.GetSettings());
 

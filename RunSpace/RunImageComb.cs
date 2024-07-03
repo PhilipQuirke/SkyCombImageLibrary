@@ -15,7 +15,7 @@ namespace SkyCombImage.RunSpace
     class CombImage : DrawImage
     {
         // Analyse input image using Comb specific approach, to generate a list of features.
-        public static CombFeatureList Process(
+        public static ProcessFeatureList Process(
             RunConfig config,
             CombProcess model,
             ProcessBlock block,
@@ -43,8 +43,8 @@ namespace SkyCombImage.RunSpace
                 dataModel = ProcessFactory.NewCombProcessModel(config.ProcessConfig,
                     new VideoData(imgOriginal.Height, imgOriginal.Width), null, model.Drone);
 
-            var featuresInBlock = ProcessFactory.NewCombFeatureList(model.ProcessConfig);
-            featuresInBlock.CreateFeaturesFromImage(dataModel, block, imgOriginal, imgThreshold);
+            var featuresInBlock = ProcessFactory.NewProcessFeatureList(model.ProcessConfig);
+            CombFeatureLogic.CreateFeaturesFromImage(dataModel, featuresInBlock, block, imgOriginal, imgThreshold);
             return featuresInBlock;
         }
     }

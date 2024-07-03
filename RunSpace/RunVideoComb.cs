@@ -68,7 +68,7 @@ namespace SkyCombImage.RunSpace
                 CombProcess.CombSpans.SetFixAltMAfterLoad(Drone.InputVideo, Drone);
 
                 // Link each object to its features
-                foreach (var feature in CombProcess.CombFeatures)
+                foreach (var feature in CombProcess.ProcessFeatures)
                     if (feature.Value.ObjectId >= 0)
                         CombProcess.CombObjs.SetLinksAfterLoad(feature.Value as CombFeature);
             }
@@ -111,7 +111,7 @@ namespace SkyCombImage.RunSpace
 
                 // Process the frame using "Image" Comb class, creating features.
                 // This "image" class has no "frame to frame" logic, so features are "one image" features.
-                CombFeatureList featuresInBlock = CombImage.Process(RunConfig, CombProcess, currBlock, CurrInputVideoFrame);
+                ProcessFeatureList featuresInBlock = CombImage.Process(RunConfig, CombProcess, currBlock, CurrInputVideoFrame);
 
                 foreach (var feature in featuresInBlock)
                 {

@@ -18,7 +18,7 @@ namespace SkyCombImage.ProcessModel
     {
         //public ProcessBlockList YoloBlocks;
         public YoloObjectList YoloObjects;
-        public YoloFeatureList YoloFeatures;
+        public ProcessFeatureList YoloFeatures;
 
         // If UseFlightLegs, how many significant objects have been found in this FlightLeg?
         public int FlightLeg_SigObjects { get; set; }
@@ -95,12 +95,13 @@ namespace SkyCombImage.ProcessModel
                 int blockID = currBlock.BlockId;
 
                 // Convert Boxes to YoloFeatures
-                YoloFeatureList featuresInBlock = new(this.ProcessConfig);
+                ProcessFeatureList featuresInBlock = new(this.ProcessConfig);
                 foreach (var box in result.Boxes)
                 {
                     // We have found a new feature/object
                     var imagePixelBox = new Rectangle(box.Bounds.Left, box.Bounds.Top, box.Bounds.Width, box.Bounds.Height);
-                    featuresInBlock.AddFeature(this, currBlock.BlockId, imagePixelBox, box);
+                    var newFeature = new YoloFeature(this, blockID, imagePixelBox, box);
+                    featuresInBlock.AddFeature(newFeature);
                 }
 
 
@@ -118,7 +119,7 @@ namespace SkyCombImage.ProcessModel
                     }
 
                 // Each feature can only be claimed once
-                YoloFeatureList availFeatures = featuresInBlock.Clone() as YoloFeatureList;
+                ProcessFeatureList availFeatures = featuresInBlock.Clone();
 
 
                 // For each active object, consider each feature (significant or not)

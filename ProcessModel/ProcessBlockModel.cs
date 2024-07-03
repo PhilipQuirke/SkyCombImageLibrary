@@ -84,19 +84,7 @@ namespace SkyCombImage.ProcessModel
             if (MaxFeatureId == UnknownValue || featureToAdd.FeatureId > MaxFeatureId)
                 MaxFeatureId = featureToAdd.FeatureId;
         }
-        public void AddFeatureList(CombFeatureList featuresToAdd)
-        {
-            if (featuresToAdd != null)
-            {
-                var count = featuresToAdd.Count;
-                if (count > 0)
-                {
-                    MinFeatureId = featuresToAdd.Keys[0];
-                    MaxFeatureId = featuresToAdd.Keys[count - 1];
-                }
-            }
-        }
-        public void AddFeatureList(YoloFeatureList featuresToAdd)
+        public void AddFeatureList(ProcessFeatureList featuresToAdd)
         {
             if (featuresToAdd != null)
             {
