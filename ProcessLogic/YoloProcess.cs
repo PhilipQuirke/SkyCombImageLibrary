@@ -138,7 +138,7 @@ namespace SkyCombImage.ProcessModel
                             bool claimedFeatures = false;
                             foreach (var feature in featuresInBlock)
                                 // Object will claim feature if the object remains viable after claiming feature
-                                if (theObject.Value.MaybeClaimFeature(feature.Value as YoloFeature, expectedObjectLocation))
+                                if ((theObject.Value as YoloObject).MaybeClaimFeature(feature.Value as YoloFeature, expectedObjectLocation))
                                 {
                                     availFeatures.Remove(feature.Value.FeatureId);
                                     claimedFeatures = true;
@@ -169,7 +169,7 @@ namespace SkyCombImage.ProcessModel
                             expectedObjectLocation.Height);
 
                         foreach (var feature in availFeatures)
-                            theObject.Value.MaybeClaimFeature(feature.Value as YoloFeature, expectedObjectLocation);
+                            (theObject.Value as YoloObject).MaybeClaimFeature(feature.Value as YoloFeature, expectedObjectLocation);
                     }
 
 

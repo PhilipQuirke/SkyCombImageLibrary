@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved. 
+﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using OfficeOpenXml;
 using OfficeOpenXml.Drawing.Chart;
 using OfficeOpenXml.Table.PivotTable;
@@ -12,24 +12,48 @@ using System.Drawing;
 
 namespace SkyCombImage.PersistModel
 {
-    // Save Comb processing model data to a datastore
-    public class CombSaveObject : DataStoreAccessor
+    // Save processing model data to a datastore
+    public class ProcessSaveObject : DataStoreAccessor
     {
         const string ObjectHeightPivotName = "ObjectHeightPivot";
         const string ObjectSizePivotName = "ObjectSizePivot";
         const string ObjectHeatPivotName = "ObjectHeatPivot";
 
 
-        public CombSaveObject(DroneDataStore data) : base(data)
+        public ProcessSaveObject(DroneDataStore data) : base(data)
         {
         }
 
 
-        public void SaveObjectList(CombProcess combProcess, bool saveAll)
+        public void SaveFeatureList(ProcessAll process, ProcessFeatureList features, bool saveAll)
+        { 
+            Data.SelectOrAddWorksheet(FeaturesTabName);
+            int featureRow = 0;
+            foreach (var feature in features)
+                if (saveAll || feature.Value.Significant)
+                    Data.SetDataListRowKeysAndValues(ref featureRow, feature.Value.GetSettings());
+
+            Data.SetColumnWidth(ProcessFeatureModel.NotesSetting, 20);
+
+            Data.SetNumberColumnNdp(ProcessFeatureModel.NorthingMSetting, LocationNdp);
+            Data.SetNumberColumnNdp(ProcessFeatureModel.EastingMSetting, LocationNdp);
+            Data.SetNumberColumnNdp(ProcessFeatureModel.HeightMSetting, HeightNdp);
+
+            Data.SetColumnColor(ProcessFeatureModel.FeatureIdSetting, featureRow, Color.Blue);
+            Data.SetColumnColor(ProcessFeatureModel.ObjectIdSetting, featureRow, Color.Blue);
+            Data.SetColumnColor(ProcessFeatureModel.BlockIdSetting, featureRow, Color.Blue);
+            Data.SetColumnColor(ProcessFeatureModel.HeightMSetting, featureRow, Color.Blue);
+            Data.SetColumnColor(ProcessFeatureModel.LegIdSetting, featureRow, Color.Blue);
+
+            Data.SetLastUpdateDateTime(FeaturesTabName);
+        }
+
+
+        public void SaveObjectList(ProcessAll process, ProcessObjList objects, bool saveAll)
         {
             Data.SelectOrAddWorksheet(Objects1TabName);
             int objectRow = 0;
-            foreach (var theObject in combProcess.CombObjs.CombObjList)
+            foreach (var theObject in objects)
                 if (saveAll || theObject.Value.NumSigBlocks > 0)
                     Data.SetDataListRowKeysAndValues(ref objectRow, theObject.Value.GetSettings());
 
@@ -43,17 +67,17 @@ namespace SkyCombImage.PersistModel
             Data.SetColumnColor(ProcessObjectModel.CenterBlockSetting, objectRow, Color.Blue);
 
             // Highlight cells in green/red to show their accuracy
-            Data.AddConditionalRuleGood(ProcessObjectModel.LocationErrMSetting, objectRow, combProcess.ProcessConfig.GoodLocationErrM);
-            Data.AddConditionalRuleBad(ProcessObjectModel.LocationErrMSetting, objectRow, combProcess.ProcessConfig.BadLocationErrM);
-            Data.AddConditionalRuleGood(ProcessObjectModel.HeightErrMSetting, objectRow, combProcess.ProcessConfig.GoodHeightErrM);
-            Data.AddConditionalRuleBad(ProcessObjectModel.HeightErrMSetting, objectRow, combProcess.ProcessConfig.BadHeightErrM);
+            Data.AddConditionalRuleGood(ProcessObjectModel.LocationErrMSetting, objectRow, process.ProcessConfig.GoodLocationErrM);
+            Data.AddConditionalRuleBad(ProcessObjectModel.LocationErrMSetting, objectRow, process.ProcessConfig.BadLocationErrM);
+            Data.AddConditionalRuleGood(ProcessObjectModel.HeightErrMSetting, objectRow, process.ProcessConfig.GoodHeightErrM);
+            Data.AddConditionalRuleBad(ProcessObjectModel.HeightErrMSetting, objectRow, process.ProcessConfig.BadHeightErrM);
 
             Data.SetLastUpdateDateTime(Objects1TabName);
         }
 
 
-        // Add a speed graph for comb objects and features and ground speed
-        public void AddCombGroundFeatureObjectSpeedGraph(int maxBlockId)
+        // Add a speed graph for objects and features and ground speed
+        public void AddProcessGroundFeatureObjectSpeedGraph(int maxBlockId)
         {
 /* PQR
             const string ChartName = "GroundFeatureObjectSpeed";
@@ -75,8 +99,8 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // Add a height graph for comb objects and features
-        public void AddCombFeatureObjectHeightGraph(int maxBlockId)
+        // Add a height graph for objects and features
+        public void AddProcessFeatureObjectHeightGraph(int maxBlockId)
         {
             const string ChartName = "FeatureObjectHeight";
             const string ChartTitle = "Feature & Object Height (in meters)";
@@ -96,8 +120,8 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // Add a scatter plot of the comb objects and features.
-        public void AddCombObjectFeatureScatterGraph()
+        // Add a scatter plot of the objects and features.
+        public void AddProcessObjectFeatureScatterGraph()
         {
             const string ChartName = "ObjectScatterPlot";
             const string ChartTitle = "Object & Feature Locations (Northing / Easting) in meters";
@@ -115,8 +139,8 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // Add a scatter plot of the comb object and feature locations.
-        public void AddCombFlightObjectFeatureGraph()
+        // Add a scatter plot of the process object and feature locations.
+        public void AddProcessFlightObjectFeatureGraph()
         {
             const string ChartName = "FlightObjectFeaturePlot";
             const string ChartTitle = "Drone Steps, Object & Feature Locations (Northing / Easting) in meters";
@@ -135,18 +159,18 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // Add up to 4 Comb object / feature charts / graphs
+        // Add up to 4  object / feature charts / graphs
         public void SaveObjectGraphs(int maxBlockId)
         {
             Data.SelectOrAddWorksheet(Objects2TabName);
             Data.Worksheet.Drawings.Clear();
             if (maxBlockId > 0)
             {
-                AddCombGroundFeatureObjectSpeedGraph(maxBlockId);
-                AddCombFeatureObjectHeightGraph(maxBlockId);
+                AddProcessGroundFeatureObjectSpeedGraph(maxBlockId);
+                AddProcessFeatureObjectHeightGraph(maxBlockId);
             }
-            AddCombObjectFeatureScatterGraph();
-            AddCombFlightObjectFeatureGraph();
+            AddProcessObjectFeatureScatterGraph();
+            AddProcessFlightObjectFeatureGraph();
 
             Data.SetLastUpdateDateTime(Objects2TabName);
         }
@@ -300,7 +324,7 @@ namespace SkyCombImage.PersistModel
 
 
         // Save population summary data, pivots and graphs
-        public void SavePopulation(CombProcess combProcess)
+        public void SavePopulation(ProcessObjList objects)
         {
             try
             {
@@ -308,7 +332,7 @@ namespace SkyCombImage.PersistModel
 
                 int row = 1;
                 Data.SetTitle(ref row, 1, PopulationSummaryTitle, LargeTitleFontSize);
-                Data.SetTitleAndDataListColumn(ObjectSummaryTitle, ModelTitleRow, LhsColOffset, combProcess.CombObjs.CombObjList.GetSettings());
+                Data.SetTitleAndDataListColumn(ObjectSummaryTitle, ModelTitleRow, LhsColOffset, objects.GetSettings());
                 Data.SetColumnWidth(1, 20);
 
                 (var objectWs, int maxObjRow) = Data.EndRow(Objects1TabName);
@@ -327,7 +351,7 @@ namespace SkyCombImage.PersistModel
             }
             catch (Exception ex)
             {
-                throw ThrowException("CombSaveObject.SavePopulation", ex);
+                throw ThrowException("ProcessSaveObject.SavePopulation", ex);
             }
         }
     }

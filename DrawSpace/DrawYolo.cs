@@ -24,7 +24,7 @@ namespace SkyCombImage.DrawSpace
             {
                 if ((theObject.Value.LastFeature != null) && (theObject.Value.LastFeature.BlockId == thisBlockId))
                 {
-                    var theColor = theObject.Value.ClassColor;
+                    var theColor = (theObject.Value as YoloObject).ClassColor;
                     var theObjectBox = theObject.Value.LastFeature.PixelBox;
                     var the_title = "#" + theObject.Value.ObjectId.ToString();
 

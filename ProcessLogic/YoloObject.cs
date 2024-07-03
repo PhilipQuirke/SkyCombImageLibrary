@@ -158,7 +158,7 @@ namespace SkyCombImage.ProcessModel
     };
 
 
-    public class YoloObjectList : SortedList<int, YoloObject>
+    public class YoloObjectList : ProcessObjList
     {
         private YoloProcess YoloProcess;
 
