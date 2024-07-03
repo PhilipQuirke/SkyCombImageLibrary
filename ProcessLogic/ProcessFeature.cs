@@ -2,7 +2,6 @@
 using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
-using SkyCombDrone.DroneLogic;
 using System.Drawing;
 
 
@@ -13,6 +12,8 @@ namespace SkyCombImage.ProcessLogic
     {
         // Parent process model
         protected ProcessAll ProcessAll { get; }
+        public ProcessConfigModel? ProcessConfig { get { return ProcessAll == null ? null : ProcessAll.ProcessConfig; } }
+
 
         // A feature is associated 1-1 with a Block
         public ProcessBlock Block { get; set; }
@@ -416,7 +417,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Add the feature list for a new block into this CombFeatureListList 
+        // Add the feature list for a new block into this ProcessFeatureList
         public void AddFeatureList(ProcessFeatureList featuresToAdd)
         {
             if (featuresToAdd != null)
@@ -449,5 +450,122 @@ namespace SkyCombImage.ProcessLogic
             }
         }
 
+
+
+        // Calculate object's location (centroid) as average of real feature's locations, using real features.
+        // Also calculate the average error in location relative to the centroid.
+        public (DroneLocation, float) Calculate_Avg_LocationM_and_LocationErrM()
+        {
+            if (this.Count >= 2)
+            {
+                int sumCount = 0;
+                DroneLocation sumLocation = new();
+
+                foreach (var feature in this)
+                    if ((feature.Value.LocationM != null) &&
+                        (feature.Value.Type == FeatureTypeEnum.Real))
+                    {
+                        sumCount++;
+                        sumLocation.NorthingM += feature.Value.LocationM.NorthingM;
+                        sumLocation.EastingM += feature.Value.LocationM.EastingM;
+                    }
+
+                if (sumCount > 0)
+                {
+                    var theLocationM = sumLocation.Multiply(1.0f / sumCount);
+
+                    double sumDist = 0;
+                    foreach (var feature in this)
+                        if ((feature.Value.LocationM != null) &&
+                            (feature.Value.Type == FeatureTypeEnum.Real))
+                            sumDist += RelativeLocation.DistanceM(feature.Value.LocationM, theLocationM);
+                    var theLocationErrM = (float)(sumDist / sumCount);
+
+                    return (theLocationM.Clone(), theLocationErrM);
+                }
+            }
+            else if (this.Count == 1)
+            {
+                var firstFeat = this.Values[0];
+                if (firstFeat.LocationM != null)
+                    return (firstFeat.LocationM.Clone(), 0);
+            }
+
+            return (new DroneLocation(), 0);
+        }
+
+
+        // Calculate object height and object height error, using real features.
+        // With the BaseLine calculation algorithm the last value is most accurate.
+        // With the LineOfSight calculation algorithm every value is equally accurate.
+        public (float heightM, float heightErrM, float minHeight, float maxHeight) Calculate_Avg_HeightM_and_HeightErrM()
+        {
+            int countLOS = 0;
+            float sumLOSHeight = 0;
+            float minHeight = 9999;
+            float maxHeight = BaseConstants.UnknownValue;
+            float lastBLHeight = BaseConstants.UnknownValue;
+            foreach (var feature in this)
+                if ((feature.Value.LocationM != null) &&
+                    (feature.Value.Type == FeatureTypeEnum.Real))
+                {
+                    var featureHeight = feature.Value.HeightM;
+                    if (featureHeight != BaseConstants.UnknownValue)
+                    {
+                        minHeight = Math.Min(featureHeight, minHeight);
+                        maxHeight = Math.Max(featureHeight, maxHeight);
+                        if (feature.Value.HeightAlgorithm == ProcessFeature.BaseLineHeightAlgorithm)
+                            lastBLHeight = featureHeight;
+                        else if (feature.Value.HeightAlgorithm == ProcessFeature.LineOfSightHeightAlgorithm)
+                        {
+                            countLOS++;
+                            sumLOSHeight += featureHeight;
+                        }
+                    }
+                }
+
+            // Use BaseLine value if available, else the LOS value if available.
+            var heightM = (lastBLHeight > 0 ? lastBLHeight : (countLOS > 0 ? (float)(sumLOSHeight / countLOS) : BaseConstants.UnknownValue));
+            if (heightM >= 0)
+                return (
+                    heightM,
+                    Math.Max(
+                        Math.Abs(maxHeight - heightM),
+                        Math.Abs(minHeight - heightM)),
+                    minHeight, maxHeight);
+
+            return (BaseConstants.UnknownValue, BaseConstants.UnknownValue, BaseConstants.UnknownValue, BaseConstants.UnknownValue);
+        }
+
+
+        // Return the average altitude of the drone over the object features.
+        public float AverageFlightStepFixedAltitudeM()
+        {
+            float answer = 0;
+            int count = 0;
+
+            foreach (var feature in this)
+            {
+                if (feature.Value.Type == FeatureTypeEnum.Real)
+                {
+                    var step = feature.Value.Block.FlightStep;
+                    if (step != null)
+                    {
+                        var atlM = feature.Value.Block.FlightStep.FixedAltitudeM;
+                        if (atlM != BaseConstants.UnknownValue)
+                        {
+                            answer += atlM;
+                            count++;
+                        }
+                    }
+                }
+            }
+            if (count > 0)
+                answer /= count;
+            else
+                answer = BaseConstants.UnknownValue;
+
+            return answer;
+        }
     };
 }

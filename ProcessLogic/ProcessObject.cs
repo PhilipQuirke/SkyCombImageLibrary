@@ -11,8 +11,11 @@ namespace SkyCombImage.ProcessLogic
     // A significant object - a logical object derived from overlapping features over successive frames. 
     public class ProcessObject : ProcessObjectModel
     {
-        // Static config data shared by all objects
-        public static ProcessConfigModel ProcessConfig;
+        // Parent process model
+        protected ProcessAll ProcessAll { get; }
+
+        public ProcessConfigModel? ProcessConfig { get { return ProcessAll == null ? null : ProcessAll.ProcessConfig; } }
+
         // Static NextObjectID shared by all objects
         public static int NextObjectId = 0;
         // Static random number generator
@@ -22,10 +25,10 @@ namespace SkyCombImage.ProcessLogic
         public ProcessFeatureList ProcessFeatures;
 
 
-        public ProcessObject(ProcessConfigModel processConfig, ProcessScope scope) : base()
+        public ProcessObject(ProcessAll processAll, ProcessScope scope) : base()
         {
-            ProcessConfig = processConfig;
-            ProcessFeatures = new ProcessFeatureList(ProcessConfig);
+            ProcessAll = processAll;
+            ProcessFeatures = new ProcessFeatureList(ProcessAll.ProcessConfig);
 
             ObjectId = ++NextObjectId;
             if (scope != null)
@@ -41,6 +44,39 @@ namespace SkyCombImage.ProcessLogic
         {
             base.ResetMemberData();
             ProcessFeatures = new(ProcessConfig);
+        }
+
+
+        // Number of real features owned by this object.
+        public virtual int NumRealFeatures()
+        {
+            int answer = 0;
+
+            // Rarely, the object may have a sequence of real, then unreal, then real features.
+            foreach (var feature in ProcessFeatures)
+                if (feature.Value.Type == FeatureTypeEnum.Real)
+                    answer++;
+
+            return answer;
+        }
+
+
+        // How long has this object been seen for in Config.ObjectMinDurationMs units?
+        public double SeenForMinDurations()
+        {
+            var minDuration = ProcessConfig.ObjectMinDurationMs; // Say 500ms
+            var timeSeenMs = (1000.0F * NumRealFeatures()) / ProcessAll.VideoData.Fps;
+            return (timeSeenMs / minDuration);
+        }
+
+
+        // More features is correlated with more location error.
+        // A good measure of location scatter is location error per real feature.
+        public float LocationErrPerFeatureM()
+        {
+            int realFeats = NumRealFeatures();
+
+            return (realFeats == 0 ? UnknownValue : LocationErrM / realFeats);
         }
 
 

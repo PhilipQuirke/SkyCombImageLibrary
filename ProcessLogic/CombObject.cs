@@ -1,8 +1,6 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.CategorySpace;
-using SkyCombImage.DrawSpace;
 using SkyCombImage.ProcessModel;
 using System.Drawing;
 
@@ -27,7 +25,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Constructor used processing video 
-        public CombObject(ProcessScope scope, CombProcess model, CombFeature firstFeature) : base(model.ProcessConfig, scope)
+        public CombObject(ProcessScope scope, CombProcess model, CombFeature firstFeature) : base(model, scope)
         {
             CombProcess = model;
             ResetMemberData();
@@ -41,7 +39,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Constructor used when loaded objects from the datastore
-        public CombObject(CombProcess model, List<string> settings) : base(model.ProcessConfig, null)
+        public CombObject(CombProcess model, List<string> settings) : base(model, null)
         {
             CombProcess = model;
             ResetMemberData();
@@ -62,17 +60,12 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Number of real features owned by this object.
-        public int NumRealFeatures()
+        public override int NumRealFeatures()
         {
-            int answer = 0;
-
             if (COM.LastRealFeatureIndex >= 0)
-                // Rarely, the object may have a sequence of real, then unreal, then real features.
-                foreach (var feature in ProcessFeatures)
-                    if (feature.Value.Type == FeatureTypeEnum.Real)
-                        answer++;
+                return base.NumRealFeatures();
 
-            return answer;
+            return 0;
         }
 
 
@@ -93,25 +86,6 @@ namespace SkyCombImage.ProcessLogic
             pixelArea *= 0.785f;
 
             return (1.0f * COM.MaxRealHotPixels) / pixelArea;
-        }
-
-
-        // How long has this object been seen for in Config.ObjectMinDurationMs units?
-        public double SeenForMinDurations()
-        {
-            var minDuration = ProcessConfig.ObjectMinDurationMs; // Say 500ms
-            var timeSeenMs = (1000.0F * NumRealFeatures()) / CombProcess.VideoData.Fps;
-            return (timeSeenMs / minDuration);
-        }
-
-
-        // More features is correlated with more location error.
-        // A good measure of location scatter is location error per real feature.
-        public float LocationErrPerFeatureM()
-        {
-            int realFeats = NumRealFeatures();
-
-            return (realFeats == 0 ? UnknownValue : LocationErrM / realFeats);
         }
 
 
@@ -283,7 +257,7 @@ namespace SkyCombImage.ProcessLogic
                         lastFeature.Calculate_HeightM_BaseLineMovement(
                                 FirstFeature,
                                 DemM,
-                                CombFeatureLogic.AverageFlightStepFixedAltitudeM(ProcessFeatures));
+                                ProcessFeatures.AverageFlightStepFixedAltitudeM());
                 }
                 else
                     lastFeature.SetHeightAlgorithmError("BL_TooShort"); // Either in time or distance.
@@ -489,7 +463,7 @@ namespace SkyCombImage.ProcessLogic
         // Refer https://stats.stackexchange.com/questions/13272/2d-analog-of-standard-deviation for rationale.
         private void Calculate_LocationM_and_LocationErrM()
         {
-            (LocationM, LocationErrM) = CombFeatureLogic.Calculate_Avg_LocationM_and_LocationErrM(ProcessFeatures);
+            (LocationM, LocationErrM) = ProcessFeatures.Calculate_Avg_LocationM_and_LocationErrM();
         }
 
 
@@ -542,7 +516,7 @@ namespace SkyCombImage.ProcessLogic
         // Calculate object height and object height error by averaging the feature data.
         private void Calculate_HeightM_and_HeightErrM()
         {
-            (HeightM, HeightErrM, MinHeightM, MaxHeightM) = CombFeatureLogic.Calculate_Avg_HeightM_and_HeightErrM(ProcessFeatures);
+            (HeightM, HeightErrM, MinHeightM, MaxHeightM) = ProcessFeatures.Calculate_Avg_HeightM_and_HeightErrM();
         }
 
 

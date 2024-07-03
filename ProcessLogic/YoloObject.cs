@@ -20,7 +20,7 @@ namespace SkyCombImage.ProcessModel
         public YoloFeature? LastFeature { get { return ProcessFeatures.LastFeature as YoloFeature; } }
 
 
-        public YoloObject(YoloProcess yoloProcess, ProcessScope scope, YoloFeature firstFeature, string className, Color classColor, float classConfidence) : base(yoloProcess.ProcessConfig, scope)
+        public YoloObject(YoloProcess yoloProcess, ProcessScope scope, YoloFeature firstFeature, string className, Color classColor, float classConfidence) : base(yoloProcess, scope)
         {
             ResetMemberData();
             ClassName = className;
