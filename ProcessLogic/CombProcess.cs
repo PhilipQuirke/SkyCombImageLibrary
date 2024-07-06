@@ -66,9 +66,7 @@ namespace SkyCombImage.ProcessLogic
         // Ensure each object has at least an "insignificant" name e.g. #16
         public override void EnsureObjectsNamed()
         {
-            foreach (var theObject in CombObjs.CombObjList)
-                if (theObject.Value.Name == "")
-                    theObject.Value.SetName();
+            CombObjs.CombObjList.EnsureObjectsNamed();
         }
 
 
@@ -76,7 +74,7 @@ namespace SkyCombImage.ProcessLogic
         {
             if (Drone.UseFlightLegs)
             {
-                // For "Comb" process robustness, we want to process each leg independently.
+                // For process robustness, we want to process each leg independently.
                 // So at the start and end of each leg we stop tracking all objects.
                 CombObjs.StopTracking();
                 FlightLeg_SigObjects = 0;
@@ -164,7 +162,7 @@ namespace SkyCombImage.ProcessLogic
 
         // If !UseFlightLegs, track significant objects, based on their corresponding FlightSteps.
         // Does not make use of FlightLegs.
-        private void ProcessObjectsFlightSteps(CombObjList inScopeObjects, ProcessBlock currBlock)
+        private void ProcessObjectsFlightSteps(ProcessObjList inScopeObjects, ProcessBlock currBlock)
         {
             if (!Drone.UseFlightLegs)
             {
@@ -224,8 +222,8 @@ namespace SkyCombImage.ProcessLogic
                 // We only want to consider objects that are active.
                 // For long flights most objects will have become inactive seconds or minutes ago.
                 Phase = 2;
-                CombObjList inScopeObjects = new();
-                CombObjList availObjects = new();
+                ProcessObjList inScopeObjects = new();
+                ProcessObjList availObjects = new();
                 foreach (var theObject in CombObjs.CombObjList)
                 {
                     var combObject = theObject.Value as CombObject;

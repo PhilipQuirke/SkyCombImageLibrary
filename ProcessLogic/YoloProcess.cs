@@ -8,6 +8,7 @@ using SkyCombGround.CommonSpace;
 using System.Drawing;
 using Compunet.YoloV8.Data;
 using SkyCombGround.GroundLogic;
+using SixLabors.ImageSharp;
 
 
 
@@ -17,44 +18,99 @@ namespace SkyCombImage.ProcessModel
     // Ignores thermal threshold.
     public class YoloProcess : ProcessAll
     {
-        //public ProcessBlockList YoloBlocks;
+        // YOLO (You only look once) V8 image processing
+        public YoloDetect YoloDetect;
+
+        // List of features detected in each frame in a leg by YoloDetect 
+        List<FeatureSeen> LegFrameFeatures;
+
         public YoloObjectList YoloObjects;
 
         // If UseFlightLegs, how many significant objects have been found in this FlightLeg?
         public int FlightLeg_SigObjects { get; set; }
+        public int FlightLeg_StartObjects { get; set; }
 
-        // YOLO (You only look once) V8 image processing
-        public YoloDetect YoloDetect;
 
 
         public YoloProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config, string yoloDirectory) : base(ground, video, drone, config)
         {
+            YoloDetect = new YoloDetect(yoloDirectory, config.YoloDetectConfidence, config.YoloIoU);
+            LegFrameFeatures = new();
             YoloObjects = new(this);
             YoloObjects.LegFirstIndex = 0;
             FlightLeg_SigObjects = 0;
-            YoloDetect = new YoloDetect(yoloDirectory, config.YoloConfidence, config.YoloIoU);
+            FlightLeg_StartObjects = 0;
         }
 
 
         // Reset any internal state of the model, so it can be re-used in another run immediately
         public override void ResetModel()
         {
+            LegFrameFeatures.Clear();
             YoloObjects.Clear();
-
             YoloObjects.LegFirstIndex = 0;
             FlightLeg_SigObjects = 0;
+            FlightLeg_StartObjects = 0;
 
             base.ResetModel();
+        }
+
+
+        // Ensure each object has at least an "insignificant" name e.g. #16
+        public override void EnsureObjectsNamed()
+        {
+            YoloObjects.EnsureObjectsNamed();
         }
 
 
         // For process robustness, we want to process each leg independently.
         public override void ProcessFlightLegStart(int legId)
         {
-            // No existing objects should be live at the start of a new leg
-            YoloObjects.ProcessLegStart();
-            FlightLeg_SigObjects = 0;
+            if (Drone.UseFlightLegs)
+            {
+                // For process robustness, we want to process each leg independently.
+                // So at the start and end of each leg we stop tracking all objects.
+                YoloObjects.StopTracking();
+                LegFrameFeatures.Clear();
+                FlightLeg_SigObjects = 0;
+                FlightLeg_StartObjects = YoloObjects.Count;
+            }
         }
+
+
+        public override void ProcessFlightLegEnd(int legId)
+        {
+            if (Drone.UseFlightLegs)
+            {
+                if (LegFrameFeatures.Count > 0)
+                {
+                    /*
+                        // Number of objects found in this leg using just IoU testing.
+                        int featuresCount = LegFrameFeatures.Count;
+                        int combLegObjectCount = YoloObjects.Count - FlightLeg_StartObjects;
+
+                        YoloImageTracker tracker = new( 
+                            0.1f, // % overlap between feature in successive images 
+                            0.66f ); // % confidence in merging two objects
+                        var targets = tracker.CalculateTargets(LegFrameFeatures);
+
+                        // Number of objects found in this leg using just IoU and merging.
+                        int yoloImageLegObjectCount = targets.Count;
+
+                        Assert(yoloImageLegObjectCount <= featuresCount, "Bad YoloImageTracker.Targets.Count 1");
+                        Assert(yoloImageLegObjectCount <= combLegObjectCount, "Bad YoloImageTracker.Targets.Count 2");
+                    */
+                }
+
+                // For process robustness, we want to process each leg independently.
+                // So at the start and end of each leg we stop tracking all objects.
+                YoloObjects.StopTracking();
+                LegFrameFeatures.Clear();
+            }
+
+            EnsureObjectsNamed();
+        }
+
 
 
         // Create a Yolo feature and add it to the Yolo object. Update the block totals
@@ -90,14 +146,16 @@ namespace SkyCombImage.ProcessModel
                 var currBlock = Blocks.LastBlock;
                 int blockID = currBlock.BlockId;
 
-                // Convert Boxes to YoloFeatures
+
+                // Convert Yolo Bounding Boxes to YoloFeatures
                 ProcessFeatureList featuresInBlock = new(this.ProcessConfig);
                 foreach (var box in result.Boxes)
                 {
                     // We have found a new feature/object
-                    var imagePixelBox = new Rectangle(box.Bounds.Left, box.Bounds.Top, box.Bounds.Width, box.Bounds.Height);
+                    var imagePixelBox = new System.Drawing.Rectangle(box.Bounds.Left, box.Bounds.Top, box.Bounds.Width, box.Bounds.Height);
                     var newFeature = new YoloFeature(this, blockID, imagePixelBox, box);
                     featuresInBlock.AddFeature(newFeature);
+                    LegFrameFeatures.Add(new FeatureSeen { BlockId = blockID, Box = imagePixelBox, FeatureId = newFeature.FeatureId });
                 }
 
 

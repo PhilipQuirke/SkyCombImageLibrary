@@ -26,6 +26,11 @@ namespace SkyCombImage.ProcessModel
     //      - WARNING: Changing the default values below will have NO effect.
     public class ProcessConfigModel : ConfigBase
     {
+        public const float YoloDetectConfidenceDefault = 0.66f;
+        public const float YoloIoUDefault = 0.5f; // Typically 0.3 to 0.7
+        public const float YoloMergeConfidenceDefault = 0.25f;
+
+
         // --------------------- Debug --------------------- 
         // The ID of the Object that we want to focus on (if any).
         public int FocusObjectId { get; set; } = 0;
@@ -92,8 +97,9 @@ namespace SkyCombImage.ProcessModel
 
 
         // Yolo process:
-        public float YoloConfidence { get; set; } = 0.66f; 
-        public float YoloIoU { get; set; } = 0.5f; // Typically 0.3 to 0.7
+        public float YoloDetectConfidence { get; set; } = ProcessConfigModel.YoloDetectConfidenceDefault; 
+        public float YoloIoU { get; set; } = ProcessConfigModel.YoloIoUDefault; // Typically 0.3 to 0.7
+        public float YoloMergeConfidence { get; set; } = ProcessConfigModel.YoloMergeConfidenceDefault;
 
 
         // --------------------- Saving Output --------------------- 
@@ -162,11 +168,14 @@ namespace SkyCombImage.ProcessModel
 
         public void ValidateYolo()
         {
-            if((YoloConfidence < 0.1f) || (YoloConfidence > 0.9f))
-               YoloConfidence = 0.66f;
+            if ((YoloDetectConfidence < 0.1f) || (YoloDetectConfidence > 0.9f))
+                YoloDetectConfidence = ProcessConfigModel.YoloDetectConfidenceDefault;
 
-            if((YoloIoU < 0.1f) || (YoloIoU > 0.9f))
-                YoloIoU = 0.5f;
+            if ((YoloIoU < 0.1f) || (YoloIoU > 0.9f))
+                YoloIoU = ProcessConfigModel.YoloIoUDefault;
+
+            if ((YoloMergeConfidence < 0.1f) || (YoloMergeConfidence > 0.9f))
+                YoloMergeConfidence = ProcessConfigModel.YoloMergeConfidenceDefault;
         }
 
 
@@ -219,7 +228,7 @@ namespace SkyCombImage.ProcessModel
                 { "Gftt Block Size", GfttBlockSize },
                 { "Gftt Use Harris", GfttUseHarris.ToString() },
                 { "Gftt K", GfttK.ToString() },
-                { "Yolo Confidence", YoloConfidence, 2 },
+                { "Yolo Confidence", YoloDetectConfidence, 2 },
                 { "Yolo IoU", YoloIoU, 2 },
             };
         }
@@ -254,7 +263,7 @@ namespace SkyCombImage.ProcessModel
             GfttBlockSize = StringToNonNegInt(settings[i++]);
             GfttUseHarris = StringToBool(settings[i++]);
             GfttK = StringToDouble(settings[i++]);
-            YoloConfidence = StringToFloat(settings[i++]);
+            YoloDetectConfidence = StringToFloat(settings[i++]);
             YoloIoU = StringToFloat(settings[i++]);
         }
 

@@ -247,7 +247,7 @@ namespace SkyCombImage.ProcessLogic
                         // For speed, scan backwards through CombObjList
                         // until we find an object that ends before minBlockId.
                         var allObjs = Process.CombObjs.CombObjList;
-                        CombObjList combObjs = new();
+                        ProcessObjList combObjs = new();
                         for (int objectId = allObjs.Last().Key; objectId >= 0; objectId--)
                         {
                             ProcessObject theObject;

@@ -533,6 +533,16 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Ensure each object has at least an "insignificant" name e.g. #16
+        public void EnsureObjectsNamed()
+        {
+            foreach (var theObj in this)
+                if (theObj.Value.Name == "")
+                    theObj.Value.SetName();
+        }
+
+
+
         public int NumSignificantObjects()
         {
             int answer = 0;
@@ -560,7 +570,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public void StopTracking()
+        public virtual void StopTracking()
         {
             foreach (var theObject in this)
                 theObject.Value.BeingTracked = false;

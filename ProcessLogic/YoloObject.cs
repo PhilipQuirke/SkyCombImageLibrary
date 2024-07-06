@@ -196,8 +196,9 @@ namespace SkyCombImage.ProcessModel
 
 
         // No existing objects should be tracked at the start of a new leg
-        public void ProcessLegStart()
+        public override void StopTracking()
         {
+            base.StopTracking();
             LegFirstIndex = Count;
         }
     };

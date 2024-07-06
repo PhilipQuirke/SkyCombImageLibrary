@@ -330,22 +330,13 @@ namespace SkyCombImage.ProcessLogic
     };
 
 
-    public class CombObjList : ProcessObjList  
-    {
- 
-        public CombObjList()
-        {
-            ResetSettings();
-        }
-    }
-
 
     // A list of Comb objects
     public class CombObjs
     {
         private readonly CombProcess Model;
 
-        public CombObjList CombObjList;
+        public ProcessObjList CombObjList;
 
 
         public CombObjs(CombProcess model)
@@ -370,11 +361,11 @@ namespace SkyCombImage.ProcessLogic
             if ((feature == null) || (feature.ObjectId <= 0))
                 return;
 
-            CombObjList.TryGetValue(feature.ObjectId, out var combObject);
+            CombObjList.TryGetValue(feature.ObjectId, out var processObject);
 
             // Null case occurs when saving All features but only Significant objects and load from datastore
-            if (combObject != null)
-                (combObject as CombObject).SetLinksAfterLoad(feature);
+            if (processObject != null)
+                processObject.SetLinksAfterLoad(feature);
         }
 
 
