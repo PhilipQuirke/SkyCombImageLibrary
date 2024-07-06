@@ -24,7 +24,7 @@ namespace SkyCombImage.ProcessLogic
         // List of Blocks (aka frames processed)  
         public ProcessBlockList Blocks { get; set; }
 
-        // List of comb features found. Each feature is a cluster of hot pixels, with a bounding retangle
+        // List of features found. Each has a bounding retangle
         public ProcessFeatureList ProcessFeatures { get; set; }
 
 
