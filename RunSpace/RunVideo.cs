@@ -370,7 +370,6 @@ namespace SkyCombImage.RunSpace
                         Assert(inputVideo.CurrFrameId == PSM.CurrInputFrameId, "RunVideo.Run: Bad FrameId 1");
 
                         // Process start &/or end of drone flight legs.
-                        ProcessAll.OnObservation(ProcessEventEnum.LegEnd_Before, EventArgs.Empty);
                         ProcessFlightLegChange(this, prevLegId, PSM.CurrRunLegId);
 
                         // If we have just ended a leg change, then may have just calculated FixAltM
@@ -455,10 +454,7 @@ namespace SkyCombImage.RunSpace
 
                 // End the last leg (if any)
                 if (PSM.CurrRunLegId > 0)
-                {
-                    ProcessAll.OnObservation(ProcessEventEnum.LegEnd_Before, EventArgs.Empty);
                     ProcessFlightLegChange(this, PSM.CurrRunLegId, UnknownValue);
-                }
                 ProcessAll.ProcessEndWrapper();
 
                 var saveWatch = Stopwatch.StartNew();

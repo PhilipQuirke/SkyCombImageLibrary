@@ -8,7 +8,7 @@ using System.Drawing;
 namespace SkyCombImage.ProcessModel
 {
     // An image feature detected by YOLO in a single frame
-    class FeatureSeen
+    public class YoloFeatureSeen
     {
         public int BlockId;
         public int FeatureId;
@@ -16,20 +16,37 @@ namespace SkyCombImage.ProcessModel
     }
 
 
+    public class YoloFeatureSeenList : List<YoloFeatureSeen>
+    {
+        public YoloFeatureSeenList() : base() { }
+
+        // Clone this list
+
+        public YoloFeatureSeenList Clone()
+        {
+            YoloFeatureSeenList clone = new();
+            foreach (var feature in this)
+                clone.Add(new YoloFeatureSeen { BlockId = feature.BlockId, FeatureId = feature.FeatureId, Box = feature.Box });
+
+            return clone;
+        }
+    }
+
+
     // An object is a collection of features over several frames
-    class ObjectSeen
+    public class YoloObjectSeen
     {
         // The features that make up the object. Implies the first and last frame the object was seen in
-        public List<FeatureSeen> Features;
+        public YoloFeatureSeenList Features;
 
         // Average pixel velocity of the object over time in the image
         public double AverageVelocityX;
         public double AverageVelocityY;
 
 
-        public ObjectSeen()
+        public YoloObjectSeen()
         {
-            Features = new List<FeatureSeen>();
+            Features = new();
             AverageVelocityX = 0;
             AverageVelocityY = 0;
         }
@@ -69,7 +86,7 @@ namespace SkyCombImage.ProcessModel
     // Physical objects may be visible, then obscured, then visible resulting in two ObjectSeens. We try to merge them.
     class YoloTracker
     {
-        private List<ObjectSeen> ObjectsSeen;
+        private List<YoloObjectSeen> ObjectsSeen;
 
         // Minimum % overlap between features in successive images 
         private float IoUThreshold;
@@ -88,19 +105,19 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        public void ProcessFrame(int blockId, List<FeatureSeen> features, bool firstBlock)
+        public void ProcessFrame(int blockId, YoloFeatureSeenList features, bool firstBlock)
         {
             if (firstBlock)
             {
                 // For the first frame, create a new target for each detection
                 foreach (var feature in features)
-                    ObjectsSeen.Add(new ObjectSeen { Features = new List<FeatureSeen> { new FeatureSeen { BlockId = blockId, Box = feature.Box, FeatureId = feature.FeatureId } } });
+                    ObjectsSeen.Add(new YoloObjectSeen { Features = new YoloFeatureSeenList { new YoloFeatureSeen { BlockId = blockId, Box = feature.Box, FeatureId = feature.FeatureId } } });
             }
             else
             {
-                var unassignedFeatures = new List<FeatureSeen>();
+                var unassignedFeatures = new YoloFeatureSeenList();
                 foreach (var feature in features)
-                    unassignedFeatures.Add(new FeatureSeen { BlockId = blockId, Box = feature.Box, FeatureId = feature.FeatureId });
+                    unassignedFeatures.Add(new YoloFeatureSeen { BlockId = blockId, Box = feature.Box, FeatureId = feature.FeatureId });
 
                 foreach (var existingObject in ObjectsSeen)
                 {
@@ -119,17 +136,17 @@ namespace SkyCombImage.ProcessModel
                 // Create new objects for unassigned features
                 foreach (var detection in unassignedFeatures)
                 {
-                    ObjectsSeen.Add(new ObjectSeen { Features = new List<FeatureSeen> { detection } });
+                    ObjectsSeen.Add(new YoloObjectSeen { Features = new YoloFeatureSeenList { detection } });
                 }
             }
         }
 
 
         // Find the feature with the best overlap. Overlap must exceed IoUThreshold 
-        private FeatureSeen? FindBestMatch(Rectangle lastKnownBox, List<FeatureSeen> detections)
+        private YoloFeatureSeen? FindBestMatch(Rectangle lastKnownBox, YoloFeatureSeenList detections)
         {
             double maxIoU = 0;
-            FeatureSeen? bestMatch = null;
+            YoloFeatureSeen? bestMatch = null;
 
             foreach (var detection in detections)
             {
@@ -190,7 +207,7 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        private double CalculateTargetSimilarity(ObjectSeen t1, ObjectSeen t2, (double X, double Y) droneVelocity)
+        private double CalculateTargetSimilarity(YoloObjectSeen t1, YoloObjectSeen t2, (double X, double Y) droneVelocity)
         {
             // Velocity similarity
             double velocitySimilarity = 1 - (Math.Abs(t1.AverageVelocityX - t2.AverageVelocityX) / Math.Abs(droneVelocity.X) +
@@ -217,7 +234,7 @@ namespace SkyCombImage.ProcessModel
         public void MergeSimilarObjects()
         {
             var droneVelocity = CalculateAverageDroneVelocity();
-            var objectsToMerge = new List<(ObjectSeen, ObjectSeen)>();
+            var objectsToMerge = new List<(YoloObjectSeen, YoloObjectSeen)>();
 
             for (int i = 0; i < ObjectsSeen.Count; i++)
             {
@@ -251,7 +268,7 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        public List<ObjectSeen> CalculateObjects(List<FeatureSeen> features)
+        public List<YoloObjectSeen> CalculateObjects(YoloFeatureSeenList features)
         {
             var minFrameId = features[0].BlockId;
             var maxFrameId = features[^1].BlockId;
@@ -261,7 +278,7 @@ namespace SkyCombImage.ProcessModel
             // Process each frame
             for (int frameId = minFrameId; frameId <= maxFrameId; frameId++)
             {
-                List<FeatureSeen> frameFeatures = new();
+                YoloFeatureSeenList frameFeatures = new();
                 foreach(var feature in features)
                     if (feature.BlockId == frameId)
                         frameFeatures.Add(feature);

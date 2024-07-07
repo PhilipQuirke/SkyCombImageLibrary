@@ -18,7 +18,7 @@ namespace SkyCombImage.ProcessModel
         public YoloDetect YoloDetect;
 
         // List of features detected in each frame in a leg by YoloDetect 
-        List<FeatureSeen> LegFrameFeatures;
+        public YoloFeatureSeenList LegFrameFeatures;
 
         public YoloObjList YoloObjects;
 
@@ -148,7 +148,7 @@ namespace SkyCombImage.ProcessModel
                     var imagePixelBox = new System.Drawing.Rectangle(box.Bounds.Left, box.Bounds.Top, box.Bounds.Width, box.Bounds.Height);
                     var newFeature = new YoloFeature(this, blockID, imagePixelBox, box);
                     featuresInBlock.AddFeature(newFeature);
-                    LegFrameFeatures.Add(new FeatureSeen { BlockId = blockID, Box = imagePixelBox, FeatureId = newFeature.FeatureId });
+                    LegFrameFeatures.Add(new YoloFeatureSeen { BlockId = blockID, Box = imagePixelBox, FeatureId = newFeature.FeatureId });
                 }
 
 /*
