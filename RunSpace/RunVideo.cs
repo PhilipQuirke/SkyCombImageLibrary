@@ -188,10 +188,6 @@ namespace SkyCombImage.RunSpace
         public abstract ProcessBlock AddBlockAndProcessInputVideoFrame();
 
 
-        // Called after block processing has finished
-        public virtual void EndBlockProcessing() { }
-
-
         // Return ProcessModel as CombProcessModel if that is possible
         public CombProcess CombProcessIfAny()
         {
@@ -232,15 +228,10 @@ namespace SkyCombImage.RunSpace
         public abstract void SaveProcessSettings();
 
 
-
         // Reset any internal state of the run or model, so they can be re-used in another run ResetRun().
         // Do not change input or drone data. Do not delete config references.
-        public virtual void ResetRun()
+        public virtual void RunStart()
         {
-            // Reset (but do not delete) the process model.
-            if (ProcessAll != null)
-                ProcessAll.ResetModel();
-
             CurrInputVideoFrame = null;
             StopRunning = false;
             ProcessDurationMs = 0;
@@ -248,6 +239,8 @@ namespace SkyCombImage.RunSpace
             ConfigureModelScope();
             ProcessDrawScope.Reset(this, Drone);
             CombDrawPath.Reset(ProcessDrawScope);
+
+            ProcessAll?.ProcessStartWrapper();
         }
 
 
@@ -320,7 +313,7 @@ namespace SkyCombImage.RunSpace
                 (var videoWriter, var outputVideoFilename) =
                     CombSave.CreateVideoWriter(RunConfig, InputVideoFileName(), VideoBase.Fps, VideoBase.ImageSize);
 
-                ResetRun();
+                RunStart();
                 PSM.CurrBlockId = 0;
                 RefreshAll();
 
@@ -377,6 +370,7 @@ namespace SkyCombImage.RunSpace
                         Assert(inputVideo.CurrFrameId == PSM.CurrInputFrameId, "RunVideo.Run: Bad FrameId 1");
 
                         // Process start &/or end of drone flight legs.
+                        ProcessAll.OnObservation( ProcessEventEnum.LegEnd_Before, EventArgs.Empty);
                         ProcessFlightLegChange(prevLegId, PSM.CurrRunLegId);
 
                         // If we have just ended a leg change, then may have just calculated FixAltM
@@ -460,10 +454,12 @@ namespace SkyCombImage.RunSpace
                 }
 
                 // End the last leg (if any)
-                if(PSM.CurrRunLegId > 0)
+                if (PSM.CurrRunLegId > 0)
+                {
+                    ProcessAll.OnObservation(ProcessEventEnum.LegEnd_Before, EventArgs.Empty);
                     ProcessFlightLegChange(PSM.CurrRunLegId, UnknownValue);
-                EndBlockProcessing();
-                ProcessAll.EnsureObjectsNamed();
+                }
+                ProcessAll.ProcessEndWrapper();
 
                 var saveWatch = Stopwatch.StartNew();
 
@@ -583,10 +579,10 @@ namespace SkyCombImage.RunSpace
 
 
         // Reset any internal state of the run or model, so they can be re-used in another run. Do no change input or drone data.
-        public override void ResetRun()
+        public override void RunStart()
         {
             PrevGray = null;
-            base.ResetRun();
+            base.RunStart();
         }
     }
 }

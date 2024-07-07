@@ -45,7 +45,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Reset any internal state of the model, so it can be re-used in another run immediately
-        public override void ResetModel()
+        protected override void ProcessStart()
         {
             CombFeature.NextFeatureId = 0;
             FlightLeg_SigObjects = 0;
@@ -55,11 +55,20 @@ namespace SkyCombImage.ProcessLogic
             CombObjs.CombObjList.Clear();
             CombSpans.Clear();
 
-            base.ResetModel();
+            base.ProcessStart();
 
             // We want the category information to be retained between runs, so don't clear it.
             // Categories.Clear();
             // ObjectCategories.Clear();
+        }
+
+
+        protected override void ProcessEnd()
+        {
+            base.ProcessEnd();
+
+            // If we have been tracking some significant objects, create a CombSpan for them
+            Process_CombSpan_Create();
         }
 
 
@@ -70,7 +79,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public override void ProcessFlightLegStart(int legId)
+        protected override void ProcessFlightLegStart(int legId)
         {
             if (Drone.UseFlightLegs)
             {
@@ -82,7 +91,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public override void ProcessFlightLegEnd(int legId)
+        protected override void ProcessFlightLegEnd(int legId)
         {
             if (Drone.UseFlightLegs)
             {

@@ -44,7 +44,7 @@ namespace SkyCombImage.ProcessModel
 
 
         // Reset any internal state of the model, so it can be re-used in another run immediately
-        public override void ResetModel()
+        protected override void ProcessStart()
         {
             LegFrameFeatures.Clear();
             YoloObjects.Clear();
@@ -52,7 +52,7 @@ namespace SkyCombImage.ProcessModel
             FlightLeg_SigObjects = 0;
             FlightLeg_StartObjects = 0;
 
-            base.ResetModel();
+            base.ProcessStart();
         }
 
 
@@ -64,7 +64,7 @@ namespace SkyCombImage.ProcessModel
 
 
         // For process robustness, we want to process each leg independently.
-        public override void ProcessFlightLegStart(int legId)
+        protected override void ProcessFlightLegStart(int legId)
         {
             if (Drone.UseFlightLegs)
             {
@@ -78,28 +78,26 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        public override void ProcessFlightLegEnd(int legId)
+        protected override void ProcessFlightLegEnd(int legId)
         {
             if (Drone.UseFlightLegs)
             {
                 if (LegFrameFeatures.Count > 0)
                 {
-                    /*
-                        // Number of objects found in this leg using just IoU testing.
-                        int featuresCount = LegFrameFeatures.Count;
-                        int combLegObjectCount = YoloObjects.Count - FlightLeg_StartObjects;
+                    // Number of objects found in this leg using just IoU testing.
+                    int featuresCount = LegFrameFeatures.Count;
+                    int combLegObjectCount = YoloObjects.Count - FlightLeg_StartObjects;
 
-                        YoloImageTracker tracker = new( 
-                            0.1f, // % overlap between feature in successive images 
-                            0.66f ); // % confidence in merging two objects
-                        var targets = tracker.CalculateTargets(LegFrameFeatures);
+                    YoloImageTracker tracker = new( 
+                        0.1f, // % overlap between feature in successive images 
+                        0.66f ); // % confidence in merging two objects
+                    var targets = tracker.CalculateTargets(LegFrameFeatures);
 
-                        // Number of objects found in this leg using just IoU and merging.
-                        int yoloImageLegObjectCount = targets.Count;
+                    // Number of objects found in this leg using just IoU and merging.
+                    int yoloImageLegObjectCount = targets.Count;
 
-                        Assert(yoloImageLegObjectCount <= featuresCount, "Bad YoloImageTracker.Targets.Count 1");
-                        Assert(yoloImageLegObjectCount <= combLegObjectCount, "Bad YoloImageTracker.Targets.Count 2");
-                    */
+                    // Assert(yoloImageLegObjectCount <= featuresCount, "Bad YoloImageTracker.Targets.Count 1");
+                    // Assert(yoloImageLegObjectCount <= combLegObjectCount, "Bad YoloImageTracker.Targets.Count 2");
                 }
 
                 // For process robustness, we want to process each leg independently.

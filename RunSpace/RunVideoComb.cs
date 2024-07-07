@@ -138,14 +138,6 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        // Called after block processing has finished
-        public override void EndBlockProcessing()
-        { 
-            // If we have been tracking some significant objects, create a CombSpan for them
-            CombProcess.Process_CombSpan_Create();
-        }
-
-
         // Return the data to show in the ObjectGrid in the Main Form
         public override List<object[]> GetObjectGridData(bool mainForm)
         {

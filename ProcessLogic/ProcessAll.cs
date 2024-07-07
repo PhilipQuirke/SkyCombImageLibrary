@@ -7,6 +7,20 @@ using SkyCombGround.GroundLogic;
 
 namespace SkyCombImage.ProcessLogic
 {
+    public enum ProcessEventEnum
+    {
+        ProcessStart,
+        LegStart_Before,
+        LegStart_After,
+        LegEnd_Before,
+        LegEnd_After,
+        ProcessEnd
+    }
+
+
+    public delegate void ObservationHandler<T>(T sender, ProcessEventEnum processEvent, EventArgs e) where T : class;
+
+
     // All processing models derive from this class.
     public class ProcessAll : BaseConstants
     {
@@ -28,6 +42,9 @@ namespace SkyCombImage.ProcessLogic
         public ProcessFeatureList ProcessFeatures { get; set; }
 
 
+        // Hooks for testing 
+        public event ObservationHandler<ProcessAll> Observation;
+
 
         public ProcessAll(GroundData groundData, VideoData video, Drone drone, ProcessConfigModel config)
         {
@@ -43,8 +60,17 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Reset any internal state of the model, so it can be re-used in another run immediately
-        public virtual void ResetModel()
+        public virtual void EnsureObjectsNamed() { }
+
+
+        public void OnObservation(ProcessEventEnum processEvent, EventArgs args)
+        {
+            Observation?.Invoke(this, processEvent, args);
+        }
+
+
+        // Reset the process model, ready for a process run to start
+        protected virtual void ProcessStart()
         {
             Blocks.Clear();
             ProcessFeatures = new(ProcessConfig);
@@ -52,26 +78,70 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        public void ProcessStartWrapper()
+        {
+            ProcessStart();
+            OnObservation(ProcessEventEnum.ProcessStart, EventArgs.Empty);
+        }
+
+
         // A new drone flight leg has started.
-        public virtual void ProcessFlightLegStart(int LegId) { }
+        protected virtual void ProcessFlightLegStart(int LegId) 
+        {
+        }
+
+
+        public void ProcessFlightLegStartWrapper(int LegId)
+        {
+            if (Drone.UseFlightLegs)
+                Observation?.Invoke(this, ProcessEventEnum.LegStart_Before, EventArgs.Empty);
+
+            ProcessFlightLegStart(LegId);
+
+            if (Drone.UseFlightLegs)
+                Observation?.Invoke(this, ProcessEventEnum.LegStart_After, EventArgs.Empty);
+        }
 
 
         // A drone flight leg has finished. 
-        public virtual void ProcessFlightLegEnd(int LegId) { }
+        protected virtual void ProcessFlightLegEnd(int LegId) { }
 
 
-        public virtual void EnsureObjectsNamed() { }
+        public void ProcessFlightLegEndWrapper(int LegId)
+        {
+            if (Drone.UseFlightLegs)
+                Observation?.Invoke(this, ProcessEventEnum.LegEnd_Before, EventArgs.Empty);
 
+            ProcessFlightLegEnd(LegId);
+
+            if (Drone.UseFlightLegs)
+                Observation?.Invoke(this, ProcessEventEnum.LegEnd_After, EventArgs.Empty);
+        }
+
+
+        // The process run has ended
+        protected virtual void ProcessEnd()
+        {
+            EnsureObjectsNamed();
+        }
+
+
+        public void ProcessEndWrapper()
+        {
+            EnsureObjectsNamed();
+
+            OnObservation(ProcessEventEnum.ProcessEnd, EventArgs.Empty);
+        }
 
 
         // A drone flight leg has finished &/or started. 
         public void ProcessFlightLegStartAndEnd(int prevLegId, int currLegId)
         {
             if ((prevLegId > 0) && (prevLegId != currLegId))
-                ProcessFlightLegEnd(prevLegId);
+                ProcessFlightLegEndWrapper(prevLegId);
 
             if ((currLegId > 0) && (prevLegId != currLegId))
-                ProcessFlightLegStart(currLegId);
+                ProcessFlightLegStartWrapper(currLegId);
         }
 
 
