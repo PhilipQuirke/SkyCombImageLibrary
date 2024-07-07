@@ -88,9 +88,9 @@ namespace SkyCombImage.RunSpace
 
 
         // Process start &/or end of drone flight legs.
-        public override void ProcessFlightLegChange(int prevLegId, int currLegId)
+        public override void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId)
         {
-            CombProcess.ProcessFlightLegStartAndEnd(prevLegId, currLegId);
+            CombProcess.ProcessFlightLegStartAndEnd(scope, prevLegId, currLegId);
 
             // Save memory (if compatible with Config settings) by deleting pixel data
             CombProcess.DeleteFeaturePixelsForObjects();

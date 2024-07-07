@@ -63,6 +63,22 @@ namespace SkyCombImage.ProcessLogic
         public virtual void EnsureObjectsNamed() { }
 
 
+        // Ensure that significant objects, in the current FlightStep, have a name
+        protected int EnsureObjectsNamed(int sigObjects, ProcessObjList theObjects, FlightStep? currRunFlightStep)
+        {
+            foreach (var theObject in theObjects)
+                if ((theObject.Value.FlightLegId > 0) &&
+                   ((currRunFlightStep == null) || (theObject.Value.FlightLegId == currRunFlightStep.FlightLegId)) &&
+                   (theObject.Value.Significant) &&
+                   (theObject.Value.Name == ""))
+                {
+                    sigObjects++;
+                    theObject.Value.SetName(sigObjects);
+                }
+            return sigObjects;
+        }
+
+
         public void OnObservation(ProcessEventEnum processEvent, EventArgs args)
         {
             Observation?.Invoke(this, processEvent, args);
@@ -86,17 +102,17 @@ namespace SkyCombImage.ProcessLogic
 
 
         // A new drone flight leg has started.
-        protected virtual void ProcessFlightLegStart(int LegId) 
+        protected virtual void ProcessFlightLegStart(ProcessScope scope, int LegId) 
         {
         }
 
 
-        public void ProcessFlightLegStartWrapper(int LegId)
+        public void ProcessFlightLegStartWrapper(ProcessScope scope, int LegId)
         {
             if (Drone.UseFlightLegs)
                 Observation?.Invoke(this, ProcessEventEnum.LegStart_Before, EventArgs.Empty);
 
-            ProcessFlightLegStart(LegId);
+            ProcessFlightLegStart(scope, LegId);
 
             if (Drone.UseFlightLegs)
                 Observation?.Invoke(this, ProcessEventEnum.LegStart_After, EventArgs.Empty);
@@ -104,15 +120,15 @@ namespace SkyCombImage.ProcessLogic
 
 
         // A drone flight leg has finished. 
-        protected virtual void ProcessFlightLegEnd(int LegId) { }
+        protected virtual void ProcessFlightLegEnd(ProcessScope scope, int LegId) { }
 
 
-        public void ProcessFlightLegEndWrapper(int LegId)
+        public void ProcessFlightLegEndWrapper(ProcessScope scope, int LegId)
         {
             if (Drone.UseFlightLegs)
                 Observation?.Invoke(this, ProcessEventEnum.LegEnd_Before, EventArgs.Empty);
 
-            ProcessFlightLegEnd(LegId);
+            ProcessFlightLegEnd(scope, LegId);
 
             if (Drone.UseFlightLegs)
                 Observation?.Invoke(this, ProcessEventEnum.LegEnd_After, EventArgs.Empty);
@@ -135,13 +151,13 @@ namespace SkyCombImage.ProcessLogic
 
 
         // A drone flight leg has finished &/or started. 
-        public void ProcessFlightLegStartAndEnd(int prevLegId, int currLegId)
+        public void ProcessFlightLegStartAndEnd(ProcessScope scope, int prevLegId, int currLegId)
         {
             if ((prevLegId > 0) && (prevLegId != currLegId))
-                ProcessFlightLegEndWrapper(prevLegId);
+                ProcessFlightLegEndWrapper(scope, prevLegId);
 
             if ((currLegId > 0) && (prevLegId != currLegId))
-                ProcessFlightLegStartWrapper(currLegId);
+                ProcessFlightLegStartWrapper(scope, currLegId);
         }
 
 

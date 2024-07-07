@@ -79,7 +79,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        protected override void ProcessFlightLegStart(int legId)
+        protected override void ProcessFlightLegStart(ProcessScope scope, int legId)
         {
             if (Drone.UseFlightLegs)
             {
@@ -91,7 +91,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        protected override void ProcessFlightLegEnd(int legId)
+        protected override void ProcessFlightLegEnd(ProcessScope scope, int legId)
         {
             if (Drone.UseFlightLegs)
             {
@@ -346,15 +346,7 @@ namespace SkyCombImage.ProcessLogic
                     // Needs to be done ASAP so the "C5" name can be drawn on video frames.
                     // Note: Some objects never become significant.
                     Phase = 8;
-                    foreach (var theObject in inScopeObjects)
-                        if ((theObject.Value.FlightLegId > 0) &&
-                           ((scope.CurrRunFlightStep == null) || (theObject.Value.FlightLegId == scope.CurrRunFlightStep.FlightLegId)) &&
-                           (theObject.Value.Significant) &&
-                           (theObject.Value.Name == ""))
-                        {
-                            FlightLeg_SigObjects++;
-                            theObject.Value.SetName(FlightLeg_SigObjects);
-                        }
+                    FlightLeg_SigObjects = EnsureObjectsNamed(FlightLeg_SigObjects, inScopeObjects, scope.CurrRunFlightStep);
                 }
                 else
                 {

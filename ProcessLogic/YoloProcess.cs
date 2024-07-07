@@ -1,15 +1,11 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using Emgu.CV;
-using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
 using SkyCombImage.ProcessLogic;
 using SkyCombGround.CommonSpace;
-using System.Drawing;
 using Compunet.YoloV8.Data;
 using SkyCombGround.GroundLogic;
-using SixLabors.ImageSharp;
-
 
 
 namespace SkyCombImage.ProcessModel
@@ -24,7 +20,7 @@ namespace SkyCombImage.ProcessModel
         // List of features detected in each frame in a leg by YoloDetect 
         List<FeatureSeen> LegFrameFeatures;
 
-        public YoloObjectList YoloObjects;
+        public YoloObjList YoloObjects;
 
         // If UseFlightLegs, how many significant objects have been found in this FlightLeg?
         public int FlightLeg_SigObjects { get; set; }
@@ -64,7 +60,7 @@ namespace SkyCombImage.ProcessModel
 
 
         // For process robustness, we want to process each leg independently.
-        protected override void ProcessFlightLegStart(int legId)
+        protected override void ProcessFlightLegStart(ProcessScope scope, int legId)
         {
             if (Drone.UseFlightLegs)
             {
@@ -78,26 +74,38 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        protected override void ProcessFlightLegEnd(int legId)
+        protected override void ProcessFlightLegEnd(ProcessScope scope, int legId)
         {
             if (Drone.UseFlightLegs)
             {
                 if (LegFrameFeatures.Count > 0)
                 {
-                    // Number of objects found in this leg using just IoU testing.
+                    // During the leg, we found features using Yolo image detection,
+                    // and defined objects using IoU overlap in successive frames.
                     int featuresCount = LegFrameFeatures.Count;
-                    int combLegObjectCount = YoloObjects.Count - FlightLeg_StartObjects;
+                    int basicObjectCount = YoloObjects.Count - FlightLeg_StartObjects;
+                    Assert(basicObjectCount <= featuresCount, "Basic detection bad");
 
-                    YoloImageTracker tracker = new( 
+                    YoloTracker tracker = new( 
                         0.1f, // % overlap between feature in successive images 
                         0.66f ); // % confidence in merging two objects
-                    var targets = tracker.CalculateTargets(LegFrameFeatures);
+                    var objectsSeen = tracker.CalculateObjects(LegFrameFeatures);
 
-                    // Number of objects found in this leg using just IoU and merging.
-                    int yoloImageLegObjectCount = targets.Count;
+                    // For each ObjectSeen, create a YoloObject
+                    FlightLeg_SigObjects = 0;
+                    foreach (var objSeen in objectsSeen)
+                    {
+                        FlightLeg_SigObjects++;
+                        YoloFeature firstFeature = ProcessFeatures[ objSeen.Features[0].FeatureId ] as YoloFeature;
+                        YoloObject newObject = YoloObjects.AddObject(scope, firstFeature);
 
-                    // Assert(yoloImageLegObjectCount <= featuresCount, "Bad YoloImageTracker.Targets.Count 1");
-                    // Assert(yoloImageLegObjectCount <= combLegObjectCount, "Bad YoloImageTracker.Targets.Count 2");
+                        // Add remaining features to the object
+                        for (int i = 1; i < objSeen.Features.Count; i++)
+                        {
+                            YoloFeature nextFeature = ProcessFeatures[objSeen.Features[i].FeatureId] as YoloFeature;
+                            newObject.ClaimFeature(nextFeature);
+                        }
+                    }
                 }
 
                 // For process robustness, we want to process each leg independently.
@@ -110,22 +118,9 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-
-        // Create a Yolo feature and add it to the Yolo object. Update the block totals
-        public void ObjectClaimsNewFeature(ProcessBlock block, YoloObject theObject, YoloFeature newFeature)
-        {
-            try
-            {
-                block.AddFeature(newFeature);
-                theObject.ClaimFeature(newFeature);
-            }
-            catch (Exception ex)
-            {
-                throw ThrowException("YoloProcessModel.ObjectClaimsNewFeature", ex);
-            }
-        }
-
-
+        // Process the image using YOLO to find features. 
+        // For each feature found, if it overlaps an object (from previous frame), object claims the feature.
+        // Else create a new object to own the feature.
         public int ProcessBlock(
             ProcessScope scope,
             Image<Gray, byte> prevGray,
@@ -156,7 +151,7 @@ namespace SkyCombImage.ProcessModel
                     LegFrameFeatures.Add(new FeatureSeen { BlockId = blockID, Box = imagePixelBox, FeatureId = newFeature.FeatureId });
                 }
 
-
+/*
                 // We only want to consider objects that are active.
                 // For long flights most objects will have become inactive seconds or minutes ago.
                 Phase = 2;
@@ -174,117 +169,51 @@ namespace SkyCombImage.ProcessModel
                 ProcessFeatureList availFeatures = featuresInBlock.Clone();
 
 
-                // For each active object, consider each feature (significant or not)
+                // For each active object, consider each feature 
                 // found in this frame to see if it overlaps.
-                // This priviledges objects with multiple real features,
-                // as they can more accurately estimate their expected location.
-                // We priviledge objects with a "real" last feature over objects with a "unreal" last feature.
                 Phase = 3;
-                for (int pass = 0; pass < 2; pass++)
-                    foreach (var theObject in inScopeObjects)
-                    {
-                        var lastFeat = theObject.Value.LastFeature;
-                        if ((lastFeat.Block.BlockId == blockID - 1) &&
-                            (pass == 0 ? lastFeat.Type == FeatureTypeEnum.Real : lastFeat.Type != FeatureTypeEnum.Unreal))
-                        {
-                            // If one or more features overlaps the object's expected location,
-                            // claim ownership of the feature(s), and mark them as Significant.
-                            var expectedObjectLocation = theObject.Value.ExpectedLocationThisBlock();
+                foreach (var theObject in inScopeObjects)
+                {
+                    var yoloObject = theObject.Value as YoloObject;
 
-                            bool claimedFeatures = false;
-                            foreach (var feature in featuresInBlock)
-                                // Object will claim feature if the object remains viable after claiming feature
-                                if ((theObject.Value as YoloObject).MaybeClaimFeature(feature.Value as YoloFeature, expectedObjectLocation))
-                                {
-                                    availFeatures.Remove(feature.Value.FeatureId);
-                                    claimedFeatures = true;
-                                }
-                            if (claimedFeatures)
-                                availObjects.Remove(theObject.Value.ObjectId);
-                        }
-                    }
-
-                // An active object with exactly one real feature can't estimate its expected location at all.
-                // An active object with two features has a lot of wobble in its expected movement/location.
-                // If the object is moving in the image quickly, the object location
-                // and feature location will not overlap. Instead the feature will (usually)
-                // be vertically below the object estimated location.
-                Phase = 4;
-                foreach (var theObject in availObjects)
-                    if (theObject.Value.NumRealFeatures() <= 2)
+                    var lastFeat = theObject.Value.LastFeature;
+                    if (lastFeat.Block.BlockId == blockID - 1)
                     {
                         // If one or more features overlaps the object's expected location,
                         // claim ownership of the feature(s), and mark them as Significant.
                         var expectedObjectLocation = theObject.Value.ExpectedLocationThisBlock();
 
-                        // Search higher in the image 
-                        expectedObjectLocation = new System.Drawing.Rectangle(
-                            expectedObjectLocation.X,
-                            expectedObjectLocation.Y + 20, // Higher
-                            expectedObjectLocation.Width,
-                            expectedObjectLocation.Height);
-
-                        foreach (var feature in availFeatures)
-                            (theObject.Value as YoloObject).MaybeClaimFeature(feature.Value as YoloFeature, expectedObjectLocation);
+                        bool claimedFeatures = false;
+                        foreach (var feature in featuresInBlock)
+                            // Object will claim feature if location overlaps byProcessConfig.FeatureMinOverlapPerc
+                            if (yoloObject.MaybeClaimFeature(feature.Value as YoloFeature, expectedObjectLocation))
+                            {
+                                availFeatures.Remove(feature.Value.FeatureId);
+                                claimedFeatures = true;
+                            }
+                        if (claimedFeatures)
+                            availObjects.Remove(theObject.Value.ObjectId);
                     }
-
+                }
+*/
 
                 Phase = 5;
                 currBlock.AddFeatureList(featuresInBlock);
                 ProcessFeatures.AddFeatureList(featuresInBlock);
 
 /*
-                // For each active object, where the above code did not find an 
-                // overlapping feature in this Block, if it is worth continuing tracking...
-                Phase = 6;
-                foreach (var theObject in inScopeObjects)
-                    if (theObject.Value.COM.BeingTracked &&
-                        (theObject.Value.COM.LastRealFeatureIndex != UnknownValue) &&
-                        (theObject.Value.LastRealFeature().Block.BlockId < blockID) &&
-                        theObject.Value.KeepTracking(blockID))
-                        // ... persist this object another Block. Create an unreal feature, with no pixels, with a rectangle   
-                        // calculated from the object's last bounding rectangle and the average frame movement.
-                        AddPersistFeature(theObject.Value);
-*/
-
-
- //               // All active features have passed the min pixels and min density tests, and are worth tracking.
                 // For all unowned active features in this frame, create a new object to own the feature.
-                Phase = 7;
                 foreach (var feature in availFeatures)
                     if (feature.Value.ObjectId == 0)
-                    {
-                        YoloObjects.AddObject(scope, feature.Value as YoloFeature );
-                        if (blockID >= 2)
-                        {
-                            // TODO: Consider claiming overship of overlapping inactive features from the previous Block(s).
-                        }
-                    }
+                        YoloObjects.AddObject(scope, feature.Value as YoloFeature);
 
-
+                Phase = 8;
                 if (Drone.UseFlightLegs)
-                {
                     // Ensure each significant object in this leg has a "significant" name e.g. C5
                     // Needs to be done ASAP so the "C5" name can be drawn on video frames.
                     // Note: Some objects never become significant.
-                    Phase = 8;
-                    foreach (var theObject in inScopeObjects)
-                        if ((theObject.Value.FlightLegId > 0) &&
-                            ((scope.CurrRunFlightStep == null) || (theObject.Value.FlightLegId == scope.CurrRunFlightStep.FlightLegId)) &&
-                            (theObject.Value.Significant) &&
-                            (theObject.Value.Name == ""))
-                        {
-                            FlightLeg_SigObjects++;
-                            theObject.Value.SetName(FlightLeg_SigObjects);
-                        }
-                }
-                else
-                {
-                    // Track data related to a CombSpan (not a FlightLeg)
-                    Phase = 9;
-                    // PQR TODO ProcessObjectsFlightSteps(inScopeObjects, currBlock);
-                }
-
+                    FlightLeg_SigObjects = EnsureObjectsNamed(FlightLeg_SigObjects, inScopeObjects, scope.CurrRunFlightStep);
+*/
 
                 return numSig;
             }

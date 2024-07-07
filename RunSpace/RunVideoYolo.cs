@@ -20,7 +20,6 @@ namespace SkyCombImage.RunSpace
         public RunVideoYolo(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
             : base(parent, config, dataStore, drone, ProcessFactory.NewYoloProcessModel(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig, config.YoloDirectory))
         {
-    
         }
 
 
@@ -41,9 +40,9 @@ namespace SkyCombImage.RunSpace
 
 
         // Process start &/or end of drone flight legs.
-        public override void ProcessFlightLegChange(int prevLegId, int currLegId)
+        public override void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId)
         {
-            YoloProcess.ProcessFlightLegStartAndEnd(prevLegId, currLegId);
+            YoloProcess.ProcessFlightLegStartAndEnd(scope, prevLegId, currLegId);
         }
 
 
@@ -54,7 +53,6 @@ namespace SkyCombImage.RunSpace
             {
                 var thisBlock = AddBlock();
 
-                // We do not use Threshold or Smooth as we want to find as many GFTT features as possible.
                 var currGray = DrawImage.ToGrayScale(CurrInputVideoFrame);
 
                 var result = YoloProcess.YoloDetect.Detect(currGray.ToBitmap());
@@ -78,7 +76,7 @@ namespace SkyCombImage.RunSpace
         // Describe the objects found
         public override string DescribeSignificantObjects()
         {
-            return "#Features=" + YoloProcess.YoloObjects.Count;
+            return "#Objects=" + YoloProcess.YoloObjects.Count;
         }
 
 

@@ -14,7 +14,7 @@ namespace SkyCombImage.RunSpace
     // create the appropriate RunVideo object.
     public class VideoRunnerFactory
     {
-        public static RunVideo Create(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone)
+        public static RunVideo Create(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone, ObservationHandler<ProcessAll> processHook)
         {
             try
             {
@@ -47,11 +47,16 @@ namespace SkyCombImage.RunSpace
                 switch (theRunModel)
                 {
                     case RunProcessEnum.Yolo:
-                        answer = new RunVideoYolo(parent, config, dataStore, drone);
+                        var yoloRunner = new RunVideoYolo(parent, config, dataStore, drone);
+                        // yoloRunner.ProcessDrawScope.Process = yoloRunner.YoloProcess;
+                        yoloRunner.YoloProcess.Observation += processHook;
+                        answer = yoloRunner;
                         break;
                     case RunProcessEnum.Comb:
-                        answer = new RunVideoCombDrone(parent, config, dataStore, drone);
-                        answer.ProcessDrawScope.Process = answer.ProcessAll as CombProcess;
+                        var combRunner = new RunVideoCombDrone(parent, config, dataStore, drone);
+                        combRunner.ProcessDrawScope.Process = combRunner.CombProcess;
+                        combRunner.CombProcess.Observation += processHook;
+                        answer = combRunner;
                         break;
                     default:
                         answer = new RunVideoStandard(parent, config, dataStore, drone);
@@ -73,6 +78,11 @@ namespace SkyCombImage.RunSpace
             {
                 throw BaseConstants.ThrowException("VideoRunnerFactory.Create", ex);
             }
+        }
+
+        private static void CombProcess_Observation(ProcessAll sender, ProcessEventEnum processEvent, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
     }
 

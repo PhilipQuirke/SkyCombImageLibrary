@@ -181,7 +181,7 @@ namespace SkyCombImage.RunSpace
 
 
         // Process start &/or end of drone flight legs.
-        public abstract void ProcessFlightLegChange(int prevLegId, int currLegId);
+        public abstract void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId);
 
 
         // Process/analyse a single input video frame 
@@ -370,8 +370,8 @@ namespace SkyCombImage.RunSpace
                         Assert(inputVideo.CurrFrameId == PSM.CurrInputFrameId, "RunVideo.Run: Bad FrameId 1");
 
                         // Process start &/or end of drone flight legs.
-                        ProcessAll.OnObservation( ProcessEventEnum.LegEnd_Before, EventArgs.Empty);
-                        ProcessFlightLegChange(prevLegId, PSM.CurrRunLegId);
+                        ProcessAll.OnObservation(ProcessEventEnum.LegEnd_Before, EventArgs.Empty);
+                        ProcessFlightLegChange(this, prevLegId, PSM.CurrRunLegId);
 
                         // If we have just ended a leg change, then may have just calculated FixAltM
                         // so display the UI so the object-feature-lines are redrawn using the refined locations.
@@ -457,7 +457,7 @@ namespace SkyCombImage.RunSpace
                 if (PSM.CurrRunLegId > 0)
                 {
                     ProcessAll.OnObservation(ProcessEventEnum.LegEnd_Before, EventArgs.Empty);
-                    ProcessFlightLegChange(PSM.CurrRunLegId, UnknownValue);
+                    ProcessFlightLegChange(this, PSM.CurrRunLegId, UnknownValue);
                 }
                 ProcessAll.ProcessEndWrapper();
 
@@ -522,7 +522,7 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        public override void ProcessFlightLegChange(int prevLegId, int currLegId) { }
+        public override void ProcessFlightLegChange(ProcessScope scope,int prevLegId, int currLegId) { }
 
 
         // Process/analyse a single frame at a time.
