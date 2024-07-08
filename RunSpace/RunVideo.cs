@@ -84,7 +84,7 @@ namespace SkyCombImage.RunSpace
                 // Only consider objects in the current ProcessScope.
                 // This is effectively the intersects of what legs were processed
                 // and what legs are currently selected
-                combObjList = combProcess.CombObjs.CombObjList.FilterByProcessScope(this);
+                combObjList = combProcess.ProcessObjects.FilterByProcessScope(this);
                 if ((combObjList != null) && (combObjList.Count > 0))
                 {
                     // Default the filters based on these objects.

@@ -52,10 +52,12 @@ namespace SkyCombImage.ProcessLogic
         public ProcessConfigModel ProcessConfig;
 
         // List of Blocks (aka frames processed)  
-        public ProcessBlockList Blocks { get; set; }
+        public ProcessBlockList Blocks { get; private set; }
 
         // List of features found. Each has a bounding retangle
-        public ProcessFeatureList ProcessFeatures { get; set; }
+        public ProcessFeatureList ProcessFeatures { get; private set; }
+        // List of logical objects found - derived from overlapping features over successive frames. 
+        public ProcessObjList ProcessObjects { get; private set; }
 
 
         // Hooks for testing 
@@ -71,6 +73,7 @@ namespace SkyCombImage.ProcessLogic
             ProcessConfig = config;
             Blocks = new();
             ProcessFeatures = new(config);
+            ProcessObjects = new();
 
             ProcessObject.NextObjectId = 0;
         }
@@ -109,6 +112,7 @@ namespace SkyCombImage.ProcessLogic
         {
             Blocks.Clear();
             ProcessFeatures = new(ProcessConfig);
+            ProcessObjects.Clear();
             ProcessObject.NextObjectId = 0;
         }
 

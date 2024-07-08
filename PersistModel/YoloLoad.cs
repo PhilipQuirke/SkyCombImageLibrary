@@ -22,7 +22,7 @@ namespace SkyCombImage.PersistModel
 
 
         // Load all Yolo Objects from the datastore
-        public void YoloObjects(YoloProcess model)
+        public void ProcessObjects(YoloProcess model)
         {
             int row = 2;
 
@@ -39,7 +39,7 @@ namespace SkyCombImage.PersistModel
                         var objectId = ConfigBase.StringToNonNegInt(objectIdString);
 
                         // Load the non-blank cells in this row into a YoloObject
-                        model.YoloObjects.AddObject(
+                        model.ProcessObjects.AddObject(
                             ProcessFactory.NewYoloObject(model, Data.GetRowSettings(row, 1)));
 
                         row++;
@@ -50,8 +50,8 @@ namespace SkyCombImage.PersistModel
             catch (Exception ex)
             {
                 // Suppress the error and any objects loaded
-                System.Diagnostics.Debug.WriteLine("Suppressed YoloLoad.YoloObjects failure: " + ex.ToString());
-                model.YoloObjects.Clear();
+                System.Diagnostics.Debug.WriteLine("Suppressed YoloLoad.ProcessObjects failure: " + ex.ToString());
+                model.ProcessObjects.Clear();
             }
         }
 

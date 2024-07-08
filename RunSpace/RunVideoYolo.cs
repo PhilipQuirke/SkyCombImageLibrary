@@ -48,15 +48,15 @@ namespace SkyCombImage.RunSpace
                 YoloLoad datareader2 = new(DataStore);
                 datareader2.YoloFeatures(YoloProcess);
 
-                datareader2.YoloObjects(YoloProcess);
+                datareader2.ProcessObjects(YoloProcess);
                 var objectListSettings = datareader2.ObjectListSettings();
                 if (objectListSettings != null)
-                    YoloProcess.YoloObjects.LoadSettings(objectListSettings);
+                    YoloProcess.ProcessObjects.LoadSettings(objectListSettings);
 
                 // Link each object to its features
                 foreach (var feature in YoloProcess.ProcessFeatures)
                     if (feature.Value.ObjectId >= 0)
-                        YoloProcess.YoloObjects.SetLinksAfterLoad(feature.Value);
+                        YoloProcess.ProcessObjects.SetLinksAfterLoad(feature.Value);
             }
             catch (Exception ex)
             {
@@ -116,7 +116,7 @@ namespace SkyCombImage.RunSpace
         // Describe the objects found
         public override string DescribeSignificantObjects()
         {
-            return "#Objects=" + YoloProcess.YoloObjects.Count;
+            return "#Objects=" + YoloProcess.ProcessObjects.Count;
         }
 
 
@@ -135,7 +135,7 @@ namespace SkyCombImage.RunSpace
         // Return the data to show in the ObjectGrid in the Main Form
         public override List<object[]> GetObjectGridData(bool mainForm)
         {
-            return YoloProcess.YoloObjects.GetObjectGridData(this, RunConfig.ProcessConfig, mainForm, CategoryAll.ObjectCategories, RunConfig.ProcessConfig.FocusObjectId);
+            return YoloProcess.ProcessObjects.GetObjectGridData(this, RunConfig.ProcessConfig, mainForm, CategoryAll.ObjectCategories, RunConfig.ProcessConfig.FocusObjectId);
         }
 
 

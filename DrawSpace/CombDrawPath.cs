@@ -153,7 +153,7 @@ namespace SkyCombImage.DrawSpace
                     var unrealBgr = DroneColors.UnrealFeatureBgr;     // Yellow
 
                     // Draw significant in-scope objects as red boxes with orange & yellow features
-                    foreach (var thisObject in process.CombObjs.CombObjList)
+                    foreach (var thisObject in process.ProcessObjects)
                     {
                         var processObject = thisObject.Value;
                         if (processObject.Significant &&

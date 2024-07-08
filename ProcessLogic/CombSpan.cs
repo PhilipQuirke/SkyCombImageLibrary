@@ -126,7 +126,7 @@ namespace SkyCombImage.ProcessLogic
                     // Lock in the best single value across the leg steps
                     fixAltM = BestFixAltM;
                     CalculateSettings_ApplyFixAltM(fixAltM, theSteps, combObjs);
-                    Process.CombObjs.CombObjList.CalculateSettings(Process.CombObjs.CombObjList);
+                    Process.ProcessObjects.CalculateSettings(Process.ProcessObjects);
                 }
                 else
                 {
@@ -178,7 +178,7 @@ namespace SkyCombImage.ProcessLogic
                     fixAltM = BestFixAltM;
                     CalculateSettings_ApplyFixAltM(fixAltM, theSteps, combObjs);
                     SetBest(fixAltM, combObjs);
-                    Process.CombObjs.CombObjList.CalculateSettings(Process.CombObjs.CombObjList);
+                    Process.ProcessObjects.CalculateSettings(Process.ProcessObjects);
                 }
             }
             catch (Exception ex)
@@ -214,7 +214,7 @@ namespace SkyCombImage.ProcessLogic
                 return;
 
             var legSteps = Process.Drone.FlightSteps.Steps.GetLegSteps(CombSpanId);
-            var combObjs = Process.CombObjs.CombObjList.FilterByLeg(CombSpanId);
+            var combObjs = Process.ProcessObjects.FilterByLeg(CombSpanId);
 
             CalculateSettings_FixAltM(legSteps, combObjs);
             SummariseSteps(legSteps);
@@ -229,7 +229,7 @@ namespace SkyCombImage.ProcessLogic
                 ResetBest();
                 ResetTardis();
 
-                if((Process.Drone.FlightSteps != null) && (Process.CombObjs.CombObjList.Count > 0))
+                if((Process.Drone.FlightSteps != null) && (Process.ProcessObjects.Count > 0))
                 {
                     // Get the FlightSteps corresponding to the block range
                     FlightStepList theSteps = new();
@@ -246,7 +246,7 @@ namespace SkyCombImage.ProcessLogic
                         // Recall that objects are ordered by the BlockId of the first feature in the object.
                         // For speed, scan backwards through CombObjList
                         // until we find an object that ends before minBlockId.
-                        var allObjs = Process.CombObjs.CombObjList;
+                        var allObjs = Process.ProcessObjects;
                         ProcessObjList combObjs = new();
                         for (int objectId = allObjs.Last().Key; objectId >= 0; objectId--)
                         {

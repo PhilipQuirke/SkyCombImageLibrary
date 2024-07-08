@@ -1,4 +1,5 @@
 ﻿// Copyright SkyComb Limited 2023. All rights reserved. 
+using Emgu.CV.Dnn;
 using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
@@ -10,9 +11,6 @@ namespace SkyCombImage.ProcessLogic
     // A class to hold all feature data and Block data associated with a video
     public class CombProcess : ProcessAll
     {
-        // List of comb objects found. Each is a logical object derived from overlapping features over successive frames. 
-        public CombObjs CombObjs { get; set; }
-
         // List of CombSpans that analsyse CombObjects to generate FixAltM data
         public CombSpanList CombSpans { get; set; }
 
@@ -37,7 +35,6 @@ namespace SkyCombImage.ProcessLogic
         {
             CombFeature.NextFeatureId = 0;
 
-            CombObjs = new(this);
             CombSpans = new();
             FlightLeg_SigObjects = 0;
             ResetCombSpanData();
@@ -50,9 +47,6 @@ namespace SkyCombImage.ProcessLogic
             CombFeature.NextFeatureId = 0;
             FlightLeg_SigObjects = 0;
             ResetCombSpanData();
-
-            ProcessFeatures.Clear();
-            CombObjs.CombObjList.Clear();
             CombSpans.Clear();
 
             base.ProcessStart();
@@ -75,7 +69,7 @@ namespace SkyCombImage.ProcessLogic
         // Ensure each object has at least an "insignificant" name e.g. #16
         public override void EnsureObjectsNamed()
         {
-            CombObjs.CombObjList.EnsureObjectsNamed();
+            ProcessObjects.EnsureObjectsNamed();
         }
 
 
@@ -85,7 +79,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 // For process robustness, we want to process each leg independently.
                 // So at the start and end of each leg we stop tracking all objects.
-                CombObjs.StopTracking();
+                ProcessObjects.StopTracking();
                 FlightLeg_SigObjects = 0;
             }
         }
@@ -97,7 +91,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 // For "Comb" process robustness, we want to process each leg independently.
                 // So at the start and end of each leg we stop tracking all objects.
-                CombObjs.StopTracking();
+                ProcessObjects.StopTracking();
 
                 // If we are lacking the current CombSpan then create it.
                 if ((legId > 0) && !CombSpans.TryGetValue(legId, out _))
@@ -159,7 +153,7 @@ namespace SkyCombImage.ProcessLogic
         public void DeleteFeaturePixelsForObjects()
         {
             if (ProcessConfig.SavePixels == SavePixelsEnum.None)
-                foreach (var theObject in CombObjs.CombObjList)
+                foreach (var theObject in ProcessObjects)
                 {
                     var combObject = theObject.Value as CombObject;
                     if (combObject.FlightLegId <= 0)
@@ -233,7 +227,7 @@ namespace SkyCombImage.ProcessLogic
                 Phase = 2;
                 ProcessObjList inScopeObjects = new();
                 ProcessObjList availObjects = new();
-                foreach (var theObject in CombObjs.CombObjList)
+                foreach (var theObject in ProcessObjects)
                 {
                     var combObject = theObject.Value as CombObject;
                     if ((combObject.LastFeature != null) &&
@@ -332,7 +326,8 @@ namespace SkyCombImage.ProcessLogic
                 foreach (var feature in availFeatures)
                     if (feature.Value.IsTracked && (feature.Value.ObjectId == 0))
                     {
-                        CombObjs.Add(scope, feature.Value as CombFeature);
+                        var theObject = ProcessFactory.NewCombObject(scope, this, feature.Value as CombFeature);
+                        ProcessObjects.AddObject(theObject);
                         if (blockID >= 2)
                         {
                             // TODO: Consider claiming overship of overlapping inactive features from the previous Block(s).
@@ -390,8 +385,8 @@ namespace SkyCombImage.ProcessLogic
             return new DataPairList
             {
                 { "# Blocks", Blocks.Count },
-                { "# Objects", CombObjs.CombObjList.Count },
-                { "# Significant Objects", CombObjs.NumEverSignificantObjects },
+                { "# Objects", ProcessObjects.Count },
+                { "# Significant Objects", ProcessObjects.NumEverSignificantObjects },
                 { "# Features", ProcessFeatures.Count },
                 { "# Significant Features", ProcessFeatures.NumSig },
                 { "# Pixels", numPixels },

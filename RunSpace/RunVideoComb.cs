@@ -60,7 +60,7 @@ namespace SkyCombImage.RunSpace
                 datareader2.CombObjects(CombProcess);
                 var objectListSettings = datareader2.ObjectListSettings();
                 if (objectListSettings != null)
-                    CombProcess.CombObjs.CombObjList.LoadSettings(objectListSettings);
+                    CombProcess.ProcessObjects.LoadSettings(objectListSettings);
 
                 datareader2.CombSpans(CombProcess, Drone);
 
@@ -70,7 +70,7 @@ namespace SkyCombImage.RunSpace
                 // Link each object to its features
                 foreach (var feature in CombProcess.ProcessFeatures)
                     if (feature.Value.ObjectId >= 0)
-                        CombProcess.CombObjs.CombObjList.SetLinksAfterLoad(feature.Value as CombFeature);
+                        CombProcess.ProcessObjects.SetLinksAfterLoad(feature.Value as CombFeature);
             }
             catch (Exception ex)
             {
@@ -82,7 +82,7 @@ namespace SkyCombImage.RunSpace
         // Describe the objects found
         public override string DescribeSignificantObjects()
         {
-            return CombProcess.CombObjs.DescribeSignificantObjects();
+            return CombProcess.ProcessObjects.DescribeSignificantObjects();
         }
 
 
@@ -140,7 +140,7 @@ namespace SkyCombImage.RunSpace
         // Return the data to show in the ObjectGrid in the Main Form
         public override List<object[]> GetObjectGridData(bool mainForm)
         {
-            return CombProcess.CombObjs.CombObjList.GetObjectGridData(this, RunConfig.ProcessConfig, mainForm, CategoryAll.ObjectCategories, RunConfig.ProcessConfig.FocusObjectId);
+            return CombProcess.ProcessObjects.GetObjectGridData(this, RunConfig.ProcessConfig, mainForm, CategoryAll.ObjectCategories, RunConfig.ProcessConfig.FocusObjectId);
        }
 
 
@@ -148,7 +148,7 @@ namespace SkyCombImage.RunSpace
         public override void EndRunning()
         {
             // Calculate object summary data
-            CombProcess?.CombObjs?.CombObjList.CalculateSettings(this, RunConfig.ProcessConfig.FocusObjectId);
+            CombProcess?.ProcessObjects?.CalculateSettings(this, RunConfig.ProcessConfig.FocusObjectId);
 
             CombSave dataWriter = new(Drone, DataStore);
             dataWriter.Comb(RunConfig, GetEffort(), GetSettings(), this, CombProcess, true);

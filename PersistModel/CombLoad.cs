@@ -38,7 +38,7 @@ namespace SkyCombImage.PersistModel
                         var objectId = ConfigBase.StringToNonNegInt(objectIdString);
 
                         // Load the non-blank cells in this row into a CombObject
-                        model.CombObjs.CombObjList.AddObject(
+                        model.ProcessObjects.AddObject(
                             ProcessFactory.NewCombObject(model, Data.GetRowSettings(row, 1)));
 
                         row++;
@@ -50,7 +50,7 @@ namespace SkyCombImage.PersistModel
             {
                 // Suppress the error and any objects loaded
                 System.Diagnostics.Debug.WriteLine("Suppressed CombLoad.CombObjects failure: " + ex.ToString());
-                model.CombObjs.CombObjList.Clear();
+                model.ProcessObjects.Clear();
             }
         }
 

@@ -333,10 +333,6 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public string DescribeSignificantObjects()
-        {
-            var num = NumEverSignificantObjects;
-            return (num == 0 ? "" : string.Format("{0} Objects", num));
-        }
+
     }
 }

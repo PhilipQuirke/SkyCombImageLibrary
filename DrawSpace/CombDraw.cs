@@ -147,7 +147,7 @@ namespace SkyCombImage.DrawSpace
                             // Draw the bounding rectangle of the owned feature
                             CombObject? theObject = null;
                             if (feature.ObjectId > 0)
-                                theObject = process.CombObjs.CombObjList[feature.ObjectId] as CombObject;
+                                theObject = process.ProcessObjects[feature.ObjectId] as CombObject;
                             ObjectFeatures(drawConfig, focusObjectId, ref outputImg, feature as CombFeature, theObject, transform);
                         }
                     }
@@ -276,9 +276,9 @@ namespace SkyCombImage.DrawSpace
         {
             try
             {
-                if ((DroneDrawScope.Drone != null) && (process != null) && (process.CombObjs.CombObjList.Count > 0))
+                if ((DroneDrawScope.Drone != null) && (process != null) && (process.ProcessObjects.Count > 0))
                 {
-                    foreach (var thisObject in process.CombObjs.CombObjList)
+                    foreach (var thisObject in process.ProcessObjects)
                         if (thisObject.Value.Significant && (thisObject.Value.HeightM > ProcessObjectModel.UnknownHeight))
                         {
                             var avgHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.HeightM - MinVertRaw, VertRangeRaw));
@@ -372,9 +372,9 @@ namespace SkyCombImage.DrawSpace
         {
             try
             {
-                if ((DroneDrawScope.Drone != null) && (process != null) && (process.CombObjs.CombObjList.Count > 0))
+                if ((DroneDrawScope.Drone != null) && (process != null) && (process.ProcessObjects.Count > 0))
                 {
-                    foreach (var thisObject in process.CombObjs.CombObjList)
+                    foreach (var thisObject in process.ProcessObjects)
                         if (thisObject.Value.Significant)
                         {
                             var avgHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.HeightM - MinVertRaw, VertRangeRaw));

@@ -6,6 +6,8 @@ using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using Compunet.YoloV8.Data;
 using SkyCombGround.GroundLogic;
+using static System.Formats.Asn1.AsnWriter;
+using System.Drawing;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -20,8 +22,6 @@ namespace SkyCombImage.ProcessLogic
         // List of features detected in each frame in a leg by YoloDetect 
         public YoloFeatureSeenList LegFrameFeatures;
 
-        public YoloObjList YoloObjects;
-
         // If UseFlightLegs, how many significant objects have been found in this FlightLeg?
         public int FlightLeg_SigObjects { get; set; }
         public int FlightLeg_StartObjects { get; set; }
@@ -32,8 +32,6 @@ namespace SkyCombImage.ProcessLogic
         {
             YoloDetect = new YoloDetect(yoloDirectory, config.YoloDetectConfidence, config.YoloIoU);
             LegFrameFeatures = new();
-            YoloObjects = new(this);
-            YoloObjects.LegFirstIndex = 0;
             FlightLeg_SigObjects = 0;
             FlightLeg_StartObjects = 0;
         }
@@ -43,8 +41,6 @@ namespace SkyCombImage.ProcessLogic
         protected override void ProcessStart()
         {
             LegFrameFeatures.Clear();
-            YoloObjects.Clear();
-            YoloObjects.LegFirstIndex = 0;
             FlightLeg_SigObjects = 0;
             FlightLeg_StartObjects = 0;
 
@@ -55,7 +51,7 @@ namespace SkyCombImage.ProcessLogic
         // Ensure each object has at least an "insignificant" name e.g. #16
         public override void EnsureObjectsNamed()
         {
-            YoloObjects.EnsureObjectsNamed();
+            ProcessObjects.EnsureObjectsNamed();
         }
 
 
@@ -66,11 +62,29 @@ namespace SkyCombImage.ProcessLogic
             {
                 // For process robustness, we want to process each leg independently.
                 // So at the start and end of each leg we stop tracking all objects.
-                YoloObjects.StopTracking();
+                ProcessObjects.StopTracking();
                 LegFrameFeatures.Clear();
                 FlightLeg_SigObjects = 0;
-                FlightLeg_StartObjects = YoloObjects.Count;
+                FlightLeg_StartObjects = ProcessObjects.Count;
             }
+        }
+
+
+        public YoloObject AddYoloObject(ProcessScope scope, YoloFeature firstFeature)
+        {
+            BaseConstants.Assert(firstFeature != null, "YoloObjectList.AddObject: No firstFeature");
+
+            string className = firstFeature.BoundingBox != null ? firstFeature.BoundingBox.Class.Name : "??";
+            float classConfidence = firstFeature.BoundingBox != null ? firstFeature.BoundingBox.Confidence : 0.6f;
+            /*
+            newObject.ClassId = box.Class.Id;
+            newObject.ClassType = box.Class.Type;
+            newObject.ClassDescription = box.Class.Description;
+            */
+
+            var answer = new YoloObject(this, scope, firstFeature, className, Color.Red, classConfidence);
+            ProcessObjects.AddObject(answer);
+            return answer;
         }
 
 
@@ -96,7 +110,7 @@ namespace SkyCombImage.ProcessLogic
                         {
                             FlightLeg_SigObjects++;
                             YoloFeature firstFeature = ProcessFeatures[ objSeen.Features[0].FeatureId ] as YoloFeature;
-                            YoloObject newObject = YoloObjects.AddObject(scope, firstFeature);
+                            YoloObject newObject = AddYoloObject(scope, firstFeature);
 
                             // Add remaining features to the object
                             for (int i = 1; i < objSeen.Features.Count; i++)
@@ -109,7 +123,7 @@ namespace SkyCombImage.ProcessLogic
 
                 // For process robustness, we want to process each leg independently.
                 // So at the start and end of each leg we stop tracking all objects.
-                YoloObjects.StopTracking();
+                ProcessObjects.StopTracking();
                 LegFrameFeatures.Clear();
             }
 
@@ -156,7 +170,7 @@ namespace SkyCombImage.ProcessLogic
                 Phase = 2;
                 YoloObjectList inScopeObjects = new(this);
                 YoloObjectList availObjects = new(this);
-                foreach (var theObject in YoloObjects)
+                foreach (var theObject in ProcessObjects)
                     if ((theObject.Value.LastFeature != null) &&
                         (theObject.Value.LastFeature.Block.BlockId == blockID - 1))
                     {
@@ -204,7 +218,7 @@ namespace SkyCombImage.ProcessLogic
                 // For all unowned active features in this frame, create a new object to own the feature.
                 foreach (var feature in availFeatures)
                     if (feature.Value.ObjectId == 0)
-                        YoloObjects.AddObject(scope, feature.Value as YoloFeature);
+                        ProcessObjects.AddObject(scope, feature.Value as YoloFeature);
 
                 Phase = 8;
                 if (Drone.UseFlightLegs)
@@ -232,7 +246,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 { "# Blocks", Blocks.Count },
                 { "# Features", ProcessFeatures.Count},
-                { "# Objects", YoloObjects.Count},
+                { "# Objects", ProcessObjects.Count},
             };
         }
 

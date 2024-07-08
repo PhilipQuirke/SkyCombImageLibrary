@@ -886,6 +886,13 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        public string DescribeSignificantObjects()
+        {
+            var num = NumEverSignificantObjects;
+            return (num == 0 ? "" : string.Format("{0} Objects", num));
+        }
+
+
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
         public virtual DataPairList GetSettings()
         {

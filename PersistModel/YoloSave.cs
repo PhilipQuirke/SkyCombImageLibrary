@@ -49,9 +49,9 @@ namespace SkyCombImage.PersistModel
                     SaveProcess.SaveFeatureList(process, process.ProcessFeatures, saveAllObjects);
 
                 // Save the Object data 
-                var saveObjects = ((runConfig.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None) && (process.YoloObjects.Count > 0));
+                var saveObjects = ((runConfig.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None) && (process.ProcessObjects.Count > 0));
                 if (saveObjects)
-                    SaveProcess.SaveObjectList(process, process.YoloObjects, saveAllObjects);
+                    SaveProcess.SaveObjectList(process, process.ProcessObjects, saveAllObjects);
 
                 // Add the Object/Feature charts
                 SaveProcess.SaveObjectGraphs(MaxDatumId);

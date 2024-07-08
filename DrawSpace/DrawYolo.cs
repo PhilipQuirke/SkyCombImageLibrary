@@ -21,7 +21,7 @@ namespace SkyCombImage.DrawSpace
             if (outputImg.Width > 1000)
                 theThickness = 2;
 
-            foreach (var theObject in yoloProcess.YoloObjects)
+            foreach (var theObject in yoloProcess.ProcessObjects)
             {
                 if ((theObject.Value.LastFeature != null) && (theObject.Value.LastFeature.BlockId == thisBlockId))
                 {

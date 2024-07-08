@@ -35,7 +35,7 @@ namespace SkyCombImage.ProcessLogic
 
 
     // An object is a collection of features over several frames
-    public class YoloObjectSeen
+    public class ProcessObjectseen
     {
         // The features that make up the object. Implies the first and last frame the object was seen in
         public YoloFeatureSeenList Features;
@@ -45,7 +45,7 @@ namespace SkyCombImage.ProcessLogic
         public double AverageVelocityY;
 
 
-        public YoloObjectSeen()
+        public ProcessObjectseen()
         {
             Features = new();
             AverageVelocityX = 0;
@@ -83,9 +83,9 @@ namespace SkyCombImage.ProcessLogic
     }
 
 
-    public class YoloObjectSeenList : List<YoloObjectSeen>
+    public class ProcessObjectseenList : List<ProcessObjectseen>
     {
-        public YoloObjectSeenList() : base() { }
+        public ProcessObjectseenList() : base() { }
 
 
         public int NumSignificant()
@@ -105,7 +105,7 @@ namespace SkyCombImage.ProcessLogic
     // Physical objects may be visible, then obscured, then visible resulting in two ObjectSeen objects. Try to merge them.
     public class YoloTracker
     {
-        public YoloObjectSeenList ObjectsSeen;
+        public ProcessObjectseenList ObjectsSeen;
 
         // Minimum % overlap between features in successive images 
         private float IoUThreshold;
@@ -130,7 +130,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 // For the first frame, create a new target for each detection
                 foreach (var feature in features)
-                    ObjectsSeen.Add(new YoloObjectSeen { Features = new YoloFeatureSeenList { new YoloFeatureSeen { BlockId = blockId, Box = feature.Box, FeatureId = feature.FeatureId } } });
+                    ObjectsSeen.Add(new ProcessObjectseen { Features = new YoloFeatureSeenList { new YoloFeatureSeen { BlockId = blockId, Box = feature.Box, FeatureId = feature.FeatureId } } });
                 return;
             }
 
@@ -153,7 +153,7 @@ namespace SkyCombImage.ProcessLogic
 
             // Create new objects for unassigned features
             foreach (var detection in unassignedFeatures)
-                ObjectsSeen.Add(new YoloObjectSeen { Features = new YoloFeatureSeenList { detection } });
+                ObjectsSeen.Add(new ProcessObjectseen { Features = new YoloFeatureSeenList { detection } });
         }
 
 
@@ -222,7 +222,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        private double CalculateTargetSimilarity(YoloObjectSeen t1, YoloObjectSeen t2, (double X, double Y) droneVelocity)
+        private double CalculateTargetSimilarity(ProcessObjectseen t1, ProcessObjectseen t2, (double X, double Y) droneVelocity)
         {
             // Velocity similarity
             double velocitySimilarity = 1 - (Math.Abs(t1.AverageVelocityX - t2.AverageVelocityX) / Math.Abs(droneVelocity.X) +
@@ -249,7 +249,7 @@ namespace SkyCombImage.ProcessLogic
         public void MergeSimilarObjects()
         {
             var droneVelocity = CalculateAverageDroneVelocity();
-            var objectsToMerge = new List<(YoloObjectSeen, YoloObjectSeen)>();
+            var objectsToMerge = new List<(ProcessObjectseen, ProcessObjectseen)>();
 
             for (int i = 0; i < ObjectsSeen.Count; i++)
             {
