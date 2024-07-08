@@ -14,7 +14,7 @@ namespace SkyCombImage.DrawSpace
         // The Video, Drone & model scope of a processing run
         public ProcessScope ProcessScope;
         // The actual processing object (if any)
-        public CombProcess Process;
+        public ProcessAll Process;
 
 
         // First millisecond of flight data drawn. Used on graphs with a time axis
@@ -72,7 +72,7 @@ namespace SkyCombImage.DrawSpace
         public override float MaxSpeedMps { get { return ProcessScope.MaxSpeedMps; } }
 
 
-        public ProcessDrawScope(CombProcess process, ProcessScope processScope, Drone drone) : base (drone)
+        public ProcessDrawScope(ProcessAll process, ProcessScope processScope, Drone drone) : base (drone)
         {
             Process = process;
             ProcessScope = processScope;
@@ -149,7 +149,7 @@ namespace SkyCombImage.DrawSpace
         public override int LastDrawMs { get { return LastObjectMs; } }
 
 
-        public ObjectDrawScope(CombProcess process, ProcessScope scope, Drone drone) : base(process, scope, drone)
+        public ObjectDrawScope(ProcessAll process, ProcessScope scope, Drone drone) : base(process, scope, drone)
         {
             Reset(scope, drone);
         }

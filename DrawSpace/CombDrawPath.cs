@@ -141,7 +141,7 @@ namespace SkyCombImage.DrawSpace
 
         // Draw drone flight path and one object in particular.
         // Draw least important then more important stuff as the rectangles will overlap.
-        public void CurrImage(ref Image<Bgr, byte> image, CombProcess process, ProcessObject focusObject)
+        public void CurrImage(ref Image<Bgr, byte> image, ProcessAll process, ProcessObject focusObject)
         {
             try
             {

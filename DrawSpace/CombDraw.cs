@@ -19,7 +19,7 @@ namespace SkyCombImage.DrawSpace
         // Draw the hot pixels
         public static void HotPixels(
             DrawImageConfig config, ProcessConfigModel processConfig,
-            ref Image<Bgr, byte> image, CombFeature feature, Transform transform)
+            ref Image<Bgr, byte> image, ProcessFeature feature, Transform transform)
         {
             if (config.DrawPixelColor == Color.White)
                 return;
@@ -63,7 +63,7 @@ namespace SkyCombImage.DrawSpace
         // Draw the bounding rectangles of the owned features
         public static void ObjectFeatures(DrawImageConfig config, int focusObjectId,
             ref Image<Bgr, byte> image,
-            CombFeature feature, CombObject? combObject,
+            ProcessFeature feature, ProcessObject? combObject,
             Transform transform)
         {
             if (config.DrawRealFeatureColor == Color.White &&
@@ -115,7 +115,7 @@ namespace SkyCombImage.DrawSpace
         public static void CombImage(
             DrawImageConfig drawConfig, ProcessConfigModel processConfig,
             int focusObjectId, ref Image<Bgr, byte> outputImg,
-            CombProcess process, ProcessBlockModel block, Transform transform)
+            ProcessAll process, ProcessBlockModel block, Transform transform)
         {
             try
             {
@@ -142,13 +142,13 @@ namespace SkyCombImage.DrawSpace
                             Assert(feature.BlockId == block.BlockId, "CombImage: Bad logic");
 
                             // Draw all hot pixels for the current block 
-                            HotPixels(drawConfig, processConfig, ref outputImg, feature as CombFeature, transform);
+                            HotPixels(drawConfig, processConfig, ref outputImg, feature, transform);
 
                             // Draw the bounding rectangle of the owned feature
-                            CombObject? theObject = null;
+                            ProcessObject? theObject = null;
                             if (feature.ObjectId > 0)
-                                theObject = process.ProcessObjects[feature.ObjectId] as CombObject;
-                            ObjectFeatures(drawConfig, focusObjectId, ref outputImg, feature as CombFeature, theObject, transform);
+                                theObject = process.ProcessObjects[feature.ObjectId];
+                            ObjectFeatures(drawConfig, focusObjectId, ref outputImg, feature, theObject, transform);
                         }
                     }
                 }
@@ -184,7 +184,7 @@ namespace SkyCombImage.DrawSpace
         public static (Image<Bgr, byte>?, Image<Bgr, byte>?) Draw(
             RunProcessEnum runProcess,
             ProcessConfigModel processConfig, DrawImageConfig drawConfig, Drone drone,
-            ProcessBlockModel block, CombProcess combProcess, int focusObjectId,
+            ProcessBlockModel block, ProcessAll processAll, int focusObjectId,
             Image<Bgr, byte> inputFrame, Image<Bgr, byte> displayFrame)
         {
             try
@@ -199,7 +199,7 @@ namespace SkyCombImage.DrawSpace
                     if (runProcess == RunProcessEnum.Comb)
                         // Draw hot objects
                         CombImage(drawConfig, processConfig, focusObjectId,
-                            ref modifiedInputFrame, combProcess, block, new());
+                            ref modifiedInputFrame, processAll, block, new());
                     else
                         // Handles RunModel = Contour, GFTT, etc.
                         DrawImage.Draw(runProcess, processConfig, drawConfig, ref modifiedInputFrame);
@@ -221,7 +221,7 @@ namespace SkyCombImage.DrawSpace
                             inputFrame.Size, displayFrame.Size, drone.ExcludeDisplayMarginRatio);
 
                         CombImage(newDrawConfig, processConfig, focusObjectId,
-                            ref modifiedDisplayFrame, combProcess, block, inputToDisplayTransform);
+                            ref modifiedDisplayFrame, processAll, block, inputToDisplayTransform);
                     }
                 }
                 return (modifiedInputFrame, modifiedDisplayFrame);
@@ -445,7 +445,7 @@ namespace SkyCombImage.DrawSpace
         }
 
 
-        public void Initialise(CombProcess process, Size size, ProcessObject focusObject)
+        public void Initialise(ProcessAll process, Size size, ProcessObject focusObject)
         {
             try
             {
@@ -477,7 +477,7 @@ namespace SkyCombImage.DrawSpace
         }
 
 
-        public void CurrImage(ref Image<Bgr, byte> image, CombProcess process, CombObject thisObject)
+        public void CurrImage(ref Image<Bgr, byte> image, ProcessAll process, ProcessObject thisObject)
         {
             try
             {

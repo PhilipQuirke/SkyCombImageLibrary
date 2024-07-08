@@ -175,23 +175,6 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Get the class's settings as datapairs for use in ObjectForm
-        public DataPairList GetSettings_ObjectForm(RelativeLocation objectLocation)
-        {
-            return new DataPairList
-            {
-                { "Feature", FeatureId },
-                { "Attributes", Attributes },
-                { "NorthingDiffCM", ( LocationM != null ? (LocationM.NorthingM - objectLocation.NorthingM ) * 100 : 0), 0},
-                { "EastingDiffCM", ( LocationM != null ? (LocationM.EastingM - objectLocation.EastingM) * 100 : 0), 0},
-                { "HeightCM", HeightM * 100, 0 },
-                { "WidthPixels", PixelBox.Width },
-                { "DepthPixels", PixelBox.Height },
-                { "#HotPixels", NumHotPixels },
-            };
-        }
-
-
         // Get the class's settings as datapairs (e.g. for saving to the datastore)
         override public DataPairList GetSettings()
         {
