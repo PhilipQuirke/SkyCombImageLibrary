@@ -1,7 +1,9 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using Emgu.CV;
+using Emgu.CV.Dnn;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
+using SkyCombImage.CategorySpace;
 using SkyCombImage.DrawSpace;
 using SkyCombImage.ProcessModel;
 using System.Drawing;
@@ -65,6 +67,7 @@ namespace SkyCombImage.ProcessLogic
 
             return answer;
         }
+
 
         // Is this object still worth tracking in specified block?
         public bool KeepTracking(int BlockId)
@@ -453,6 +456,31 @@ namespace SkyCombImage.ProcessLogic
             }
         }
 
+
+        // Get the class's settings as datapairs (e.g. for saving to the datastore)
+        public override DataPairList GetSettings()
+        {
+            var answer = base.GetSettings();
+
+            var firstBlock = (FirstFeature != null ? FirstFeature.Block.BlockId : 0);
+            var lastRealBlock = (LastRealFeature != null ? LastRealFeature.Block.BlockId : 0);
+            var lastBlock = (LastFeature != null ? LastFeature.Block.BlockId : 0);
+            var centerBlock = (firstBlock + lastRealBlock + 1) / 2; // The +1 rounds upward.
+
+            answer.Add("FirstBlock", firstBlock);
+            answer.Add("CenterBlock", centerBlock);
+            answer.Add("LastRealBlock", lastRealBlock);
+            answer.Add("LastBlock", lastBlock);
+
+            answer.Add("#RealFeats", NumRealFeatures());
+            answer.Add("RealDensityPx", RealDensityPx(), AreaM2Ndp);
+            answer.Add("LocnErrPerFeatCM", LocationErrPerFeatureM() * 100, LocationNdp);
+
+            // Average horizontal distance from object to drone in M.
+            answer.Add("RangeM", AvgRangeM);
+
+            return answer;
+        }
     }
 
 
@@ -677,6 +705,26 @@ namespace SkyCombImage.ProcessLogic
             foreach (var theObject in this)
                 if ((theObject.Value.FlightLegId == legId) && theObject.Value.Significant)
                     answer.AddObject(theObject.Value);
+
+            return answer;
+        }
+
+
+        // Returns key attributes of objects and associated user annotations (if any)
+        // to show in the ObjectGrid in the Main Form or the ObjectList in the Object Form
+        public List<object[]> GetObjectGridData(ProcessScope scope, ProcessConfigModel processConfig, bool mainForm, ObjectCategoryList annotations, int focusObjectID = BaseConstants.UnknownValue)
+        {
+            var answer = new List<object[]>();
+
+            var sigObjects = FilterByProcessScope(scope, focusObjectID);
+            foreach (var theObject in sigObjects)
+            {
+                ObjectCategoryModel? annotation = null;
+                if (annotations != null)
+                    annotation = annotations.GetData(theObject.Value.Name);
+
+                answer.Add(theObject.Value.GetObjectGridData(processConfig, mainForm, annotation));
+            }
 
             return answer;
         }

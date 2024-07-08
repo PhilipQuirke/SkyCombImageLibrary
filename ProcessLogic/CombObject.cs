@@ -301,32 +301,6 @@ namespace SkyCombImage.ProcessLogic
             return false;
         }
 
-
-        // Get the class's settings as datapairs (e.g. for saving to the datastore)
-        public override DataPairList GetSettings()
-        {
-            var answer = base.GetSettings();
-
-            var firstBlock = (FirstFeature != null ? FirstFeature.Block.BlockId : 0);
-            var lastRealBlock = (LastRealFeature != null ? LastRealFeature.Block.BlockId : 0);
-            var lastBlock = (LastFeature != null ? LastFeature.Block.BlockId : 0);
-            var centerBlock = (firstBlock + lastRealBlock + 1) / 2; // The +1 rounds upward.
-
-            answer.Add("FirstBlock", firstBlock);
-            answer.Add("CenterBlock", centerBlock);
-            answer.Add("LastRealBlock", lastRealBlock);
-            answer.Add("LastBlock", lastBlock);
-
-            answer.Add("#RealFeats", NumRealFeatures());
-            answer.Add("RealDensityPx", RealDensityPx(), AreaM2Ndp);
-            answer.Add("LocnErrPerFeatCM", LocationErrPerFeatureM() * 100, LocationNdp);
-
-            // Average horizontal distance from object to drone in M.
-            answer.Add("RangeM", AvgRangeM);
-
-
-            return answer;
-        }
     };
 
 
@@ -390,26 +364,6 @@ namespace SkyCombImage.ProcessLogic
         {
             var num = NumEverSignificantObjects;
             return (num == 0 ? "" : string.Format("{0} Objects", num));
-        }
-
-
-        // Returns key attributes of objects and associated user annotations (if any)
-        // to show in the ObjectGrid in the Main Form or the ObjectList in the Object Form
-        public List<object[]> GetObjectGridData(ProcessScope scope, bool mainForm, ObjectCategoryList annotations, int focusObjectID = BaseConstants.UnknownValue)
-        {
-            var answer = new List<object[]>();
-
-            var sigObjects = CombObjList.FilterByProcessScope(scope, focusObjectID);
-            foreach (var theObject in sigObjects)
-            {
-                ObjectCategoryModel? annotation = null;
-                if (annotations != null)
-                    annotation = annotations.GetData(theObject.Value.Name);
-
-                answer.Add(theObject.Value.GetObjectGridData(Model.ProcessConfig, mainForm, annotation));
-            }
-
-            return answer;
         }
     }
 }

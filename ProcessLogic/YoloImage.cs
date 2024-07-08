@@ -1,4 +1,5 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+using SkyCombGround.CommonSpace;
 using System.Drawing;
 
 
@@ -21,7 +22,6 @@ namespace SkyCombImage.ProcessModel
         public YoloFeatureSeenList() : base() { }
 
         // Clone this list
-
         public YoloFeatureSeenList Clone()
         {
             YoloFeatureSeenList clone = new();
@@ -82,11 +82,29 @@ namespace SkyCombImage.ProcessModel
     }
 
 
-    // A class to track all objects across all frames. 
-    // Physical objects may be visible, then obscured, then visible resulting in two ObjectSeens. We try to merge them.
-    class YoloTracker
+    public class YoloObjectSeenList : List<YoloObjectSeen>
     {
-        private List<YoloObjectSeen> ObjectsSeen;
+        public YoloObjectSeenList() : base() { }
+
+
+        public int NumSignificant()
+        {
+            int numSignificant = 0;
+
+            foreach (var target in this)
+                if (target.Features.Any())
+                    numSignificant++;
+
+            return numSignificant;
+        }
+    }
+
+
+    // A class to track all objects across all frames. 
+    // Physical objects may be visible, then obscured, then visible resulting in two ObjectSeen objects. Try to merge them.
+    public class YoloTracker
+    {
+        public YoloObjectSeenList ObjectsSeen;
 
         // Minimum % overlap between features in successive images 
         private float IoUThreshold;
@@ -96,8 +114,8 @@ namespace SkyCombImage.ProcessModel
 
 
         public YoloTracker(
-            float ioUThreshold = 0.25f, // 25% overlap 
-            float mergeConfidenceThreshold = 0.6f) // 60% confidence in merging
+            float ioUThreshold, // e.g. 0.25 for 25% overlap 
+            float mergeConfidenceThreshold = 0.6f) // e.g. 0.6 for 60% confidence in merging
         {
             ObjectsSeen = new();
             IoUThreshold = ioUThreshold;
@@ -112,33 +130,29 @@ namespace SkyCombImage.ProcessModel
                 // For the first frame, create a new target for each detection
                 foreach (var feature in features)
                     ObjectsSeen.Add(new YoloObjectSeen { Features = new YoloFeatureSeenList { new YoloFeatureSeen { BlockId = blockId, Box = feature.Box, FeatureId = feature.FeatureId } } });
+                return;
             }
-            else
-            {
-                var unassignedFeatures = new YoloFeatureSeenList();
-                foreach (var feature in features)
-                    unassignedFeatures.Add(new YoloFeatureSeen { BlockId = blockId, Box = feature.Box, FeatureId = feature.FeatureId });
 
-                foreach (var existingObject in ObjectsSeen)
+            var unassignedFeatures = features.Clone();
+
+            foreach (var existingObject in ObjectsSeen)
+            {
+                if (existingObject.Features.Any() && (blockId == existingObject.Features.Last().BlockId + 1))
                 {
-                    if (existingObject.Features.Any() && (blockId == existingObject.Features.Last().BlockId + 1))
+                    var lastBox = existingObject.Features.Last().Box;
+                    var bestMatch = FindBestMatch(lastBox, unassignedFeatures);
+                    if (bestMatch != null)
                     {
-                        var lastBox = existingObject.Features.Last().Box;
-                        var bestMatch = FindBestMatch(lastBox, unassignedFeatures);
-                        if (bestMatch != null)
-                        {
-                            existingObject.Features.Add(bestMatch);
-                            unassignedFeatures.Remove(bestMatch);
-                        }
+                        existingObject.Features.Add(bestMatch);
+                        var removed = unassignedFeatures.Remove(bestMatch);
+                        BaseConstants.Assert(removed, "YoloTracker.ProcessFrame: Failed to remove feature from unassigned list");
                     }
                 }
-
-                // Create new objects for unassigned features
-                foreach (var detection in unassignedFeatures)
-                {
-                    ObjectsSeen.Add(new YoloObjectSeen { Features = new YoloFeatureSeenList { detection } });
-                }
             }
+
+            // Create new objects for unassigned features
+            foreach (var detection in unassignedFeatures)
+                ObjectsSeen.Add(new YoloObjectSeen { Features = new YoloFeatureSeenList { detection } });
         }
 
 
@@ -243,13 +257,14 @@ namespace SkyCombImage.ProcessModel
                     var t1 = ObjectsSeen[i];
                     var t2 = ObjectsSeen[j];
 
-                    if (t1.Features.Last().BlockId < t2.Features.First().BlockId)
-                    {
-                        double similarity = CalculateTargetSimilarity(t1, t2, droneVelocity);
-                        if (similarity > MergeConfidenceThreshold)
-                            // We have found two objects to merge
-                            objectsToMerge.Add((t1, t2));
-                    }
+                    if(t1.Features.Any() && t2.Features.Any())
+                        if (t1.Features.Last().BlockId < t2.Features.First().BlockId)
+                        {
+                            double similarity = CalculateTargetSimilarity(t1, t2, droneVelocity);
+                            if (similarity > MergeConfidenceThreshold)
+                                // We have found two objects to merge
+                                objectsToMerge.Add((t1, t2));
+                        }
                 }
             }
 
@@ -257,18 +272,19 @@ namespace SkyCombImage.ProcessModel
             {
                 t1.Features.AddRange(t2.Features);
                 t1.Features.Sort((a, b) => a.BlockId.CompareTo(b.BlockId));
-                ObjectsSeen.Remove(t2);
+                t2.Features.Clear();
+                var removed = ObjectsSeen.Remove(t2);
+                //if( ! removed)
+                //    BaseConstants.Assert(removed, "YoloTracker.MergeSimilarObjects: Failed to remove target from list");
             }
 
             // Recalculate velocities for merged targets
             foreach (var target in ObjectsSeen)
-            {
                 target.CalculateAverageVelocity();
-            }
         }
 
 
-        public List<YoloObjectSeen> CalculateObjects(YoloFeatureSeenList features)
+        public (int, int) CalculateObjectsInLeg(YoloFeatureSeenList features)
         {
             var minFrameId = features[0].BlockId;
             var maxFrameId = features[^1].BlockId;
@@ -291,9 +307,11 @@ namespace SkyCombImage.ProcessModel
             }
 
             // Merge similar targets
+            int preMerge = ObjectsSeen.NumSignificant();
             MergeSimilarObjects();
+            int postMerge = ObjectsSeen.NumSignificant();
 
-            return ObjectsSeen;
+            return (preMerge, postMerge);
         }
     }
 }

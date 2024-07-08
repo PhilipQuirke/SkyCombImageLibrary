@@ -26,9 +26,13 @@ namespace SkyCombImage.ProcessModel
     //      - WARNING: Changing the default values below will have NO effect.
     public class ProcessConfigModel : ConfigBase
     {
+        // Single frame Yolo detection confidence
         public const float YoloDetectConfidenceDefault = 0.66f;
-        public const float YoloIoUDefault = 0.5f; // Typically 0.3 to 0.7
-        public const float YoloMergeConfidenceDefault = 0.25f;
+        // Successive frame Yolo overlap threshold. Typically 0.2 to 0.4
+        public const float YoloIoUDefault = 0.25f; 
+        // Yolo merge objects based on similarity threshold
+        public const float YoloMergeConfidenceDefault = 0.2f;
+
 
 
         // --------------------- Debug --------------------- 
@@ -96,9 +100,12 @@ namespace SkyCombImage.ProcessModel
         public double GfttK { get; set; } = 0.04;
 
 
-        // Yolo process:
-        public float YoloDetectConfidence { get; set; } = ProcessConfigModel.YoloDetectConfidenceDefault; 
-        public float YoloIoU { get; set; } = ProcessConfigModel.YoloIoUDefault; // Typically 0.3 to 0.7
+        // YOLO
+        // Single frame Yolo detection confidence
+        public float YoloDetectConfidence { get; set; } = ProcessConfigModel.YoloDetectConfidenceDefault;
+        // Successive frame Yolo overlap threshold
+        public float YoloIoU { get; set; } = ProcessConfigModel.YoloIoUDefault; // Typically 0.2 to 0.4
+        // Yolo merge objects based on similarity threshold
         public float YoloMergeConfidence { get; set; } = ProcessConfigModel.YoloMergeConfidenceDefault;
 
 

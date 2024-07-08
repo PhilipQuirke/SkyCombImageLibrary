@@ -78,34 +78,33 @@ namespace SkyCombImage.ProcessModel
         {
             if (Drone.UseFlightLegs)
             {
+                FlightLeg_SigObjects = 0;
+
                 if (LegFrameFeatures.Count > 0)
                 {
                     // During the leg, we found features using Yolo image detection,
                     // and defined objects using IoU overlap in successive frames.
-                    int featuresCount = LegFrameFeatures.Count;
-                    int basicObjectCount = YoloObjects.Count - FlightLeg_StartObjects;
-                    Assert(basicObjectCount <= featuresCount, "Basic detection bad");
 
                     YoloTracker tracker = new( 
                         0.1f, // % overlap between feature in successive images 
                         0.66f ); // % confidence in merging two objects
-                    var objectsSeen = tracker.CalculateObjects(LegFrameFeatures);
+                    tracker.CalculateObjectsInLeg(LegFrameFeatures);
 
                     // For each ObjectSeen, create a YoloObject
-                    FlightLeg_SigObjects = 0;
-                    foreach (var objSeen in objectsSeen)
-                    {
-                        FlightLeg_SigObjects++;
-                        YoloFeature firstFeature = ProcessFeatures[ objSeen.Features[0].FeatureId ] as YoloFeature;
-                        YoloObject newObject = YoloObjects.AddObject(scope, firstFeature);
-
-                        // Add remaining features to the object
-                        for (int i = 1; i < objSeen.Features.Count; i++)
+                    foreach (var objSeen in tracker.ObjectsSeen)
+                        if(objSeen.Features.Any())
                         {
-                            YoloFeature nextFeature = ProcessFeatures[objSeen.Features[i].FeatureId] as YoloFeature;
-                            newObject.ClaimFeature(nextFeature);
+                            FlightLeg_SigObjects++;
+                            YoloFeature firstFeature = ProcessFeatures[ objSeen.Features[0].FeatureId ] as YoloFeature;
+                            YoloObject newObject = YoloObjects.AddObject(scope, firstFeature);
+
+                            // Add remaining features to the object
+                            for (int i = 1; i < objSeen.Features.Count; i++)
+                            {
+                                YoloFeature nextFeature = ProcessFeatures[objSeen.Features[i].FeatureId] as YoloFeature;
+                                newObject.ClaimFeature(nextFeature);
+                            }
                         }
-                    }
                 }
 
                 // For process robustness, we want to process each leg independently.

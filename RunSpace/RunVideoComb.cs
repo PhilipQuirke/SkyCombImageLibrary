@@ -1,10 +1,9 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved. 
+﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
 using SkyCombImage.PersistModel;
 using SkyCombImage.ProcessModel;
 using SkyCombImage.ProcessLogic;
-using System.Diagnostics;
 
 
 // Continuation of RunVideo.cs, contains both Skycomb-specific runners
@@ -141,8 +140,8 @@ namespace SkyCombImage.RunSpace
         // Return the data to show in the ObjectGrid in the Main Form
         public override List<object[]> GetObjectGridData(bool mainForm)
         {
-            return CombProcess.CombObjs.GetObjectGridData(this, mainForm, CategoryAll.ObjectCategories, RunConfig.ProcessConfig.FocusObjectId);
-        }
+            return CombProcess.CombObjs.CombObjList.GetObjectGridData(this, RunConfig.ProcessConfig, mainForm, CategoryAll.ObjectCategories, RunConfig.ProcessConfig.FocusObjectId);
+       }
 
 
         // Do any final activity at the end processing of video

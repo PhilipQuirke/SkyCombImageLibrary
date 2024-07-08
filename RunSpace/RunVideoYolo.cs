@@ -1,13 +1,14 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using Emgu.CV;
+using Emgu.CV.Dnn;
 using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
-using SkyCombGround.GroundLogic;
 using SkyCombImage.DrawSpace;
 using SkyCombImage.PersistModel;
 using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
+using static System.Formats.Asn1.AsnWriter;
 
 
 // Namespace for processing of a video made up of multiple images (frames).
@@ -89,6 +90,13 @@ namespace SkyCombImage.RunSpace
             DrawYolo.Draw(RunConfig.ImageConfig, YoloProcess, block.BlockId, ref modifiedInputFrame);
 
             return (modifiedInputFrame.Clone(), DisplayFrame.Clone());
+        }
+
+
+        // Return the data to show in the ObjectGrid in the Main Form
+        public override List<object[]> GetObjectGridData(bool mainForm)
+        {
+            return YoloProcess.YoloObjects.GetObjectGridData(this, RunConfig.ProcessConfig, mainForm, CategoryAll.ObjectCategories, RunConfig.ProcessConfig.FocusObjectId);
         }
 
 

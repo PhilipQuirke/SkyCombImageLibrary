@@ -2,6 +2,8 @@
 using SkyCombImage.ProcessLogic;
 using SkyCombGround.CommonSpace;
 using System.Drawing;
+using Emgu.CV.Dnn;
+using SkyCombImage.CategorySpace;
 
 
 namespace SkyCombImage.ProcessModel
@@ -41,12 +43,19 @@ namespace SkyCombImage.ProcessModel
         // This object claims this feature
         public void ClaimFeature(YoloFeature theFeature)
         {
-            Assert(theFeature.ObjectId <= 0, "YoloObject.ClaimFeature: Feature is already owned");
+            if(theFeature.ObjectId > 0)
+                Assert(theFeature.ObjectId <= 0, "YoloObject.ClaimFeature: Feature is already owned");
 
             theFeature.ObjectId = this.ObjectId;
             ProcessFeatures.AddFeature(theFeature);
 
             NumSigBlocks = LastFeature.BlockId - FirstFeature.BlockId + 1;
+
+            LastRealFeatureIndex = ProcessFeatures.Count - 1;
+            RunToVideoS = (float)(LastRealFeature.Block.InputFrameMs / 1000.0);
+
+            MaxRealPixelWidth = Math.Max(MaxRealPixelWidth, theFeature.PixelBox.Width);
+            MaxRealPixelHeight = Math.Max(MaxRealPixelHeight, theFeature.PixelBox.Height);
         }
 
 
@@ -63,23 +72,6 @@ namespace SkyCombImage.ProcessModel
                 }
 
             return false;
-        }
-
-
-        // Get the class's settings as datapairs (e.g. for saving to the datastore)
-        override public DataPairList GetSettings()
-        {
-            return new DataPairList
-            {
-                { "Object", ObjectId },
-                { "FromS", RunFromVideoS, SecondsNdp },
-                { "ToS", RunToVideoS, SecondsNdp },
-                { "Attributes", Attributes },
-                { "Significant", Significant },
-                { "#SigBlocks", NumSigBlocks },
-                { "FirstFeat", (FirstFeature == null) ? -1 : FirstFeature.FeatureId },
-                { "LastFeat", (LastFeature == null) ? -1 : LastFeature.FeatureId },
-            };
         }
     };
 

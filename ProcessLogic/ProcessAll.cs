@@ -20,12 +20,12 @@ namespace SkyCombImage.ProcessLogic
 
 
     // Hook custom event data
-    public class ProcessScopeEventArgs : EventArgs
+    public class ProcessEventArgs : EventArgs
     {
         public ProcessScope Scope { get; private set; }
         public int LegId{ get; private set; }
 
-        public ProcessScopeEventArgs(ProcessScope scope, int legId)
+        public ProcessEventArgs(ProcessScope scope, int legId)
         {
             Scope = scope;
             LegId = legId;  
@@ -34,7 +34,7 @@ namespace SkyCombImage.ProcessLogic
 
 
     // Hook signature
-    public delegate void ObservationHandler<T>(T sender, ProcessEventEnum processEvent, ProcessScopeEventArgs e) where T : class;
+    public delegate void ObservationHandler<T>(T sender, ProcessEventEnum processEvent, ProcessEventArgs e) where T : class;
 
 
     // All processing models derive from this class.
@@ -95,10 +95,10 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public void OnObservation(ProcessEventEnum processEvent, ProcessScopeEventArgs args = null)
+        public void OnObservation(ProcessEventEnum processEvent, ProcessEventArgs args = null)
         {
             if( args == null)
-                args = new ProcessScopeEventArgs(null, 0);
+                args = new ProcessEventArgs(null, 0);
 
             Observation?.Invoke(this, processEvent, args);
         }
@@ -129,12 +129,12 @@ namespace SkyCombImage.ProcessLogic
         public void ProcessFlightLegStartWrapper(ProcessScope scope, int LegId)
         {
             if (Drone.UseFlightLegs)
-                OnObservation(ProcessEventEnum.LegStart_Before, new ProcessScopeEventArgs(scope, LegId));
+                OnObservation(ProcessEventEnum.LegStart_Before, new ProcessEventArgs(scope, LegId));
 
             ProcessFlightLegStart(scope, LegId);
 
             if (Drone.UseFlightLegs)
-                OnObservation(ProcessEventEnum.LegStart_After, new ProcessScopeEventArgs(scope, LegId));
+                OnObservation(ProcessEventEnum.LegStart_After, new ProcessEventArgs(scope, LegId));
         }
 
 
@@ -145,12 +145,12 @@ namespace SkyCombImage.ProcessLogic
         public void ProcessFlightLegEndWrapper(ProcessScope scope, int LegId)
         {
             if (Drone.UseFlightLegs)
-                OnObservation(ProcessEventEnum.LegEnd_Before, new ProcessScopeEventArgs(scope, LegId));
+                OnObservation(ProcessEventEnum.LegEnd_Before, new ProcessEventArgs(scope, LegId));
 
             ProcessFlightLegEnd(scope, LegId);
 
             if (Drone.UseFlightLegs)
-                OnObservation(ProcessEventEnum.LegEnd_After, new ProcessScopeEventArgs(scope, LegId));
+                OnObservation(ProcessEventEnum.LegEnd_After, new ProcessEventArgs(scope, LegId));
         }
 
 
