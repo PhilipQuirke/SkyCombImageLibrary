@@ -190,6 +190,7 @@ namespace SkyCombImage.DrawSpace
             if (outputImg.Width > 1000)
                 theThickness = 2;
 
+            // During processing of a video, the YoloProcess has YoloFeatures but not YoloObjects (until after the LegEnd event)
             foreach (var theFeature in process.ProcessFeatures)
             {
                 if (theFeature.Value.BlockId == block.BlockId)

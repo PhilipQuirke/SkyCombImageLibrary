@@ -174,7 +174,7 @@ namespace SkyCombImage.ProcessLogic
         {
             try
             {
-                var lastFeature = LastFeature as CombFeature;
+                var lastFeature = LastFeature;
                 if ((theFeature.Type == FeatureTypeEnum.Real) && (lastFeature != null))
                 {
                     // To get here, theFeature overlaps this object significantly.

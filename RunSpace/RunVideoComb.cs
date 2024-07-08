@@ -70,7 +70,7 @@ namespace SkyCombImage.RunSpace
                 // Link each object to its features
                 foreach (var feature in CombProcess.ProcessFeatures)
                     if (feature.Value.ObjectId >= 0)
-                        CombProcess.ProcessObjects.SetLinksAfterLoad(feature.Value as CombFeature);
+                        CombProcess.ProcessObjects.SetLinksAfterLoad(feature.Value);
             }
             catch (Exception ex)
             {

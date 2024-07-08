@@ -164,69 +164,9 @@ namespace SkyCombImage.ProcessLogic
                     LegFrameFeatures.Add(new YoloFeatureSeen { BlockId = blockID, Box = imagePixelBox, FeatureId = newFeature.FeatureId });
                 }
 
-/*
-                // We only want to consider objects that are active.
-                // For long flights most objects will have become inactive seconds or minutes ago.
-                Phase = 2;
-                YoloObjectList inScopeObjects = new(this);
-                YoloObjectList availObjects = new(this);
-                foreach (var theObject in ProcessObjects)
-                    if ((theObject.Value.LastFeature != null) &&
-                        (theObject.Value.LastFeature.Block.BlockId == blockID - 1))
-                    {
-                        inScopeObjects.AddObject(theObject.Value);
-                        availObjects.AddObject(theObject.Value);
-                    }
-
-                // Each feature can only be claimed once
-                ProcessFeatureList availFeatures = featuresInBlock.Clone();
-
-
-                // For each active object, consider each feature 
-                // found in this frame to see if it overlaps.
-                Phase = 3;
-                foreach (var theObject in inScopeObjects)
-                {
-                    var yoloObject = theObject.Value as YoloObject;
-
-                    var lastFeat = theObject.Value.LastFeature;
-                    if (lastFeat.Block.BlockId == blockID - 1)
-                    {
-                        // If one or more features overlaps the object's expected location,
-                        // claim ownership of the feature(s), and mark them as Significant.
-                        var expectedObjectLocation = theObject.Value.ExpectedLocationThisBlock();
-
-                        bool claimedFeatures = false;
-                        foreach (var feature in featuresInBlock)
-                            // Object will claim feature if location overlaps byProcessConfig.FeatureMinOverlapPerc
-                            if (yoloObject.MaybeClaimFeature(feature.Value as YoloFeature, expectedObjectLocation))
-                            {
-                                availFeatures.Remove(feature.Value.FeatureId);
-                                claimedFeatures = true;
-                            }
-                        if (claimedFeatures)
-                            availObjects.Remove(theObject.Value.ObjectId);
-                    }
-                }
-*/
-
                 Phase = 5;
                 currBlock.AddFeatureList(featuresInBlock);
                 ProcessFeatures.AddFeatureList(featuresInBlock);
-
-/*
-                // For all unowned active features in this frame, create a new object to own the feature.
-                foreach (var feature in availFeatures)
-                    if (feature.Value.ObjectId == 0)
-                        ProcessObjects.AddObject(scope, feature.Value as YoloFeature);
-
-                Phase = 8;
-                if (Drone.UseFlightLegs)
-                    // Ensure each significant object in this leg has a "significant" name e.g. C5
-                    // Needs to be done ASAP so the "C5" name can be drawn on video frames.
-                    // Note: Some objects never become significant.
-                    FlightLeg_SigObjects = EnsureObjectsNamed(FlightLeg_SigObjects, inScopeObjects, scope.CurrRunFlightStep);
-*/
 
                 return numSig;
             }
@@ -238,18 +178,5 @@ namespace SkyCombImage.ProcessLogic
                     ",Phase=" + Phase + ")", ex);
             }
         }
-
-
-        override public DataPairList GetSettings()
-        {
-            return new DataPairList
-            {
-                { "# Blocks", Blocks.Count },
-                { "# Features", ProcessFeatures.Count},
-                { "# Objects", ProcessObjects.Count},
-            };
-        }
-
     };
-
 }

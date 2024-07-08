@@ -166,10 +166,9 @@ namespace SkyCombImage.ProcessLogic
         public override void Consume(ProcessFeature otherFeature)
         {
             // Transfer the pixels
-            var combFeature = otherFeature as CombFeature;
-            if(combFeature.Pixels != null)
-                Pixels.AddRange(combFeature.Pixels);
-            combFeature.Pixels = null;
+            if(otherFeature.Pixels != null)
+                Pixels.AddRange(otherFeature.Pixels);
+            otherFeature.Pixels = null;
 
             base.Consume(otherFeature);
         }

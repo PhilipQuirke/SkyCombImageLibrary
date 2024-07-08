@@ -197,9 +197,22 @@ namespace SkyCombImage.ProcessLogic
 
         virtual public DataPairList GetSettings()
         {
+            int numPixels = 0;
+            foreach (var feature in ProcessFeatures)
+            {
+                var combFeature = feature.Value;
+                if (combFeature.Pixels != null)
+                    numPixels += combFeature.Pixels.Count;
+            }
+
             return new DataPairList
             {
                 { "# Blocks", Blocks.Count },
+                { "# Objects", ProcessObjects.Count },
+                { "# Significant Objects", ProcessObjects.NumEverSignificantObjects },
+                { "# Features", ProcessFeatures.Count },
+                { "# Significant Features", ProcessFeatures.NumSig },
+                { "# Pixels", numPixels },
             };
         }
     };

@@ -339,7 +339,7 @@ namespace SkyCombImage.ProcessLogic
             if ((ProcessAll == null) || (ProcessAll.VideoData == null))
                 return;
 
-            var lastFeature = LastFeature as CombFeature;
+            var lastFeature = LastFeature;
             if ((lastFeature == null) ||
                 (lastFeature.Type != FeatureTypeEnum.Real) ||
                 (lastFeature.Block == null) ||

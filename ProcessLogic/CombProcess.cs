@@ -146,7 +146,7 @@ namespace SkyCombImage.ProcessLogic
                     var combObject = theObject.Value as CombObject;
                     if (combObject.FlightLegId <= 0)
                         foreach (var feature in combObject.ProcessFeatures)
-                            (feature.Value as CombFeature).Pixels?.Clear();
+                            feature.Value.Pixels?.Clear();
                 }
         }
 
@@ -157,9 +157,7 @@ namespace SkyCombImage.ProcessLogic
         {
             if (!Drone.UseFlightLegs)
             {
-                foreach (var theObject in inScopeObjects)
-                    if (theObject.Value.Name == "")
-                        theObject.Value.SetName();
+                inScopeObjects.EnsureObjectsNamed();
 
                 int sigObjects = inScopeObjects.NumSignificantObjects();
                 if (sigObjects > 0)
@@ -357,28 +355,6 @@ namespace SkyCombImage.ProcessLogic
 
             Blocks.LastBlock.AddFeatureList(featuresInBlock);
             ProcessFeatures.AddFeatureList(featuresInBlock);
-        }
-
-
-        override public DataPairList GetSettings()
-        {
-            int numPixels = 0;
-            foreach (var feature in ProcessFeatures)
-            {
-                var combFeature = feature.Value as CombFeature;
-                if (combFeature.Pixels != null)
-                    numPixels += combFeature.Pixels.Count;
-            }
-
-            return new DataPairList
-            {
-                { "# Blocks", Blocks.Count },
-                { "# Objects", ProcessObjects.Count },
-                { "# Significant Objects", ProcessObjects.NumEverSignificantObjects },
-                { "# Features", ProcessFeatures.Count },
-                { "# Significant Features", ProcessFeatures.NumSig },
-                { "# Pixels", numPixels },
-            };
         }
     }
 }
