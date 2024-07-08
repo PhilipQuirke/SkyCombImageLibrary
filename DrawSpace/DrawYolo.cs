@@ -3,7 +3,6 @@ using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.CommonSpace;
 using SkyCombDrone.DrawSpace;
-using SkyCombImage.ProcessModel;
 using SkyCombImage.ProcessLogic;
 using System.Drawing;
 

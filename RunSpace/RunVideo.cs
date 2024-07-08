@@ -73,27 +73,26 @@ namespace SkyCombImage.RunSpace
             VideoBase = null;
             CategoryAll = new();
 
-            CombProcess combProcess = CombProcessIfAny();
-            ProcessDrawScope = new(combProcess, this, Drone);
+            ProcessDrawScope = new(ProcessAll, this, Drone);
 
             // What is the maximum scope of objects we draw?
-            ProcessObjList? combObjList = null;
+            ProcessObjList? objList = null;
             ObjectDrawScope? drawObjectScope = null;
-            if (combProcess != null)
+            if (ProcessAll != null)
             {
                 // Only consider objects in the current ProcessScope.
                 // This is effectively the intersects of what legs were processed
                 // and what legs are currently selected
-                combObjList = combProcess.ProcessObjects.FilterByProcessScope(this);
-                if ((combObjList != null) && (combObjList.Count > 0))
+                objList = ProcessAll.ProcessObjects.FilterByProcessScope(this);
+                if ((objList != null) && (objList.Count > 0))
                 {
                     // Default the filters based on these objects.
                     // This default shows the value range of these objects. 
-                    drawObjectScope = new(combProcess, this, Drone);
-                    drawObjectScope.SetObjectRange(combObjList);
+                    drawObjectScope = new(ProcessAll, this, Drone);
+                    drawObjectScope.SetObjectRange(objList);
                 }
             }
-            CombDrawPath = new(ProcessDrawScope, combObjList, drawObjectScope);
+            CombDrawPath = new(ProcessDrawScope, objList, drawObjectScope);
 
             //DrawCombAltitudeByTime = new(null, DrawScope);
             DrawCombAltitudeByLinealM = new(null, ProcessDrawScope);
@@ -198,10 +197,10 @@ namespace SkyCombImage.RunSpace
         // Process a single input and (maybe) display video frame for the specified block, returning the modified input&display frames to show 
         public virtual (Image<Bgr, byte>, Image<Bgr, byte>) DrawVideoFrames(ProcessBlockModel block, Image<Bgr, byte> inputFrame, Image<Bgr, byte> displayFrame)
         {
-            (var modifiedInputFrame, var modifiedDisplayFrame) = 
-                CombDrawVideoFrames.Draw(
+            (var modifiedInputFrame, var modifiedDisplayFrame) =
+                DrawSpace.DrawVideoFrames.Draw(
                     RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, Drone,
-                    block, CombProcessIfAny(), RunConfig.ProcessConfig.FocusObjectId,
+                    block, ProcessAll, RunConfig.ProcessConfig.FocusObjectId,
                     inputFrame, displayFrame);
 
             if(modifiedInputFrame != null)

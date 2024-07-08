@@ -60,22 +60,15 @@ namespace SkyCombImage.RunSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("RunVideoYoloDrone.LoadDataStore", ex);
+                throw ThrowException("RunVideoYolo.LoadDataStore", ex);
             }
         }
 
 
-
-        // Add a block, transferring some flight data and process data into it
-        private ProcessBlock AddBlock()
+        // Describe the objects found
+        public override string DescribeSignificantObjects()
         {
-            var newBlock = ProcessFactory.NewBlock(this);
-            YoloProcess.Blocks.AddBlock(newBlock, this, Drone);
-
-            if (PSM.CurrRunStepId <= 0)
-                PSM.CurrRunStepId = newBlock.TardisId;
-
-            return newBlock;
+            return "#Objects=" + YoloProcess.ProcessObjects.Count;
         }
 
 
@@ -91,7 +84,7 @@ namespace SkyCombImage.RunSpace
         {
             try
             {
-                var thisBlock = AddBlock();
+                var thisBlock = ProcessAll.AddBlock(this);
 
                 var currGray = DrawImage.ToGrayScale(CurrInputVideoFrame);
 
@@ -108,27 +101,8 @@ namespace SkyCombImage.RunSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("RunVideoYolo.ProcessInputVideoFrame", ex);
+                throw ThrowException("RunVideoYolo.AddBlockAndProcessInputVideoFrame", ex);
             }
-        }
-
-
-        // Describe the objects found
-        public override string DescribeSignificantObjects()
-        {
-            return "#Objects=" + YoloProcess.ProcessObjects.Count;
-        }
-
-
-        public override (Image<Bgr, byte>, Image<Bgr, byte>) DrawVideoFrames(ProcessBlockModel block, Image<Bgr, byte> InputFrame, Image<Bgr, byte> DisplayFrame)
-        {
-            var modifiedInputFrame = InputFrame.Clone();
-
-            DrawImage.Palette(RunConfig.ImageConfig, ref modifiedInputFrame);
-
-            DrawYolo.Draw(RunConfig.ImageConfig, YoloProcess, block.BlockId, ref modifiedInputFrame);
-
-            return (modifiedInputFrame.Clone(), DisplayFrame.Clone());
         }
 
 

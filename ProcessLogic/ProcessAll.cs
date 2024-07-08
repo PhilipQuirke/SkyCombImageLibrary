@@ -98,6 +98,17 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Add a new block
+        public ProcessBlock AddBlock(ProcessScope scope)
+        {
+            var currBlock = ProcessFactory.NewBlock(scope);
+
+            Blocks.AddBlock(currBlock, scope, Drone);
+
+            return currBlock;
+        }
+
+
         public void OnObservation(ProcessEventEnum processEvent, ProcessEventArgs args = null)
         {
             if( args == null)

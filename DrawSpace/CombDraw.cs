@@ -13,8 +13,8 @@ using System.Drawing;
 
 namespace SkyCombImage.DrawSpace
 {
-     // Code to draw images on video frames based on hot spot data
-    public class CombDrawVideoFrames : Draw
+    // Code to draw images on video frames based on hot spot data
+    public class DrawVideoFrames : Draw
     {
         // Draw the hot pixels
         public static void HotPixels(
@@ -63,7 +63,7 @@ namespace SkyCombImage.DrawSpace
         // Draw the bounding rectangles of the owned features
         public static void ObjectFeatures(DrawImageConfig config, int focusObjectId,
             ref Image<Bgr, byte> image,
-            ProcessFeature feature, ProcessObject? combObject,
+            ProcessFeature feature, ProcessObject? processObject,
             Transform transform)
         {
             if (config.DrawRealFeatureColor == Color.White &&
@@ -96,8 +96,8 @@ namespace SkyCombImage.DrawSpace
                         (focusObjectId == -1)) // Draw object # for all objects if focusObjectId is -1
                     {
                         string name;
-                        if (combObject != null)
-                            name = combObject.Name;
+                        if (processObject != null)
+                            name = processObject.Name;
                         else
                             name = feature.ObjectId.ToString();
 
@@ -175,7 +175,36 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("DrawCombVideoFrames.CombImage", ex);
+                throw ThrowException("DrawVideoFrames.CombImage", ex);
+            }
+        }
+
+
+        public static void YoloImage(
+            DrawImageConfig drawConfig, ProcessConfigModel processConfig,
+            int focusObjectId, ref Image<Bgr, byte> outputImg,
+            ProcessAll process, ProcessBlockModel block, Transform transform)
+        {
+            // Thickness of lines and circles.
+            int theThickness = 1;
+            if (outputImg.Width > 1000)
+                theThickness = 2;
+
+            foreach (var theFeature in process.ProcessFeatures)
+            {
+                if (theFeature.Value.BlockId == block.BlockId)
+                {
+                    var theColor = Color.Red;
+                    var theBox = theFeature.Value.PixelBox;
+                    var the_title = "#" + theFeature.Value.FeatureId.ToString();
+
+                    // Draw hollow bounding box
+                    BoundingRectangle(drawConfig, ref outputImg, theBox, theColor, theThickness);
+
+                    // Draw the title text 
+                    var theTitlePt = new Point(theBox.X, theBox.Y - 10);
+                    Text(ref outputImg, the_title, theTitlePt, 0.5, DroneColors.ColorToBgr(theColor));
+                }
             }
         }
 
@@ -199,6 +228,10 @@ namespace SkyCombImage.DrawSpace
                     if (runProcess == RunProcessEnum.Comb)
                         // Draw hot objects
                         CombImage(drawConfig, processConfig, focusObjectId,
+                            ref modifiedInputFrame, processAll, block, new());
+                    else if (runProcess == RunProcessEnum.Yolo)
+                        // Draw hot objects
+                        YoloImage(drawConfig, processConfig, focusObjectId,
                             ref modifiedInputFrame, processAll, block, new());
                     else
                         // Handles RunModel = Contour, GFTT, etc.
@@ -228,7 +261,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("DrawCombVideoFrames.DrawVideoFrames", ex);
+                throw ThrowException("DrawVideoFrames.DrawVideoFrames", ex);
             }
         }
     }
@@ -237,11 +270,11 @@ namespace SkyCombImage.DrawSpace
     // Code to draw ground tree-top & drone alitudes against lineal meters, with comb objects overlaid
     public class CombDrawAltitudeByLinealM : DrawAltitudeByLinealM
     {
-        CombProcess? Process { get; }
+        ProcessAll? Process { get; }
         ProcessDrawScope DrawScope { get; }
 
 
-        public CombDrawAltitudeByLinealM(CombProcess? process, ProcessDrawScope drawScope) : base(drawScope)
+        public CombDrawAltitudeByLinealM(ProcessAll? process, ProcessDrawScope drawScope) : base(drawScope)
         {
             Process = process;
             DrawScope = drawScope;
@@ -251,7 +284,7 @@ namespace SkyCombImage.DrawSpace
 
 
         // Draw altitude data dependant on Drone/GroundSpace data
-        public void Initialise(CombProcess process, Size size)
+        public void Initialise(ProcessAll process, Size size)
         {
             try
             {
@@ -266,13 +299,13 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("DrawCombAltitudeByLinealM.Initialise", ex);
+                throw ThrowException("CombDrawAltitudeByLinealM.Initialise", ex);
             }
         }
 
 
         // Draw object at best estimate of height, location with error bars
-        public void GraphObjects(ref Image<Bgr, byte> currImage, CombProcess process)
+        public void GraphObjects(ref Image<Bgr, byte> currImage, ProcessAll process)
         {
             try
             {
@@ -303,7 +336,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("DrawCombAltitudeByLinealM.GraphObjects", ex);
+                throw ThrowException("CombDrawAltitudeByLinealM.GraphObjects", ex);
             }
         }
 
@@ -319,7 +352,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("DrawCombAltitudeByLinealM.CurrImage", ex);
+                throw ThrowException("CombDrawAltitudeByLinealM.CurrImage", ex);
             }
         }
     }
@@ -329,11 +362,11 @@ namespace SkyCombImage.DrawSpace
     // Code to draw ground tree-top & drone altitudes against time, with comb objects overlaid
     public class CombDrawAltitudeByTime : DrawAltitudeByTime
     {
-        CombProcess? Process { get; }
+        ProcessAll? Process { get; }
         ProcessDrawScope DrawScope { get; }
 
 
-        public CombDrawAltitudeByTime(CombProcess? process, ProcessDrawScope drawScope) : base(drawScope)
+        public CombDrawAltitudeByTime(ProcessAll? process, ProcessDrawScope drawScope) : base(drawScope)
         {
             Process = process;
             DrawScope = drawScope;
@@ -360,7 +393,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("DrawCombAltitudeByTime.Initialise", ex);
+                throw ThrowException("CombDrawAltitudeByTime.Initialise", ex);
             }
         }
 
@@ -368,7 +401,7 @@ namespace SkyCombImage.DrawSpace
         // Draw object at best estimate of height and center of period seen
         // Draw object "visible duration" as horizontally-stretched H
         // Draw object "height error" as vertically-stretched H
-        public void GraphObjects(ref Image<Bgr, byte> currImage, CombProcess process)
+        public void GraphObjects(ref Image<Bgr, byte> currImage, ProcessAll process)
         {
             try
             {
@@ -399,9 +432,9 @@ namespace SkyCombImage.DrawSpace
 
                                 if (DroneDrawScope.DrawFullFlight())
                                 {
-                                    Assert(!(firstWidth > Size.Width + 1 || firstWidth < 0), "DrawCombAltitudeByTime.GraphObjects: firstWidth out of bounds");
-                                    Assert(!(lastWidth > Size.Width + 1 || lastWidth < 0), "DrawCombAltitudeByTime.GraphObjects: lastWidth out of bounds");
-                                    Assert(!(middleWidth > Size.Width + 1 || middleWidth < 0), "DrawCombAltitudeByTime.GraphObjects: middleWidth out of bounds");
+                                    Assert(!(firstWidth > Size.Width + 1 || firstWidth < 0), "DrawAltitudeByTime.GraphObjects: firstWidth out of bounds");
+                                    Assert(!(lastWidth > Size.Width + 1 || lastWidth < 0), "DrawAltitudeByTime.GraphObjects: lastWidth out of bounds");
+                                    Assert(!(middleWidth > Size.Width + 1 || middleWidth < 0), "DrawAltitudeByTime.GraphObjects: middleWidth out of bounds");
                                 }
 
                                 DrawObject(ref currImage, theBgr,
@@ -413,7 +446,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("DrawCombAltitudeByTime.GraphObjects", ex);
+                throw ThrowException("CombDrawAltitudeByTime.GraphObjects", ex);
             }
         }
 
@@ -429,7 +462,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("DrawCombAltitudeByTime.CurrImage", ex);
+                throw ThrowException("CombDrawAltitudeByTime.CurrImage", ex);
             }
         }
     }
@@ -472,7 +505,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("DrawCombObjectHeight.Initialise", ex);
+                throw ThrowException("CombDrawObjectHeight.Initialise", ex);
             }
         }
 
@@ -499,7 +532,7 @@ namespace SkyCombImage.DrawSpace
 
                 // Draw the object features as orange or yellow crosses
                 foreach (var thisFeature in thisObject.ProcessFeatures)
-                    if ((thisFeature.Value.HeightM > ProcessObjectModel.UnknownHeight ) &&
+                    if ((thisFeature.Value.HeightM > ProcessObjectModel.UnknownHeight) &&
                         (thisFeature.Value.BlockId <= DroneDrawScope.MaxFeatureBlockIdToDraw))
                     {
                         var theBgr = (thisFeature.Value.Type == FeatureTypeEnum.Real ? realBgr : unrealBgr);
@@ -513,9 +546,8 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("DrawCombObjectHeight.CurrImage", ex);
+                throw ThrowException("CombDrawObjectHeight.CurrImage", ex);
             }
         }
     }
 }
-

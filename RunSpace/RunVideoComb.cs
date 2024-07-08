@@ -101,7 +101,7 @@ namespace SkyCombImage.RunSpace
         {
             try
             {
-                var currBlock = CombProcess.AddCombBlock(this);
+                var currBlock = CombProcess.AddBlock(this);
 
                 // If camera is too near the horizon, skip this frame.
                 if ((currBlock != null) && (currBlock.FlightStep != null) &&
@@ -115,9 +115,8 @@ namespace SkyCombImage.RunSpace
 
                 foreach (var feature in featuresInBlock)
                 {
-                    var combFeature = feature.Value as CombFeature;
-                    combFeature.CalculateSettings_LocationM_FlatGround(null);
-                    combFeature.CalculateSettings_LocationM_HeightM_LineofSight(CombProcess.GroundData);
+                    feature.Value.CalculateSettings_LocationM_FlatGround(null);
+                    feature.Value.CalculateSettings_LocationM_HeightM_LineofSight(ProcessAll.GroundData);
                 }
 
                 // Unless legs are not used, we only do comb processing during "legs". 

@@ -1,5 +1,4 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved. 
-using Emgu.CV.Dnn;
+﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
@@ -118,17 +117,6 @@ namespace SkyCombImage.ProcessLogic
                 combSpan.CalculateSettings_from_FlightSteps(FlightSteps_MinStepId, FlightSteps_MaxStepId);
                 ResetCombSpanData();
             }
-        }
-
-
-        // Add a new block
-        public ProcessBlock AddCombBlock(ProcessScope scope)
-        {
-            var currBlock = ProcessFactory.NewBlock(scope);
-
-            Blocks.AddBlock(currBlock, scope, Drone);
-
-            return currBlock;
         }
 
 
