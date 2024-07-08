@@ -2,8 +2,6 @@
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
 using System.Drawing;
-using Emgu.CV.Dnn;
-using SkyCombImage.CategorySpace;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -23,12 +21,22 @@ namespace SkyCombImage.ProcessLogic
             ClassColor = classColor;
             ClassConfidence = classConfidence;
             Significant = true;
+            RunFromVideoS = (float)(firstFeature.Block.InputFrameMs / 1000.0);
 
             Assert(firstFeature.Type == FeatureTypeEnum.Real, "Initial feature must be Real");
             ClaimFeature(firstFeature);
         }
 
-    
+
+        // Constructor used when loaded objects from the datastore
+        public YoloObject(YoloProcess yoloProcess, List<string> settings) : base(yoloProcess, null)
+        {
+            ResetMemberData();
+
+            LoadSettings(settings);
+        }
+
+
         // Reset member data to mirror a newly created object.
         // Used in experimentation to allow repeated calculation run against this object.
         public override void ResetMemberData()

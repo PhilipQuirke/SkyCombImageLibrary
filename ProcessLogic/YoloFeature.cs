@@ -1,7 +1,5 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using SkyCombDrone.DroneLogic;
 using SkyCombImage.ProcessModel;
-using SkyCombGround.CommonSpace;
 using System.Drawing;
 using Compunet.YoloV8.Data;
 
@@ -22,6 +20,12 @@ namespace SkyCombImage.ProcessLogic
             PixelBox = imagePixelBox;
             Significant = true;
             BoundingBox = boundingBox;
+        }
+
+
+        // Constructor used when loaded objects from the datastore
+        public YoloFeature(YoloProcess yoloProcess, List<string> settings) : base(yoloProcess, settings)
+        {
         }
     };
 

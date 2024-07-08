@@ -56,14 +56,15 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Number of real features owned by this object.
-        public virtual int NumRealFeatures()
+        public int NumRealFeatures()
         {
             int answer = 0;
 
-            // Rarely, the object may have a sequence of real, then unreal, then real features.
-            foreach (var feature in ProcessFeatures)
-                if (feature.Value.Type == FeatureTypeEnum.Real)
-                    answer++;
+            if (LastRealFeatureId > 0)
+                // Rarely, the object may have a sequence of real, then unreal, then real features.
+                foreach (var feature in ProcessFeatures)
+                    if (feature.Value.Type == FeatureTypeEnum.Real)
+                        answer++;
 
             return answer;
         }

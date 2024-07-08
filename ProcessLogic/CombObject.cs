@@ -15,9 +15,9 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Constructor used processing video 
-        public CombObject(ProcessScope scope, CombProcess model, CombFeature firstFeature) : base(model, scope)
+        public CombObject(ProcessScope scope, CombProcess combProcess, CombFeature firstFeature) : base(combProcess, scope)
         {
-            CombProcess = model;
+            CombProcess = combProcess;
             ResetMemberData();
 
             if (firstFeature != null)
@@ -29,26 +29,16 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Constructor used when loaded objects from the datastore
-        public CombObject(CombProcess model, List<string> settings) : base(model, null)
+        public CombObject(CombProcess combProcess, List<string> settings) : base(combProcess, null)
         {
-            CombProcess = model;
+            CombProcess = combProcess;
             ResetMemberData();
 
             LoadSettings(settings);
         }
 
 
-        // Number of real features owned by this object.
-        public override int NumRealFeatures()
-        {
-            if (LastRealFeatureId > 0)
-                return base.NumRealFeatures();
-
-            return 0;
-        }
-
-
-         // Key logic of the Comb model to distinguish significant objects from insignificant, based on data collected.
+        // Key logic of the Comb model to distinguish significant objects from insignificant, based on data collected.
         //
         // Label this object as "Significant" based on these characteristics:
         // 1) Count: the object has >= 5 hot pixels per block
