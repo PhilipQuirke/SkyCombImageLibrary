@@ -27,6 +27,12 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        public static ProcessSpan NewProcessSpan(ProcessAll processAll, int legId, List<string>? settings = null)
+        {
+            return new ProcessSpan(processAll, legId, settings);
+        }
+
+
         public static ProcessAll NewProcessModel(ProcessConfigModel config, Drone drone)
         {
             return new ProcessAll(null, drone.InputVideo, drone, config);
@@ -72,12 +78,6 @@ namespace SkyCombImage.ProcessLogic
         public static CombObject NewCombObject(ProcessScope scope, CombProcess model, CombFeature firstFeature)
         {
             return new CombObject(scope, model, firstFeature);
-        }
-
-
-        public static CombSpan NewCombSpan(CombProcess model, int legId, List<string>? settings = null)
-        {
-             return new CombSpan(model, legId, settings);
         }
     }
 }

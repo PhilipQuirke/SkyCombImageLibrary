@@ -49,7 +49,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // This object claims this feature
-        public void ClaimFeature(YoloFeature theFeature)
+        public override bool ClaimFeature(ProcessFeature theFeature)
         {
             if(theFeature.ObjectId > 0)
                 Assert(theFeature.ObjectId <= 0, "YoloObject.ClaimFeature: Feature is already owned");
@@ -62,6 +62,8 @@ namespace SkyCombImage.ProcessLogic
             NumSigBlocks = theFeature.BlockId - FirstFeature.BlockId + 1;
             MaxRealPixelWidth = Math.Max(MaxRealPixelWidth, theFeature.PixelBox.Width);
             MaxRealPixelHeight = Math.Max(MaxRealPixelHeight, theFeature.PixelBox.Height);
+
+            return true;
         }
 
 

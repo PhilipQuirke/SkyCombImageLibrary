@@ -3,6 +3,7 @@ using SkyCombDrone.DroneLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
+using Emgu.CV.XFeatures2D;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -58,10 +59,19 @@ namespace SkyCombImage.ProcessLogic
         public ProcessFeatureList ProcessFeatures { get; private set; }
         // List of logical objects found - derived from overlapping features over successive frames. 
         public ProcessObjList ProcessObjects { get; private set; }
+        // List of ProcessSpans that analsyse ProcessObjects to generate FixAltM data
+        public ProcessSpanList ProcessSpans { get; set; }
 
 
         // Hooks for testing 
         public event ObservationHandler<ProcessAll> Observation;
+
+
+        // If !UseFlightLegs, we need to generate CombSpans for each cluster of significant objects (over a series of FlightSteps)
+        public int FlightSteps_PrevSigObjects { get; set; }
+        public int FlightSteps_MinStepId { get; set; }
+        public int FlightSteps_MaxStepId { get; set; }
+
 
 
         public ProcessAll(GroundData groundData, VideoData video, Drone drone, ProcessConfigModel config)
@@ -74,8 +84,19 @@ namespace SkyCombImage.ProcessLogic
             Blocks = new();
             ProcessFeatures = new(config);
             ProcessObjects = new();
+            ProcessSpans = new();
+            ResetSpanData();
 
             ProcessObject.NextObjectId = 0;
+            ProcessFeature.NextFeatureId = 0;
+        }
+
+
+        protected void ResetSpanData()
+        {
+            FlightSteps_PrevSigObjects = 0;
+            FlightSteps_MinStepId = UnknownValue;
+            FlightSteps_MaxStepId = UnknownValue;
         }
 
 
@@ -121,10 +142,15 @@ namespace SkyCombImage.ProcessLogic
         // Reset the process model, ready for a process run to start
         protected virtual void ProcessStart()
         {
+            ProcessObject.NextObjectId = 0;
+            ProcessFeature.NextFeatureId = 0;
+
             Blocks.Clear();
             ProcessFeatures = new(ProcessConfig);
             ProcessObjects.Clear();
             ProcessObject.NextObjectId = 0;
+            ProcessSpans.Clear();
+            ResetSpanData();
         }
 
 
@@ -136,36 +162,69 @@ namespace SkyCombImage.ProcessLogic
 
 
         // A new drone flight leg has started.
-        protected virtual void ProcessFlightLegStart(ProcessScope scope, int LegId) 
+        protected virtual void ProcessFlightLegStart(ProcessScope scope, int legId) 
         {
         }
 
 
-        public void ProcessFlightLegStartWrapper(ProcessScope scope, int LegId)
+        public void ProcessFlightLegStartWrapper(ProcessScope scope, int legId)
         {
             if (Drone.UseFlightLegs)
-                OnObservation(ProcessEventEnum.LegStart_Before, new ProcessEventArgs(scope, LegId));
+                OnObservation(ProcessEventEnum.LegStart_Before, new ProcessEventArgs(scope, legId));
 
-            ProcessFlightLegStart(scope, LegId);
+            ProcessFlightLegStart(scope, legId);
 
             if (Drone.UseFlightLegs)
-                OnObservation(ProcessEventEnum.LegStart_After, new ProcessEventArgs(scope, LegId));
+                OnObservation(ProcessEventEnum.LegStart_After, new ProcessEventArgs(scope, legId));
         }
 
 
         // A drone flight leg has finished. 
-        protected virtual void ProcessFlightLegEnd(ProcessScope scope, int LegId) { }
-
-
-        public void ProcessFlightLegEndWrapper(ProcessScope scope, int LegId)
+        protected virtual void ProcessFlightLegEnd(ProcessScope scope, int legId)
         {
             if (Drone.UseFlightLegs)
-                OnObservation(ProcessEventEnum.LegEnd_Before, new ProcessEventArgs(scope, LegId));
+            {
+                // For "Comb" process robustness, we want to process each leg independently.
+                // So at the start and end of each leg we stop tracking all objects.
+                ProcessObjects.StopTracking();
 
-            ProcessFlightLegEnd(scope, LegId);
+                // If we are lacking the current CombSpan then create it.
+                if ((legId > 0) && !ProcessSpans.TryGetValue(legId, out _))
+                {
+                    // Post process the objects found in the leg & maybe set FlightLegs.FixAltM 
+                    var combSpan = ProcessFactory.NewProcessSpan(this, legId);
+                    ProcessSpans.AddSpan(combSpan);
+                    combSpan.CalculateSettings_from_FlightLeg();
+                    combSpan.AssertGood();
+                }
+            }
+
+            EnsureObjectsNamed();
+        }
+
+
+        public void ProcessFlightLegEndWrapper(ProcessScope scope, int legId)
+        {
+            if (Drone.UseFlightLegs)
+                OnObservation(ProcessEventEnum.LegEnd_Before, new ProcessEventArgs(scope, legId));
+
+            ProcessFlightLegEnd(scope, legId);
 
             if (Drone.UseFlightLegs)
-                OnObservation(ProcessEventEnum.LegEnd_After, new ProcessEventArgs(scope, LegId));
+                OnObservation(ProcessEventEnum.LegEnd_After, new ProcessEventArgs(scope, legId));
+        }
+
+
+        // If we have been tracking some significant objects, create a CombSpan for them
+        public void Process_CombSpan_Create()
+        {
+            if ((!Drone.UseFlightLegs) && (FlightSteps_PrevSigObjects > 0))
+            {
+                var theSpan = ProcessFactory.NewProcessSpan(this, ProcessSpans.Count() + 1);
+                ProcessSpans.AddSpan(theSpan);
+                theSpan.CalculateSettings_from_FlightSteps(FlightSteps_MinStepId, FlightSteps_MaxStepId);
+                ResetSpanData();
+            }
         }
 
 

@@ -1,6 +1,5 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using SkyCombDrone.DroneLogic;
-using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
 
@@ -10,44 +9,21 @@ namespace SkyCombImage.ProcessLogic
     // A class to hold all feature data and Block data associated with a video
     public class CombProcess : ProcessAll
     {
-        // List of CombSpans that analsyse CombObjects to generate FixAltM data
-        public CombSpanList CombSpans { get; set; }
-
         // If UseFlightLegs, how many significant objects have been found in this FlightLeg?
         public int FlightLeg_SigObjects { get; set; }
-
-        // If !UseFlightLegs, we need to generate CombSpans for each cluster of significant objects (over a series of FlightSteps)
-        public int FlightSteps_PrevSigObjects { get; set; }
-        public int FlightSteps_MinStepId { get; set; }
-        public int FlightSteps_MaxStepId { get; set; }
-
-
-        private void ResetCombSpanData()
-        {
-            FlightSteps_PrevSigObjects = 0;
-            FlightSteps_MinStepId = UnknownValue;
-            FlightSteps_MaxStepId = UnknownValue;
-        }
 
 
         public CombProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config) : base(ground, video, drone, config)
         {
-            CombFeature.NextFeatureId = 0;
-
-            CombSpans = new();
             FlightLeg_SigObjects = 0;
-            ResetCombSpanData();
-        }
+         }
 
 
         // Reset any internal state of the model, so it can be re-used in another run immediately
         protected override void ProcessStart()
         {
-            CombFeature.NextFeatureId = 0;
             FlightLeg_SigObjects = 0;
-            ResetCombSpanData();
-            CombSpans.Clear();
-
+ 
             base.ProcessStart();
 
             // We want the category information to be retained between runs, so don't clear it.
@@ -80,42 +56,6 @@ namespace SkyCombImage.ProcessLogic
                 // So at the start and end of each leg we stop tracking all objects.
                 ProcessObjects.StopTracking();
                 FlightLeg_SigObjects = 0;
-            }
-        }
-
-
-        protected override void ProcessFlightLegEnd(ProcessScope scope, int legId)
-        {
-            if (Drone.UseFlightLegs)
-            {
-                // For "Comb" process robustness, we want to process each leg independently.
-                // So at the start and end of each leg we stop tracking all objects.
-                ProcessObjects.StopTracking();
-
-                // If we are lacking the current CombSpan then create it.
-                if ((legId > 0) && !CombSpans.TryGetValue(legId, out _))
-                {
-                    // Post process the objects found in the leg & maybe set FlightLegs.FixAltM 
-                    var combSpan = ProcessFactory.NewCombSpan(this, legId);
-                    CombSpans.AddSpan(combSpan);
-                    combSpan.CalculateSettings_from_FlightLeg();
-                    combSpan.AssertGood();
-                }
-            }
-
-            EnsureObjectsNamed();
-        }
-
-
-        // If we have been tracking some significant objects, create a CombSpan for them
-        public void Process_CombSpan_Create()
-        {
-            if ((!Drone.UseFlightLegs) && (FlightSteps_PrevSigObjects > 0))
-            {
-                var combSpan = ProcessFactory.NewCombSpan(this, CombSpans.Count() + 1);
-                CombSpans.AddSpan(combSpan);
-                combSpan.CalculateSettings_from_FlightSteps(FlightSteps_MinStepId, FlightSteps_MaxStepId);
-                ResetCombSpanData();
             }
         }
 
@@ -186,7 +126,7 @@ namespace SkyCombImage.ProcessLogic
                             // We tracked some significant objects, then they all became insignificant, and 8 frames have passed
                             Process_CombSpan_Create();
 
-                            ResetCombSpanData();
+                            ResetSpanData();
                         }
                     }
                 }

@@ -7,13 +7,13 @@ using SkyCombImage.ProcessLogic;
 // Models are used in-memory and to persist/load data to/from the datastore
 namespace SkyCombImage.ProcessModel
 {
-    // CombSpan relates to either the steps in a FlightLeg OR a sequence of FlightSteps (not related to a FlightLeg).
-    // Either way, CombSpan analyses CombObjects to refine/correct the flight altitude data using FlightStep.FixAltM.
-    public class CombSpanModel : TardisSummaryModel
+    // ProcessSpan relates to either the steps in a FlightLeg OR a sequence of FlightSteps (not related to a FlightLeg).
+    // Either way, ProcessSpan analyses ProcessObjects to refine/correct the flight altitude data using FlightStep.FixAltM.
+    public class ProcessSpanModel : TardisSummaryModel
     {
-        // Unique identifier of this CombSpan. If UseLeg there is a 1-1 correspondence to FlightLeg. Otherwise they are unrelated.
-        public int CombSpanId { get; set; } = UnknownValue;
-        public string Name { get { return IdToLetter(CombSpanId); } }
+        // Unique identifier of this ProcessSpan. If UseLeg there is a 1-1 correspondence to FlightLeg. Otherwise they are unrelated.
+        public int ProcessSpanId { get; set; } = UnknownValue;
+        public string Name { get { return IdToLetter(ProcessSpanId); } }
 
         // Id of first FlightStep in this span
         public int MinStepId { get; set; } = UnknownValue;
@@ -42,7 +42,7 @@ namespace SkyCombImage.ProcessModel
 
 
         // Constructor used when loaded objects from the datastore
-        public CombSpanModel(List<string>? settings = null) : base("Block")
+        public ProcessSpanModel(List<string>? settings = null) : base("Block")
         {
             if (settings != null)
                 LoadSettings(settings);
@@ -59,11 +59,11 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        protected void SetBest(float fixAltM, ProcessObjList combObjs)
+        protected void SetBest(float fixAltM, ProcessObjList objs)
         {
             BestFixAltM = fixAltM;
-            BestSumLocnErrM = combObjs.SumLocationErrM;
-            BestSumHeightErrM = combObjs.SumHeightErrM;
+            BestSumLocnErrM = objs.SumLocationErrM;
+            BestSumHeightErrM = objs.SumHeightErrM;
         }
 
 
@@ -90,7 +90,7 @@ namespace SkyCombImage.ProcessModel
         {
             var answer = new DataPairList
             {
-                { "Comb Leg Id", CombSpanId },
+                { "Process Leg Id", ProcessSpanId },
                 { "Name", Name },
                 { "Num Sig Objs", NumSignificantObjects },
                 { "Bst Fix Alt M", BestFixAltM, HeightNdp},
@@ -118,7 +118,7 @@ namespace SkyCombImage.ProcessModel
         public override void LoadSettings(List<string> settings)
         {
             int i = 0;
-            CombSpanId = StringToInt(settings[i++]);
+            ProcessSpanId = StringToInt(settings[i++]);
             i++; // Skip LegName  
             NumSignificantObjects = StringToInt(settings[i++]);
             BestFixAltM = StringToFloat(settings[i++]);

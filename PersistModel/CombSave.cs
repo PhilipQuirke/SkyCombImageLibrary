@@ -79,16 +79,16 @@ namespace SkyCombImage.PersistModel
                     SaveProcess.SaveObjectGraphs(MaxDatumId);
 
                     // Save the CombSpan data 
-                    if ((process.CombSpans != null) && (process.CombSpans.Count > 0))
+                    if ((process.ProcessSpans != null) && (process.ProcessSpans.Count > 0))
                     {
                         Data.SelectOrAddWorksheet(SpanTabName);
                         int legRow = 0;
-                        foreach (var leg in process.CombSpans)
+                        foreach (var leg in process.ProcessSpans)
                             Data.SetDataListRowKeysAndValues(ref legRow, leg.Value.GetSettings());
 
-                        Data.SetColumnColor(CombSpanModel.SpanIdSetting, legRow, Color.Blue);
-                        Data.SetColumnColor(CombSpanModel.SpanNameSetting, legRow, Color.Blue);
-                        Data.SetColumnColor(CombSpanModel.BestFixAltMSetting, legRow, Color.Blue);
+                        Data.SetColumnColor(ProcessSpanModel.SpanIdSetting, legRow, Color.Blue);
+                        Data.SetColumnColor(ProcessSpanModel.SpanNameSetting, legRow, Color.Blue);
+                        Data.SetColumnColor(ProcessSpanModel.BestFixAltMSetting, legRow, Color.Blue);
 
                         Data.SetLastUpdateDateTime(SpanTabName);
                     }

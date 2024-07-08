@@ -122,12 +122,10 @@ namespace SkyCombImage.ProcessLogic
                 }
 
                 // For process robustness, we want to process each leg independently.
-                // So at the start and end of each leg we stop tracking all objects.
-                ProcessObjects.StopTracking();
                 LegFrameFeatures.Clear();
             }
 
-            EnsureObjectsNamed();
+            base.ProcessFlightLegEnd(scope, legId);
         }
 
 

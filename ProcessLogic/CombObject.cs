@@ -170,7 +170,7 @@ namespace SkyCombImage.ProcessLogic
         // Object will claim ownership of this feature extending the objects lifetime and improving its "Significant" score.
         // In rare cases, object can claim multiple features from a single block (e.g. a tree branch bisects a heat spot into two features) 
         // But only if the object reamins viable after claiming feature (e.g. doesn't get too big or density too low).
-        public bool ClaimFeature(CombFeature theFeature)
+        public override bool ClaimFeature(ProcessFeature theFeature)
         {
             try
             {

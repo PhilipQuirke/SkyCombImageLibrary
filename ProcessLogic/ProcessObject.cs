@@ -48,6 +48,9 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        public virtual bool ClaimFeature(ProcessFeature theFeature) { return false; }
+
+
         public override void ResetMemberData()
         {
             base.ResetMemberData();

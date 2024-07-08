@@ -99,7 +99,7 @@ namespace SkyCombImage.PersistModel
             {
                 if (Data.SelectWorksheet(SpanTabName))
                 {
-                    var cell = Data.Worksheet.Cells[row, CombSpan.SpanIdSetting];
+                    var cell = Data.Worksheet.Cells[row, ProcessSpan.SpanIdSetting];
                     while (cell != null && cell.Value != null && cell.Value.ToString() != "")
                     {
                         var legIdString = cell.Value.ToString();
@@ -110,11 +110,11 @@ namespace SkyCombImage.PersistModel
 
                         // Load the non-blank cells in this row into a CombSpan
                         var settings = Data.GetRowSettings(row, 1);
-                        model.CombSpans.AddSpan(
-                            ProcessFactory.NewCombSpan(model, legId, settings));
+                        model.ProcessSpans.AddSpan(
+                            ProcessFactory.NewProcessSpan(model, legId, settings));
 
                         row++;
-                        cell = Data.Worksheet.Cells[row, CombSpan.SpanIdSetting];
+                        cell = Data.Worksheet.Cells[row, ProcessSpan.SpanIdSetting];
                     }
                 }
             }
@@ -122,7 +122,7 @@ namespace SkyCombImage.PersistModel
             {
                 // Suppress the error and any objects loaded
                 System.Diagnostics.Debug.WriteLine("Suppressed CombLoad.CombSpans failure: " + ex.ToString());
-                model.CombSpans.Clear();
+                model.ProcessSpans.Clear();
             }
         }
 
