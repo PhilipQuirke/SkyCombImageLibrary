@@ -4,6 +4,7 @@ using Emgu.CV.Structure;
 using SkyCombDrone.CommonSpace;
 using SkyCombDrone.DrawSpace;
 using SkyCombImage.ProcessModel;
+using SkyCombImage.ProcessLogic;
 using System.Drawing;
 
 
@@ -13,14 +14,14 @@ namespace SkyCombImage.DrawSpace
     public class DrawYolo : Draw
     {
         // Draw the yolo objects 
-        public static void Draw( DrawImageConfig config, YoloProcess yolodata, int thisBlockId, ref Image<Bgr, byte> outputImg)
+        public static void Draw( DrawImageConfig config, YoloProcess yoloProcess, int thisBlockId, ref Image<Bgr, byte> outputImg)
         {
             // Thickness of lines and circles.
             int theThickness = 1;
             if (outputImg.Width > 1000)
                 theThickness = 2;
 
-            foreach (var theObject in yolodata.YoloObjects)
+            foreach (var theObject in yoloProcess.YoloObjects)
             {
                 if ((theObject.Value.LastFeature != null) && (theObject.Value.LastFeature.BlockId == thisBlockId))
                 {

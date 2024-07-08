@@ -40,7 +40,7 @@ namespace SkyCombImage.RunSpace
 
             var dataModel = model;
             if (dataModel == null)
-                dataModel = ProcessFactory.NewCombProcessModel(null,
+                dataModel = ProcessFactory.NewCombProcess(null,
                     new VideoData(imgOriginal.Height, imgOriginal.Width), model.Drone, config.ProcessConfig);
 
             var featuresInBlock = ProcessFactory.NewProcessFeatureList(model.ProcessConfig);

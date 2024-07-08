@@ -3,9 +3,8 @@ using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombDrone.PersistModel;
 using SkyCombImage.ProcessModel;
-using SkyCombGround.CommonSpace;
-using System.Drawing;
 using SkyCombImage.ProcessLogic;
+using SkyCombGround.CommonSpace;
 
 
 

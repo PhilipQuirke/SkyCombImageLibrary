@@ -1,6 +1,5 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using Emgu.CV;
-using Emgu.CV.Dnn;
 using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
@@ -8,7 +7,6 @@ using SkyCombImage.DrawSpace;
 using SkyCombImage.PersistModel;
 using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
-using static System.Formats.Asn1.AsnWriter;
 
 
 // Namespace for processing of a video made up of multiple images (frames).
@@ -19,12 +17,53 @@ namespace SkyCombImage.RunSpace
     class RunVideoYolo : RunVideoPersist
     {
         public RunVideoYolo(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
-            : base(parent, config, dataStore, drone, ProcessFactory.NewYoloProcessModel(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig, config.YoloDirectory))
+            : base(parent, config, dataStore, drone, ProcessFactory.NewYoloProcess(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig, config.YoloDirectory))
         {
         }
 
 
         public YoloProcess YoloProcess { get { return (YoloProcess)ProcessAll; } }
+
+
+        // The input video file name to process.
+        // User may provide the optical video name in Config.InputFileName
+        // We base all output on the companion thermal video.
+        public override string InputVideoFileName()
+        {
+            if ((Drone != null) && Drone.HasInputVideo)
+                return Drone.InputVideo.FileName;
+
+            return RunConfig.InputFileName;
+        }
+
+
+        // Load model data from the previous run (if any).
+        public override void LoadDataStore()
+        {
+            try
+            {
+                BlockLoad datareader1 = new(DataStore);
+                datareader1.BlockObjects(YoloProcess, Drone);
+
+                YoloLoad datareader2 = new(DataStore);
+                datareader2.YoloFeatures(YoloProcess);
+
+                datareader2.YoloObjects(YoloProcess);
+                var objectListSettings = datareader2.ObjectListSettings();
+                if (objectListSettings != null)
+                    YoloProcess.YoloObjects.LoadSettings(objectListSettings);
+
+                // Link each object to its features
+                foreach (var feature in YoloProcess.ProcessFeatures)
+                    if (feature.Value.ObjectId >= 0)
+                        YoloProcess.YoloObjects.SetLinksAfterLoad(feature.Value);
+            }
+            catch (Exception ex)
+            {
+                throw ThrowException("RunVideoYoloDrone.LoadDataStore", ex);
+            }
+        }
+
 
 
         // Add a block, transferring some flight data and process data into it

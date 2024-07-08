@@ -1,12 +1,13 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using SkyCombGround.CommonSpace;
+using SkyCombImage.ProcessModel;
 using System.Drawing;
 
 
 // If this doesnt work consider using a Kalman filter
 
 
-namespace SkyCombImage.ProcessModel
+namespace SkyCombImage.ProcessLogic
 {
     // An image feature detected by YOLO in a single frame
     public class YoloFeatureSeen

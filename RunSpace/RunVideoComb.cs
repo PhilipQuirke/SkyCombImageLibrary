@@ -25,7 +25,7 @@ namespace SkyCombImage.RunSpace
     {
         public RunVideoCombDrone(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
             : base(parent, config, dataStore, drone,
-                  ProcessFactory.NewCombProcessModel(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig ))
+                  ProcessFactory.NewCombProcess(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig ))
         {
         }
 
@@ -70,7 +70,7 @@ namespace SkyCombImage.RunSpace
                 // Link each object to its features
                 foreach (var feature in CombProcess.ProcessFeatures)
                     if (feature.Value.ObjectId >= 0)
-                        CombProcess.CombObjs.SetLinksAfterLoad(feature.Value as CombFeature);
+                        CombProcess.CombObjs.CombObjList.SetLinksAfterLoad(feature.Value as CombFeature);
             }
             catch (Exception ex)
             {

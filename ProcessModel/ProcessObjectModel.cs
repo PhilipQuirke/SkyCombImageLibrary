@@ -76,7 +76,7 @@ namespace SkyCombImage.ProcessModel
         public string FlightLegName { get { return IdToLetter(FlightLegId); } }
 
         // Last Real feature claimed by this object (excluding Consumed features).
-        public int LastRealFeatureIndex { get; set; }
+        public int LastRealFeatureId { get; set; }
 
         // Is this object still being actively tracked?
         public bool BeingTracked { get; set; }
@@ -128,7 +128,7 @@ namespace SkyCombImage.ProcessModel
             NumSigBlocks = 0;
             // LegId
 
-            LastRealFeatureIndex = UnknownValue;
+            LastRealFeatureId = UnknownValue;
             BeingTracked = true;
             MaxRealHotPixels = 0;
             MaxRealPixelWidth = 0;

@@ -2,13 +2,13 @@
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
-using SkyCombImage.ProcessLogic;
+using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using Compunet.YoloV8.Data;
 using SkyCombGround.GroundLogic;
 
 
-namespace SkyCombImage.ProcessModel
+namespace SkyCombImage.ProcessLogic
 {
     // A class to hold all Yolo feature and block data associated with a video
     // Ignores thermal threshold.

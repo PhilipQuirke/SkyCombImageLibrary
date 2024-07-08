@@ -1,13 +1,13 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using SkyCombDrone.DroneLogic;
-using SkyCombImage.ProcessLogic;
+using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using System.Drawing;
 using Compunet.YoloV8.Data;
 
 
 
-namespace SkyCombImage.ProcessModel
+namespace SkyCombImage.ProcessLogic
 {
     // A Yolo feature 
     public class YoloFeature : ProcessFeature

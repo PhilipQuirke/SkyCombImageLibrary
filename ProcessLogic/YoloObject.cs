@@ -1,12 +1,12 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using SkyCombImage.ProcessLogic;
 using SkyCombGround.CommonSpace;
+using SkyCombImage.ProcessModel;
 using System.Drawing;
 using Emgu.CV.Dnn;
 using SkyCombImage.CategorySpace;
 
 
-namespace SkyCombImage.ProcessModel
+namespace SkyCombImage.ProcessLogic
 {
     // A class to hold a Yolo object - layer over a sequence of Yolo features.
     public class YoloObject : ProcessObject
@@ -49,11 +49,9 @@ namespace SkyCombImage.ProcessModel
             theFeature.ObjectId = this.ObjectId;
             ProcessFeatures.AddFeature(theFeature);
 
-            NumSigBlocks = LastFeature.BlockId - FirstFeature.BlockId + 1;
-
-            LastRealFeatureIndex = ProcessFeatures.Count - 1;
-            RunToVideoS = (float)(LastRealFeature.Block.InputFrameMs / 1000.0);
-
+            LastRealFeatureId = theFeature.FeatureId;
+            RunToVideoS = (float)(theFeature.Block.InputFrameMs / 1000.0);
+            NumSigBlocks = theFeature.BlockId - FirstFeature.BlockId + 1;
             MaxRealPixelWidth = Math.Max(MaxRealPixelWidth, theFeature.PixelBox.Width);
             MaxRealPixelHeight = Math.Max(MaxRealPixelHeight, theFeature.PixelBox.Height);
         }

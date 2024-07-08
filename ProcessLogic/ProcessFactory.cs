@@ -21,27 +21,39 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        public static ProcessFeatureList NewProcessFeatureList(ProcessConfigModel config)
+        {
+            return new ProcessFeatureList(config);
+        }
+
+
         public static ProcessAll NewProcessModel(ProcessConfigModel config, Drone drone)
         {
             return new ProcessAll(null, drone.InputVideo, drone, config);
         }
 
 
-        public static YoloProcess NewYoloProcessModel(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config, string yoloDirectory)
+        public static YoloProcess NewYoloProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config, string yoloDirectory)
         {
             return new YoloProcess(ground, video, drone, config, yoloDirectory);
         }
 
 
-        public static CombProcess NewCombProcessModel(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config )
+        public static YoloFeature NewYoloFeature(YoloProcess model, List<string> settings)
         {
-            return new CombProcess(ground, video, drone, config);
+            return new YoloFeature(model, settings);
         }
 
 
-        public static ProcessFeatureList NewProcessFeatureList(ProcessConfigModel config)
+        public static YoloObject NewYoloObject(YoloProcess model, List<string> settings)
         {
-            return new ProcessFeatureList(config);
+            return new YoloObject(model, settings);
+        }
+
+
+        public static CombProcess NewCombProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config )
+        {
+            return new CombProcess(ground, video, drone, config);
         }
 
 

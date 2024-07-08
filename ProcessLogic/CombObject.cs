@@ -41,7 +41,7 @@ namespace SkyCombImage.ProcessLogic
         // Number of real features owned by this object.
         public override int NumRealFeatures()
         {
-            if (LastRealFeatureIndex >= 0)
+            if (LastRealFeatureId > 0)
                 return base.NumRealFeatures();
 
             return 0;
@@ -227,9 +227,8 @@ namespace SkyCombImage.ProcessLogic
                     {
                         // First real feature claimed by this object for THIS block
                         ProcessFeatures.AddFeature(theFeature);
-                        LastRealFeatureIndex = ProcessFeatures.Count - 1;
-                        RunToVideoS = (float)(LastRealFeature.Block.InputFrameMs / 1000.0);
-
+                        LastRealFeatureId = theFeature.FeatureId;
+                        RunToVideoS = (float)(theFeature.Block.InputFrameMs / 1000.0);
                         MaxRealPixelWidth = Math.Max(MaxRealPixelWidth, theFeature.PixelBox.Width);
                         MaxRealPixelHeight = Math.Max(MaxRealPixelHeight, theFeature.PixelBox.Height);
                     }
@@ -324,22 +323,6 @@ namespace SkyCombImage.ProcessLogic
         {
             var theObject = ProcessFactory.NewCombObject(scope, Model, firstFeature);
             CombObjList.AddObject(theObject);
-        }
-
-
-        // After loading data from a previous run from the data store
-        // we have blocks, features and objects, but the links between them are not set.
-        // Apply the feature to the corresponding object.
-        public void SetLinksAfterLoad(CombFeature feature)
-        {
-            if ((feature == null) || (feature.ObjectId <= 0))
-                return;
-
-            CombObjList.TryGetValue(feature.ObjectId, out var processObject);
-
-            // Null case occurs when saving All features but only Significant objects and load from datastore
-            if (processObject != null)
-                processObject.SetLinksAfterLoad(feature);
         }
 
 

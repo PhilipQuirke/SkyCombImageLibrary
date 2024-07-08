@@ -318,7 +318,7 @@ namespace SkyCombImage.ProcessLogic
                 {
                     var combObject = theObject.Value as CombObject;
                     if (combObject.BeingTracked &&
-                       (combObject.LastRealFeatureIndex != UnknownValue) &&
+                       (combObject.LastRealFeatureId > 0) &&
                        (combObject.LastRealFeature.Block.BlockId < blockID) &&
                        combObject.KeepTracking(blockID))
                         // ... persist this object another Block. Create an unreal feature, with no pixels, with a rectangle   

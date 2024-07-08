@@ -28,7 +28,7 @@ namespace SkyCombImage.ProcessLogic
         public ProcessFeatureList ProcessFeatures;
         // First (Real) feature claimed by this object. 
         public ProcessFeature? FirstFeature { get { return ProcessFeatures.FirstFeature; } }
-        public ProcessFeature? LastRealFeature { get { return (LastRealFeatureIndex == UnknownValue ? null : ProcessFeatures.Values[LastRealFeatureIndex]); } }
+        public ProcessFeature? LastRealFeature { get { return (LastRealFeatureId == UnknownValue ? null : ProcessFeatures[LastRealFeatureId]); } }
         // Last (Real or UnReal) feature claimed by this object. May be null.
         public ProcessFeature? LastFeature { get { return ProcessFeatures.LastFeature; } }
 
@@ -220,7 +220,7 @@ namespace SkyCombImage.ProcessLogic
 
             ProcessFeatures.AddFeature(feature);
             if (feature.Type == FeatureTypeEnum.Real)
-                LastRealFeatureIndex = ProcessFeatures.Count - 1;
+                LastRealFeatureId = feature.FeatureId;
         }
 
 
@@ -728,6 +728,23 @@ namespace SkyCombImage.ProcessLogic
 
             return answer;
         }
+
+
+        // After loading data from a previous run from the data store
+        // we have blocks, features and objects, but the links between them are not set.
+        // Apply the feature to the corresponding object.
+        public void SetLinksAfterLoad(ProcessFeature feature)
+        {
+            if ((feature == null) || (feature.ObjectId <= 0))
+                return;
+
+            this.TryGetValue(feature.ObjectId, out var processObject);
+
+            // Null case occurs when saving All features but only Significant objects and load from datastore
+            if (processObject != null)
+                processObject.SetLinksAfterLoad(feature);
+        }
+
 
 
         // Calculate settings based on all provided objects 
