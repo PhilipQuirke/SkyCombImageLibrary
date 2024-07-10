@@ -58,6 +58,10 @@ namespace SkyCombImage.ProcessLogic
             MaxRealPixelHeight = Math.Max(MaxRealPixelHeight, theFeature.PixelBox.Height);
             Significant = true;
 
+            // Calculate the simple member data (int, float, VelocityF, etc) of this real object.
+            // Calculates DemM, LocationM, LocationErrM, HeightM, HeightErrM, AvgSumLinealM, etc.
+            Calculate_RealObject_SimpleMemberData();
+
             return true;
         }
 

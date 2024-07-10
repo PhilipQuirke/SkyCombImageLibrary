@@ -136,17 +136,6 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Calculate the simple (int, float, VelocityF, etc) member-data of this real object.
-        // Calculates DemM, LocationM, LocationErrM, HeightM, HeightErrM, AvgSumLinealM, etc.
-        public void Calculate_RealObject_SimpleMemberData()
-        {
-            // Calculate the drone SumLinealM distance corresponding to the centroid of the object
-            Calculate_AvgSumLinealM();
-
-            Calculate_RealObject_SimpleMemberData_Core();
-        }
-
-
         // Object will claim ownership of this feature extending the objects lifetime and improving its "Significant" score.
         // In rare cases, object can claim multiple features from a single block (e.g. a tree branch bisects a heat spot into two features) 
         // But only if the object reamins viable after claiming feature (e.g. doesn't get too big or density too low).

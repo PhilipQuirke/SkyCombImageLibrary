@@ -73,8 +73,8 @@ namespace SkyCombImage.ProcessLogic
         {
             BaseConstants.Assert(firstFeature != null, "YoloObjectList.AddObject: No firstFeature");
 
-            string className = firstFeature.BoundingBox != null ? firstFeature.BoundingBox.Class.Name : "??";
-            float classConfidence = firstFeature.BoundingBox != null ? firstFeature.BoundingBox.Confidence : 0.6f;
+            string className = firstFeature.Class != null? firstFeature.Class.Name : "??";
+            float classConfidence = firstFeature.Confidence;
             /*
             newObject.ClassId = box.Class.Id;
             newObject.ClassType = box.Class.Type;
@@ -115,11 +115,6 @@ namespace SkyCombImage.ProcessLogic
                             // Add remaining features to the object
                             for (int i = 1; i < objSeen.Features.Count; i++)
                                 newObject.ClaimFeature(ProcessFeatures[objSeen.Features[i].FeatureId]);
-                           
-                            // PQR CombProcess doesn't do this outside ProcessFeature
-                            // Calculate the simple member data (int, float, VelocityF, etc) of this real object.
-                            // Calculates DemM, LocationM, LocationErrM, HeightM, HeightErrM, AvgSumLinealM, etc.
-                            newObject.Calculate_RealObject_SimpleMemberData_Core();
                         }
                 }
 
@@ -127,7 +122,7 @@ namespace SkyCombImage.ProcessLogic
                 LegFrameFeatures.Clear();
             }
 
- //           base.ProcessFlightLegEnd(scope, legId);
+            base.ProcessFlightLegEnd(scope, legId);
         }
 
 
@@ -158,10 +153,9 @@ namespace SkyCombImage.ProcessLogic
                 foreach (var box in result.Boxes)
                 {
                     // We have found a new feature/object
-                    var imagePixelBox = new System.Drawing.Rectangle(box.Bounds.Left, box.Bounds.Top, box.Bounds.Width, box.Bounds.Height);
-                    var newFeature = new YoloFeature(this, blockID, imagePixelBox, box);
+                    var newFeature = new YoloFeature(this, blockID, box);
                     featuresInBlock.AddFeature(newFeature);
-                    LegFrameFeatures.Add(new YoloFeatureSeen { BlockId = blockID, Box = imagePixelBox, FeatureId = newFeature.FeatureId });
+                    LegFrameFeatures.Add(new YoloFeatureSeen { BlockId = blockID, Box = newFeature.PixelBox, FeatureId = newFeature.FeatureId });
                 }
 
                 Phase = 5;

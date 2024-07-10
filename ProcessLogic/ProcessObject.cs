@@ -401,11 +401,14 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Calculate the simple (int, float, VelocityF, etc) member-data of this real object.
-        // Calculates LocationM, LocationErrM, HeightM, HeightErrM, etc.
-        public void Calculate_RealObject_SimpleMemberData_Core()
+        // Calculates DemM, LocationM, LocationErrM, HeightM, HeightErrM, AvgSumLinealM, etc.
+        public void Calculate_RealObject_SimpleMemberData()
         {
             try
             {
+                // Calculate the drone SumLinealM distance corresponding to the centroid of the object
+                Calculate_AvgSumLinealM();
+
                 FirstFwdDownDeg = (float)FirstFeature.Calculate_Image_FwdDeg();
                 LastFwdDownDeg = (float)LastRealFeature.Calculate_Image_FwdDeg();
 
@@ -464,7 +467,7 @@ namespace SkyCombImage.ProcessLogic
             }
             catch (Exception ex)
             {
-                throw ThrowException("ProcessObject.Calculate_RealObject_SimpleMemberData_Core", ex);
+                throw ThrowException("ProcessObject.Calculate_RealObject_SimpleMemberData", ex);
             }
         }
 

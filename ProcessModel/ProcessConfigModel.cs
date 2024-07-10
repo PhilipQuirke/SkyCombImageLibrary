@@ -137,20 +137,6 @@ namespace SkyCombImage.ProcessModel
         public int MaxFeatureDistanceM { get; set; } = 150; // Min 50, Max 250
 
 
-        // Describe (summarise) the key process settings.
-        public string Describe()
-        {
-            var answer =
-                "Heat Threshold: " + HeatThresholdValue + "\r\n" +
-                "Save Annotated Video: " + (SaveAnnotatedVideo ? "Yes" : "No") + "\r\n";
-
-            if (SaveObjectData != SaveObjectDataEnum.None)
-                answer += "Save Objects: " + SaveObjectData + "\r\n";
-
-            return answer;
-        }
-
-
         // The ThresholdValue should be in range 50 to 255.
         // A user may mistake the range for 0.0 to 1.0, so we set the min value to 50
         public void ValidateHeatThresholdValue()

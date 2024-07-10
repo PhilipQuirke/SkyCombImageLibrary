@@ -98,12 +98,30 @@ namespace SkyCombImage.ProcessModel
 
 
 
-        // Describe (summarise) the run settings.
-        public string Describe()
+        // Describe (summarise) the process settings.
+        public string DescribeProcess()
         {
-            return
+            string answer =
                 "Process: " + RunProcess + "\r\n" +
                 "Speed: " + RunSpeed + "\r\n";
+
+            if(ProcessConfig != null)
+            {
+                if( RunProcess == RunProcessEnum.Comb)
+                    answer += "Heat Threshold: " + ProcessConfig.HeatThresholdValue + "\r\n";
+                else
+                    answer += "Detect/IoU/Merge: " +
+                        ProcessConfig.YoloDetectConfidence.ToString() + "/" + 
+                        ProcessConfig.YoloIoU.ToString() + "/" + 
+                        ProcessConfig.YoloMergeConfidence.ToString() + "\r\n";
+
+                answer += "Save Annotated Video: " + (ProcessConfig.SaveAnnotatedVideo ? "Yes" : "No") + "\r\n";
+
+                if (ProcessConfig.SaveObjectData != SaveObjectDataEnum.None)
+                    answer += "Save Objects: " + ProcessConfig.SaveObjectData + "\r\n";
+            }
+
+            return answer;
         }
 
 
