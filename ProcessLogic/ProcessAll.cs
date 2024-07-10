@@ -4,6 +4,7 @@ using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using Emgu.CV.XFeatures2D;
+using static System.Formats.Asn1.AsnWriter;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -67,7 +68,7 @@ namespace SkyCombImage.ProcessLogic
         public event ObservationHandler<ProcessAll> Observation;
 
 
-        // If !UseFlightLegs, we need to generate CombSpans for each cluster of significant objects (over a series of FlightSteps)
+        // If !UseFlightLegs, we need to generate ProcessSpans for each cluster of significant objects (over a series of FlightSteps)
         public int FlightSteps_PrevSigObjects { get; set; }
         public int FlightSteps_MinStepId { get; set; }
         public int FlightSteps_MaxStepId { get; set; }
@@ -184,18 +185,18 @@ namespace SkyCombImage.ProcessLogic
         {
             if (Drone.UseFlightLegs)
             {
-                // For "Comb" process robustness, we want to process each leg independently.
+                // For process robustness, we want to process each leg independently.
                 // So at the start and end of each leg we stop tracking all objects.
                 ProcessObjects.StopTracking();
 
-                // If we are lacking the current CombSpan then create it.
+                // If we are lacking the current ProcessSpan then create it.
                 if ((legId > 0) && !ProcessSpans.TryGetValue(legId, out _))
                 {
                     // Post process the objects found in the leg & maybe set FlightLegs.FixAltM 
-                    var combSpan = ProcessFactory.NewProcessSpan(this, legId);
-                    ProcessSpans.AddSpan(combSpan);
-                    combSpan.CalculateSettings_from_FlightLeg();
-                    combSpan.AssertGood();
+                    var theSpan = ProcessFactory.NewProcessSpan(this, legId);
+                    ProcessSpans.AddSpan(theSpan);
+                    theSpan.CalculateSettings_from_FlightLeg();
+                    theSpan.AssertGood();
                 }
             }
 
@@ -215,8 +216,8 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // If we have been tracking some significant objects, create a CombSpan for them
-        public void Process_CombSpan_Create()
+        // If we have been tracking some significant objects, create a ProcessSpan for them
+        public void ProcessSpan_Create()
         {
             if ((!Drone.UseFlightLegs) && (FlightSteps_PrevSigObjects > 0))
             {
@@ -232,12 +233,15 @@ namespace SkyCombImage.ProcessLogic
         protected virtual void ProcessEnd()
         {
             EnsureObjectsNamed();
+
+            // If we have been tracking some significant objects, create a ProcessSpan for them
+            ProcessSpan_Create();
         }
 
 
         public void ProcessEndWrapper()
         {
-            EnsureObjectsNamed();
+            ProcessEnd();
 
             OnObservation(ProcessEventEnum.ProcessEnd);
         }

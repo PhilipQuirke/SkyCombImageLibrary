@@ -162,6 +162,8 @@ namespace SkyCombImage.DrawSpace
         }
 
 
+        // Reset member data to mirror a newly created feature.
+        // Used in experimentation to allow repeated calculation run against this feature.
         private void ResetMemberData()
         {
             FirstObjectMs = UnknownValue;

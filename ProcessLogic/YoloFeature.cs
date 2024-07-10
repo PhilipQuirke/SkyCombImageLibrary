@@ -16,7 +16,7 @@ namespace SkyCombImage.ProcessLogic
 
         public YoloFeature(YoloProcess yoloProcess, int blockId, Rectangle imagePixelBox, BoundingBox? boundingBox) : base(yoloProcess, blockId, FeatureTypeEnum.Real)
         {
-            ResetMemberData();
+            ResetCalcedMemberData();
             PixelBox = imagePixelBox;
             Significant = true;
             BoundingBox = boundingBox;

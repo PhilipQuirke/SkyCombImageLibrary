@@ -48,13 +48,13 @@ namespace SkyCombImage.ProcessLogic
                 var objectFeatures = theObj.ProcessFeatures.Clone();
 
                 // Eliminate all object summary data.
-                theObj.ResetMemberData();
+                theObj.ResetCalcedMemberData();
 
                 // Recalc each feature - which will have a slightly different location
                 foreach (var theFeature in objectFeatures)
                 {
                     var theFeat = theFeature.Value;
-                    theFeat.ResetMemberData();
+                    theFeat.ResetCalcedMemberData();
                     theFeat.CalculateSettings_LocationM_FlatGround(theObj.LastRealFeature);
                     theFeat.CalculateSettings_LocationM_HeightM_LineofSight(Process.GroundData);
 

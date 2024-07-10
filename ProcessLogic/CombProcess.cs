@@ -32,15 +32,6 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        protected override void ProcessEnd()
-        {
-            base.ProcessEnd();
-
-            // If we have been tracking some significant objects, create a CombSpan for them
-            Process_CombSpan_Create();
-        }
-
-
         // Ensure each object has at least an "insignificant" name e.g. #16
         public override void EnsureObjectsNamed()
         {
@@ -103,10 +94,10 @@ namespace SkyCombImage.ProcessLogic
                 if (sigObjects > 0)
                 {
                     if (FlightSteps_PrevSigObjects == 0)
-                        // COMB SPAN START EVENT
+                        // PROCESS SPAN START EVENT
                         // Object(s) have just become significant. Last frame there were no significant objects.
                         // It takes a few steps to become significant, so get the minimal FlightStep.StepID of the object(s).
-                        // CombSpan_MinFlightStepId is the starting step of a future CombSpan object.
+                        // ProcessSpan_MinFlightStepId is the starting step of a future ProcessSpan object.
                         FlightSteps_MinStepId = inScopeObjects.GetMinStepId();
 
                     FlightSteps_PrevSigObjects = Math.Max(FlightSteps_PrevSigObjects, sigObjects);
@@ -122,9 +113,9 @@ namespace SkyCombImage.ProcessLogic
 
                         if (currBlock.FlightStepId - FlightSteps_MaxStepId > 8)
                         {
-                            // COMB SPAN END EVENT
+                            // PROCESS SPAN END EVENT
                             // We tracked some significant objects, then they all became insignificant, and 8 frames have passed
-                            Process_CombSpan_Create();
+                            ProcessSpan_Create();
 
                             ResetSpanData();
                         }
@@ -271,7 +262,7 @@ namespace SkyCombImage.ProcessLogic
                 }
                 else
                 {
-                    // Track data related to a CombSpan (not a FlightLeg)
+                    // Track data related to a ProcessSpan (not a FlightLeg)
                     Phase = 9;
                     ProcessObjectsFlightSteps(inScopeObjects, currBlock);
                 }

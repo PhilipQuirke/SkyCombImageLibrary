@@ -25,11 +25,11 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        public void SaveFeatureList(ProcessAll process, ProcessFeatureList features, bool saveAll)
+        public void SaveFeatureList(ProcessAll process, bool saveAll)
         { 
             Data.SelectOrAddWorksheet(FeaturesTabName);
             int featureRow = 0;
-            foreach (var feature in features)
+            foreach (var feature in process.ProcessFeatures)
                 if (saveAll || feature.Value.Significant)
                     Data.SetDataListRowKeysAndValues(ref featureRow, feature.Value.GetSettings());
 
@@ -49,11 +49,11 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        public void SaveObjectList(ProcessAll process, ProcessObjList objects, bool saveAll)
+        public void SaveObjectList(ProcessAll process, bool saveAll)
         {
             Data.SelectOrAddWorksheet(Objects1TabName);
             int objectRow = 0;
-            foreach (var theObject in objects)
+            foreach (var theObject in process.ProcessObjects)
                 if (saveAll || theObject.Value.NumSigBlocks > 0)
                     Data.SetDataListRowKeysAndValues(ref objectRow, theObject.Value.GetSettings());
 
@@ -73,6 +73,25 @@ namespace SkyCombImage.PersistModel
             Data.AddConditionalRuleBad(ProcessObjectModel.HeightErrMSetting, objectRow, process.ProcessConfig.BadHeightErrM);
 
             Data.SetLastUpdateDateTime(Objects1TabName);
+        }
+
+
+        public void SaveSpanList(ProcessAll process)
+        {
+            // Save the ProcessSpan data 
+            if ((process.ProcessSpans != null) && (process.ProcessSpans.Count > 0))
+            {
+                Data.SelectOrAddWorksheet(SpanTabName);
+                int legRow = 0;
+                foreach (var leg in process.ProcessSpans)
+                    Data.SetDataListRowKeysAndValues(ref legRow, leg.Value.GetSettings());
+
+                Data.SetColumnColor(ProcessSpanModel.SpanIdSetting, legRow, Color.Blue);
+                Data.SetColumnColor(ProcessSpanModel.SpanNameSetting, legRow, Color.Blue);
+                Data.SetColumnColor(ProcessSpanModel.BestFixAltMSetting, legRow, Color.Blue);
+
+                Data.SetLastUpdateDateTime(SpanTabName);
+            }
         }
 
 

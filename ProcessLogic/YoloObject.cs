@@ -1,5 +1,4 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
 using System.Drawing;
 
@@ -16,14 +15,14 @@ namespace SkyCombImage.ProcessLogic
 
         public YoloObject(YoloProcess yoloProcess, ProcessScope scope, YoloFeature firstFeature, string className, Color classColor, float classConfidence) : base(yoloProcess, scope)
         {
-            ResetMemberData();
+            Assert(firstFeature.Type == FeatureTypeEnum.Real, "Initial feature must be Real");
+
+            ResetCalcedMemberData();
             ClassName = className;
             ClassColor = classColor;
             ClassConfidence = classConfidence;
-            Significant = true;
             RunFromVideoS = (float)(firstFeature.Block.InputFrameMs / 1000.0);
 
-            Assert(firstFeature.Type == FeatureTypeEnum.Real, "Initial feature must be Real");
             ClaimFeature(firstFeature);
         }
 
@@ -31,30 +30,25 @@ namespace SkyCombImage.ProcessLogic
         // Constructor used when loaded objects from the datastore
         public YoloObject(YoloProcess yoloProcess, List<string> settings) : base(yoloProcess, null)
         {
-            ResetMemberData();
-
-            LoadSettings(settings);
-        }
-
-
-        // Reset member data to mirror a newly created object.
-        // Used in experimentation to allow repeated calculation run against this object.
-        public override void ResetMemberData()
-        {
-            base.ResetMemberData();
+            ResetCalcedMemberData();
             ClassName = "";
             ClassColor = Color.Black;
             ClassConfidence = 0.66f;
+            Significant = true;
+
+            LoadSettings(settings);
         }
 
 
         // This object claims this feature
         public override bool ClaimFeature(ProcessFeature theFeature)
         {
-            if(theFeature.ObjectId > 0)
-                Assert(theFeature.ObjectId <= 0, "YoloObject.ClaimFeature: Feature is already owned");
+            Assert(theFeature.ObjectId <= 0, "YoloObject.ClaimFeature: Feature is already owned");
 
             theFeature.ObjectId = this.ObjectId;
+            theFeature.CalculateSettings_LocationM_FlatGround(null);
+            theFeature.CalculateSettings_LocationM_HeightM_LineofSight(ProcessAll.GroundData);
+
             ProcessFeatures.AddFeature(theFeature);
 
             LastRealFeatureId = theFeature.FeatureId;
@@ -62,6 +56,7 @@ namespace SkyCombImage.ProcessLogic
             NumSigBlocks = theFeature.BlockId - FirstFeature.BlockId + 1;
             MaxRealPixelWidth = Math.Max(MaxRealPixelWidth, theFeature.PixelBox.Width);
             MaxRealPixelHeight = Math.Max(MaxRealPixelHeight, theFeature.PixelBox.Height);
+            Significant = true;
 
             return true;
         }

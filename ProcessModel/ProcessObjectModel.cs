@@ -100,13 +100,13 @@ namespace SkyCombImage.ProcessModel
             Name = "";
             RunFromVideoS = 0.0F;
             RunToVideoS = 0.0F;
-            ResetMemberData();
+            ResetCalcedMemberData();
         }
 
 
-        // Reset member data to mirror a newly created object.
+        // Reset "calculated" member data to mirror a newly created object.
         // Used in experimentation to allow repeated calculation run against this object.
-        public virtual void ResetMemberData()
+        public virtual void ResetCalcedMemberData()
         {
             // ObjectId
             // Name

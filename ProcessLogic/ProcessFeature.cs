@@ -24,7 +24,7 @@ namespace SkyCombImage.ProcessLogic
 
         public ProcessFeature(ProcessAll processAll, int blockId, FeatureTypeEnum type) : base(blockId, type)
         {
-            ResetMemberData();
+            ResetCalcedMemberData();
 
             ProcessAll = processAll;
             Block = processAll.Blocks[blockId];

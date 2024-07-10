@@ -20,7 +20,7 @@ namespace SkyCombImage.ProcessLogic
         {
             if (type != FeatureTypeEnum.Unreal)
                 Pixels = new();
-            ResetMemberData();
+            ResetCalcedMemberData();
         }
 
 

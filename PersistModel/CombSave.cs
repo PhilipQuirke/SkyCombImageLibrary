@@ -5,9 +5,6 @@ using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using System.Drawing;
-using System.Diagnostics;
-using System;
-
 
 
 namespace SkyCombImage.PersistModel
@@ -68,30 +65,18 @@ namespace SkyCombImage.PersistModel
                     // Save the Feature data 
                     var saveFeatures = ((runConfig.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None) && (process.ProcessFeatures.Count > 0));
                     if (saveFeatures)
-                        SaveProcess.SaveFeatureList(process, process.ProcessFeatures, saveAllObjects);
+                        SaveProcess.SaveFeatureList(process, saveAllObjects);
 
                     // Save the Object data 
                     var saveObjects = ((runConfig.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None) && (process.ProcessObjects.Count > 0));
                     if (saveObjects)
-                        SaveProcess.SaveObjectList(process, process.ProcessObjects, saveAllObjects);
+                        SaveProcess.SaveObjectList(process, saveAllObjects);
 
                     // Add the Object/Feature charts
                     SaveProcess.SaveObjectGraphs(MaxDatumId);
 
-                    // Save the CombSpan data 
-                    if ((process.ProcessSpans != null) && (process.ProcessSpans.Count > 0))
-                    {
-                        Data.SelectOrAddWorksheet(SpanTabName);
-                        int legRow = 0;
-                        foreach (var leg in process.ProcessSpans)
-                            Data.SetDataListRowKeysAndValues(ref legRow, leg.Value.GetSettings());
-
-                        Data.SetColumnColor(ProcessSpanModel.SpanIdSetting, legRow, Color.Blue);
-                        Data.SetColumnColor(ProcessSpanModel.SpanNameSetting, legRow, Color.Blue);
-                        Data.SetColumnColor(ProcessSpanModel.BestFixAltMSetting, legRow, Color.Blue);
-
-                        Data.SetLastUpdateDateTime(SpanTabName);
-                    }
+                    // Save the ProcessSpan data 
+                    SaveProcess.SaveSpanList(process);
 
                     if (saveObjects)
                         SaveProcess.SavePopulation(process.ProcessObjects);

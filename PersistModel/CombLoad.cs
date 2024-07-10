@@ -91,7 +91,7 @@ namespace SkyCombImage.PersistModel
 
 
         // Load all Comb Spans from the datastore
-        public void CombSpans(CombProcess model, Drone drone)
+        public void ProcessSpans(CombProcess model, Drone drone)
         {
             int row = 2;
 
@@ -108,7 +108,7 @@ namespace SkyCombImage.PersistModel
                         var legId = ConfigBase.StringToNonNegInt(legIdString);
 
 
-                        // Load the non-blank cells in this row into a CombSpan
+                        // Load the non-blank cells in this row into a ProcessSpan
                         var settings = Data.GetRowSettings(row, 1);
                         model.ProcessSpans.AddSpan(
                             ProcessFactory.NewProcessSpan(model, legId, settings));
@@ -121,7 +121,7 @@ namespace SkyCombImage.PersistModel
             catch (Exception ex)
             {
                 // Suppress the error and any objects loaded
-                System.Diagnostics.Debug.WriteLine("Suppressed CombLoad.CombSpans failure: " + ex.ToString());
+                System.Diagnostics.Debug.WriteLine("Suppressed CombLoad.ProcessSpans failure: " + ex.ToString());
                 model.ProcessSpans.Clear();
             }
         }

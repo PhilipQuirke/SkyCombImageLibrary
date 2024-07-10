@@ -62,9 +62,9 @@ namespace SkyCombImage.RunSpace
                 if (objectListSettings != null)
                     CombProcess.ProcessObjects.LoadSettings(objectListSettings);
 
-                datareader2.CombSpans(CombProcess, Drone);
+                datareader2.ProcessSpans(CombProcess, Drone);
 
-                // Reset the FlightStep.FixAltM values from the CombSpan data
+                // Reset the FlightStep.FixAltM values from the ProcessSpan data
                 CombProcess.ProcessSpans.SetFixAltMAfterLoad(Drone.InputVideo, Drone);
 
                 // Link each object to its features

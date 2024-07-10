@@ -1,6 +1,4 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using SkyCombGround.CommonSpace;
-using SkyCombImage.CategorySpace;
 using SkyCombImage.ProcessModel;
 using System.Drawing;
 
@@ -18,7 +16,7 @@ namespace SkyCombImage.ProcessLogic
         public CombObject(ProcessScope scope, CombProcess combProcess, CombFeature firstFeature) : base(combProcess, scope)
         {
             CombProcess = combProcess;
-            ResetMemberData();
+            ResetCalcedMemberData();
 
             if (firstFeature != null)
             {
@@ -32,7 +30,7 @@ namespace SkyCombImage.ProcessLogic
         public CombObject(CombProcess combProcess, List<string> settings) : base(combProcess, null)
         {
             CombProcess = combProcess;
-            ResetMemberData();
+            ResetCalcedMemberData();
 
             LoadSettings(settings);
         }
@@ -52,7 +50,7 @@ namespace SkyCombImage.ProcessLogic
         // 1) Animal in tree, partially visible through foliage, moving faster than ground.
         // 2) Animal on open ground, fully visible, very dense, stationary.
         // 3) Animal on open ground, fully visible, very dense, moving very slowly.
-        public void Calculate_Significant()
+        public override void Calculate_Significant()
         {
             try
             {
@@ -135,24 +133,6 @@ namespace SkyCombImage.ProcessLogic
             var densityOk = (density > minDensity); // Say 20%
 
             return maxCountOk && densityOk;
-        }
-
-
-        // Calculate the simple (int, float, VelocityF, etc) member-data of this real object.
-        // Calculates LocationM, LocationErrM, HeightM, HeightErrM, etc.
-        public override void Calculate_RealObject_SimpleMemberData_Core()
-        {
-            try
-            {
-                base.Calculate_RealObject_SimpleMemberData_Core();
- 
-                // Is this OBJECT significant?
-                Calculate_Significant();
-            }
-            catch (Exception ex)
-            {
-                throw ThrowException("CombObject.Calculate_RealObject_SimpleMemberData_Core", ex);
-            }
         }
 
 
@@ -261,11 +241,6 @@ namespace SkyCombImage.ProcessLogic
                     // Mark all (real and unreal) features associated with this object as significant.
                     foreach (var feature in ProcessFeatures)
                         feature.Value.Significant = true;
-
-                // Debugging - Set breakpoint on assignment. 
-                if (ObjectId == ProcessConfig.FocusObjectId)
-                    if ((theFeature.FeatureId == 41) || (theFeature.FeatureId == 59))
-                        LastFeature.Attributes = this.Attributes + ".";
 
                 return true;
             }

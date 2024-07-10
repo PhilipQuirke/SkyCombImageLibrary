@@ -66,21 +66,21 @@ namespace SkyCombImage.ProcessModel
             FeatureId = NextFeatureId;
             BlockId = blockId;
             Type = type;
-            ResetMemberData();
+            ResetCalcedMemberData();
         }
 
 
         // Constructor used when loaded objects from the datastore
         public ProcessFeatureModel(List<string> settings)
         {
-            ResetMemberData();
+            ResetCalcedMemberData();
             LoadSettings(settings);
         }
 
 
         // Reset member data to mirror a newly created feature.
         // Used in experimentation to allow repeated calculation run against this feature.
-        public void ResetMemberData()
+        public void ResetCalcedMemberData()
         {
             IsTracked = true;
             Significant = false;

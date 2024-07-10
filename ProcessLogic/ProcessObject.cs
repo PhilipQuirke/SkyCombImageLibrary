@@ -1,6 +1,5 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using Emgu.CV;
-using Emgu.CV.Dnn;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.CategorySpace;
@@ -36,7 +35,7 @@ namespace SkyCombImage.ProcessLogic
         public ProcessObject(ProcessAll processAll, ProcessScope scope) : base()
         {
             ProcessAll = processAll;
-            ProcessFeatures = new ProcessFeatureList(ProcessAll.ProcessConfig);
+            ProcessFeatures = new(ProcessAll.ProcessConfig);
 
             ObjectId = ++NextObjectId;
             if (scope != null)
@@ -51,9 +50,9 @@ namespace SkyCombImage.ProcessLogic
         public virtual bool ClaimFeature(ProcessFeature theFeature) { return false; }
 
 
-        public override void ResetMemberData()
+        public override void ResetCalcedMemberData()
         {
-            base.ResetMemberData();
+            base.ResetCalcedMemberData();
             ProcessFeatures = new(ProcessConfig);
         }
 
@@ -228,6 +227,12 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        public virtual void Calculate_Significant()
+        {
+            Significant = ProcessFeatures.Count > 0;
+        }
+
+
         // Calculate the drone SumLinealM distance corrsponding to the centroid of the object
         protected void Calculate_AvgSumLinealM()
         {
@@ -397,7 +402,7 @@ namespace SkyCombImage.ProcessLogic
 
         // Calculate the simple (int, float, VelocityF, etc) member-data of this real object.
         // Calculates LocationM, LocationErrM, HeightM, HeightErrM, etc.
-        public virtual void Calculate_RealObject_SimpleMemberData_Core()
+        public void Calculate_RealObject_SimpleMemberData_Core()
         {
             try
             {
@@ -453,6 +458,9 @@ namespace SkyCombImage.ProcessLogic
 
                 // Calculate the OBJECT maximum heat value (of any pixel over real features).
                 Calculate_MaxHeat();
+
+                // Is this OBJECT significant?
+                Calculate_Significant();
             }
             catch (Exception ex)
             {

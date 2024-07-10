@@ -6,7 +6,6 @@ using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using Compunet.YoloV8.Data;
 using SkyCombGround.GroundLogic;
-using static System.Formats.Asn1.AsnWriter;
 using System.Drawing;
 
 
@@ -84,6 +83,7 @@ namespace SkyCombImage.ProcessLogic
 
             var answer = new YoloObject(this, scope, firstFeature, className, Color.Red, classConfidence);
             ProcessObjects.AddObject(answer);
+            Assert(answer.Significant, "YoloProcess.AddYoloObject: Object is not significant");
             return answer;
         }
 
@@ -114,10 +114,12 @@ namespace SkyCombImage.ProcessLogic
 
                             // Add remaining features to the object
                             for (int i = 1; i < objSeen.Features.Count; i++)
-                            {
-                                YoloFeature nextFeature = ProcessFeatures[objSeen.Features[i].FeatureId] as YoloFeature;
-                                newObject.ClaimFeature(nextFeature);
-                            }
+                                newObject.ClaimFeature(ProcessFeatures[objSeen.Features[i].FeatureId]);
+                           
+                            // PQR CombProcess doesn't do this outside ProcessFeature
+                            // Calculate the simple member data (int, float, VelocityF, etc) of this real object.
+                            // Calculates DemM, LocationM, LocationErrM, HeightM, HeightErrM, AvgSumLinealM, etc.
+                            newObject.Calculate_RealObject_SimpleMemberData_Core();
                         }
                 }
 
@@ -125,7 +127,7 @@ namespace SkyCombImage.ProcessLogic
                 LegFrameFeatures.Clear();
             }
 
-            base.ProcessFlightLegEnd(scope, legId);
+ //           base.ProcessFlightLegEnd(scope, legId);
         }
 
 
