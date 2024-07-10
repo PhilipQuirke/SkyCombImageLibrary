@@ -69,7 +69,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public YoloObject AddYoloObject(ProcessScope scope, YoloFeature firstFeature)
+        public YoloObject AddYoloObject(ProcessScope scope, int legId, YoloFeature firstFeature)
         {
             BaseConstants.Assert(firstFeature != null, "YoloObjectList.AddObject: No firstFeature");
 
@@ -81,7 +81,7 @@ namespace SkyCombImage.ProcessLogic
             newObject.ClassDescription = box.Class.Description;
             */
 
-            var answer = new YoloObject(this, scope, firstFeature, className, Color.Red, classConfidence);
+            var answer = new YoloObject(this, scope, legId, firstFeature, className, Color.Red, classConfidence);
             ProcessObjects.AddObject(answer);
             Assert(answer.Significant, "YoloProcess.AddYoloObject: Object is not significant");
             return answer;
@@ -110,7 +110,7 @@ namespace SkyCombImage.ProcessLogic
                         {
                             FlightLeg_SigObjects++;
                             YoloFeature firstFeature = ProcessFeatures[ objSeen.Features[0].FeatureId ] as YoloFeature;
-                            YoloObject newObject = AddYoloObject(scope, firstFeature);
+                            YoloObject newObject = AddYoloObject(scope, legId, firstFeature);
 
                             // Add remaining features to the object
                             for (int i = 1; i < objSeen.Features.Count; i++)

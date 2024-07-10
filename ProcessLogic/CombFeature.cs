@@ -172,23 +172,6 @@ namespace SkyCombImage.ProcessLogic
 
             base.Consume(otherFeature);
         }
-
-
-        // Get the class's settings as datapairs (e.g. for saving to the datastore)
-        override public DataPairList GetSettings()
-        {
-            var settings = base.GetSettings();
-
-            settings.Add("Num Hot Pixels", NumHotPixels);
-            settings.Add("Density Perc", DensityPerc); // 0 to 100
-            settings.Add("Density Good", PixelDensityGood);
-            settings.Add("Leg", (Block != null ? Block.FlightLegId : 0));
-
-            // Horizontal distance from feature to drone.
-            settings.Add("RangeM", (Block != null ? RelativeLocation.DistanceM(LocationM, Block.DroneLocnM) : 0 ), LocationNdp);  
-
-            return settings;
-        }
     }
 
 
