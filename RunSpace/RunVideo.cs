@@ -125,7 +125,7 @@ namespace SkyCombImage.RunSpace
         // Can only evaluate this after we know InputVideoFileName (aka the ThermalVideo and/or OpticalVideo names).
         public void LoadDataStoreSettings()
         {
-            CombLoad dataReader = new(DataStore);
+            StandardLoad dataReader = new(DataStore);
 
             var modelSettings = dataReader.ModelConfigSettings();
             if (modelSettings != null)
@@ -167,8 +167,38 @@ namespace SkyCombImage.RunSpace
 
 
         // Load model data from the previous run (if any).
-        public virtual void LoadDataStore()
+        public void LoadDataStore()
         {
+            try
+            {
+                BlockLoad datareader1 = new(DataStore);
+                datareader1.ProcessBlocks(ProcessAll, Drone);
+
+                if ((ProcessAll is CombProcess) || (ProcessAll is YoloProcess))
+                {
+                    StandardLoad datareader2 = new(DataStore);
+                    datareader2.ProcessFeatures(ProcessAll);
+
+                    datareader2.ProcessObjects(ProcessAll);
+                    var objectListSettings = datareader2.ObjectListSettings();
+                    if (objectListSettings != null)
+                        ProcessAll.ProcessObjects.LoadSettings(objectListSettings);
+
+                    datareader2.ProcessSpans(ProcessAll, Drone);
+
+                    // Reset the FlightStep.FixAltM values from the ProcessSpan data
+                    ProcessAll.ProcessSpans.SetFixAltMAfterLoad(Drone.InputVideo, Drone);
+
+                    // Link each object to its features
+                    foreach (var feature in ProcessAll.ProcessFeatures)
+                        if (feature.Value.ObjectId >= 0)
+                            ProcessAll.ProcessObjects.SetLinksAfterLoad(feature.Value);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ThrowException("RunVideoYolo.LoadDataStore", ex);
+            }
         }
 
 
@@ -185,13 +215,6 @@ namespace SkyCombImage.RunSpace
 
         // Process/analyse a single input video frame 
         public abstract ProcessBlock AddBlockAndProcessInputVideoFrame();
-
-
-        // Return ProcessModel as CombProcessModel if that is possible
-        public CombProcess CombProcessIfAny()
-        {
-            return (ProcessAll is CombProcess ? ProcessAll as CombProcess : null);
-        }
 
 
         // Process a single input and (maybe) display video frame for the specified block, returning the modified input&display frames to show 
@@ -310,7 +333,7 @@ namespace SkyCombImage.RunSpace
 
                 // Create a video file writer to output the processed input video to.
                 (var videoWriter, var outputVideoFilename) =
-                    CombSave.CreateVideoWriter(RunConfig, InputVideoFileName(), VideoBase.Fps, VideoBase.ImageSize);
+                    StandardSave.CreateVideoWriter(RunConfig, InputVideoFileName(), VideoBase.Fps, VideoBase.ImageSize);
 
                 RunStart();
                 PSM.CurrBlockId = 0;

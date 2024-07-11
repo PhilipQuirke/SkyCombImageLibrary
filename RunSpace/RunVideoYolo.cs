@@ -36,34 +36,6 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        // Load model data from the previous run (if any).
-        public override void LoadDataStore()
-        {
-            try
-            {
-                BlockLoad datareader1 = new(DataStore);
-                datareader1.BlockObjects(YoloProcess, Drone);
-
-                YoloLoad datareader2 = new(DataStore);
-                datareader2.YoloFeatures(YoloProcess);
-
-                datareader2.ProcessObjects(YoloProcess);
-                var objectListSettings = datareader2.ObjectListSettings();
-                if (objectListSettings != null)
-                    YoloProcess.ProcessObjects.LoadSettings(objectListSettings);
-
-                // Link each object to its features
-                foreach (var feature in YoloProcess.ProcessFeatures)
-                    if (feature.Value.ObjectId >= 0)
-                        YoloProcess.ProcessObjects.SetLinksAfterLoad(feature.Value);
-            }
-            catch (Exception ex)
-            {
-                throw ThrowException("RunVideoYolo.LoadDataStore", ex);
-            }
-        }
-
-
         // Describe the objects found
         public override string DescribeSignificantObjects()
         {
@@ -115,8 +87,8 @@ namespace SkyCombImage.RunSpace
         // Do any final activity at the end processing of video
         public override void EndRunning()
         {
-            YoloSave dataWriter = new(Drone, DataStore);
-            dataWriter.Yolo(RunConfig, GetEffort(), GetSettings(), this, YoloProcess);
+            StandardSave dataWriter = new(Drone, DataStore);
+            dataWriter.ProcessAll(DataStore, RunConfig, GetEffort(), GetSettings(), this, YoloProcess, true);
 
             base.EndRunning();
         }
@@ -126,8 +98,8 @@ namespace SkyCombImage.RunSpace
         public override void SaveProcessSettings()
         {
             DataStore.Open();
-            YoloSave datawriter = new(Drone, DataStore);
-            datawriter.Yolo(RunConfig, GetEffort(), GetSettings(), this, YoloProcess);
+            StandardSave datawriter = new(Drone, DataStore);
+            datawriter.ProcessAll(DataStore, RunConfig, GetEffort(), GetSettings(), this, YoloProcess, false);
             DataStore.Close();
         }
     }

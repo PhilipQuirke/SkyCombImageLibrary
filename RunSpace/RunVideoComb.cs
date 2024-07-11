@@ -46,39 +46,6 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        // Load model data from the previous run (if any).
-        public override void LoadDataStore()
-        {
-            try
-            {
-                BlockLoad datareader1 = new(DataStore);
-                datareader1.BlockObjects(CombProcess, Drone);
-
-                CombLoad datareader2 = new(DataStore);
-                datareader2.CombFeatures(CombProcess);
-
-                datareader2.CombObjects(CombProcess);
-                var objectListSettings = datareader2.ObjectListSettings();
-                if (objectListSettings != null)
-                    CombProcess.ProcessObjects.LoadSettings(objectListSettings);
-
-                datareader2.ProcessSpans(CombProcess, Drone);
-
-                // Reset the FlightStep.FixAltM values from the ProcessSpan data
-                CombProcess.ProcessSpans.SetFixAltMAfterLoad(Drone.InputVideo, Drone);
-
-                // Link each object to its features
-                foreach (var feature in CombProcess.ProcessFeatures)
-                    if (feature.Value.ObjectId >= 0)
-                        CombProcess.ProcessObjects.SetLinksAfterLoad(feature.Value);
-            }
-            catch (Exception ex)
-            {
-                throw ThrowException("RunVideoCombDrone.LoadDataStore", ex);
-            }
-        }
-
-
         // Describe the objects found
         public override string DescribeSignificantObjects()
         {
@@ -149,8 +116,8 @@ namespace SkyCombImage.RunSpace
             // Calculate object summary data
             CombProcess?.ProcessObjects?.CalculateSettings(this, RunConfig.ProcessConfig.FocusObjectId);
 
-            CombSave dataWriter = new(Drone, DataStore);
-            dataWriter.Comb(RunConfig, GetEffort(), GetSettings(), this, CombProcess, true);
+            StandardSave dataWriter = new(Drone, DataStore);
+            dataWriter.ProcessAll(DataStore, RunConfig, GetEffort(), GetSettings(), this, CombProcess, true);
 
             base.EndRunning();
         }
@@ -160,8 +127,8 @@ namespace SkyCombImage.RunSpace
         public override void SaveProcessSettings()
         {
             DataStore.Open();
-            CombSave datawriter = new(Drone, DataStore);
-            datawriter.Comb(RunConfig, GetEffort(), GetSettings(), this, CombProcess, false);
+            StandardSave datawriter = new(Drone, DataStore);
+            datawriter.ProcessAll(DataStore, RunConfig, GetEffort(), GetSettings(), this, CombProcess, false);
             DataStore.Close();
         }
     }

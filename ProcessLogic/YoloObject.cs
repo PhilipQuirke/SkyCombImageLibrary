@@ -47,8 +47,6 @@ namespace SkyCombImage.ProcessLogic
             Assert(theFeature.ObjectId <= 0, "YoloObject.ClaimFeature: Feature is already owned");
 
             theFeature.ObjectId = this.ObjectId;
-            theFeature.CalculateSettings_LocationM_FlatGround(null);
-            theFeature.CalculateSettings_LocationM_HeightM_LineofSight(ProcessAll.GroundData);
 
             ProcessFeatures.AddFeature(theFeature);
 

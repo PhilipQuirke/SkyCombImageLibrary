@@ -109,12 +109,19 @@ namespace SkyCombImage.ProcessLogic
                         if(objSeen.Features.Any())
                         {
                             FlightLeg_SigObjects++;
-                            YoloFeature firstFeature = ProcessFeatures[ objSeen.Features[0].FeatureId ] as YoloFeature;
-                            YoloObject newObject = AddYoloObject(scope, legId, firstFeature);
+                            var firstFeature = ProcessFeatures[ objSeen.Features[0].FeatureId ];
+                            firstFeature.CalculateSettings_LocationM_FlatGround(null);
+                            firstFeature.CalculateSettings_LocationM_HeightM_LineofSight(GroundData);
+                            YoloObject newObject = AddYoloObject(scope, legId, firstFeature as YoloFeature);
 
                             // Add remaining features to the object
                             for (int i = 1; i < objSeen.Features.Count; i++)
-                                newObject.ClaimFeature(ProcessFeatures[objSeen.Features[i].FeatureId]);
+                            {
+                                var theFeature = ProcessFeatures[objSeen.Features[i].FeatureId];
+                                theFeature.CalculateSettings_LocationM_FlatGround(null);
+                                theFeature.CalculateSettings_LocationM_HeightM_LineofSight(GroundData);
+                                newObject.ClaimFeature(theFeature);
+                            }
                         }
                 }
 
@@ -122,7 +129,9 @@ namespace SkyCombImage.ProcessLogic
                 LegFrameFeatures.Clear();
             }
 
-            base.ProcessFlightLegEnd(scope, legId);
+
+            // Debug this code with Yolo (not Comb) data 
+              base.ProcessFlightLegEnd(scope, legId);
         }
 
 

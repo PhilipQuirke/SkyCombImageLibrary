@@ -16,8 +16,8 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // Load all Block Objects from the datastore
-        public void BlockObjects(ProcessAll model, Drone drone)
+        // Load all ProcessBlock objects from the datastore
+        public void ProcessBlocks(ProcessAll model, Drone drone)
         {
             int row = 2;
             try
@@ -43,7 +43,7 @@ namespace SkyCombImage.PersistModel
             catch (Exception ex)
             {
                 // Suppress the error and any objects loaded
-                System.Diagnostics.Debug.WriteLine("Suppressed CombLoad.CombBlocks failure: " + ex.ToString());
+                System.Diagnostics.Debug.WriteLine("Suppressed BlockLoad.ProcessBlocks failure: " + ex.ToString());
                 model.Blocks.Clear();
             }
         }

@@ -20,7 +20,7 @@ namespace SkyCombImage.RunSpace
             {
                 var directory = config.OutputElseInputDirectory();
 
-                CombLoad dataReader = new(dataStore);
+                StandardLoad dataReader = new(dataStore);
                 var runSettings = dataReader.RunConfigSettings();
 
                 // Are we processing a video/flight log for the first time?
