@@ -12,10 +12,6 @@ namespace SkyCombImage.ProcessLogic
     // A Comb feature, is a dense cluster of hot pixels, associated 1-1 with a Block
     public class CombFeature : ProcessFeature
     {
-        // Parent process model
-        protected CombProcess CombProcess { get { return ProcessAll as CombProcess; } }
-
-
         public CombFeature( CombProcess combProcess, ProcessBlock block, FeatureTypeEnum type) : base(combProcess, block.BlockId, type)
         {
             if (type != FeatureTypeEnum.Unreal)
@@ -65,7 +61,7 @@ namespace SkyCombImage.ProcessLogic
                 int rectRight = startX + toX - 1;
 
                 // Search down the image
-                for (currY = startY; currY < CombProcess.VideoData.ImageHeight; currY++)
+                for (currY = startY; currY < ProcessAll.VideoData.ImageHeight; currY++)
                 {
                     int hotPixelsInRow = 0;
 
@@ -76,10 +72,10 @@ namespace SkyCombImage.ProcessLogic
                     while ((imgThreshold.Data[currY, startX + fromX, 0] != 0) && (startX + fromX > 0))
                         fromX--;
 
-                    for (currX = startX + fromX; (currX < startX + toX) && (currX < CombProcess.VideoData.ImageWidth); currX++)
+                    for (currX = startX + fromX; (currX < startX + toX) && (currX < ProcessAll.VideoData.ImageWidth); currX++)
                     {
                         // Set inputSearched[y,x] = true
-                        inputSearched[currY * CombProcess.VideoData.ImageWidth + currX] = true;
+                        inputSearched[currY * ProcessAll.VideoData.ImageWidth + currX] = true;
 
                         // If imgInputGray[y,x] is a hot pixel
                         var currPixelIsHot = (imgThreshold.Data[currY, currX, 0] != 0);
@@ -142,7 +138,7 @@ namespace SkyCombImage.ProcessLogic
                 }
 
                 // Is this feature significant?
-                bool sizeOk = (NumHotPixels >= CombProcess.ProcessConfig.FeatureMinPixels);
+                bool sizeOk = (NumHotPixels >= ProcessAll.ProcessConfig.FeatureMinPixels);
                 bool densityOk = PixelDensityGood;
                 Significant = sizeOk && densityOk;
                 if (Significant)

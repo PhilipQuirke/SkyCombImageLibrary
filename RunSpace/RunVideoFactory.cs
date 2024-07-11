@@ -48,13 +48,13 @@ namespace SkyCombImage.RunSpace
                 {
                     case RunProcessEnum.Yolo:
                         var yoloRunner = new RunVideoYolo(parent, config, dataStore, drone);
-                        // yoloRunner.ProcessDrawScope.Process = yoloRunner.YoloProcess;
+                        yoloRunner.ProcessDrawScope.Process = yoloRunner.ProcessAll;
                         yoloRunner.YoloProcess.Observation += processHook;
                         answer = yoloRunner;
                         break;
                     case RunProcessEnum.Comb:
                         var combRunner = new RunVideoCombDrone(parent, config, dataStore, drone);
-                        combRunner.ProcessDrawScope.Process = combRunner.CombProcess;
+                        combRunner.ProcessDrawScope.Process = combRunner.ProcessAll;
                         combRunner.CombProcess.Observation += processHook;
                         answer = combRunner;
                         break;

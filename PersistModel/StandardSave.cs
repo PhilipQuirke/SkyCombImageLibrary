@@ -166,7 +166,7 @@ namespace SkyCombImage.PersistModel
 
                     var saveAllObjects = (runConfig.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All);
 
-                    ProcessSaveObject SaveProcess = new(data);
+                    ObjectSave SaveProcess = new(data);
 
                     // Save the Feature data 
                     var saveFeatures = ((runConfig.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None) && (process.ProcessFeatures.Count > 0));

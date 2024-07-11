@@ -13,14 +13,14 @@ using System.Drawing;
 namespace SkyCombImage.PersistModel
 {
     // Save processing model data to a datastore
-    public class ProcessSaveObject : DataStoreAccessor
+    public class ObjectSave : DataStoreAccessor
     {
         const string ObjectHeightPivotName = "ObjectHeightPivot";
         const string ObjectSizePivotName = "ObjectSizePivot";
         const string ObjectHeatPivotName = "ObjectHeatPivot";
 
 
-        public ProcessSaveObject(DroneDataStore data) : base(data)
+        public ObjectSave(DroneDataStore data) : base(data)
         {
         }
 

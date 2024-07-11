@@ -49,14 +49,14 @@ namespace SkyCombImage.RunSpace
         // Describe the objects found
         public override string DescribeSignificantObjects()
         {
-            return CombProcess.ProcessObjects.DescribeSignificantObjects();
+            return ProcessAll.ProcessObjects.DescribeSignificantObjects();
         }
 
 
         // Process start &/or end of drone flight legs.
         public override void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId)
         {
-            CombProcess.ProcessFlightLegStartAndEnd(scope, prevLegId, currLegId);
+            ProcessAll.ProcessFlightLegStartAndEnd(scope, prevLegId, currLegId);
 
             // Save memory (if compatible with Config settings) by deleting pixel data
             CombProcess.DeleteFeaturePixelsForObjects();
@@ -68,7 +68,7 @@ namespace SkyCombImage.RunSpace
         {
             try
             {
-                var currBlock = CombProcess.AddBlock(this);
+                var currBlock = ProcessAll.AddBlock(this);
 
                 // If camera is too near the horizon, skip this frame.
                 if ((currBlock != null) && (currBlock.FlightStep != null) &&
@@ -106,7 +106,7 @@ namespace SkyCombImage.RunSpace
         // Return the data to show in the ObjectGrid in the Main Form
         public override List<object[]> GetObjectGridData(bool mainForm)
         {
-            return CombProcess.ProcessObjects.GetObjectGridData(this, RunConfig.ProcessConfig, mainForm, CategoryAll.ObjectCategories, RunConfig.ProcessConfig.FocusObjectId);
+            return ProcessAll.ProcessObjects.GetObjectGridData(this, RunConfig.ProcessConfig, mainForm, CategoryAll.ObjectCategories, RunConfig.ProcessConfig.FocusObjectId);
        }
 
 
@@ -114,7 +114,7 @@ namespace SkyCombImage.RunSpace
         public override void EndRunning()
         {
             // Calculate object summary data
-            CombProcess?.ProcessObjects?.CalculateSettings(this, RunConfig.ProcessConfig.FocusObjectId);
+            ProcessAll?.ProcessObjects?.CalculateSettings(this, RunConfig.ProcessConfig.FocusObjectId);
 
             StandardSave dataWriter = new(Drone, DataStore);
             dataWriter.ProcessAll(DataStore, RunConfig, GetEffort(), GetSettings(), this, CombProcess, true);
