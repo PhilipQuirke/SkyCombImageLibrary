@@ -130,8 +130,14 @@ namespace SkyCombImage.ProcessLogic
             }
 
 
-            // Debug this code with Yolo (not Comb) data 
-              base.ProcessFlightLegEnd(scope, legId);
+            foreach (var feature in ProcessFeatures)
+                Assert(feature.Value.Significant, "YoloProcess.ProcessFlightLegEnd(1): Feature is not significant");
+
+            // Post process the objects found in the leg & maybe set FlightLegs.FixAltM 
+            base.ProcessFlightLegEnd(scope, legId);
+
+            foreach (var feature in ProcessFeatures)
+                feature.Value.Significant = true;
         }
 
 
@@ -165,6 +171,7 @@ namespace SkyCombImage.ProcessLogic
                     var newFeature = new YoloFeature(this, blockID, box);
                     featuresInBlock.AddFeature(newFeature);
                     LegFrameFeatures.Add(new YoloFeatureSeen { BlockId = blockID, Box = newFeature.PixelBox, FeatureId = newFeature.FeatureId });
+                    Assert(newFeature.Significant, "YoloProcess.ProcessBlock: Feature is not significant");
                 }
 
                 Phase = 5;

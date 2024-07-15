@@ -421,7 +421,7 @@ namespace SkyCombImage.ProcessLogic
                 // (which could be say 20m left of the drone's flight path).
                 Calculate_DemM();
 
-                // In RunVideoCombDrone.AddBlockAndProcessInputVideoFrame, a new CombFeature is created
+                // In RunVideoCombDrone.AddBlockAndProcessInputVideoFrame, a new Feature is created
                 // and these "one-feature" function calls are made (before the feature is assigned to an object):
                 //    FEATURE.CalculateSettings_LocationM_FlatGround();           // Assumes flat ground & feature is on ground
                 //    FEATURE.CalculateSettings_LocationM_HeightM_LineofSight();  // Works if CameraFwdDeg between 10 and 80.
