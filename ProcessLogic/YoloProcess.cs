@@ -99,9 +99,12 @@ namespace SkyCombImage.ProcessLogic
                     // During the leg, we found features using Yolo image detection,
                     // and defined objects using IoU overlap in successive frames.
 
-                    YoloTracker tracker = new( 
-                        0.1f, // % overlap between feature in successive images 
-                        0.66f ); // % confidence in merging two objects
+                    YoloTracker tracker = new(
+                        ProcessConfig.YoloIoU, // % overlap between feature in successive images
+                        ProcessConfig.YoloMergeConfidence, // % confidence in merging two objects
+                        ProcessConfig.YoloMergeVelocityWeighting,
+                        ProcessConfig.YoloMergePositionWeighting);
+
                     tracker.CalculateObjectsInLeg(LegFrameFeatures);
 
                     // For each ObjectSeen, create a YoloObject

@@ -48,14 +48,21 @@ namespace SkyCombImage.ProcessLogic
         public YoloObjectSeen()
         {
             Features = new();
-            AverageVelocityX = 0;
-            AverageVelocityY = 0;
+            DefaultAverageVelocity();
+        }
+
+
+        public void DefaultAverageVelocity(double velocityX = 0, double velocityY = 0)
+        {
+            AverageVelocityX = velocityX;
+            AverageVelocityY = velocityY;
         }
 
 
         public void CalculateAverageVelocity()
         {
-            if (Features.Count < 2) return;
+            if (Features.Count < 2) 
+                return;
 
             double totalVelocityX = 0;
             double totalVelocityY = 0;
@@ -113,18 +120,27 @@ namespace SkyCombImage.ProcessLogic
         // Minimum % confidence in merging two objects based on movement over time
         private float MergeConfidenceThreshold;
 
+        // Weightings for three similarity criteria between two objects
+        private float MergeVelocityWeighting = 0.45f;
+        private float MergePositionWeighting = 0.45f;
+        private float MergeSizeWeighting { get { return 1.0f - (MergeVelocityWeighting + MergePositionWeighting); } } 
+
 
         public YoloTracker(
             float ioUThreshold, // e.g. 0.25 for 25% overlap 
-            float mergeConfidenceThreshold = 0.6f) // e.g. 0.6 for 60% confidence in merging
+            float mergeConfidenceThreshold, // e.g. 0.6 for 60% confidence in merging
+            float mergeVelocityWeighting,
+            float mergePositionWeighting )
         {
             ObjectsSeen = new();
             IoUThreshold = ioUThreshold;
             MergeConfidenceThreshold = mergeConfidenceThreshold;
+            MergeVelocityWeighting = mergeVelocityWeighting;
+            MergePositionWeighting = mergePositionWeighting;
         }
 
 
-        public void ProcessFrame(int blockId, YoloFeatureSeenList features, bool firstBlock)
+    public void ProcessFrame(int blockId, YoloFeatureSeenList features, bool firstBlock)
         {
             if (firstBlock)
             {
@@ -200,49 +216,96 @@ namespace SkyCombImage.ProcessLogic
 
         public (double X, double Y) CalculateAverageDroneVelocity()
         {
+            double answerVelocityX = 0;
+            double answerVelocityY = 0;
+
             double totalVelocityX = 0;
             double totalVelocityY = 0;
             int count = 0;
 
             foreach (var target in ObjectsSeen)
-            {
-                target.CalculateAverageVelocity();
                 if (target.Features.Count >= 2)
                 {
+                    target.CalculateAverageVelocity();
                     totalVelocityX += target.AverageVelocityX;
                     totalVelocityY += target.AverageVelocityY;
                     count++;
                 }
-            }
 
             if (count > 0)
-                return (totalVelocityX / count, totalVelocityY / count);
+            {
+                answerVelocityX = totalVelocityX / count;
+                answerVelocityY = totalVelocityY / count;
 
-            return (0, 0);
+                foreach (var target in ObjectsSeen)
+                    if (target.Features.Count == 1)
+                        target.DefaultAverageVelocity(answerVelocityX, answerVelocityY);
+            }
+
+            return (answerVelocityX, answerVelocityY);
         }
 
 
-        private double CalculateTargetSimilarity(YoloObjectSeen t1, YoloObjectSeen t2, (double X, double Y) droneVelocity)
+        private double CalculateTargetSimilarity(YoloObjectSeen obj1, YoloObjectSeen obj2, (double X, double Y) droneVelocity)
         {
+            // Time gap
+            var lastDetection1 = obj1.Features.Last();
+            var firstDetection2 = obj2.Features.First();
+            int frameGap = firstDetection2.BlockId - lastDetection1.BlockId;
+            if (frameGap <= 0)
+                return 0;
+
+            const double velocityEpsilon = 1e-2; // Pixels per frame
+            bool velocityXSignificant = Math.Abs(droneVelocity.X) > velocityEpsilon;
+            bool velocityYSignificant = Math.Abs(droneVelocity.Y) > velocityEpsilon;
+
+
             // Velocity similarity
-            double velocitySimilarity = 1 - (Math.Abs(t1.AverageVelocityX - t2.AverageVelocityX) / Math.Abs(droneVelocity.X) +
-                                             Math.Abs(t1.AverageVelocityY - t2.AverageVelocityY) / Math.Abs(droneVelocity.Y)) / 2;
+            double velocityDiffX = obj1.AverageVelocityX - obj2.AverageVelocityX;
+            double velocityDiffY = obj1.AverageVelocityY - obj2.AverageVelocityY;
+            double velocitySimilarityX = 1;
+            double velocitySimilarityY = 1;
+            if (velocityXSignificant)
+                velocitySimilarityX = 1 - Math.Abs(velocityDiffX / droneVelocity.X);
+            else if (Math.Abs(velocityDiffX) > velocityEpsilon)
+                velocitySimilarityX = 0;
+            if (velocityYSignificant)
+                velocitySimilarityY = 1 - Math.Abs(velocityDiffY / droneVelocity.Y);
+            else if (Math.Abs(velocityDiffY) > velocityEpsilon)
+                velocitySimilarityY = 0;
+            double velocitySimilarity = (velocitySimilarityX + velocitySimilarityY) / 2;
 
             // Position similarity
-            var lastDetection1 = t1.Features.Last();
-            var firstDetection2 = t2.Features.First();
-            int frameGap = firstDetection2.BlockId - lastDetection1.BlockId;
-            double expectedX = lastDetection1.Box.X + t1.AverageVelocityX * frameGap;
-            double expectedY = lastDetection1.Box.Y + t1.AverageVelocityY * frameGap;
-            double positionSimilarity = 1 - (Math.Abs(expectedX - firstDetection2.Box.X) / Math.Abs(droneVelocity.X * frameGap) +
-                                             Math.Abs(expectedY - firstDetection2.Box.Y) / Math.Abs(droneVelocity.Y * frameGap)) / 2;
+            const double positionEpsilon = 1; // Pixels 
+            double expectedX = lastDetection1.Box.X + obj1.AverageVelocityX * frameGap;
+            double expectedY = lastDetection1.Box.Y + obj1.AverageVelocityY * frameGap;
+            double diffX = expectedX - firstDetection2.Box.X;
+            double diffY = expectedY - firstDetection2.Box.Y;
+            double positionSimilarityX = 1;
+            double positionSimilarityY = 1;
+            if (velocityXSignificant)
+                positionSimilarityX = 1 - Math.Abs(diffX) / Math.Abs(droneVelocity.X * frameGap);
+            else if (Math.Abs(diffX) > positionEpsilon)
+                positionSimilarityX = 0;
+            if (velocityYSignificant)
+                positionSimilarityY = 1 - Math.Abs(diffY) / Math.Abs(droneVelocity.Y * frameGap);
+            else if (Math.Abs(diffY) > positionEpsilon)
+                positionSimilarityY = 0;
+            double positionSimilarity = (positionSimilarityX + positionSimilarityY) / 2;
 
             // Size similarity
-            double sizeSimilarity = 1 - (Math.Abs(lastDetection1.Box.Width - firstDetection2.Box.Width) / lastDetection1.Box.Width +
-                                         Math.Abs(lastDetection1.Box.Height - firstDetection2.Box.Height) / lastDetection1.Box.Height) / 2;
+            double sizeSimilarity = 0;
+            if( lastDetection1.Box.Width > 1 && lastDetection1.Box.Height > 1)
+                sizeSimilarity = 1-(Math.Abs(lastDetection1.Box.Width - firstDetection2.Box.Width) / (1.0 * lastDetection1.Box.Width) +
+                                    Math.Abs(lastDetection1.Box.Height - firstDetection2.Box.Height) / (1.0 * lastDetection1.Box.Height)) / 2.0;
 
             // Combine similarities (you can adjust weights as needed)
-            return (velocitySimilarity * 0.4 + positionSimilarity * 0.4 + sizeSimilarity * 0.2);
+            var answer =
+                velocitySimilarity * MergeVelocityWeighting +
+                positionSimilarity * MergePositionWeighting +
+                sizeSimilarity * MergeSizeWeighting;
+
+            return answer;
         }
 
 
@@ -271,17 +334,22 @@ namespace SkyCombImage.ProcessLogic
 
             foreach (var (t1, t2) in objectsToMerge)
             {
-                t1.Features.AddRange(t2.Features);
-                t1.Features.Sort((a, b) => a.BlockId.CompareTo(b.BlockId));
-                t2.Features.Clear();
-                var removed = ObjectsSeen.Remove(t2);
-                //if( ! removed)
-                //    BaseConstants.Assert(removed, "YoloTracker.MergeSimilarObjects: Failed to remove target from list");
-            }
+                if (ObjectsSeen.Contains(t2))
+                {
+                    t1.Features.AddRange(t2.Features);
+                    t1.Features.Sort((a, b) => a.BlockId.CompareTo(b.BlockId));
+                    t2.Features.Clear();
+                    var removed = ObjectsSeen.Remove(t2);
+                    BaseConstants.Assert(removed, "YoloTracker.MergeSimilarObjects: Failed to remove target from list");
 
-            // Recalculate velocities for merged targets
-            foreach (var target in ObjectsSeen)
-                target.CalculateAverageVelocity();
+                    t1.CalculateAverageVelocity();
+                    t2.DefaultAverageVelocity();
+                }
+                else
+                {
+                    // t2 has already been merged and removed in a previous iteration
+                }
+            }
         }
 
 
