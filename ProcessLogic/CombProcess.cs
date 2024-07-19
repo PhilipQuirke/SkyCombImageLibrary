@@ -156,7 +156,7 @@ namespace SkyCombImage.ProcessLogic
                     }
                 }
 
-                // Each feature can only be claimed once
+                // Each feature can only be claimed once. Clone the list (not the features).
                 ProcessFeatureList availFeatures = featuresInBlock.Clone();
 
 

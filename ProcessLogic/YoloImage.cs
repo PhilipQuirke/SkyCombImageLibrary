@@ -1,10 +1,14 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using SkyCombGround.CommonSpace;
-using SkyCombImage.ProcessModel;
+using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Drawing;
-
-
-// If this doesnt work consider using a Kalman filter
+using System.Linq;
+using Accord.MachineLearning;
+using Accord.MachineLearning.VectorMachines.Learning;
+using Accord.MachineLearning.VectorMachines;
+using Accord.Statistics.Kernels;
+using SkyCombGround.CommonSpace;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -22,6 +26,7 @@ namespace SkyCombImage.ProcessLogic
     {
         public YoloFeatureSeenList() : base() { }
 
+
         // Clone this list
         public YoloFeatureSeenList Clone()
         {
@@ -30,6 +35,23 @@ namespace SkyCombImage.ProcessLogic
                 clone.Add(new YoloFeatureSeen { BlockId = feature.BlockId, FeatureId = feature.FeatureId, Box = feature.Box });
 
             return clone;
+        }
+
+
+        // Return a list of each feature's ID, BlockId (Time frame) and 2D location
+        public DataTable ToDataTable()
+        {
+            DataTable dataTable = new DataTable();
+            dataTable.Columns.Add("X", typeof(double));
+            dataTable.Columns.Add("Y", typeof(double));
+            dataTable.Columns.Add("Time", typeof(double));
+            dataTable.Columns.Add("Cluster", typeof(int));
+            dataTable.Columns.Add("Feature", typeof(int));
+
+            foreach (var feature in this)
+                dataTable.Rows.Add(feature.Box.X, feature.Box.Y, feature.BlockId, 0, feature.FeatureId);
+
+            return dataTable;
         }
     }
 
@@ -40,71 +62,15 @@ namespace SkyCombImage.ProcessLogic
         // The features that make up the object. Implies the first and last frame the object was seen in
         public YoloFeatureSeenList Features;
 
-        // Average pixel velocity of the object over time in the image
-        public double AverageVelocityX;
-        public double AverageVelocityY;
-
-
         public YoloObjectSeen()
         {
             Features = new();
-            DefaultAverageVelocity();
-        }
-
-
-        public void DefaultAverageVelocity(double velocityX = 0, double velocityY = 0)
-        {
-            AverageVelocityX = velocityX;
-            AverageVelocityY = velocityY;
-        }
-
-
-        public void CalculateAverageVelocity()
-        {
-            if (Features.Count < 2) 
-                return;
-
-            double totalVelocityX = 0;
-            double totalVelocityY = 0;
-            int count = 0;
-
-            for (int i = 1; i < Features.Count; i++)
-            {
-                var prev = Features[i - 1];
-                var curr = Features[i];
-
-                if (curr.BlockId - prev.BlockId == 1)
-                {
-                    totalVelocityX += curr.Box.X - prev.Box.X;
-                    totalVelocityY += curr.Box.Y - prev.Box.Y;
-                    count++;
-                }
-            }
-
-            if (count > 0)
-            {
-                AverageVelocityX = totalVelocityX / count;
-                AverageVelocityY = totalVelocityY / count;
-            }
         }
     }
 
 
     public class YoloObjectSeenList : List<YoloObjectSeen>
     {
-        public YoloObjectSeenList() : base() { }
-
-
-        public int NumSignificant()
-        {
-            int numSignificant = 0;
-
-            foreach (var target in this)
-                if (target.Features.Any())
-                    numSignificant++;
-
-            return numSignificant;
-        }
     }
 
 
@@ -112,275 +78,254 @@ namespace SkyCombImage.ProcessLogic
     // Physical objects may be visible, then obscured, then visible resulting in two ObjectSeen objects. Try to merge them.
     public class YoloTracker
     {
-        public YoloObjectSeenList ObjectsSeen;
-
-        // Minimum % overlap between features in successive images 
-        private float IoUThreshold;
-
-        // Minimum % confidence in merging two objects based on movement over time
-        private float MergeConfidenceThreshold;
-
-        // Weightings for three similarity criteria between two objects
-        private float MergeVelocityWeighting = 0.45f;
-        private float MergePositionWeighting = 0.45f;
-        private float MergeSizeWeighting { get { return 1.0f - (MergeVelocityWeighting + MergePositionWeighting); } } 
-
-
-        public YoloTracker(
-            float ioUThreshold, // e.g. 0.25 for 25% overlap 
-            float mergeConfidenceThreshold, // e.g. 0.6 for 60% confidence in merging
-            float mergeVelocityWeighting,
-            float mergePositionWeighting )
+        static public YoloObjectSeenList CalculateObjectsInLeg(double yMovePerTimeSlice, YoloFeatureSeenList features)
         {
-            ObjectsSeen = new();
-            IoUThreshold = ioUThreshold;
-            MergeConfidenceThreshold = mergeConfidenceThreshold;
-            MergeVelocityWeighting = mergeVelocityWeighting;
-            MergePositionWeighting = mergePositionWeighting;
-        }
+            YoloObjectSeenList answer = new();
 
-
-    public void ProcessFrame(int blockId, YoloFeatureSeenList features, bool firstBlock)
-        {
-            if (firstBlock)
+            try
             {
-                // For the first frame, create a new target for each detection
-                foreach (var feature in features)
-                    ObjectsSeen.Add(new YoloObjectSeen { Features = new YoloFeatureSeenList { new YoloFeatureSeen { BlockId = blockId, Box = feature.Box, FeatureId = feature.FeatureId } } });
-                return;
-            }
-
-            var unassignedFeatures = features.Clone();
-
-            foreach (var existingObject in ObjectsSeen)
-            {
-                if (existingObject.Features.Any() && (blockId == existingObject.Features.Last().BlockId + 1))
+                if (features.Count > 0)
                 {
-                    var lastBox = existingObject.Features.Last().Box;
-                    var bestMatch = FindBestMatch(lastBox, unassignedFeatures);
-                    if (bestMatch != null)
+                    var minFrameId = features[0].BlockId;
+                    var maxFrameId = features[^1].BlockId;
+
+                    var dataTable = features.ToDataTable();
+
+                    foreach (DataRow row in dataTable.Rows)
                     {
-                        existingObject.Features.Add(bestMatch);
-                        var removed = unassignedFeatures.Remove(bestMatch);
-                        BaseConstants.Assert(removed, "YoloTracker.ProcessFrame: Failed to remove feature from unassigned list");
+                        row["Y"] = (double)row["Y"] - (double)row["Time"] * yMovePerTimeSlice;
+                    }
+
+                    // Estimate the optimal number of clusters
+                    int nClusters = EstimateClustersSilhouette(dataTable, 50);
+
+                    // Initial clustering
+                    double[][] data = dataTable.AsEnumerable().Select(row => new double[] { (double)row["X"], (double)row["Y"], (double)row["Time"] }).ToArray();
+                    KMeans kmeans = new(nClusters);
+                    KMeansClusterCollection clusters = kmeans.Learn(data);
+                    int[] clusterLabels = clusters.Decide(data);
+
+                    // Assign cluster labels to each data point
+                    for (int i = 0; i < dataTable.Rows.Count; i++)
+                    {
+                        dataTable.Rows[i]["Cluster"] = clusterLabels[i];
+                    }
+
+                    // Adjust clusters to meet the criteria
+                    // PQR temp todo var adjustedTable = AdjustClusters(yMovePerTimeSlice, dataTable);
+                    var adjustedTable = dataTable;
+
+                    // Validate the clusters
+                    //var validationErrors = ValidateClusters(yMovePerTimeSlice, adjustedTable);
+                    //Console.WriteLine("Validation Errors:");
+                    //foreach (var error in validationErrors)
+                    //{
+                    //    Console.WriteLine(error);
+                    //}
+
+                    // Identify features not contained in the adjusted clusters
+                    //var adjustedFeatureIndices = adjustedTable.AsEnumerable().Select(row => dataTable.Rows.IndexOf(row)).ToList();
+                    //var allFeatureIndices = Enumerable.Range(0, dataTable.Rows.Count).ToList();
+                    //var unclusteredFeatures = allFeatureIndices.Except(adjustedFeatureIndices).ToList();
+
+
+                    foreach (var cluster in adjustedTable.AsEnumerable().Select(row => row.Field<int>("Cluster")).Distinct())
+                    {
+                        var objSeen = new YoloObjectSeen();
+                        var clusterDf = adjustedTable.AsEnumerable().Where(row => row.Field<int>("Cluster") == cluster).OrderBy(row => row.Field<int>("Feature")).ToList();
+                        foreach (var row in clusterDf)
+                        {
+                            var featureId = row.Field<int>("Feature");
+                            var time = row.Field<double>("Time");
+                            var x = row.Field<double>("X");
+                            var y = row.Field<double>("Y");
+
+                            objSeen.Features.Add(features.First(feature => feature.FeatureId == featureId));
+                        }
+                        answer.Add(objSeen);
                     }
                 }
             }
-
-            // Create new objects for unassigned features
-            foreach (var detection in unassignedFeatures)
-                ObjectsSeen.Add(new YoloObjectSeen { Features = new YoloFeatureSeenList { detection } });
-        }
-
-
-        // Find the feature with the best overlap. Overlap must exceed IoUThreshold 
-        private YoloFeatureSeen? FindBestMatch(Rectangle lastKnownBox, YoloFeatureSeenList detections)
-        {
-            double maxIoU = 0;
-            YoloFeatureSeen? bestMatch = null;
-
-            foreach (var detection in detections)
+            catch (Exception ex)
             {
-                double iou = CalculateIoU(lastKnownBox, detection.Box);
-                if (iou > maxIoU && iou >= IoUThreshold)
-                {
-                    maxIoU = iou;
-                    bestMatch = detection;
-                }
+                throw BaseConstants.ThrowException("YoloTracker.CalculateObjectsInLeg", ex);
             }
-
-            return bestMatch;
-        }
-
-
-        // Calculate the overlap
-        private double CalculateIoU(Rectangle box1, Rectangle box2)
-        {
-            // Calculate the intersection rectangle
-            double x1 = Math.Max(box1.X, box2.X);
-            double y1 = Math.Max(box1.Y, box2.Y);
-            double x2 = Math.Min(box1.X + box1.Width, box2.X + box2.Width);
-            double y2 = Math.Min(box1.Y + box1.Height, box2.Y + box2.Height);
-
-            // Calculate intersection area
-            double intersectionArea = Math.Max(0, x2 - x1) * Math.Max(0, y2 - y1);
-
-            // Calculate union area
-            double box1Area = box1.Width * box1.Height;
-            double box2Area = box2.Width * box2.Height;
-            double unionArea = box1Area + box2Area - intersectionArea;
-
-            return intersectionArea / unionArea;
-        }
-
-
-        public (double X, double Y) CalculateAverageDroneVelocity()
-        {
-            double answerVelocityX = 0;
-            double answerVelocityY = 0;
-
-            double totalVelocityX = 0;
-            double totalVelocityY = 0;
-            int count = 0;
-
-            foreach (var target in ObjectsSeen)
-                if (target.Features.Count >= 2)
-                {
-                    target.CalculateAverageVelocity();
-                    totalVelocityX += target.AverageVelocityX;
-                    totalVelocityY += target.AverageVelocityY;
-                    count++;
-                }
-
-            if (count > 0)
-            {
-                answerVelocityX = totalVelocityX / count;
-                answerVelocityY = totalVelocityY / count;
-
-                foreach (var target in ObjectsSeen)
-                    if (target.Features.Count == 1)
-                        target.DefaultAverageVelocity(answerVelocityX, answerVelocityY);
-            }
-
-            return (answerVelocityX, answerVelocityY);
-        }
-
-
-        private double CalculateTargetSimilarity(YoloObjectSeen obj1, YoloObjectSeen obj2, (double X, double Y) droneVelocity)
-        {
-            // Time gap
-            var lastDetection1 = obj1.Features.Last();
-            var firstDetection2 = obj2.Features.First();
-            int frameGap = firstDetection2.BlockId - lastDetection1.BlockId;
-            if (frameGap <= 0)
-                return 0;
-
-            const double velocityEpsilon = 1e-2; // Pixels per frame
-            bool velocityXSignificant = Math.Abs(droneVelocity.X) > velocityEpsilon;
-            bool velocityYSignificant = Math.Abs(droneVelocity.Y) > velocityEpsilon;
-
-
-            // Velocity similarity
-            double velocityDiffX = obj1.AverageVelocityX - obj2.AverageVelocityX;
-            double velocityDiffY = obj1.AverageVelocityY - obj2.AverageVelocityY;
-            double velocitySimilarityX = 1;
-            double velocitySimilarityY = 1;
-            if (velocityXSignificant)
-                velocitySimilarityX = 1 - Math.Abs(velocityDiffX / droneVelocity.X);
-            else if (Math.Abs(velocityDiffX) > velocityEpsilon)
-                velocitySimilarityX = 0;
-            if (velocityYSignificant)
-                velocitySimilarityY = 1 - Math.Abs(velocityDiffY / droneVelocity.Y);
-            else if (Math.Abs(velocityDiffY) > velocityEpsilon)
-                velocitySimilarityY = 0;
-            double velocitySimilarity = (velocitySimilarityX + velocitySimilarityY) / 2;
-
-            // Position similarity
-            const double positionEpsilon = 1; // Pixels 
-            double expectedX = lastDetection1.Box.X + obj1.AverageVelocityX * frameGap;
-            double expectedY = lastDetection1.Box.Y + obj1.AverageVelocityY * frameGap;
-            double diffX = expectedX - firstDetection2.Box.X;
-            double diffY = expectedY - firstDetection2.Box.Y;
-            double positionSimilarityX = 1;
-            double positionSimilarityY = 1;
-            if (velocityXSignificant)
-                positionSimilarityX = 1 - Math.Abs(diffX) / Math.Abs(droneVelocity.X * frameGap);
-            else if (Math.Abs(diffX) > positionEpsilon)
-                positionSimilarityX = 0;
-            if (velocityYSignificant)
-                positionSimilarityY = 1 - Math.Abs(diffY) / Math.Abs(droneVelocity.Y * frameGap);
-            else if (Math.Abs(diffY) > positionEpsilon)
-                positionSimilarityY = 0;
-            double positionSimilarity = (positionSimilarityX + positionSimilarityY) / 2;
-
-            // Size similarity
-            double sizeSimilarity = 0;
-            if( lastDetection1.Box.Width > 1 && lastDetection1.Box.Height > 1)
-                sizeSimilarity = 1-(Math.Abs(lastDetection1.Box.Width - firstDetection2.Box.Width) / (1.0 * lastDetection1.Box.Width) +
-                                    Math.Abs(lastDetection1.Box.Height - firstDetection2.Box.Height) / (1.0 * lastDetection1.Box.Height)) / 2.0;
-
-            // Combine similarities (you can adjust weights as needed)
-            var answer =
-                velocitySimilarity * MergeVelocityWeighting +
-                positionSimilarity * MergePositionWeighting +
-                sizeSimilarity * MergeSizeWeighting;
 
             return answer;
         }
 
 
-        public void MergeSimilarObjects()
+        static int EstimateClustersSilhouette(DataTable data, int maxClusters)
         {
-            var droneVelocity = CalculateAverageDroneVelocity();
-            var objectsToMerge = new List<(YoloObjectSeen, YoloObjectSeen)>();
+            var X = data.AsEnumerable().Select(row => new double[] { (double)row["X"], (double)row["Y"], (double)row["Time"] }).ToArray();
+            List<double> silhouetteScores = new List<double>();
 
-            for (int i = 0; i < ObjectsSeen.Count; i++)
+            for (int nClusters = 2; nClusters <= maxClusters; nClusters++)
             {
-                for (int j = i + 1; j < ObjectsSeen.Count; j++)
-                {
-                    var t1 = ObjectsSeen[i];
-                    var t2 = ObjectsSeen[j];
-
-                    if(t1.Features.Any() && t2.Features.Any())
-                        if (t1.Features.Last().BlockId < t2.Features.First().BlockId)
-                        {
-                            double similarity = CalculateTargetSimilarity(t1, t2, droneVelocity);
-                            if (similarity > MergeConfidenceThreshold)
-                                // We have found two objects to merge
-                                objectsToMerge.Add((t1, t2));
-                        }
-                }
+                var kmeans = new KMeans(nClusters);
+                var clusterLabels = kmeans.Learn(X).Decide(X);
+                double silhouetteScore = CalculateSilhouetteScore(X, clusterLabels, nClusters);
+                silhouetteScores.Add(silhouetteScore);
             }
 
-            foreach (var (t1, t2) in objectsToMerge)
-            {
-                if (ObjectsSeen.Contains(t2))
-                {
-                    t1.Features.AddRange(t2.Features);
-                    t1.Features.Sort((a, b) => a.BlockId.CompareTo(b.BlockId));
-                    t2.Features.Clear();
-                    var removed = ObjectsSeen.Remove(t2);
-                    BaseConstants.Assert(removed, "YoloTracker.MergeSimilarObjects: Failed to remove target from list");
+            int optimalClusters = silhouetteScores.IndexOf(silhouetteScores.Max()) + 2;
+            return optimalClusters;
+        }
 
-                    t1.CalculateAverageVelocity();
-                    t2.DefaultAverageVelocity();
-                }
-                else
+        static double CalculateSilhouetteScore(double[][] X, int[] labels, int nClusters)
+        {
+            double[] silhouetteScores = new double[X.Length];
+
+            for (int i = 0; i < X.Length; i++)
+            {
+                int currentLabel = labels[i];
+
+                var sameCluster = X.Where((t, idx) => labels[idx] == currentLabel && idx != i).ToArray();
+                var otherCluster = X.Where((t, idx) => labels[idx] != currentLabel).ToArray();
+
+                double a = sameCluster.Length > 0 ? sameCluster.Average(point => Distance(X[i], point)) : 0;
+                double b = otherCluster.Length > 0 ? Enumerable.Range(0, otherCluster.Length)
+                                                               .GroupBy(idx => labels[Array.IndexOf(X, otherCluster[idx])])
+                                                               .Select(group => group.Average(idx => Distance(X[i], otherCluster[idx])))
+                                                               .Min() : 0;
+
+                silhouetteScores[i] = (b - a) / Math.Max(a, b);
+            }
+
+            return silhouetteScores.Average();
+        }
+
+
+        static double Distance(double[] point1, double[] point2)
+        {
+            double sum = 0;
+            for (int i = 0; i < point1.Length; i++)
+            {
+                sum += Math.Pow(point1[i] - point2[i], 2);
+            }
+            return Math.Sqrt(sum);
+        }
+
+
+        static DataTable AdjustClusters(double yMovePerTimeSlice, DataTable orgClusters)
+        {
+            try { 
+                var adjClusters = new List<DataTable>();
+
+                foreach (var orgCluster in orgClusters.AsEnumerable().Select(row => row.Field<int>("Cluster")).Distinct())
                 {
-                    // t2 has already been merged and removed in a previous iteration
+                    var clusterRows = orgClusters.AsEnumerable().Where(row => row.Field<int>("Cluster") == orgCluster).OrderBy(row => row.Field<double>("Time")).ToList();
+                    var validFeatures = new List<DataRow>();
+
+                    for (int i = 0; i < clusterRows.Count; i++)
+                    {
+                        if (i == 0 || (Math.Abs(clusterRows[i].Field<double>("Y") - validFeatures.Last().Field<double>("Y")) <= 25 - yMovePerTimeSlice &&
+                                        clusterRows[i].Field<double>("Y") - validFeatures.Last().Field<double>("Y") >= -yMovePerTimeSlice &&
+                                        Math.Abs(clusterRows[i].Field<double>("X") - validFeatures.Last().Field<double>("X")) <= 10))
+                        {
+                            if (validFeatures.Count == 0 || clusterRows[i].Field<double>("Time") != validFeatures.Last().Field<double>("Time"))
+                            {
+                                validFeatures.Add(clusterRows[i]);
+                            }
+                        }
+                    }
+
+                    if (validFeatures.Count > 0)
+                    {
+                        var tempTable = orgClusters.Clone();
+                        foreach (var row in validFeatures)
+                        {
+                            tempTable.ImportRow(row);
+                        }
+                        adjClusters.Add(tempTable);
+                    }
                 }
+
+                DataTable adjustedDf = adjClusters.Count > 0 ? adjClusters.Aggregate((dt1, dt2) => { dt1.Merge(dt2); return dt1; }) : orgClusters.Clone();
+                var remainingFeatures = orgClusters.AsEnumerable().Except(adjustedDf.AsEnumerable()).CopyToDataTable();
+
+                while (remainingFeatures.Rows.Count > 0)
+                {
+                    bool reassigned = false;
+                    foreach (DataRow feature in remainingFeatures.Rows)
+                    {
+                        int closestCluster = -1;
+                        double closestDistance = double.MaxValue;
+
+                        foreach (var cluster in adjustedDf.AsEnumerable().Select(row => row.Field<int>("Cluster")).Distinct())
+                        {
+                            var clusterDf = adjustedDf.AsEnumerable().Where(row => row.Field<int>("Cluster") == cluster).CopyToDataTable();
+                            double distance = Math.Sqrt(Math.Pow((double)feature["X"] - clusterDf.AsEnumerable().Select(row => row.Field<double>("X")).Average(), 2) +
+                                                        Math.Pow((double)feature["Y"] - clusterDf.AsEnumerable().Select(row => row.Field<double>("Y")).Average(), 2));
+                            if (distance < closestDistance)
+                            {
+                                closestCluster = cluster;
+                                closestDistance = distance;
+                            }
+                        }
+
+                        if (closestCluster != -1)
+                        {
+                            var clusterDf = adjustedDf.AsEnumerable().Where(row => row.Field<int>("Cluster") == closestCluster).CopyToDataTable();
+                            if (Math.Abs((double)feature["Y"] - clusterDf.AsEnumerable().Select(row => row.Field<double>("Y")).Max()) <= 15 &&
+                                (double)feature["Y"] - clusterDf.AsEnumerable().Select(row => row.Field<double>("Y")).Max() >= -10 &&
+                                Math.Abs((double)feature["X"] - clusterDf.AsEnumerable().Select(row => row.Field<double>("X")).Average()) <= 10 &&
+                                (double)feature["Time"] - clusterDf.AsEnumerable().Select(row => row.Field<double>("Time")).Max() <= 5)
+                            {
+                                adjustedDf.ImportRow(feature);
+                                remainingFeatures.Rows.Remove(feature);
+                                reassigned = true;
+                            }
+                        }
+                    }
+
+                    if (!reassigned)
+                    {
+                        break;
+                    }
+                }
+
+                return adjustedDf;
+            }
+            catch (Exception ex)
+            {
+                throw BaseConstants.ThrowException("YoloTracker.AdjustClusters", ex);
             }
         }
 
 
-        public (int, int) CalculateObjectsInLeg(YoloFeatureSeenList features)
+        static List<string> ValidateClusters(double yMovePerTimeSlice, DataTable df)
         {
-            var minFrameId = features[0].BlockId;
-            var maxFrameId = features[^1].BlockId;
+            var validationErrors = new List<string>();
 
-            bool firstFrame = true;
-
-            // Process each frame
-            for (int frameId = minFrameId; frameId <= maxFrameId; frameId++)
+            foreach (var cluster in df.AsEnumerable().Select(row => row.Field<int>("Cluster")).Distinct())
             {
-                YoloFeatureSeenList frameFeatures = new();
-                foreach(var feature in features)
-                    if (feature.BlockId == frameId)
-                        frameFeatures.Add(feature);
+                var clusterDf = df.AsEnumerable().Where(row => row.Field<int>("Cluster") == cluster).OrderBy(row => row.Field<string>("Feature")).ToList();
+                DataRow previousRow = null;
 
-                if (frameFeatures.Count > 0)
+                foreach (var row in clusterDf)
                 {
-                    ProcessFrame(frameId, frameFeatures, firstFrame);
-                    firstFrame = false;
+                    if (previousRow != null)
+                    {
+                        if ((double)row["Time"] < (double)previousRow["Time"])
+                        {
+                            validationErrors.Add($"Cluster {cluster}, Feature {row["Feature"]}: Time not monotonically increasing.");
+                        }
+                        if (Math.Abs((double)row["Y"] - (double)previousRow["Y"]) > 25 - yMovePerTimeSlice || (double)row["Y"] - (double)previousRow["Y"] < -yMovePerTimeSlice)
+                        {
+                            validationErrors.Add($"Cluster {cluster}, Feature {row["Feature"]}: Y change out of allowed range.");
+                        }
+                        if ((double)row["Time"] - (double)previousRow["Time"] > 5)
+                        {
+                            validationErrors.Add($"Cluster {cluster}, Feature {row["Feature"]}: Time gap greater than 5.");
+                        }
+                    }
+
+                    previousRow = row;
                 }
             }
 
-            // Merge similar targets
-            int preMerge = ObjectsSeen.NumSignificant();
-            MergeSimilarObjects();
-            int postMerge = ObjectsSeen.NumSignificant();
-
-            return (preMerge, postMerge);
+            return validationErrors;
         }
     }
 }

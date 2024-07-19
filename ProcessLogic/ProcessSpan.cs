@@ -1,5 +1,4 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using MathNet.Numerics.LinearRegression;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
@@ -44,7 +43,8 @@ namespace SkyCombImage.ProcessLogic
             foreach (var theObject in objs)
             {
                 var theObj = theObject.Value;
-                // Copy the list of features claimed by the object
+
+                // Clone the list of features (not the features themselves) claimed by the object 
                 var objectFeatures = theObj.ProcessFeatures.Clone();
 
                 // Eliminate all object summary data.
@@ -63,7 +63,7 @@ namespace SkyCombImage.ProcessLogic
             }
 
             // Calculate the revised object-list location and height errors.
-            objs.CalculateSettings(objs);
+            objs.CalculateSettings();
 
             // Do we see a drop in location error sum?
             // The location error assumes the objects are mostly stationary over the time they are observed.
@@ -95,95 +95,44 @@ namespace SkyCombImage.ProcessLogic
                 if (!Process.Drone.FlightSteps.HasOnGroundAtFix)
                     maxTestAbsM = 15;
 
-                if (true)
-                {
-                    // Proven method
+                // Calculate the initial object error location and height errors with no fix.
+                var fixAltM = 0.0f;
+                CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs);
+                OrgSumLocnErrM = BestSumLocnErrM;
+                OrgSumHeightErrM = BestSumHeightErrM;
 
-                    // Calculate the initial object error location and height errors with no fix.
-                    var fixAltM = 0.0f;
-                    CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs);
-                    OrgSumLocnErrM = BestSumLocnErrM;
-                    OrgSumHeightErrM = BestSumHeightErrM;
+                float bigInc = 0.5f; // 50 centimeters
+                float smallInc = 0.1f;// 10 centimeters
 
-                    // Search upwards at +0.2m intervals. If maxTestAbsM == 5, do <= 24 calculations 
-                    for (fixAltM = 0.2f; fixAltM <= maxTestAbsM; fixAltM += 0.2f)
-                        if (!CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs))
-                            break;
-
-                    // Search downwards at -0.2m intervals. If maxTestAbsM == 5, do <= 24 calculations 
-                    for (fixAltM = -0.2f; fixAltM >= -maxTestAbsM; fixAltM -= 0.2f)
-                        if (!CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs))
-                            break;
-
-                    // Fine tune at 0.1m intervals. Costs 1 or 2 calculations.
-                    fixAltM = BestFixAltM + 0.1f;
+                // Search upwards at big increments. If maxTestAbsM == 16, do 32 calculations 
+                for (fixAltM = bigInc; fixAltM <= maxTestAbsM; fixAltM += bigInc)
                     if (!CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs))
-                    {
-                        fixAltM = BestFixAltM - 0.1f;
-                        CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs);
-                    }
+                        break;
+                // Search downwards at big intervals. If maxTestAbsM == 16, do 32 calculations 
+                for (fixAltM = -bigInc; fixAltM >= -maxTestAbsM; fixAltM -= bigInc)
+                    if (!CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs))
+                        break;
+                var roughBestFixAltM = BestFixAltM;
 
-                    // Lock in the best single value across the leg steps
-                    fixAltM = BestFixAltM;
-                    CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs);
-                    Process.ProcessObjects.CalculateSettings(Process.ProcessObjects);
-                }
-                else
-                {
-                    // Trial method. Works but not well enough to replace above code. Needs refining.
+                // Fine tune search upwards at small increments. Do 4 calculations 
+                for (fixAltM = smallInc; fixAltM < bigInc; fixAltM += smallInc)
+                    if (!CalculateSettings_ApplyFixAltM(roughBestFixAltM + fixAltM, theSteps, theObjs))
+                        break;
 
-                    var fixAltM = 0.0f;
-                    OrgSumLocnErrM = 9999;
-                    OrgSumHeightErrM = 9999;
+                // Fine tune search downwards at small intervals. Do 4 calculations 
+                for (fixAltM = -smallInc; fixAltM > -bigInc; fixAltM -= smallInc)
+                    if (!CalculateSettings_ApplyFixAltM(roughBestFixAltM + fixAltM, theSteps, theObjs))
+                        break;
 
-                    // Pass 1: Build up sample points using the
-                    // (computationally expensive) CalculateSettings_ApplyFixAltM
-                    const int numPoints = 16;
-                    var x = new double[numPoints];
-                    var y = new double[numPoints];
-                    for (int i = 0; i < numPoints; i++)
-                    {
-                        fixAltM = i * 0.5f - 4; // Evaluate from -4 to +4
-                        CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs);
-
-                        x[i] = fixAltM;
-                        y[i] = theObjs.SumLocationErrM;
-
-                        if (fixAltM == 0)
-                            OrgSumLocnErrM = theObjs.SumLocationErrM;
-
-                        if (Math.Abs(y[i]) < BestSumLocnErrM)
-                        {
-                            BestSumLocnErrM = theObjs.SumLocationErrM;
-                            BestFixAltM = fixAltM;
-                        }
-                    }
-
-
-                    // Pass 2: Try more values from -9m to +9m in 0.1m increments
-                    // using the (computationally cheap) polynomial
-                    var rslt = MathNet.Numerics.Fit.Polynomial(x, y, 5, DirectRegressionMethod.QR);
-                    var poly = new MathNet.Numerics.Polynomial(rslt);
-                    for (fixAltM = -9; fixAltM <= +9; fixAltM += 0.1f)
-                    {
-                        var value = (float)Math.Abs(poly.Evaluate(fixAltM));
-                        if (value < BestSumLocnErrM)
-                        {
-                            BestSumLocnErrM = value;
-                            BestFixAltM = fixAltM;
-                        }
-                    }
-
-                    // Lock in the best single value across the full leg
-                    fixAltM = BestFixAltM;
-                    CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs);
-                    SetBest(fixAltM, theObjs);
-                    Process.ProcessObjects.CalculateSettings(Process.ProcessObjects);
-                }
+                // Lock in the best single value across the leg steps
+                fixAltM = BestFixAltM;
+                CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs);
+                SetBest(fixAltM, theObjs);
+                Process.ProcessObjects.CalculateSettings();
             }
             catch (Exception ex)
             {
-                throw ThrowException("ProcessSpan.CalculateSettings_Core", ex);
+                throw ThrowException("ProcessSpan.CalculateSettings_FixAltM", ex);
             }
         }
 

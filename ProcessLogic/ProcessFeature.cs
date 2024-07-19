@@ -536,6 +536,8 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+
+        // Clone the feature list (not the feature themselves).
         public ProcessFeatureList Clone()
         {
             var answer = new ProcessFeatureList(ProcessConfig);

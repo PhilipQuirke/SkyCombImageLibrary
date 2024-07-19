@@ -99,33 +99,30 @@ namespace SkyCombImage.ProcessLogic
                     // During the leg, we found features using Yolo image detection,
                     // and defined objects using IoU overlap in successive frames.
 
-                    YoloTracker tracker = new(
-                        ProcessConfig.YoloIoU, // % overlap between feature in successive images
-                        ProcessConfig.YoloMergeConfidence, // % confidence in merging two objects
-                        ProcessConfig.YoloMergeVelocityWeighting,
-                        ProcessConfig.YoloMergePositionWeighting);
+                    double yMovePerTimeSlice = 10; // Estiamte of number of y pixels per frame  // PQR TODO
 
-                    tracker.CalculateObjectsInLeg(LegFrameFeatures);
+                    var objectsSeen = YoloTracker.CalculateObjectsInLeg(yMovePerTimeSlice, LegFrameFeatures);
 
                     // For each ObjectSeen, create a YoloObject
-                    foreach (var objSeen in tracker.ObjectsSeen)
-                        if(objSeen.Features.Any())
-                        {
-                            FlightLeg_SigObjects++;
-                            var firstFeature = ProcessFeatures[ objSeen.Features[0].FeatureId ];
-                            firstFeature.CalculateSettings_LocationM_FlatGround(null);
-                            firstFeature.CalculateSettings_LocationM_HeightM_LineofSight(GroundData);
-                            YoloObject newObject = AddYoloObject(scope, legId, firstFeature as YoloFeature);
+                    foreach (var objSeen in objectsSeen)
+                    {
+                        Assert(objSeen.Features.Any(), "YoloObject has no features");
 
-                            // Add remaining features to the object
-                            for (int i = 1; i < objSeen.Features.Count; i++)
-                            {
-                                var theFeature = ProcessFeatures[objSeen.Features[i].FeatureId];
-                                theFeature.CalculateSettings_LocationM_FlatGround(null);
-                                theFeature.CalculateSettings_LocationM_HeightM_LineofSight(GroundData);
-                                newObject.ClaimFeature(theFeature);
-                            }
+                        FlightLeg_SigObjects++;
+                        var firstFeature = ProcessFeatures[ objSeen.Features[0].FeatureId ];
+                        firstFeature.CalculateSettings_LocationM_FlatGround(null);
+                        firstFeature.CalculateSettings_LocationM_HeightM_LineofSight(GroundData);
+                        YoloObject newObject = AddYoloObject(scope, legId, firstFeature as YoloFeature);
+
+                        // Add remaining features to the object
+                        for (int i = 1; i < objSeen.Features.Count; i++)
+                        {
+                            var theFeature = ProcessFeatures[objSeen.Features[i].FeatureId];
+                            theFeature.CalculateSettings_LocationM_FlatGround(null);
+                            theFeature.CalculateSettings_LocationM_HeightM_LineofSight(GroundData);
+                            newObject.ClaimFeature(theFeature);
                         }
+                    }
                 }
 
                 // For process robustness, we want to process each leg independently.

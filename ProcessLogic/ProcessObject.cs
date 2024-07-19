@@ -663,7 +663,7 @@ namespace SkyCombImage.ProcessLogic
                     answer.AddObject(theObject.Value);
 
             if (answer.Count > 0)
-                answer.CalculateSettings(answer);
+                answer.CalculateSettings();
 
             return answer;
         }
@@ -761,9 +761,8 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-
-        // Calculate settings based on all provided objects 
-        public void CalculateSettings(ProcessObjList objects)
+        // Calculate settings based on provided ProcessObjects 
+        private void CalculateSettings(ProcessObjList objects)
         {
             ResetSettings();
 
@@ -790,9 +789,12 @@ namespace SkyCombImage.ProcessLogic
                 (MinHeat, MaxHeat) = TardisSummaryModel.SummariseInt(MinHeat, MaxHeat, theObject.Value.MaxHeat);
             }
         }
-
-
-        // Calculate settings based on significant child objects 
+        // Calculate settings based on owned ProcessObjects 
+        public void CalculateSettings()
+        {
+           CalculateSettings(this);
+        }
+        // Calculate settings based on in-scope ProcessObjects 
         public void CalculateSettings(ProcessScope scope, int focusObjectID)
         {
             CalculateSettings(FilterByProcessScope(scope, focusObjectID));
