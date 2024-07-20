@@ -107,13 +107,11 @@ namespace SkyCombImage.ProcessModel
 
             if(ProcessConfig != null)
             {
-                if( RunProcess == RunProcessEnum.Comb)
-                    answer += "Heat Threshold: " + ProcessConfig.HeatThresholdValue + "\r\n";
-                else
+                answer += "Heat Threshold: " + ProcessConfig.HeatThresholdValue + "\r\n";
+                if (RunProcess == RunProcessEnum.Yolo)
                     answer += "Detect/IoU/Merge: " +
                         ProcessConfig.YoloDetectConfidence.ToString() + "/" + 
-                        ProcessConfig.YoloIoU.ToString() + "/" + 
-                        ProcessConfig.YoloMergeConfidence.ToString() + "\r\n";
+                        ProcessConfig.YoloIoU.ToString() + "\r\n";
 
                 answer += "Save Annotated Video: " + (ProcessConfig.SaveAnnotatedVideo ? "Yes" : "No") + "\r\n";
 

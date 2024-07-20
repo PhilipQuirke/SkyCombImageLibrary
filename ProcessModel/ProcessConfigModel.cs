@@ -31,11 +31,11 @@ namespace SkyCombImage.ProcessModel
         // Successive frame Yolo overlap threshold. Typically 0.2 to 0.4
         public const float YoloIoUDefault = 0.25f; 
         // Yolo merge objects based on similarity threshold
-        public const float YoloMergeConfidenceDefault = 0.8f;
+        //public const float YoloMergeConfidenceDefault = 0.8f;
         // Weightings for similarity criteria between two objects
-        public const float YoloMergeVelocityWeightingDefault = 0.45f;
-        public const float YoloMergePositionWeightingDefault = 0.45f;
-        public const float YoloMergeSizeWeightingDefault = 1.0f - (YoloMergeVelocityWeightingDefault + YoloMergePositionWeightingDefault);
+        //public const float YoloMergeVelocityWeightingDefault = 0.45f;
+        //public const float YoloMergePositionWeightingDefault = 0.45f;
+        //public const float YoloMergeSizeWeightingDefault = 1.0f - (YoloMergeVelocityWeightingDefault + YoloMergePositionWeightingDefault);
 
 
         // --------------------- Debug --------------------- 
@@ -109,9 +109,9 @@ namespace SkyCombImage.ProcessModel
         // Successive frame Yolo overlap threshold
         public float YoloIoU { get; set; } = ProcessConfigModel.YoloIoUDefault; // Typically 0.2 to 0.4
         // Yolo merge objects based on similarity threshold
-        public float YoloMergeConfidence { get; set; } = ProcessConfigModel.YoloMergeConfidenceDefault;
-        public float YoloMergeVelocityWeighting { get; set; } = ProcessConfigModel. YoloMergeVelocityWeightingDefault;
-        public float YoloMergePositionWeighting { get; set; } = ProcessConfigModel.YoloMergePositionWeightingDefault;
+        //public float YoloMergeConfidence { get; set; } = ProcessConfigModel.YoloMergeConfidenceDefault;
+        //public float YoloMergeVelocityWeighting { get; set; } = ProcessConfigModel. YoloMergeVelocityWeightingDefault;
+        //public float YoloMergePositionWeighting { get; set; } = ProcessConfigModel.YoloMergePositionWeightingDefault;
 
 
         // --------------------- Saving Output --------------------- 
@@ -172,8 +172,8 @@ namespace SkyCombImage.ProcessModel
             if ((YoloIoU < 0.1f) || (YoloIoU > 0.9f))
                 YoloIoU = ProcessConfigModel.YoloIoUDefault;
 
-            if ((YoloMergeConfidence < 0.1f) || (YoloMergeConfidence > 0.9f))
-                YoloMergeConfidence = ProcessConfigModel.YoloMergeConfidenceDefault;
+            //if ((YoloMergeConfidence < 0.1f) || (YoloMergeConfidence > 0.9f))
+            //    YoloMergeConfidence = ProcessConfigModel.YoloMergeConfidenceDefault;
         }
 
 
