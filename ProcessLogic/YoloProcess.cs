@@ -83,7 +83,6 @@ namespace SkyCombImage.ProcessLogic
 
             var answer = new YoloObject(this, scope, legId, firstFeature, className, Color.Red, classConfidence);
             ProcessObjects.AddObject(answer);
-            Assert(answer.Significant, "YoloProcess.AddYoloObject: Object is not significant");
             return answer;
         }
 
@@ -93,6 +92,7 @@ namespace SkyCombImage.ProcessLogic
             if (Drone.UseFlightLegs)
             {
                 FlightLeg_SigObjects = 0;
+                ProcessObjList legObjs = new();
 
                 if (LegFrameFeatures.Count > 0)
                 {
@@ -108,11 +108,11 @@ namespace SkyCombImage.ProcessLogic
                     {
                         Assert(objSeen.Features.Any(), "YoloObject has no features");
 
-                        FlightLeg_SigObjects++;
                         var firstFeature = ProcessFeatures[ objSeen.Features[0].FeatureId ];
                         firstFeature.CalculateSettings_LocationM_FlatGround(null);
                         firstFeature.CalculateSettings_LocationM_HeightM_LineofSight(GroundData);
                         YoloObject newObject = AddYoloObject(scope, legId, firstFeature as YoloFeature);
+                        legObjs.AddObject(newObject);
 
                         // Add remaining features to the object
                         for (int i = 1; i < objSeen.Features.Count; i++)
@@ -124,6 +124,8 @@ namespace SkyCombImage.ProcessLogic
                         }
                     }
                 }
+
+                FlightLeg_SigObjects = EnsureObjectsNamed(0, legObjs, null);
 
                 // For process robustness, we want to process each leg independently.
                 LegFrameFeatures.Clear();

@@ -108,14 +108,17 @@ namespace SkyCombImage.ProcessLogic
         protected int EnsureObjectsNamed(int sigObjects, ProcessObjList theObjects, FlightStep? currRunFlightStep)
         {
             foreach (var theObject in theObjects)
-                if ((theObject.Value.FlightLegId > 0) &&
-                   ((currRunFlightStep == null) || (theObject.Value.FlightLegId == currRunFlightStep.FlightLegId)) &&
-                   (theObject.Value.Significant) &&
-                   (theObject.Value.Name == ""))
+            {
+                var theObj = theObject.Value;
+                if ((theObj.FlightLegId > 0) &&
+                   ((currRunFlightStep == null) || (theObj.FlightLegId == currRunFlightStep.FlightLegId)) &&
+                   (theObj.Significant) &&
+                   (theObj.Name == ""))
                 {
                     sigObjects++;
-                    theObject.Value.SetName(sigObjects);
+                    theObj.SetName(sigObjects);
                 }
+            }
             return sigObjects;
         }
 
