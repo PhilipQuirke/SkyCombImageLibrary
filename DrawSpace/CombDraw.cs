@@ -268,14 +268,14 @@ namespace SkyCombImage.DrawSpace
     }
 
 
-    // Code to draw ground tree-top & drone alitudes against lineal meters, with comb objects overlaid
-    public class CombDrawAltitudeByLinealM : DrawAltitudeByLinealM
+    // Code to draw ground tree-top & drone alitudes against lineal meters, with objects overlaid
+    public class ProcessDrawAltitudeByLinealM : DrawAltitudeByLinealM
     {
-        ProcessAll? Process { get; }
-        ProcessDrawScope DrawScope { get; }
+        private ProcessAll Process { get; }
+        private ProcessDrawScope DrawScope { get; }
 
 
-        public CombDrawAltitudeByLinealM(ProcessAll? process, ProcessDrawScope drawScope) : base(drawScope)
+        public ProcessDrawAltitudeByLinealM(ProcessAll process, ProcessDrawScope drawScope) : base(drawScope)
         {
             Process = process;
             DrawScope = drawScope;
@@ -285,34 +285,23 @@ namespace SkyCombImage.DrawSpace
 
 
         // Draw altitude data dependant on Drone/GroundSpace data
-        public void Initialise(ProcessAll process, Size size)
+        public override void Initialise(Size size)
         {
-            try
-            {
-                Initialise(size);
+            base.Initialise(size);
 
-                if (DroneDrawScope.Drone == null)
-                    return;
-
-                // Draw significant object as horizontally-stretched H with centroid - showing object duration and height
-                if (process != null)
-                    GraphObjects(ref BaseImage, process);
-            }
-            catch (Exception ex)
-            {
-                throw ThrowException("CombDrawAltitudeByLinealM.Initialise", ex);
-            }
+            // Draw significant object as horizontally-stretched H with centroid - showing object duration and height
+            GraphObjects(ref BaseImage);
         }
 
 
         // Draw object at best estimate of height, location with error bars
-        public void GraphObjects(ref Image<Bgr, byte> currImage, ProcessAll process)
+        public void GraphObjects(ref Image<Bgr, byte> currImage)
         {
             try
             {
-                if ((DroneDrawScope.Drone != null) && (process != null) && (process.ProcessObjects.Count > 0))
+                if ((DroneDrawScope.Drone != null) && (Process != null) && (Process.ProcessObjects.Count > 0))
                 {
-                    foreach (var thisObject in process.ProcessObjects)
+                    foreach (var thisObject in Process.ProcessObjects)
                         if (thisObject.Value.Significant && (thisObject.Value.HeightM > ProcessObjectModel.UnknownHeight))
                         {
                             var avgHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.HeightM - MinVertRaw, VertRangeRaw));
@@ -345,29 +334,20 @@ namespace SkyCombImage.DrawSpace
         // Draw altitude data based on Drone/GroundSpace & RunSpace data
         public override void CurrImage(ref Image<Bgr, byte> image)
         {
-            try
-            {
-                // Draw significant object as horizontally-stretched H with centroid - showing object duration and height
-                if (Process != null)
-                    GraphObjects(ref image, Process);
-            }
-            catch (Exception ex)
-            {
-                throw ThrowException("CombDrawAltitudeByLinealM.CurrImage", ex);
-            }
+            GraphObjects(ref image);
         }
     }
 
 
 
-    // Code to draw ground tree-top & drone altitudes against time, with comb objects overlaid
-    public class CombDrawAltitudeByTime : DrawAltitudeByTime
+    // Code to draw ground tree-top & drone altitudes against time, with objects overlaid
+    public class ProcessDrawAltitudeByTime : DrawAltitudeByTime
     {
-        ProcessAll? Process { get; }
-        ProcessDrawScope DrawScope { get; }
+        private ProcessAll Process { get; }
+        private ProcessDrawScope DrawScope { get; }
 
 
-        public CombDrawAltitudeByTime(ProcessAll? process, ProcessDrawScope drawScope) : base(drawScope)
+        public ProcessDrawAltitudeByTime(ProcessAll process, ProcessDrawScope drawScope) : base(drawScope)
         {
             Process = process;
             DrawScope = drawScope;
@@ -377,38 +357,24 @@ namespace SkyCombImage.DrawSpace
 
 
         // Draw altitude data dependant on Drone/GroundSpace data (but not RunSpace data)
-        public void Initialise(CombProcess process, Size size)
+        public override void Initialise(Size size)
         {
-            try
-            {
-                Initialise(size);
+            base.Initialise(size);
 
-                if (DroneDrawScope.Drone == null)
-                    return;
-
-                // Draw significant object as horizontally-stretched H with centroid - showing object duration and height
-                if (process != null)
-                {
-                    GraphObjects(ref BaseImage, process);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ThrowException("CombDrawAltitudeByTime.Initialise", ex);
-            }
+            GraphObjects(ref BaseImage);
         }
 
 
         // Draw object at best estimate of height and center of period seen
         // Draw object "visible duration" as horizontally-stretched H
         // Draw object "height error" as vertically-stretched H
-        public void GraphObjects(ref Image<Bgr, byte> currImage, ProcessAll process)
+        public void GraphObjects(ref Image<Bgr, byte> currImage)
         {
             try
             {
-                if ((DroneDrawScope.Drone != null) && (process != null) && (process.ProcessObjects.Count > 0))
+                if ((DroneDrawScope.Drone != null) && (Process != null) && (Process.ProcessObjects.Count > 0))
                 {
-                    foreach (var thisObject in process.ProcessObjects)
+                    foreach (var thisObject in Process.ProcessObjects)
                         if (thisObject.Value.Significant)
                         {
                             var avgHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.HeightM - MinVertRaw, VertRangeRaw));
@@ -455,16 +421,7 @@ namespace SkyCombImage.DrawSpace
         // Draw altitude data based on Drone/GroundSpace & RunSpace data
         public override void CurrImage(ref Image<Bgr, byte> image)
         {
-            try
-            {
-                // Draw significant object as horizontally-stretched H with centroid - showing object duration and height
-                if (Process != null)
-                    GraphObjects(ref image, Process);
-            }
-            catch (Exception ex)
-            {
-                throw ThrowException("CombDrawAltitudeByTime.CurrImage", ex);
-            }
+            GraphObjects(ref image);
         }
     }
 
@@ -472,14 +429,20 @@ namespace SkyCombImage.DrawSpace
     // Code to draw comb object height - including feature estimates
     public class CombDrawObjectHeight : DrawAltitudeByTime
     {
-        public CombDrawObjectHeight(ProcessDrawScope drawScope) : base(drawScope)
+        private ProcessAll Process { get; }
+        private ProcessDrawScope DrawScope { get; }
+
+
+        public CombDrawObjectHeight(ProcessAll process, ProcessDrawScope drawScope) : base(drawScope)
         {
+            Process = process;
+            DrawScope = drawScope;
             Description +=
                 "Object & object feature height are shown.";
         }
 
 
-        public void Initialise(ProcessAll process, Size size, ProcessObject focusObject)
+        public void Initialise(Size size, ProcessObject focusObject)
         {
             try
             {
@@ -511,7 +474,7 @@ namespace SkyCombImage.DrawSpace
         }
 
 
-        public void CurrImage(ref Image<Bgr, byte> image, ProcessAll process, ProcessObject thisObject)
+        public void CurrImage(ref Image<Bgr, byte> image, ProcessObject thisObject)
         {
             try
             {
