@@ -54,11 +54,6 @@ namespace SkyCombImage.ProcessLogic
         {
             try
             {
-                // Debugging - Set breakpoint on assignment. Assignment value is overridden later in this proc.
-                if (ObjectId == ProcessConfig.FocusObjectId)
-                    if (CombProcess.Blocks.Count >= 17)
-                        Significant = false;
-
                 // COUNT
                 // Maximum pixel count per real feature
                 var maxCount = MaxRealHotPixels;
@@ -167,10 +162,6 @@ namespace SkyCombImage.ProcessLogic
                 // Associate the feature with this object.
                 Assert(theFeature.ObjectId <= 0, "CombObject.ClaimFeature: Feature is already owned.");
                 theFeature.ObjectId = this.ObjectId;
-
-                // Debugging - Set breakpoint on assignment. (Value is unchanged by assignment)
-                if (ObjectId == ProcessConfig.FocusObjectId)
-                    theFeature.ObjectId = this.ObjectId;
 
                 bool wasSignificant = Significant;
 

@@ -4,9 +4,11 @@ using Emgu.CV.Structure;
 using SkyCombDrone.DrawSpace;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
+using SkyCombGroundLibrary.CommonSpace;
+using SkyCombImage.ProcessModel;
 
 
-namespace SkyCombImage.ProcessModel
+namespace SkyCombImageLibrary.RunSpace
 {
     public enum RunProcessEnum { Comb, Yolo, Threshold, GFTT, None };
 
@@ -28,19 +30,8 @@ namespace SkyCombImage.ProcessModel
         public ProcessConfigModel ProcessConfig;
         public DrawImageConfig ImageConfig;
 
-
-        // Name of image or video file to load at app start up. Can be just a directory path. Can be blank.
+        // InputDirectory with an optional file name. Trailing "\" (if any) is trimmed
         public string InputFileName { get; set; } = "";
-
-        // Ground path containing static ground contour data. Can be blank. Trailing "\" (if any) is trimmed
-        public string GroundDirectory { get; set; } = "";
-
-        // Directory path to store created (video and spreadsheet) files into. Can be blank. Trailing "\" (if any) is trimmed
-        public string OutputDirectory { get; set; } = "";
-
-        // Directory path/file to load YOLOv8 model from. If is a bare directory path, code appends "\yolo_v8_s_e100.onnx"
-        // yolo_v8_s_e100.onnx was generated in and exported from Supervisely.
-        public string YoloDirectory { get; set; } = "";
 
         // Name of main process to run: contour, distance, yolo, gftt, comb, threshold, none. Lowercase.
         public RunProcessEnum RunProcess { get; set; } = RunProcessEnum.Comb;
@@ -76,23 +67,9 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        // File directory name stripped from the input file name
-        public string InputDirectory()
-        {
-            return Path.GetDirectoryName(InputFileName).Trim('\\');
-        }
-
-
         // We output files to the OutputDirectory (if specified) else the InputDirectory.
         // File directory name stripped from the input file name
-        public string OutputElseInputDirectory()
-        {
-            if (OutputDirectory != "")
-                return OutputDirectory;
-
-            return Path.GetDirectoryName(InputFileName).Trim('\\');
-        }
-
+        public string OutputElseInputDirectory { get { return OutputDirectory != "" ? OutputDirectory : InputDirectory; } }
 
         public bool MaxRunSpeed { get { return RunSpeed == RunSpeedEnum.Max; } }
 
@@ -105,12 +82,12 @@ namespace SkyCombImage.ProcessModel
                 "Process: " + RunProcess + "\r\n" +
                 "Speed: " + RunSpeed + "\r\n";
 
-            if(ProcessConfig != null)
+            if (ProcessConfig != null)
             {
                 answer += "Heat Threshold: " + ProcessConfig.HeatThresholdValue + "\r\n";
                 if (RunProcess == RunProcessEnum.Yolo)
                     answer += "Detect/IoU/Merge: " +
-                        ProcessConfig.YoloDetectConfidence.ToString() + "/" + 
+                        ProcessConfig.YoloDetectConfidence.ToString() + "/" +
                         ProcessConfig.YoloIoU.ToString() + "\r\n";
 
                 answer += "Save Annotated Video: " + (ProcessConfig.SaveAnnotatedVideo ? "Yes" : "No") + "\r\n";
@@ -143,39 +120,22 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        // Load this object's settings from strings (loaded from App.Config)
-        // This function must align to the above GetSettings function.
-        public void LoadSettings(DataPairList settings)
+        // Load this object's settings from json
+        public void LoadJsonSettings()
         {
             try
             {
-                ProcessConfig.LoadSettings(settings);
-
-                foreach (var setting in settings)
-                    switch (setting.Key)
-                    {
-                        case "inputfilename":
-                            InputFileName = setting.Value; break;
-                        case "grounddirectory":
-                            GroundDirectory = setting.Value.TrimEnd('\\'); break;
-                        case "outputdirectory":
-                            OutputDirectory = setting.Value.TrimEnd('\\'); break;
-                        case "yolodirectory":
-                            YoloDirectory = setting.Value.TrimEnd('\\'); break;
-                    }
+                var settings = JsonSettings.LoadSettings();
+                InputDirectory = settings.InputDirectory.TrimEnd('\\');
+                LinzApiKey = settings.LinzApiKey;
+                GroundDirectory = settings.GroundDirectory.TrimEnd('\\');
+                YoloDirectory = settings.YoloDirectory.TrimEnd('\\');
+                OutputDirectory = settings.OutputDirectory.TrimEnd('\\');
             }
             catch (Exception ex)
             {
-                throw ThrowException("RunConfig.LoadSettings", ex);
+                throw ThrowException("RunConfig.LoadJsonSettings", ex);
             }
-        }
-
-
-        // Process (analyse) a single image (using any one ProcessName) and returns an image.
-        // The output image shows hot pixel in green, with red rectangles bounding significant features.
-        public static void Run(RunConfig config, ref Image<Bgr, byte> imgInput)
-        {
-            DrawSpace.DrawImage.Draw(config.RunProcess, config.ProcessConfig, config.ImageConfig, ref imgInput);
         }
     }
 }

@@ -2,9 +2,9 @@
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
 using SkyCombImage.PersistModel;
-using SkyCombImage.ProcessModel;
 using SkyCombImage.ProcessLogic;
 using SkyCombGround.CommonSpace;
+using SkyCombImageLibrary.RunSpace;
 
 
 // Continuation of RunVideo.cs, contains both Skycomb-specific runners
@@ -18,7 +18,7 @@ namespace SkyCombImage.RunSpace
         {
             try
             {
-                var directory = config.OutputElseInputDirectory();
+                var directory = config.OutputElseInputDirectory;
 
                 StandardLoad dataReader = new(dataStore);
                 var runSettings = dataReader.RunConfigSettings();

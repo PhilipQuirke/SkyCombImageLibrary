@@ -12,6 +12,7 @@ using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using System.Diagnostics;
+using SkyCombImageLibrary.RunSpace;
 
 
 // Namespace for processing of a video made up of multiple images (frames).
@@ -223,7 +224,7 @@ namespace SkyCombImage.RunSpace
             (var modifiedInputFrame, var modifiedDisplayFrame) =
                 DrawSpace.DrawVideoFrames.Draw(
                     RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, Drone,
-                    block, ProcessAll, RunConfig.ProcessConfig.FocusObjectId,
+                    block, ProcessAll, UnknownValue, 
                     inputFrame, displayFrame);
 
             if(modifiedInputFrame != null)
@@ -552,13 +553,15 @@ namespace SkyCombImage.RunSpace
                 ProcessAll.Blocks.AddBlock(thisBlock, this, Drone);
 
                 var inputImage = CurrInputVideoFrame.Clone();
-                RunConfig.Run(RunConfig, ref inputImage);
+
+                // Process (analyse) a single image (using any one ProcessName) and returns an image.
+                DrawImage.Draw(RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, ref inputImage);
 
                 return thisBlock;
             }
             catch (Exception ex)
             {
-                throw ThrowException("RunSpace.StandardVideoProcessor.ProcessFrame", ex);
+                throw ThrowException("RunSpace.RunVideoStandard.AddBlockAndProcessInputVideoFrame", ex);
             }
         }
 

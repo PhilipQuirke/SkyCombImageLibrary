@@ -652,12 +652,12 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public ProcessObjList FilterByProcessScope(ProcessScope scope, int focusObjectID = BaseConstants.UnknownValue)
+        public ProcessObjList FilterByProcessScope(ProcessScope scope)
         {
             ProcessObjList answer = new();
 
             foreach (var theObject in this)
-                if ((theObject.Value.Significant || (theObject.Value.ObjectId == focusObjectID)) &&
+                if (theObject.Value.Significant &&
                     // Only return objects in the RunFrom/To scope.
                     theObject.Value.InRunScope(scope))
                     answer.AddObject(theObject.Value);
@@ -727,11 +727,11 @@ namespace SkyCombImage.ProcessLogic
 
         // Returns key attributes of objects and associated user annotations (if any)
         // to show in the ObjectGrid in the Main Form or the ObjectList in the Object Form
-        public List<object[]> GetObjectGridData(ProcessScope scope, ProcessConfigModel processConfig, bool mainForm, ObjectCategoryList annotations, int focusObjectID = BaseConstants.UnknownValue)
+        public List<object[]> GetObjectGridData(ProcessScope scope, ProcessConfigModel processConfig, bool mainForm, ObjectCategoryList annotations)
         {
             var answer = new List<object[]>();
 
-            var sigObjects = FilterByProcessScope(scope, focusObjectID);
+            var sigObjects = FilterByProcessScope(scope);
             foreach (var theObject in sigObjects)
             {
                 ObjectCategoryModel? annotation = null;
@@ -795,9 +795,9 @@ namespace SkyCombImage.ProcessLogic
            CalculateSettings(this);
         }
         // Calculate settings based on in-scope ProcessObjects 
-        public void CalculateSettings(ProcessScope scope, int focusObjectID)
+        public void CalculateSettings(ProcessScope scope)
         {
-            CalculateSettings(FilterByProcessScope(scope, focusObjectID));
+            CalculateSettings(FilterByProcessScope(scope));
         }
 
 

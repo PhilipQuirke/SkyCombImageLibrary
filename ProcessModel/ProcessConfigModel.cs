@@ -30,17 +30,6 @@ namespace SkyCombImage.ProcessModel
         public const float YoloDetectConfidenceDefault = 0.66f;
         // Successive frame Yolo overlap threshold. Typically 0.2 to 0.4
         public const float YoloIoUDefault = 0.25f; 
-        // Yolo merge objects based on similarity threshold
-        //public const float YoloMergeConfidenceDefault = 0.8f;
-        // Weightings for similarity criteria between two objects
-        //public const float YoloMergeVelocityWeightingDefault = 0.45f;
-        //public const float YoloMergePositionWeightingDefault = 0.45f;
-        //public const float YoloMergeSizeWeightingDefault = 1.0f - (YoloMergeVelocityWeightingDefault + YoloMergePositionWeightingDefault);
-
-
-        // --------------------- Debug --------------------- 
-        // The ID of the Object that we want to focus on (if any).
-        public int FocusObjectId { get; set; } = 0;
 
 
         // --------------------- Process Techniques --------------------- 
@@ -202,7 +191,6 @@ namespace SkyCombImage.ProcessModel
         {
             return new DataPairList
             {
-                { "Focus Object Id", FocusObjectId },
                 { "Smooth Process", SmoothProcess.ToString() },
                 { "Smooth Pixels", SmoothPixels },
                 { "Threshold Process", ThresholdProcess.ToString() },
@@ -237,7 +225,6 @@ namespace SkyCombImage.ProcessModel
         public void LoadModelSettings(List<string> settings)
         {
             int i = 0;
-            FocusObjectId = StringToNonNegInt(settings[i++]);
             SmoothProcess = (SmoothProcessEnum)Enum.Parse(typeof(SmoothProcessEnum), settings[i++]);
             SmoothPixels = StringToNonNegInt(settings[i++]);
             ThresholdProcess = (ThresholdProcessEnum)Enum.Parse(typeof(ThresholdProcessEnum), settings[i++]);
@@ -263,19 +250,6 @@ namespace SkyCombImage.ProcessModel
             GfttK = StringToDouble(settings[i++]);
             YoloDetectConfidence = StringToFloat(settings[i++]);
             YoloIoU = StringToFloat(settings[i++]);
-        }
-
-
-        // Load this object's settings from strings (loaded from App.Config)
-        // This function must align to the above GetSettings function.
-        public void LoadSettings(DataPairList settings)
-        {
-            foreach (var setting in settings)
-                switch (setting.Key)
-                {
-                    case "focusobjectid":
-                        FocusObjectId = StringToNonNegInt(setting.Value); break;
-                }
         }
 
 

@@ -2,8 +2,8 @@
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
 using SkyCombImage.PersistModel;
-using SkyCombImage.ProcessModel;
 using SkyCombImage.ProcessLogic;
+using SkyCombImageLibrary.RunSpace;
 
 
 // Continuation of RunVideo.cs, contains both Skycomb-specific runners
@@ -106,7 +106,7 @@ namespace SkyCombImage.RunSpace
         // Return the data to show in the ObjectGrid in the Main Form
         public override List<object[]> GetObjectGridData(bool mainForm)
         {
-            return ProcessAll.ProcessObjects.GetObjectGridData(this, RunConfig.ProcessConfig, mainForm, CategoryAll.ObjectCategories, RunConfig.ProcessConfig.FocusObjectId);
+            return ProcessAll.ProcessObjects.GetObjectGridData(this, RunConfig.ProcessConfig, mainForm, CategoryAll.ObjectCategories);
        }
 
 
@@ -114,7 +114,7 @@ namespace SkyCombImage.RunSpace
         public override void EndRunning()
         {
             // Calculate object summary data
-            ProcessAll?.ProcessObjects?.CalculateSettings(this, RunConfig.ProcessConfig.FocusObjectId);
+            ProcessAll?.ProcessObjects?.CalculateSettings(this);
 
             StandardSave dataWriter = new(Drone, DataStore);
             dataWriter.ProcessAll(DataStore, RunConfig, GetEffort(), GetSettings(), this, CombProcess, true);

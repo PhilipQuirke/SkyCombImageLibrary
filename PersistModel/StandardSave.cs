@@ -8,6 +8,7 @@ using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using System.Drawing;
 using System.Drawing.Imaging;
+using SkyCombImageLibrary.RunSpace;
 
 
 namespace SkyCombImage.PersistModel
@@ -50,7 +51,7 @@ namespace SkyCombImage.PersistModel
             if (!Config.ProcessConfig.SaveAnnotatedVideo || Fps <= 0.1 || frameSize.Width == 0 || frameSize.Height == 0)
                 return (null, "");
 
-            return VideoData.CreateVideoWriter(inputFileName, Config.OutputElseInputDirectory(), Fps, frameSize);
+            return VideoData.CreateVideoWriter(inputFileName, Config.OutputElseInputDirectory, Fps, frameSize);
         }
 
 

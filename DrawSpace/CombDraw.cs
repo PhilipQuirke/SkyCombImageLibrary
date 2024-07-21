@@ -9,6 +9,7 @@ using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using System.Drawing;
+using SkyCombImageLibrary.RunSpace;
 
 
 namespace SkyCombImage.DrawSpace
