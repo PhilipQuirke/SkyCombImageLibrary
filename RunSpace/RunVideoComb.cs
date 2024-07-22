@@ -1,4 +1,6 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+using Emgu.CV.Structure;
+using Emgu.CV;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
 using SkyCombImage.DrawSpace;
@@ -78,29 +80,19 @@ namespace SkyCombImage.RunSpace
                     // Don't create features. Don't update objects.
                     return currBlock;
 
-                // Process the frame using "Image" Comb class, creating features.
+                Image<Bgr, byte> imgInput = CurrInputVideoFrame.Clone();
+                DrawImage.Smooth(RunConfig.ProcessConfig, ref imgInput);
 
-                //var imgInput = CurrInputVideoFrame.Clone();
-                //DrawImage.Smooth(RunConfig.ProcessConfig, ref imgInput);
+                Image<Gray, byte> imgThreshold = DrawImage.ToGrayScale(imgInput);
+                DrawImage.Threshold(RunConfig.ProcessConfig, ref imgThreshold);
 
-                // Set pixels hotter than ThresholdValue to 1. Set other pixels to 0.
-                //var imgThreshold = DrawImage.ToGrayScale(imgInput);
-                //DrawImage.Threshold(RunConfig.ProcessConfig, ref imgThreshold);
+                ProcessFeatureList featuresInBlock = ProcessFactory.NewProcessFeatureList(CombProcess.ProcessConfig);
+                CombFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, currBlock, CurrInputVideoFrame, imgThreshold);
 
-                //var featuresInBlock = ProcessFactory.NewProcessFeatureList(ProcessAll.ProcessConfig);
-                //CombFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, currBlock, imgInput, imgThreshold);
-
-                // Process the frame using "Image" Comb class, creating features.
-                // This "image" class has no "frame to frame" logic, so features are "one image" features.
-                ProcessFeatureList featuresInBlock = CombImage.Process(RunConfig, CombProcess, currBlock, CurrInputVideoFrame);
-
-                int num_sig = 0;
                 foreach (var feature in featuresInBlock)
                 {
                     feature.Value.CalculateSettings_LocationM_FlatGround(null);
                     feature.Value.CalculateSettings_LocationM_HeightM_LineofSight(ProcessAll.GroundData);
-                    if (feature.Value.Significant)
-                        num_sig++;
                 }
 
                 // Unless legs are not used, we only do comb processing during "legs". 

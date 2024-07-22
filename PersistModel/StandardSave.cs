@@ -155,9 +155,9 @@ namespace SkyCombImage.PersistModel
                             foreach (var feature in process.ProcessFeatures)
                                 if (runConfig.ProcessConfig.SavePixels == SavePixelsEnum.All || feature.Value.Significant)
                                 {
-                                    var combFeature = feature.Value as CombFeature;
-                                    if (combFeature.Pixels != null)
-                                        foreach (var pixel in combFeature.Pixels)
+                                    var theFeature = feature.Value;
+                                    if (theFeature.Pixels != null)
+                                        foreach (var pixel in theFeature.Pixels)
                                             if (runConfig.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All || feature.Value.Significant)
                                                 Data.SetDataListRowKeysAndValues(ref row, pixel.GetSettings());
                                 }

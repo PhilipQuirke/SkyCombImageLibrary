@@ -97,6 +97,7 @@ namespace SkyCombImage.ProcessLogic
 
                             MinHeat = Math.Min(MinHeat, currHeat);
                             MaxHeat = Math.Max(MaxHeat, currHeat);
+
                             Pixels.Add(new PixelHeat(BlockId, FeatureId, currY, currX, currHeat));
                             CalcNumHotPixels();
 
