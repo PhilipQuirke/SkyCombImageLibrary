@@ -472,7 +472,7 @@ namespace SkyCombImage.ProcessLogic
         {
             var settings = base.GetSettings();
 
-            // Derived data that is saved but nor reloaded.
+            // Derived data that is saved but not reloaded.
             settings.Add("Num Hot Pixels", NumHotPixels);
             settings.Add("Density Perc", DensityPerc); // 0 to 100
             settings.Add("Density Good", PixelDensityGood);

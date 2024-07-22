@@ -265,11 +265,7 @@ namespace SkyCombImage.ProcessLogic
         {
             int numPixels = 0;
             foreach (var feature in ProcessFeatures)
-            {
-                var combFeature = feature.Value;
-                if (combFeature.Pixels != null)
-                    numPixels += combFeature.Pixels.Count;
-            }
+                numPixels += feature.Value.NumHotPixels;
 
             return new DataPairList
             {
