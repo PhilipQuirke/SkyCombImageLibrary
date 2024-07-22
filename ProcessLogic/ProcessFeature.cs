@@ -39,26 +39,12 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Number of hot pixels inside the PixelBox
-        public int NumHotPixels
-        {
-            get
-            {
-                if (Pixels != null)
-                    return Pixels.Count;
-                return 0;
-            }
-        }
-
-
         // Percentage of PixelBox which is hot pixels
         public int DensityPerc
         {
             get
             {
-                if (Pixels != null)
-                    return (int)((100.0f * Pixels.Count) / (PixelBox.Width * PixelBox.Height));
-                return 0;
+                return (int)((100.0f * NumHotPixels) / (PixelBox.Width * PixelBox.Height));
             }
         }
 
@@ -473,7 +459,6 @@ namespace SkyCombImage.ProcessLogic
             var settings = base.GetSettings();
 
             // Derived data that is saved but not reloaded.
-            settings.Add("Num Hot Pixels", NumHotPixels);
             settings.Add("Density Perc", DensityPerc); // 0 to 100
             settings.Add("Density Good", PixelDensityGood);
             settings.Add("Leg", (Block != null ? Block.FlightLegId : 0));

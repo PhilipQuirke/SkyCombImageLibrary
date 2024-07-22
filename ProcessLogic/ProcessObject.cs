@@ -373,13 +373,6 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Calculate the maximum heat value of any pixel in this object in any frame 
-        protected void Calculate_MaxHeat()
-        {
-            (int _, int maxHeat, int _) = ProcessFeatures.HeatSummary();
-            MaxHeat = maxHeat;
-        }
-
         // Maximum density of the object across real features.
         // Assumes that the maximum hot pixels occurred when the object was at its maximum size.
         // Measured in hot pixels in rectangular area so <= 1. Example value 0.5
@@ -458,9 +451,6 @@ namespace SkyCombImage.ProcessLogic
 
                 // Calculate the range of the OBJECT from the drone in meters (as average over real features).
                 Calculate_AvgRangeM();
-
-                // Calculate the OBJECT maximum heat value (of any pixel over real features).
-                Calculate_MaxHeat();
 
                 // Is this OBJECT significant?
                 Calculate_Significant();

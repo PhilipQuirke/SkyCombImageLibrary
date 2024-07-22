@@ -15,8 +15,6 @@ namespace SkyCombImage.ProcessLogic
         public YoloV8Class? Class { get; init; } = null;
         public float Confidence { get; init; } = 0f;
 
-        public int PixelSize { get; set; } = 0;
-
 
         public YoloFeature(YoloProcess yoloProcess, int blockId, BoundingBox? box) : base(yoloProcess, blockId, FeatureTypeEnum.Real)
         {
@@ -44,7 +42,7 @@ namespace SkyCombImage.ProcessLogic
         {
             MinHeat = 255 + 255 + 255;
             MaxHeat = 0;
-            PixelSize = 0;
+            NumHotPixels = 0;
 
             // Test each pixel in the bounding box. If the image pixel exceeds the threshold, update the MaxHeat, MinHeat and pixelCount
             for (int y = PixelBox.Top; y < PixelBox.Bottom; y++)
@@ -62,12 +60,12 @@ namespace SkyCombImage.ProcessLogic
                                 MinHeat = currHeat;
                             if (currHeat > MaxHeat)
                                 MaxHeat = currHeat;
-                        PixelSize++;
+                            NumHotPixels++;
                         }
                     }
 
             // Is this feature significant?
-            Significant = (PixelSize >= ProcessAll.ProcessConfig.FeatureMinPixels);
+            Significant = (NumHotPixels >= ProcessAll.ProcessConfig.FeatureMinPixels);
             IsTracked = Significant;
         }
     };

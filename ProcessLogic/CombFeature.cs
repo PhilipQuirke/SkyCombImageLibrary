@@ -137,6 +137,8 @@ namespace SkyCombImage.ProcessLogic
                         break;
                 }
 
+                NumHotPixels = Pixels.Count();
+
                 // Is this feature significant?
                 bool sizeOk = (NumHotPixels >= ProcessAll.ProcessConfig.FeatureMinPixels);
                 bool densityOk = PixelDensityGood;

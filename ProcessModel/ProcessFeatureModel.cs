@@ -58,6 +58,9 @@ namespace SkyCombImage.ProcessModel
         // Technique used to calculate HeightM 
         public string HeightAlgorithm { get; set; } = "";
 
+        // Number of image pixels in the PixelBox above the ProcessConfig min heat threshold
+        public int NumHotPixels { get; set; } = 0;
+
 
         public ProcessFeatureModel(int blockId, FeatureTypeEnum type)
         {
@@ -89,6 +92,7 @@ namespace SkyCombImage.ProcessModel
             LocationM = null;
             HeightM = ProcessObjectModel.UnknownHeight;
             HeightAlgorithm = "";
+            NumHotPixels = 0;
         }
 
 
@@ -155,6 +159,7 @@ namespace SkyCombImage.ProcessModel
                 { "Box.Height", PixelBox.Height },
                 { "Min Heat", MinHeat },
                 { "Max Heat", MaxHeat },
+                { "# Hot Pixels", NumHotPixels },
             };
         }
 
@@ -181,6 +186,7 @@ namespace SkyCombImage.ProcessModel
                 StringToInt(settings[PixelBoxHeightSetting - 1]));
             MinHeat = StringToNonNegInt(settings[MinHeatSetting - 1]);
             MaxHeat = StringToNonNegInt(settings[MaxHeatSetting - 1]);
+            NumHotPixels = StringToNonNegInt(settings[NumHotPixelsSetting - 1]);
         }
     }
 }

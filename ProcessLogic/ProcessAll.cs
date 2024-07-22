@@ -263,9 +263,9 @@ namespace SkyCombImage.ProcessLogic
 
         virtual public DataPairList GetSettings()
         {
-            int numPixels = 0;
+            int numHotPixels = 0;
             foreach (var feature in ProcessFeatures)
-                numPixels += feature.Value.NumHotPixels;
+                numHotPixels += feature.Value.NumHotPixels;
 
             return new DataPairList
             {
@@ -274,7 +274,7 @@ namespace SkyCombImage.ProcessLogic
                 { "# Significant Objects", ProcessObjects.NumEverSignificantObjects },
                 { "# Features", ProcessFeatures.Count },
                 { "# Significant Features", ProcessFeatures.NumSig },
-                { "# Pixels", numPixels },
+                { "# Hot Pixels", numHotPixels },
             };
         }
     };

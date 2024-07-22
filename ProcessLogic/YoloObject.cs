@@ -55,6 +55,7 @@ namespace SkyCombImage.ProcessLogic
             NumSigBlocks = theFeature.BlockId - FirstFeature.BlockId + 1;
             MaxRealPixelWidth = Math.Max(MaxRealPixelWidth, theFeature.PixelBox.Width);
             MaxRealPixelHeight = Math.Max(MaxRealPixelHeight, theFeature.PixelBox.Height);
+            MaxRealHotPixels = Math.Max(MaxRealHotPixels, theFeature.NumHotPixels);
             Significant = true;
 
             // Calculate the simple member data (int, float, VelocityF, etc) of this real object.
