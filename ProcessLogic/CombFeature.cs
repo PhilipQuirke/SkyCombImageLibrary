@@ -26,6 +26,12 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        public void CalcNumHotPixels()
+        {
+            NumHotPixels = (Pixels == null ? 0 : Pixels.Count() );
+        }   
+
+
         // Search for hot neighbours of an initial hot pixel
         //      - Minimum search size is 3 x 3
         //      - Maximum search size if config.FeatureMaxSize x config.FeatureMaxSize
@@ -92,6 +98,7 @@ namespace SkyCombImage.ProcessLogic
                             MinHeat = Math.Min(MinHeat, currHeat);
                             MaxHeat = Math.Max(MaxHeat, currHeat);
                             Pixels.Add(new PixelHeat(BlockId, FeatureId, currY, currX, currHeat));
+                            CalcNumHotPixels();
 
                             // Expand rectangle to include the hot pixel.
                             if (currX < rectLeft) rectLeft = currX;
@@ -102,8 +109,8 @@ namespace SkyCombImage.ProcessLogic
                         if (currX == startX + fromX)
                         {
                             if (currPixelIsHot)
-                            // CASE: EXPAND LEFT. Applies to THIS row search. Covered in reloop code above
-                            { }
+                                // CASE: EXPAND LEFT. Applies to THIS row search. Covered in reloop code above
+                                { }
                             else
                                 // CASE: SHRINK LEFT. Applies to NEXT row search
                                 fromX++;
@@ -137,8 +144,6 @@ namespace SkyCombImage.ProcessLogic
                         break;
                 }
 
-                NumHotPixels = Pixels.Count();
-
                 // Is this feature significant?
                 bool sizeOk = (NumHotPixels >= ProcessAll.ProcessConfig.FeatureMinPixels);
                 bool densityOk = PixelDensityGood;
@@ -164,9 +169,14 @@ namespace SkyCombImage.ProcessLogic
         public override void Consume(ProcessFeature otherFeature)
         {
             // Transfer the pixels
-            if(otherFeature.Pixels != null)
+            if (otherFeature.Pixels != null)
+            {
                 Pixels.AddRange(otherFeature.Pixels);
-            otherFeature.Pixels = null;
+                CalcNumHotPixels();
+
+                otherFeature.Pixels = null;
+                otherFeature.NumHotPixels = 0;
+            }
 
             base.Consume(otherFeature);
         }

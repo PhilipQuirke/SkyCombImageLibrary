@@ -1,11 +1,8 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved. 
+﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using Emgu.CV;
 using Emgu.CV.Structure;
-using SkyCombDrone.DroneLogic;
 using SkyCombImage.DrawSpace;
-using SkyCombImage.ProcessModel;
 using SkyCombImage.ProcessLogic;
-using SkyCombGround.CommonSpace;
 using SkyCombImageLibrary.RunSpace;
 
 
@@ -22,30 +19,18 @@ namespace SkyCombImage.RunSpace
             ProcessBlock block,
             Image<Bgr, byte> imgOriginal)
         {
-            var imgInput = imgOriginal.Clone();
-
+            Image<Bgr, byte> imgInput = imgOriginal.Clone();
             Smooth(config.ProcessConfig, ref imgInput);
 
-            var imgThreshold = ToGrayScale(imgInput);
-
+            Image<Gray, byte> imgThreshold = ToGrayScale(imgInput);
             Threshold(config.ProcessConfig, ref imgThreshold);
 
-            // Set pixels hotter than TruncThresholdValue to 0.
-            // Currently TruncThresholdValue can only be set by editing the datastore.
-            // Used with DJI_0114 experimentally to eliminate unwanted hot house roof. Unsuccessful. 
-            //if (config.ProcessConfig.TruncThresholdValue != BaseConstants.UnknownValue)
-            //    imgThreshold = imgThreshold.ThresholdToZeroInv(new Gray(config.ProcessConfig.TruncThresholdValue));
+            ProcessFeatureList featuresInBlock = ProcessFactory.NewProcessFeatureList(model.ProcessConfig);
+            int num_sig = featuresInBlock.NumSig;
 
-            // Set pixels hotter than ThresholdValue to 1. Set other pixels to 0.
-            DrawImage.Threshold(config.ProcessConfig, ref imgThreshold);
-
-            //var dataModel = model;
-            //if (dataModel == null)
-            //    dataModel = ProcessFactory.NewCombProcess(config.ProcessConfig,
-            //       new VideoData(imgOriginal.Height, imgOriginal.Width), null, model.Drone);
-
-            var featuresInBlock = ProcessFactory.NewProcessFeatureList(model.ProcessConfig);
             CombFeatureLogic.CreateFeaturesFromImage(model, featuresInBlock, block, imgOriginal, imgThreshold);
+            num_sig = featuresInBlock.NumSig;
+
             return featuresInBlock;
         }
     }

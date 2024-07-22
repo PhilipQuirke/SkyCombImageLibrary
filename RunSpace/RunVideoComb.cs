@@ -94,10 +94,13 @@ namespace SkyCombImage.RunSpace
                 // This "image" class has no "frame to frame" logic, so features are "one image" features.
                 ProcessFeatureList featuresInBlock = CombImage.Process(RunConfig, CombProcess, currBlock, CurrInputVideoFrame);
 
+                int num_sig = 0;
                 foreach (var feature in featuresInBlock)
                 {
                     feature.Value.CalculateSettings_LocationM_FlatGround(null);
                     feature.Value.CalculateSettings_LocationM_HeightM_LineofSight(ProcessAll.GroundData);
+                    if (feature.Value.Significant)
+                        num_sig++;
                 }
 
                 // Unless legs are not used, we only do comb processing during "legs". 

@@ -77,7 +77,10 @@ namespace SkyCombImage.ProcessLogic
                     var combObject = theObject.Value as CombObject;
                     if (combObject.FlightLegId <= 0)
                         foreach (var feature in combObject.ProcessFeatures)
+                        {
                             feature.Value.Pixels?.Clear();
+                            // NumHotPixels is not cleared 
+                        }
                 }
         }
 

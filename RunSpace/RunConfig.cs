@@ -24,7 +24,7 @@ namespace SkyCombImageLibrary.RunSpace
     //      - ALL member data values are loaded from the DataStore specific to this video 
     //      - So if you want to trial different values for the same video, alter the setting in the DATASTORE.
     //      - WARNING: Changing the values below will have no effect.
-    public class RunConfig : ConfigBase
+    public class RunConfig : SettingsBase
     {
         public DroneConfigModel DroneConfig;
         public ProcessConfigModel ProcessConfig;
