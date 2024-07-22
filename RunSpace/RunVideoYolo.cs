@@ -1,4 +1,5 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+using Compunet.YoloV8.Data;
 using Emgu.CV;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
@@ -59,12 +60,13 @@ namespace SkyCombImage.RunSpace
 
                 var currGray = DrawImage.ToGrayScale(CurrInputVideoFrame);
 
-                var result = YoloProcess.YoloDetect.Detect(currGray.ToBitmap());
+                // Set pixels hotter than ThresholdValue to 1. Set other pixels to 0.
+                var imgThreshold = currGray.Clone();
+                DrawImage.Threshold(RunConfig.ProcessConfig, ref imgThreshold);
 
-                int numSig = YoloProcess.ProcessBlock(this, PrevGray, currGray, result);
+                DetectionResult result = YoloProcess.YoloDetect.Detect(currGray.ToBitmap());
 
-                // Update the persisted gray frame 
-                PrevGray = currGray.Clone();
+                int numSig = YoloProcess.ProcessBlock(this, currGray, CurrInputVideoFrame, imgThreshold, result);
 
                 thisBlock.NumSig = numSig; 
 

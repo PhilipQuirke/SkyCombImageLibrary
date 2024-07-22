@@ -1,9 +1,11 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
+using SkyCombImage.DrawSpace;
 using SkyCombImage.PersistModel;
 using SkyCombImage.ProcessLogic;
 using SkyCombImageLibrary.RunSpace;
+
 
 
 // Continuation of RunVideo.cs, contains both Skycomb-specific runners
@@ -77,8 +79,16 @@ namespace SkyCombImage.RunSpace
                     return currBlock;
 
                 // Process the frame using "Image" Comb class, creating features.
-                // This "image" class has no "frame to frame" logic, so features are "one image" features.
-                ProcessFeatureList featuresInBlock = CombImage.Process(RunConfig, CombProcess, currBlock, CurrInputVideoFrame);
+
+                var imgInput = CurrInputVideoFrame.Clone();
+                DrawImage.Smooth(RunConfig.ProcessConfig, ref imgInput);
+
+                // Set pixels hotter than ThresholdValue to 1. Set other pixels to 0.
+                var imgThreshold = DrawImage.ToGrayScale(imgInput);
+                DrawImage.Threshold(RunConfig.ProcessConfig, ref imgThreshold);
+
+                var featuresInBlock = ProcessFactory.NewProcessFeatureList(ProcessAll.ProcessConfig);
+                CombFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, currBlock, CurrInputVideoFrame, imgThreshold);
 
                 foreach (var feature in featuresInBlock)
                 {

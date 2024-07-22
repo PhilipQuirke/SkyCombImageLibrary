@@ -131,10 +131,6 @@ namespace SkyCombImage.ProcessLogic
                 LegFrameFeatures.Clear();
             }
 
-
-            foreach (var feature in ProcessFeatures)
-                Assert(feature.Value.Significant, "YoloProcess.ProcessFlightLegEnd(1): Feature is not significant");
-
             // Post process the objects found in the leg & maybe set FlightLegs.FixAltM 
             base.ProcessFlightLegEnd(scope, legId);
 
@@ -148,8 +144,9 @@ namespace SkyCombImage.ProcessLogic
         // Else create a new object to own the feature.
         public int ProcessBlock(
             ProcessScope scope,
-            Image<Gray, byte> prevGray,
             Image<Gray, byte> currGray,
+            Image<Bgr, byte> imgOriginal,
+            Image<Gray, byte> imgThreshold,
             DetectionResult? result)
         {
             int Phase = 0;
@@ -171,9 +168,9 @@ namespace SkyCombImage.ProcessLogic
                 {
                     // We have found a new feature/object
                     var newFeature = new YoloFeature(this, blockID, box);
+                    newFeature.CalculateHeat(imgOriginal, imgThreshold);
                     featuresInBlock.AddFeature(newFeature);
                     LegFrameFeatures.Add(new YoloFeatureSeen { BlockId = blockID, Box = newFeature.PixelBox, FeatureId = newFeature.FeatureId });
-                    Assert(newFeature.Significant, "YoloProcess.ProcessBlock: Feature is not significant");
                 }
 
                 Phase = 5;

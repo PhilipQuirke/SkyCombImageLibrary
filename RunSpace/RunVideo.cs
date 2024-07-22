@@ -589,21 +589,9 @@ namespace SkyCombImage.RunSpace
     // Class to implement processing of a video, with information persisted from frame to frame in member data.
     abstract public class RunVideoPersist : RunVideo
     {
-        // Persisted information across many frames
-        protected Image<Gray, byte>? PrevGray = null;
-
-
         public RunVideoPersist(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone, ProcessAll processAll) 
             : base(parent, config, dataStore, drone, processAll)
         {
-        }
-
-
-        // Reset any internal state of the run or model, so they can be re-used in another run. Do no change input or drone data.
-        public override void RunStart()
-        {
-            PrevGray = null;
-            base.RunStart();
         }
     }
 }

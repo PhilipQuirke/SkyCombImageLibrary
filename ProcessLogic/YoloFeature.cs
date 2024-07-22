@@ -1,8 +1,9 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using SkyCombImage.ProcessModel;
-using System.Drawing;
 using Compunet.YoloV8.Data;
 using Compunet.YoloV8.Metadata;
+using Emgu.CV.Structure;
+using Emgu.CV;
+using SkyCombImage.ProcessModel;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -13,6 +14,8 @@ namespace SkyCombImage.ProcessLogic
         // Results of YoloDetect image processing
         public YoloV8Class? Class { get; init; } = null;
         public float Confidence { get; init; } = 0f;
+
+        public int PixelSize { get; set; } = 0;
 
 
         public YoloFeature(YoloProcess yoloProcess, int blockId, BoundingBox? box) : base(yoloProcess, blockId, FeatureTypeEnum.Real)
@@ -32,6 +35,40 @@ namespace SkyCombImage.ProcessLogic
             Class = null;
             Confidence = 0f;
         }
-    };
 
+
+        // Evaluate the MinHeat, MaxHeat and PixelSize of this feature
+        public void CalculateHeat(
+            Image<Bgr, byte> imgOriginal,
+            Image<Gray, byte> imgThreshold)
+        {
+            MinHeat = 255 + 255 + 255;
+            MaxHeat = 0;
+            PixelSize = 0;
+
+            // Test each pixel in the bounding box. If the image pixel exceeds the threshold, update the MaxHeat, MinHeat and pixelCount
+            for (int y = PixelBox.Top; y < PixelBox.Bottom; y++)
+                for (int x = PixelBox.Left; x < PixelBox.Right; x++)
+                    {
+                        if (imgThreshold.Data[y, x, 0] > 0)
+                        {
+                            // Evaluate the heat from the original image (not the smooth / threshold image)
+                            int currHeat = (
+                                imgOriginal.Data[y, x, 0] +
+                                imgOriginal.Data[y, x, 1] +
+                                imgOriginal.Data[y, x, 2]) / 3;
+
+                            if (currHeat < MinHeat)
+                                MinHeat = currHeat;
+                            if (currHeat > MaxHeat)
+                                MaxHeat = currHeat;
+                        PixelSize++;
+                        }
+                    }
+
+            // Is this feature significant?
+            Significant = (PixelSize >= ProcessAll.ProcessConfig.FeatureMinPixels);
+            IsTracked = Significant;
+        }
+    };
 }

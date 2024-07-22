@@ -44,8 +44,6 @@ namespace SkyCombImage.ProcessModel
         public ThresholdProcessEnum ThresholdProcess { get; set; } = ThresholdProcessEnum.Binary;
         // Pixel gray-scale value that ThresholdProcess uses. Takes values from 50 to 255
         public int HeatThresholdValue { get; set; } = 235;
-        // A setting to allow stupidly hot pixels to (optionally) be ignored.
-        public int TruncThresholdValue { get; set; } = UnknownValue;
 
 
         // Comb:
@@ -195,7 +193,6 @@ namespace SkyCombImage.ProcessModel
                 { "Smooth Pixels", SmoothPixels },
                 { "Threshold Process", ThresholdProcess.ToString() },
                 { "Threshold Value", HeatThresholdValue },
-                { "Trunc Threshold Value", TruncThresholdValue },
                 { "Feature Min Pixels", FeatureMinPixels },
                 { "Feature MinDensity Perc", FeatureMinDensityPerc },
                 { "Feature Max Size", FeatureMaxSize },
@@ -229,7 +226,6 @@ namespace SkyCombImage.ProcessModel
             SmoothPixels = StringToNonNegInt(settings[i++]);
             ThresholdProcess = (ThresholdProcessEnum)Enum.Parse(typeof(ThresholdProcessEnum), settings[i++]);
             HeatThresholdValue = StringToNonNegInt(settings[i++]);
-            TruncThresholdValue = StringToInt(settings[i++]);
             FeatureMinPixels = StringToNonNegInt(settings[i++]);
             FeatureMinDensityPerc = StringToNonNegInt(settings[i++]);
             FeatureMaxSize = StringToNonNegInt(settings[i++]);
