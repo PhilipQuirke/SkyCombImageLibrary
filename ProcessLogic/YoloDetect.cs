@@ -5,11 +5,9 @@ using Compunet.YoloV8;
 using Compunet.YoloV8.Data;
 using Compunet.YoloV8.Plotting;
 using Emgu.CV;
-using Emgu.CV.Structure;
 
 // Refer https://sixlabors.com/products/imagesharp/
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.PixelFormats;
 
 using SkyCombGround.CommonSpace;

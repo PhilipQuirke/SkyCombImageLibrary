@@ -80,15 +80,19 @@ namespace SkyCombImage.RunSpace
 
                 // Process the frame using "Image" Comb class, creating features.
 
-                var imgInput = CurrInputVideoFrame.Clone();
-                DrawImage.Smooth(RunConfig.ProcessConfig, ref imgInput);
+                //var imgInput = CurrInputVideoFrame.Clone();
+                //DrawImage.Smooth(RunConfig.ProcessConfig, ref imgInput);
 
                 // Set pixels hotter than ThresholdValue to 1. Set other pixels to 0.
-                var imgThreshold = DrawImage.ToGrayScale(imgInput);
-                DrawImage.Threshold(RunConfig.ProcessConfig, ref imgThreshold);
+                //var imgThreshold = DrawImage.ToGrayScale(imgInput);
+                //DrawImage.Threshold(RunConfig.ProcessConfig, ref imgThreshold);
 
-                var featuresInBlock = ProcessFactory.NewProcessFeatureList(ProcessAll.ProcessConfig);
-                CombFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, currBlock, CurrInputVideoFrame, imgThreshold);
+                //var featuresInBlock = ProcessFactory.NewProcessFeatureList(ProcessAll.ProcessConfig);
+                //CombFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, currBlock, imgInput, imgThreshold);
+
+                // Process the frame using "Image" Comb class, creating features.
+                // This "image" class has no "frame to frame" logic, so features are "one image" features.
+                ProcessFeatureList featuresInBlock = CombImage.Process(RunConfig, CombProcess, currBlock, CurrInputVideoFrame);
 
                 foreach (var feature in featuresInBlock)
                 {

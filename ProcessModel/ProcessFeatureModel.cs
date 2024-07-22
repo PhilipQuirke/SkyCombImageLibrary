@@ -69,6 +69,7 @@ namespace SkyCombImage.ProcessModel
             FeatureId = NextFeatureId;
             BlockId = blockId;
             Type = type;
+            NumHotPixels = 0; // Derived from image processing. Can't be recalced. So excldued from ResetCalcedMemberData
             ResetCalcedMemberData();
         }
 
@@ -92,7 +93,7 @@ namespace SkyCombImage.ProcessModel
             LocationM = null;
             HeightM = ProcessObjectModel.UnknownHeight;
             HeightAlgorithm = "";
-            NumHotPixels = 0;
+            // NumHotPixels = 0; Derived from image processing. Can't be recalced. So excldued 
         }
 
 

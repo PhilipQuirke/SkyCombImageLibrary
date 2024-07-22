@@ -56,10 +56,8 @@ namespace SkyCombImage.ProcessLogic
                                 imgOriginal.Data[y, x, 1] +
                                 imgOriginal.Data[y, x, 2]) / 3;
 
-                            if (currHeat < MinHeat)
-                                MinHeat = currHeat;
-                            if (currHeat > MaxHeat)
-                                MaxHeat = currHeat;
+                            MinHeat = Math.Min(MinHeat, currHeat);
+                            MaxHeat = Math.Max(MaxHeat, currHeat);
                             NumHotPixels++;
                         }
                     }

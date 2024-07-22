@@ -665,6 +665,7 @@ namespace SkyCombImage.ProcessLogic
             return answer;
         }
 
+
         public  (int minHeat, int maxHeat, int maxPixels) HeatSummary()
         {
             int maxHeat = 0;
