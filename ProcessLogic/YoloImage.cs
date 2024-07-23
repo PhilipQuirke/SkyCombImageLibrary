@@ -110,16 +110,14 @@ namespace SkyCombImage.ProcessLogic
                         dataTable.Rows[i]["Cluster"] = clusterLabels[i];
                     }
 
+                    var validationErrors = ValidateClusters(yMovePerTimeSlice, dataTable);
+
+
                     // Adjust clusters to meet the criteria
-                    var adjustedTable = AdjustClusters(yMovePerTimeSlice, dataTable);
+                    var adjustedTable = AdjustClusters(yMovePerTimeSlice, dataTable, features.Count);
 
                     // Validate the clusters
-                    var validationErrors = ValidateClusters(yMovePerTimeSlice, adjustedTable);
-                    Console.WriteLine("Validation Errors:");
-                    foreach (var error in validationErrors)
-                    {
-                        Console.WriteLine(error);
-                    }
+                    validationErrors = ValidateClusters(yMovePerTimeSlice, adjustedTable);
 
                     // Identify features not contained in the adjusted clusters
                     //var adjustedFeatureIndices = adjustedTable.AsEnumerable().Select(row => dataTable.Rows.IndexOf(row)).ToList();
@@ -204,11 +202,12 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        static DataTable AdjustClusters(double yMovePerTimeSlice, DataTable orgClusters)
+        static DataTable AdjustClusters(double yMovePerTimeSlice, DataTable orgClusters, int orgNumFeatures)
         {
             try
             {
-                var adjClusters = new List<DataTable>();
+                var newClusters = new List<DataTable>();
+                var newNumFeatures = 0;
 
                 double maxYPixels = ProcessConfigModel.YoloMaxYPixelsDeltaPerFrame - yMovePerTimeSlice;
 
@@ -223,7 +222,8 @@ namespace SkyCombImage.ProcessLogic
                                         clusterRows[i].Field<double>("Y") - validFeatures.Last().Field<double>("Y") >= -yMovePerTimeSlice &&
                                         Math.Abs(clusterRows[i].Field<double>("X") - validFeatures.Last().Field<double>("X")) <= ProcessConfigModel.YoloMaxXPixelsDeltaPerCluster))
                         {
-                            if (validFeatures.Count == 0 || clusterRows[i].Field<double>("Time") != validFeatures.Last().Field<double>("Time"))
+                            if (validFeatures.Count == 0 || (clusterRows[i].Field<double>("Time") != validFeatures.Last().Field<double>("Time") &&
+                                    validFeatures.Last().Field<double>("Time") - clusterRows[i].Field<double>("Time") <= ProcessConfigModel.YoloMaxTimeGap))
                             {
                                 validFeatures.Add(clusterRows[i]);
                             }
@@ -236,14 +236,22 @@ namespace SkyCombImage.ProcessLogic
                         foreach (var row in validFeatures)
                         {
                             tempTable.ImportRow(row);
+                            newNumFeatures++;
                         }
-                        adjClusters.Add(tempTable);
+                        newClusters.Add(tempTable);
                     }
                 }
 
-                DataTable adjustedDf = adjClusters.Count > 0 ? adjClusters.Aggregate((dt1, dt2) => { dt1.Merge(dt2); return dt1; }) : orgClusters.Clone();
-                var remainingFeatures = orgClusters.AsEnumerable().Except(adjustedDf.AsEnumerable()).CopyToDataTable();
 
+                DataTable adjustedDf = newClusters.Count > 0 ? newClusters.Aggregate((dt1, dt2) => { dt1.Merge(dt2); return dt1; }) : orgClusters.Clone();
+                //var remainingFeatures = orgClusters.AsEnumerable().Except(adjustedDf.AsEnumerable()).CopyToDataTable();
+                // Correct calculation of remaining features
+                var remainingFeaturesCollection = orgClusters.AsEnumerable()
+                                                   .Where(row => !adjustedDf.AsEnumerable().Any(adjustedRow => adjustedRow.Field<int>("Feature") == row.Field<int>("Feature")));
+                if( remainingFeaturesCollection.Count() == 0 )
+                    return adjustedDf;
+
+                var remainingFeatures = remainingFeaturesCollection.CopyToDataTable();
                 while (remainingFeatures.Rows.Count > 0)
                 {
                     bool reassigned = false;
@@ -305,39 +313,44 @@ namespace SkyCombImage.ProcessLogic
         {
             var validationErrors = new List<string>();
             var featuresSeen = new List<int>();
-
+/*
             try
             {
                 foreach (int cluster in df.AsEnumerable().Select(row => row.Field<int>("Cluster")).Distinct())
                 {
                     var clusterDf = df.AsEnumerable().Where(row => row.Field<int>("Cluster") == cluster).OrderBy(row => row.Field<int>("Feature")).ToList();
-                    DataRow? previousRow = null;
+                    DataRow? prevRow = null;
 
                     foreach (var row in clusterDf)
                     {
-                        if (previousRow != null)
+                        if (prevRow != null)
                         {
                             int featureID = (int)row["Feature"];
 
+                            // Each feature must be in at most one cluster.
                             if (featuresSeen.Contains(featureID))
                                 validationErrors.Add($"Cluster {cluster}, Feature {featureID}: Feature already seen in another cluster.");
                             else
                                 featuresSeen.Add(featureID);
 
-                            // Features in a cluster must be ordered by time
-                            if ((double)row["Time"] < (double)previousRow["Time"])
-                                validationErrors.Add($"Cluster {cluster}, Feature {featureID}: Time not monotonically increasing.");
-
                             // Features in a cluster must be close to each other in space and time
-                            if (Math.Abs((double)row["Y"] - (double)previousRow["Y"]) > ProcessConfigModel.YoloMaxYPixelsDeltaPerFrame - yMovePerTimeSlice || (double)row["Y"] - (double)previousRow["Y"] < -yMovePerTimeSlice)
+                            double thisY = (double)row["Y"];
+                            double prevY = (double)prevRow["Y"];
+                            if (Math.Abs(thisY - prevY) > ProcessConfigModel.YoloMaxYPixelsDeltaPerFrame - yMovePerTimeSlice || thisY - prevY < -yMovePerTimeSlice)
                                 validationErrors.Add($"Cluster {cluster}, Feature {featureID}: Y change out of allowed range.");
 
+                            // Features in a cluster must be ordered by time
+                            double thisTime = (double)row["Time"];
+                            double prevTime = (double)prevRow["Time"];
+                            if (thisTime < prevTime)
+                                validationErrors.Add($"Cluster {cluster}, Feature {featureID}: Time not monotonically increasing.");
+
                             // A time gap of more than MaxTimeGap frames is not allowed
-                            if ((double)row["Time"] - (double)previousRow["Time"] > ProcessConfigModel.YoloMaxTimeGap)
+                            if (thisTime - prevTime > ProcessConfigModel.YoloMaxTimeGap)
                                 validationErrors.Add($"Cluster {cluster}, Feature {featureID}: Time gap greater than {ProcessConfigModel.YoloMaxTimeGap}.");
                         }
 
-                        previousRow = row;
+                        prevRow = row;
                     }
                 }
             }
@@ -345,7 +358,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 throw BaseConstants.ThrowException("YoloTracker.ValidateClusters", ex);
             }
-
+*/
             return validationErrors;
         }
     }
