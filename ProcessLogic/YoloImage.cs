@@ -201,6 +201,23 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Are these two features similar enough to be associated with each other?
+        static bool NextFeatureGood(double yMovePerTimeSlice, DataRow lastFeature, DataRow thisFeature)
+        {
+            double maxYPixels = ProcessConfigModel.YoloMaxYPixelsDeltaPerFrame - yMovePerTimeSlice;
+
+            return
+                // The two features need to be close in Y direction
+                (Math.Abs(thisFeature.Field<double>("Y") - lastFeature.Field<double>("Y")) <= maxYPixels &&
+                thisFeature.Field<double>("Y") - lastFeature.Field<double>("Y") >= -yMovePerTimeSlice &&
+                // The two features need to be close in X direction
+                Math.Abs(thisFeature.Field<double>("X") - lastFeature.Field<double>("X")) <= ProcessConfigModel.YoloMaxXPixelsDeltaPerCluster) &&
+                // The two features must be time ordered and not too far apart
+                thisFeature.Field<double>("Time") < lastFeature.Field<double>("Time") &&
+                lastFeature.Field<double>("Time") - thisFeature.Field<double>("Time") <= ProcessConfigModel.YoloMaxTimeGap;
+        }
+
+
         static DataTable AdjustClusters(double yMovePerTimeSlice, DataTable orgClusters, int orgNumFeatures)
         {
             try
@@ -208,26 +225,21 @@ namespace SkyCombImage.ProcessLogic
                 var newClusters = new List<DataTable>();
                 var newNumFeatures = 0;
 
-                double maxYPixels = ProcessConfigModel.YoloMaxYPixelsDeltaPerFrame - yMovePerTimeSlice;
-
+                // Shrink the orgClusters by removing any features that fail the NextFeatureGood test
                 foreach (var orgCluster in orgClusters.AsEnumerable().Select(row => row.Field<int>("Cluster")).Distinct())
                 {
                     var clusterRows = orgClusters.AsEnumerable().Where(row => row.Field<int>("Cluster") == orgCluster).OrderBy(row => row.Field<double>("Time")).ToList();
                     var validFeatures = new List<DataRow>();
 
-                    DataRow? prevFeature = null;
+                    DataRow? lastFeature = null;
                     for (int i = 0; i < clusterRows.Count; i++)
                     {
                         DataRow thisFeature = clusterRows[i];
                         if (i == 0)
                             validFeatures.Add(thisFeature);
-                        else if ((Math.Abs(thisFeature.Field<double>("Y") - prevFeature.Field<double>("Y")) <= maxYPixels &&
-                                thisFeature.Field<double>("Y") - prevFeature.Field<double>("Y") >= -yMovePerTimeSlice &&
-                                Math.Abs(thisFeature.Field<double>("X") - prevFeature.Field<double>("X")) <= ProcessConfigModel.YoloMaxXPixelsDeltaPerCluster) &&
-                                thisFeature.Field<double>("Time") < prevFeature.Field<double>("Time") &&
-                                prevFeature.Field<double>("Time") - thisFeature.Field<double>("Time") <= ProcessConfigModel.YoloMaxTimeGap)
+                        else if( NextFeatureGood(yMovePerTimeSlice, lastFeature, thisFeature) )
                             validFeatures.Add(thisFeature);
-                        prevFeature = thisFeature;
+                        lastFeature = thisFeature;
                     }
 
                     if (validFeatures.Count > 0)
@@ -242,20 +254,23 @@ namespace SkyCombImage.ProcessLogic
                     }
                 }
 
-
+                // Find the orphaned features 
                 DataTable adjustedDf = newClusters.Count > 0 ? newClusters.Aggregate((dt1, dt2) => { dt1.Merge(dt2); return dt1; }) : orgClusters.Clone();
-                var remainingFeaturesCollection = orgClusters.AsEnumerable()
+                var orphanedFeaturesSet = orgClusters.AsEnumerable()
                         .Where(row => !adjustedDf.AsEnumerable().Any(adjustedRow => adjustedRow.Field<int>("Feature") == row.Field<int>("Feature")));
-                if( remainingFeaturesCollection.Count() == 0 )
+                if( orphanedFeaturesSet.Count() == 0 )
                     return adjustedDf;
 
-                var remainingFeatures = remainingFeaturesCollection.CopyToDataTable();
-                while (remainingFeatures.Rows.Count > 0)
+                double maxYPixels = ProcessConfigModel.YoloMaxYPixelsDeltaPerFrame - yMovePerTimeSlice;
+
+                // Try to reassign the orphaned features to an existing cluster
+                var orphanedFeatures = orphanedFeaturesSet.CopyToDataTable();
+                while (orphanedFeatures.Rows.Count > 0)
                 {
                     bool reassigned = false;
                     var rowsToRemove = new List<DataRow>();
 
-                    foreach (DataRow feature in remainingFeatures.Rows)
+                    foreach (DataRow feature in orphanedFeatures.Rows)
                     {
                         int closestCluster = -1;
                         double closestDistance = double.MaxValue;
@@ -288,14 +303,10 @@ namespace SkyCombImage.ProcessLogic
                     }
 
                     foreach (var row in rowsToRemove)
-                    {
-                        remainingFeatures.Rows.Remove(row);
-                    }
+                        orphanedFeatures.Rows.Remove(row);
 
                     if (!reassigned)
-                    {
                         break;
-                    }
                 }
 
                 return adjustedDf;
