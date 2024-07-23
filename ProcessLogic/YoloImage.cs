@@ -202,19 +202,26 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Are these two features similar enough to be associated with each other?
-        static bool NextFeatureGood(double yMovePerTimeSlice, DataRow lastFeature, DataRow thisFeature)
+        static bool IsGoodNextFeature(double yMovePerTimeSlice, double lastTime, double lastX, double lastY, DataRow nextFeature)
         {
             double maxYPixels = ProcessConfigModel.YoloMaxYPixelsDeltaPerFrame - yMovePerTimeSlice;
 
             return
                 // The two features need to be close in Y direction
-                (Math.Abs(thisFeature.Field<double>("Y") - lastFeature.Field<double>("Y")) <= maxYPixels &&
-                thisFeature.Field<double>("Y") - lastFeature.Field<double>("Y") >= -yMovePerTimeSlice &&
+                (Math.Abs(nextFeature.Field<double>("Y") - lastY) <= maxYPixels &&
+                nextFeature.Field<double>("Y") - lastY >= -yMovePerTimeSlice &&
                 // The two features need to be close in X direction
-                Math.Abs(thisFeature.Field<double>("X") - lastFeature.Field<double>("X")) <= ProcessConfigModel.YoloMaxXPixelsDeltaPerCluster) &&
+                Math.Abs(nextFeature.Field<double>("X") - lastX) <= ProcessConfigModel.YoloMaxXPixelsDeltaPerCluster) &&
                 // The two features must be time ordered and not too far apart
-                thisFeature.Field<double>("Time") < lastFeature.Field<double>("Time") &&
-                lastFeature.Field<double>("Time") - thisFeature.Field<double>("Time") <= ProcessConfigModel.YoloMaxTimeGap;
+                nextFeature.Field<double>("Time") > lastTime &&
+                Math.Abs(nextFeature.Field<double>("Time") - lastTime) <= ProcessConfigModel.YoloMaxTimeGap;
+        }
+
+
+        // Are these two features similar enough to be associated with each other?
+        static bool IsGoodNextFeature(double yMovePerTimeSlice, DataRow lastFeature, DataRow nextFeature)
+        {
+            return IsGoodNextFeature(yMovePerTimeSlice, lastFeature.Field<double>("Time"), lastFeature.Field<double>("X"), lastFeature.Field<double>("Y"), nextFeature);
         }
 
 
@@ -234,12 +241,12 @@ namespace SkyCombImage.ProcessLogic
                     DataRow? lastFeature = null;
                     for (int i = 0; i < clusterRows.Count; i++)
                     {
-                        DataRow thisFeature = clusterRows[i];
+                        DataRow nextFeature = clusterRows[i];
                         if (i == 0)
-                            validFeatures.Add(thisFeature);
-                        else if( NextFeatureGood(yMovePerTimeSlice, lastFeature, thisFeature) )
-                            validFeatures.Add(thisFeature);
-                        lastFeature = thisFeature;
+                            validFeatures.Add(nextFeature);
+                        else if( IsGoodNextFeature(yMovePerTimeSlice, lastFeature, nextFeature) )
+                            validFeatures.Add(nextFeature);
+                        lastFeature = nextFeature;
                     }
 
                     if (validFeatures.Count > 0)
