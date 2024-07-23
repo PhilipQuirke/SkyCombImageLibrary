@@ -209,13 +209,20 @@ namespace SkyCombImage.ProcessLogic
 
         public void ProcessFlightLegEndWrapper(ProcessScope scope, int legId)
         {
-            if (Drone.UseFlightLegs)
-                OnObservation(ProcessEventEnum.LegEnd_Before, new ProcessEventArgs(scope, legId));
+            try
+            {
+                if (Drone.UseFlightLegs)
+                    OnObservation(ProcessEventEnum.LegEnd_Before, new ProcessEventArgs(scope, legId));
 
-            ProcessFlightLegEnd(scope, legId);
+                ProcessFlightLegEnd(scope, legId);
 
-            if (Drone.UseFlightLegs)
-                OnObservation(ProcessEventEnum.LegEnd_After, new ProcessEventArgs(scope, legId));
+                if (Drone.UseFlightLegs)
+                    OnObservation(ProcessEventEnum.LegEnd_After, new ProcessEventArgs(scope, legId));
+            }
+            catch (Exception ex)
+            {
+                throw ThrowException("ProcessFlightLegEndWrapper", ex);
+            }
         }
 
 

@@ -64,21 +64,5 @@ namespace SkyCombImage.ProcessLogic
 
             return true;
         }
-
-
-        // Object will claim ownership of this feature extending the objects lifetime and improving its "Significant" score.
-        // In rare cases, object can claim multiple features from a single block (e.g. a tree branch bisects a heat spot into two features) 
-        public bool MaybeClaimFeature(YoloFeature feature, Rectangle objectExpectedPixelBox)
-        {
-            if (feature.ObjectId == 0) // Not claimed yet
-                if (feature.SignificantPixelBoxIntersection(objectExpectedPixelBox))
-                {
-                    // Object will claim feature if the object remains viable after claiming feature
-                    ClaimFeature(feature);
-                    return true;
-                }
-
-            return false;
-        }
     };
 }

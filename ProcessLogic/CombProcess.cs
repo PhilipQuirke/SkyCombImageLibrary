@@ -212,7 +212,7 @@ namespace SkyCombImage.ProcessLogic
                         // Search higher in the image 
                         expectedObjectLocation = new System.Drawing.Rectangle(
                             expectedObjectLocation.X,
-                            expectedObjectLocation.Y + 20, // Higher
+                            expectedObjectLocation.Y + ProcessConfigModel.CombHigherPixels, // Higher
                             expectedObjectLocation.Width,
                             expectedObjectLocation.Height);
 

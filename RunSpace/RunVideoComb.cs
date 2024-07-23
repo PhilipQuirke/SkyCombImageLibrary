@@ -116,7 +116,7 @@ namespace SkyCombImage.RunSpace
         public override List<object[]> GetObjectGridData(bool mainForm)
         {
             return ProcessAll.ProcessObjects.GetObjectGridData(this, RunConfig.ProcessConfig, mainForm, CategoryAll.ObjectCategories);
-       }
+        }
 
 
         // Do any final activity at the end processing of video

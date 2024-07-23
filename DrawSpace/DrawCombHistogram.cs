@@ -117,7 +117,7 @@ namespace SkyCombImage.DrawSpace
 
     public class DrawSizeHistogram : DrawHistogram
     {
-        public const int Scale = 500; // Each bar represents a 500cm2 increase in size
+        public const int Scale = 100; // Each bar represents a 100cm2 increase in size
 
         public DrawSizeHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, ProcessObjList objs) :
             base(drawScope, objs.HistogramSizeCm2(Scale), 0, (int)Math.Ceiling(objs.MaxSizeCM2), Scale)

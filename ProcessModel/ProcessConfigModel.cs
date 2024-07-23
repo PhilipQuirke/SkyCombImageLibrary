@@ -26,10 +26,20 @@ namespace SkyCombImage.ProcessModel
     //      - WARNING: Changing the default values below will have NO effect.
     public class ProcessConfigModel : ConfigBase
     {
+        // In legs objects move down the Y axis between frames.
+        // When associating objects in successive frames, we sometimes search higher in the image.
+        public const int CombHigherPixels = 20;
+
         // Single frame Yolo detection confidence
         public const float YoloDetectConfidenceDefault = 0.66f;
         // Successive frame Yolo overlap threshold. Typically 0.2 to 0.4
-        public const float YoloIoUDefault = 0.25f; 
+        public const float YoloIoUDefault = 0.25f;
+        // We are clustering features in objects while the drone is flying a leg. We expect very little change in the X values.
+        public const int YoloMaxXPixelsDeltaPerCluster = 10;
+        // We are clustering features in objects while the drone is flying a leg. We define a maximum Y delta between frames.
+        public const int YoloMaxYPixelsDeltaPerFrame = 25;
+        // Succcessive features in an object can't be more than 5 frames apart.
+        public const int YoloMaxTimeGap = 5;
 
 
         // --------------------- Process Techniques --------------------- 
