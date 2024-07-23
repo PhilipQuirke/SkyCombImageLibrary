@@ -167,6 +167,7 @@ namespace SkyCombImage.ProcessLogic
             return optimalClusters;
         }
 
+
         static double CalculateSilhouetteScore(double[][] X, int[] labels, int nClusters)
         {
             double[] silhouetteScores = new double[X.Length];
@@ -216,18 +217,19 @@ namespace SkyCombImage.ProcessLogic
                     var clusterRows = orgClusters.AsEnumerable().Where(row => row.Field<int>("Cluster") == orgCluster).OrderBy(row => row.Field<double>("Time")).ToList();
                     var validFeatures = new List<DataRow>();
 
+                    DataRow? prevFeature = null;
                     for (int i = 0; i < clusterRows.Count; i++)
                     {
-                        if (i == 0 || (Math.Abs(clusterRows[i].Field<double>("Y") - validFeatures.Last().Field<double>("Y")) <= maxYPixels &&
-                                        clusterRows[i].Field<double>("Y") - validFeatures.Last().Field<double>("Y") >= -yMovePerTimeSlice &&
-                                        Math.Abs(clusterRows[i].Field<double>("X") - validFeatures.Last().Field<double>("X")) <= ProcessConfigModel.YoloMaxXPixelsDeltaPerCluster))
-                        {
-                            if (validFeatures.Count == 0 || (clusterRows[i].Field<double>("Time") != validFeatures.Last().Field<double>("Time") &&
-                                    validFeatures.Last().Field<double>("Time") - clusterRows[i].Field<double>("Time") <= ProcessConfigModel.YoloMaxTimeGap))
-                            {
-                                validFeatures.Add(clusterRows[i]);
-                            }
-                        }
+                        DataRow thisFeature = clusterRows[i];
+                        if (i == 0)
+                            validFeatures.Add(thisFeature);
+                        else if ((Math.Abs(thisFeature.Field<double>("Y") - prevFeature.Field<double>("Y")) <= maxYPixels &&
+                                thisFeature.Field<double>("Y") - prevFeature.Field<double>("Y") >= -yMovePerTimeSlice &&
+                                Math.Abs(thisFeature.Field<double>("X") - prevFeature.Field<double>("X")) <= ProcessConfigModel.YoloMaxXPixelsDeltaPerCluster) &&
+                                thisFeature.Field<double>("Time") != prevFeature.Field<double>("Time") &&
+                                prevFeature.Field<double>("Time") - thisFeature.Field<double>("Time") <= ProcessConfigModel.YoloMaxTimeGap)
+                            validFeatures.Add(thisFeature);
+                        prevFeature = thisFeature;
                     }
 
                     if (validFeatures.Count > 0)
