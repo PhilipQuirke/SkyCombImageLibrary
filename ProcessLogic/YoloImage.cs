@@ -297,10 +297,27 @@ namespace SkyCombImage.ProcessLogic
                         if (closestCluster != -1)
                         {
                             var clusterDf = adjustedDf.AsEnumerable().Where(row => row.Field<int>("Cluster") == closestCluster).CopyToDataTable();
+                            // This is the best code:
                             if (Math.Abs((double)feature["Y"] - clusterDf.AsEnumerable().Select(row => row.Field<double>("Y")).Max()) <= maxYPixels &&
                                 (double)feature["Y"] - clusterDf.AsEnumerable().Select(row => row.Field<double>("Y")).Max() >= -yMovePerTimeSlice &&
                                 Math.Abs((double)feature["X"] - clusterDf.AsEnumerable().Select(row => row.Field<double>("X")).Average()) <= ProcessConfigModel.YoloMaxXPixelsDeltaPerCluster &&
                                 (double)feature["Time"] - clusterDf.AsEnumerable().Select(row => row.Field<double>("Time")).Max() <= ProcessConfigModel.YoloMaxTimeGap)
+
+                            //This is worse:
+                            //if( IsGoodNextFeature(yMovePerTimeSlice,
+                            //    clusterDf.AsEnumerable().Select(row => row.Field<double>("Time")).Max(),
+                            //    clusterDf.AsEnumerable().Select(row => row.Field<double>("X")).Average(),
+                            //    clusterDf.AsEnumerable().Select(row => row.Field<double>("Y")).Max(), 
+                            //    feature) )
+                            // Consider finding the exist cluster feature with the closest but lower Time value and then use IsGoodNextFeature
+
+                            //This is worse:
+                            // Find the row with the highest "Time" value that is strictly less than TestTime
+                            //DataRow prevFeature = clusterDf.AsEnumerable()
+                            //                      .Where(row => row.Field<double>("Time") < (double)feature["Time"])
+                            //                      .OrderByDescending(row => row.Field<double>("Time"))
+                            //                      .FirstOrDefault();
+                            //if( IsGoodNextFeature(yMovePerTimeSlice, prevFeature, feature) )
                             {
                                 adjustedDf.ImportRow(feature);
                                 rowsToRemove.Add(feature);
