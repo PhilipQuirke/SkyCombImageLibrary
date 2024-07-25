@@ -1,6 +1,4 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved. 
-using Emgu.CV;
-using Emgu.CV.Structure;
+﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using SkyCombDrone.DrawSpace;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
@@ -127,7 +125,6 @@ namespace SkyCombImageLibrary.RunSpace
             {
                 var settings = JsonSettings.LoadSettings();
                 InputDirectory = settings.InputDirectory.TrimEnd('\\');
-                LinzApiKey = settings.LinzApiKey;
                 GroundDirectory = settings.GroundDirectory.TrimEnd('\\');
                 YoloDirectory = settings.YoloDirectory.TrimEnd('\\');
                 OutputDirectory = settings.OutputDirectory.TrimEnd('\\');
