@@ -31,8 +31,8 @@ namespace SkyCombImageLibrary.RunSpace
         // InputDirectory with an optional file name. Trailing "\" (if any) is trimmed
         public string InputFileName { get; set; } = "";
 
-        // Name of main process to run: contour, distance, yolo, gftt, comb, threshold, none. Lowercase.
-        public RunProcessEnum RunProcess { get; set; } = RunProcessEnum.Comb;
+        // Name of main process to run: yolo, gftt, comb, threshold, none.
+        public RunProcessEnum RunProcess { get; set; } = RunProcessEnum.Yolo;
 
         // Between processing blocks, do we pause (slows down processing). That values max, fast, medium, slow. 
         public RunSpeedEnum RunSpeed { get; set; } = RunSpeedEnum.Fast;
