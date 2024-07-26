@@ -233,7 +233,7 @@ namespace SkyCombImage.ProcessModel
                 { "Size Rnd CM2", (SizeCM2 == UnknownValue ? UnknownHeight : ((int)(SizeCM2 / 100f)) * 100), AreaCM2Ndp },
                 { "Avg Range M", AvgRangeM },
                 { "Max Heat", MaxHeat}, 
-                { "Dem M", DemM, HeightNdp },
+                { "Dem M", DemM, ElevationNdp },
                 { "Leg", (FlightLegId == UnknownValue ? 0 : FlightLegId) },
                 { "Attributes", Attributes },
                 { "Significant", Significant },
