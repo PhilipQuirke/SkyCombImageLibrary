@@ -76,22 +76,25 @@ namespace SkyCombImageLibrary.RunSpace
         // Describe (summarise) the process settings.
         public string DescribeProcess()
         {
-            string answer =
-                "Process: " + RunProcess + "\r\n" +
-                "Speed: " + RunSpeed + "\r\n";
+            string answer = "Process: " + RunProcess + "\r\n";
 
-            if (ProcessConfig != null)
+            if (RunProcess != RunProcessEnum.None)
             {
-                answer += "Heat Threshold: " + ProcessConfig.HeatThresholdValue + "\r\n";
-                if (RunProcess == RunProcessEnum.Yolo)
-                    answer += "Detect/IoU/Merge: " +
-                        ProcessConfig.YoloDetectConfidence.ToString() + "/" +
-                        ProcessConfig.YoloIoU.ToString() + "\r\n";
+                answer += "Speed: " + RunSpeed + "\r\n";
 
-                answer += "Save Annotated Video: " + (ProcessConfig.SaveAnnotatedVideo ? "Yes" : "No") + "\r\n";
+                if (ProcessConfig != null)
+                {
+                    answer += "Heat Threshold: " + ProcessConfig.HeatThresholdValue + "\r\n";
+                    if (RunProcess == RunProcessEnum.Yolo)
+                        answer += "Detect/IoU/Merge: " +
+                            ProcessConfig.YoloDetectConfidence.ToString() + "/" +
+                            ProcessConfig.YoloIoU.ToString() + "\r\n";
 
-                if (ProcessConfig.SaveObjectData != SaveObjectDataEnum.None)
-                    answer += "Save Objects: " + ProcessConfig.SaveObjectData + "\r\n";
+                    answer += "Save Annotated Video: " + (ProcessConfig.SaveAnnotatedVideo ? "Yes" : "No") + "\r\n";
+
+                    if (ProcessConfig.SaveObjectData != SaveObjectDataEnum.None)
+                        answer += "Save Objects: " + ProcessConfig.SaveObjectData + "\r\n";
+                }
             }
 
             return answer;

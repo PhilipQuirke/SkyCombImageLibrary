@@ -168,9 +168,6 @@ namespace SkyCombImage.ProcessModel
 
             if ((YoloIoU < 0.1f) || (YoloIoU > 0.9f))
                 YoloIoU = ProcessConfigModel.YoloIoUDefault;
-
-            //if ((YoloMergeConfidence < 0.1f) || (YoloMergeConfidence > 0.9f))
-            //    YoloMergeConfidence = ProcessConfigModel.YoloMergeConfidenceDefault;
         }
 
 
