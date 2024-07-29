@@ -2,6 +2,7 @@
 using SkyCombDrone.PersistModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessLogic;
+using SkyCombImageLibrary.RunSpace;
 
 
 namespace SkyCombImage.PersistModel
@@ -14,13 +15,6 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // Load model config data from the datastore
-        public List<string> ModelConfigSettings()
-        {
-            return Data.GetColumnSettingsIfAvailable(ProcessTabName, ProcessConfigTitle, ModelTitleRow, LhsColOffset);
-        }
-
-
         // Load run config data from the datastore 
         public List<string> RunConfigSettings()
         {
@@ -28,17 +22,26 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // Load draw config data from the datastore
-        public List<string> DrawConfigSettings()
+        // Load run config data from the datastore 
+        public void LoadRunConfigSettings(RunConfig runConfig)
         {
-            return Data.GetColumnSettingsIfAvailable(ProcessTabName, DrawTitle, DrawTitleRow, MidColOffset);
+            runConfig.LoadSettings(RunConfigSettings());    
         }
 
 
-        // Load "save" config data from the datastore
-        public List<string> OutputConfigSettings()
+        public void LoadConfigSettings(RunConfig runConfig)
         {
-            return Data.GetColumnSettingsIfAvailable(ProcessTabName, OutputConfigTitle, OutputTitleRow, MidColOffset);
+            var modelSettings = Data.GetColumnSettingsIfAvailable(ProcessTabName, ProcessConfigTitle, ModelTitleRow, LhsColOffset);
+            if (modelSettings != null)
+                runConfig.ProcessConfig.LoadModelSettings(modelSettings);
+
+            var drawSettings = Data.GetColumnSettingsIfAvailable(ProcessTabName, DrawTitle, DrawTitleRow, MidColOffset);
+            if (drawSettings != null)
+                runConfig.ImageConfig.LoadSettings(drawSettings);
+
+            var outputSettings = Data.GetColumnSettingsIfAvailable(ProcessTabName, OutputConfigTitle, OutputTitleRow, MidColOffset);
+            if (outputSettings != null)
+                runConfig.ProcessConfig.LoadOutputSettings(outputSettings);
         }
 
 

@@ -116,8 +116,11 @@ namespace SkyCombImageLibrary.RunSpace
         // This function must align to the above GetSettings function.
         public void LoadSettings(List<string> settings)
         {
-            RunProcess = (RunProcessEnum)Enum.Parse(typeof(RunProcessEnum), settings[0]);
-            RunSpeed = (RunSpeedEnum)Enum.Parse(typeof(RunSpeedEnum), settings[1]);
+            if (settings != null)
+            {
+                RunProcess = (RunProcessEnum)Enum.Parse(typeof(RunProcessEnum), settings[0]);
+                RunSpeed = (RunSpeedEnum)Enum.Parse(typeof(RunSpeedEnum), settings[1]);
+            }
         }
 
 

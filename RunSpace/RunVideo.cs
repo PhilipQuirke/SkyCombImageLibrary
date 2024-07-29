@@ -124,21 +124,10 @@ namespace SkyCombImage.RunSpace
         // See if there is an "XXXXXXX_SkyComb.xls" created in a previous run that we can use as a settings cache.
         // This allows the values of RunVideoFromS, RunVideoToS, RunModel, ThresholdValue, etc to be preserved between runs.
         // Can only evaluate this after we know InputVideoFileName (aka the ThermalVideo and/or OpticalVideo names).
-        public void LoadDataStoreSettings()
+        public void LoadDataStoreConfigSettings()
         {
             StandardLoad dataReader = new(DataStore);
-
-            var modelSettings = dataReader.ModelConfigSettings();
-            if (modelSettings != null)
-                RunConfig.ProcessConfig.LoadModelSettings(modelSettings);
-
-            var drawSettings = dataReader.DrawConfigSettings();
-            if (drawSettings != null)
-                RunConfig.ImageConfig.LoadSettings(drawSettings);
-
-            var outputSettings = dataReader.OutputConfigSettings();
-            if (outputSettings != null)
-                RunConfig.ProcessConfig.LoadOutputSettings(outputSettings);
+            dataReader.LoadConfigSettings(RunConfig);
         }
 
 
