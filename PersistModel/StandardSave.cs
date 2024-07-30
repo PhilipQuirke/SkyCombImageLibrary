@@ -146,25 +146,6 @@ namespace SkyCombImage.PersistModel
                     // Add the Block charts
                     AddBlocks2Tab(summary);
 
-                    // Save the Pixel data 
-                    if (process is CombProcess)
-                        if ((runConfig.ProcessConfig.SavePixels != SavePixelsEnum.None) && (process.ProcessFeatures.Count > 0))
-                        {
-                            Data.SelectOrAddWorksheet(PixelsTabName);
-                            int row = 0;
-                            foreach (var feature in process.ProcessFeatures)
-                                if (runConfig.ProcessConfig.SavePixels == SavePixelsEnum.All || feature.Value.Significant)
-                                {
-                                    var theFeature = feature.Value;
-                                    if (theFeature.Pixels != null)
-                                        foreach (var pixel in theFeature.Pixels)
-                                            if (runConfig.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All || feature.Value.Significant)
-                                                Data.SetDataListRowKeysAndValues(ref row, pixel.GetSettings());
-                                }
-
-                            Data.SetLastUpdateDateTime(PixelsTabName);
-                        }
-
                     var saveAllObjects = (runConfig.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All);
 
                     ObjectSave SaveProcess = new(data);

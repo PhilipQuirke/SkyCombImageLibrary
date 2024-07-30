@@ -12,8 +12,6 @@ namespace SkyCombImage.ProcessModel
 
     public enum SaveObjectDataEnum { All, Significant, None };
 
-    public enum SavePixelsEnum { All, Some, None };
-
 
     // Configuration settings related to processing models.
     //
@@ -105,19 +103,14 @@ namespace SkyCombImage.ProcessModel
         public float YoloDetectConfidence { get; set; } = ProcessConfigModel.YoloDetectConfidenceDefault;
         // Successive frame Yolo overlap threshold
         public float YoloIoU { get; set; } = ProcessConfigModel.YoloIoUDefault; // Typically 0.2 to 0.4
-        // Yolo merge objects based on similarity threshold
-        //public float YoloMergeConfidence { get; set; } = ProcessConfigModel.YoloMergeConfidenceDefault;
-        //public float YoloMergeVelocityWeighting { get; set; } = ProcessConfigModel. YoloMergeVelocityWeightingDefault;
-        //public float YoloMergePositionWeighting { get; set; } = ProcessConfigModel.YoloMergePositionWeightingDefault;
+
 
 
         // --------------------- Saving Output --------------------- 
-        // Create annotated video file as output
-        public bool SaveAnnotatedVideo { get; set; } = true;
+        // Create annotated video file as output MP4
+        public bool SaveAnnotatedVideo { get; set; } = false;
         // Save the objects and features to the datastore. Takes values all, significant, none.
         public SaveObjectDataEnum SaveObjectData { get; set; } = SaveObjectDataEnum.Significant; 
-        // Save the pixels to the datastore (slow & bulky). Takes values all, some, none.
-        public SavePixelsEnum SavePixels { get; set; } = SavePixelsEnum.None;
 
 
         // --------------------- Error Thresholds --------------------- 
@@ -263,7 +256,6 @@ namespace SkyCombImage.ProcessModel
             {
                 { "Save Annotated Video", SaveAnnotatedVideo },
                 { "Save Object Data", SaveObjectData.ToString() },
-                { "Save Pixels", SavePixels.ToString() },
                 { "Good Location Err M", GoodLocationErrM, LocationNdp },
                 { "Bad Location Err M", BadLocationErrM, LocationNdp },
                 { "Good Height Err M", GoodHeightErrM, HeightNdp },
@@ -280,7 +272,6 @@ namespace SkyCombImage.ProcessModel
             int i = 0;
             SaveAnnotatedVideo = Convert.ToBoolean(settings[i++]);
             SaveObjectData = (SaveObjectDataEnum)Enum.Parse(typeof(SaveObjectDataEnum), settings[i++]);
-            SavePixels = (SavePixelsEnum)Enum.Parse(typeof(SavePixelsEnum), settings[i++]);
             GoodLocationErrM = StringToNonNegFloat(settings[i++]);
             BadLocationErrM = StringToNonNegFloat(settings[i++]);
             GoodHeightErrM = StringToNonNegFloat(settings[i++]);
