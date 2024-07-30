@@ -341,10 +341,11 @@ namespace SkyCombImage.RunSpace
                 // Ensure we trigger a ProcessFlightLegChange start event on the first block (if needed)
                 PSM.CurrRunLegId = UnknownValue;
 
-                Image<Bgr, byte>? modifiedInputImage = null;
-                Image<Bgr, byte>? modifiedDisplayImage = null;
                 while (true)
                 {
+                    Image<Bgr, byte>? modifiedInputImage = null;
+                    Image<Bgr, byte>? modifiedDisplayImage = null;
+
                     int prevLegId = PSM.CurrRunLegId;
 
                     // Move to the next video frame, processing block, and maybe flight section
@@ -424,7 +425,7 @@ namespace SkyCombImage.RunSpace
                     // Calc effort excludes UI updates
                     ProcessDurationMs += (int)calcWatch.Elapsed.TotalMilliseconds;
 
-                    // Always show summary of processing effort
+                    // Show summary of processing effort
                     ShowStepProgress();
                     if (!suppressUiUpdates)
                     {
@@ -432,6 +433,9 @@ namespace SkyCombImage.RunSpace
                         DrawUI(modifiedInputImage, modifiedDisplayImage);
                         RefreshAll();
                     }
+                    // Free the image memory
+                    modifiedInputImage = null;
+                    modifiedDisplayImage = null;
 
                     // Has user clicked the Stop button?
                     if (StopRunning)
@@ -482,7 +486,8 @@ namespace SkyCombImage.RunSpace
                 // & save changes to the datastore.
                 SafeEndRunning();
 
-                DrawUI(modifiedInputImage, modifiedDisplayImage);
+
+                // DrawUI(modifiedInputImage, modifiedDisplayImage);
                 RunParent.DrawObjectGrid(this, true);
                 RunParent.ShowRunSummary(
                     string.Format("{0}\nFrames: {1} of {2}\nSaving video",
