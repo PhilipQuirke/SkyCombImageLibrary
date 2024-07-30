@@ -14,9 +14,9 @@ using SkyCombImageLibrary.RunSpace;
 namespace SkyCombImage.RunSpace
 {
     // YOLO (You only look once) V8 video processing.
-    class RunVideoYolo : RunVideoPersist
+    class RunVideoYoloDrone : RunVideoPersist
     {
-        public RunVideoYolo(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
+        public RunVideoYoloDrone(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
             : base(parent, config, dataStore, drone, ProcessFactory.NewYoloProcess(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig, config.YoloDirectory))
         {
         }
