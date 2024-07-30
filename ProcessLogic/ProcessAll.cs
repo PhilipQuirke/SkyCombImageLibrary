@@ -246,6 +246,11 @@ namespace SkyCombImage.ProcessLogic
 
             // If we have been tracking some significant objects, create a ProcessSpan for them
             ProcessSpan_Create();
+
+            if (Drone.HasInputVideo)
+                Drone.InputVideo.ResetCurrFrame();
+            if (Drone.HasDisplayVideo)
+                Drone.DisplayVideo.ResetCurrFrame();
         }
 
 
