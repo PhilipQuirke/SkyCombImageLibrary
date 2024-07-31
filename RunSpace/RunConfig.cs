@@ -90,10 +90,13 @@ namespace SkyCombImageLibrary.RunSpace
                             ProcessConfig.YoloDetectConfidence.ToString() + "/" +
                             ProcessConfig.YoloIoU.ToString() + "\r\n";
 
-                    answer += "Save Annotated Video: " + (ProcessConfig.SaveAnnotatedVideo ? "Yes" : "No") + "\r\n";
+                    if(ProcessConfig.SaveAnnotatedVideo)
+                        answer += "Save Annotated Video\r\n";
 
-                    if (ProcessConfig.SaveObjectData != SaveObjectDataEnum.None)
-                        answer += "Save Objects: " + ProcessConfig.SaveObjectData + "\r\n";
+                    if (ProcessConfig.SaveObjectData == SaveObjectDataEnum.Significant)
+                        answer += "Save Significant Objects\r\n";
+                    else if (ProcessConfig.SaveObjectData == SaveObjectDataEnum.All)
+                        answer += "Save All Objects\r\n";
                 }
             }
 
