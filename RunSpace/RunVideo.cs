@@ -41,9 +41,6 @@ namespace SkyCombImage.RunSpace
         // Basic attributes of the input video
         public VideoModel? VideoBase = null;
 
-        // Current input video frame image
-        public Image<Bgr, byte>? CurrInputVideoFrame { get; set; } = null;
-
 
         // Has user requested we stop processing?
         public bool StopRunning { get; set; } = false;
@@ -244,10 +241,10 @@ namespace SkyCombImage.RunSpace
         // Do not change input or drone data. Do not delete config references.
         public virtual void RunStart()
         {
-            CurrInputVideoFrame = null;
             StopRunning = false;
             ProcessDurationMs = 0;
 
+            ResetCurrImages();
             ConfigureModelScope();
             ProcessDrawScope.Reset(this, Drone);
             CombDrawPath.Reset(ProcessDrawScope);
@@ -364,7 +361,7 @@ namespace SkyCombImage.RunSpace
                         break;
 
                     // Convert the already loaded Mat(s) into Image(s)
-                    (var currInputImage, var currDisplayImage) = ConvertImages();
+                    ConvertCurrImages();
 
                     if (prevLegId != PSM.CurrRunLegId)
                     {
@@ -378,7 +375,7 @@ namespace SkyCombImage.RunSpace
                         if (!Drone.HaveFrames())
                             break;
 
-                        (currInputImage, currDisplayImage) = ConvertImages();
+                        ConvertCurrImages();
 
                         Assert(inputVideo.CurrFrameId == PSM.CurrInputFrameId, "RunVideo.Run: Bad FrameId 1");
 
@@ -404,8 +401,6 @@ namespace SkyCombImage.RunSpace
                     if ((Drone.HasFlightSteps) && (PSM.CurrRunStepId > MaxTardisId))
                         break;
 
-                    CurrInputVideoFrame = currInputImage.Clone();
-
                     // Apply process model to this new frame
                     var thisBlock = AddBlockAndProcessInputVideoFrame();
 
@@ -416,7 +411,7 @@ namespace SkyCombImage.RunSpace
                     modifiedDisplayImage = null;
                     if ((videoWriter != null) || (!suppressUiUpdates))
                         (modifiedInputImage, modifiedDisplayImage) =
-                            DrawVideoFrames(thisBlock, CurrInputVideoFrame, currDisplayImage);
+                            DrawVideoFrames(thisBlock, CurrInputImage, CurrDisplayImage);
 
                     // Save the output frame to disk. 
                     if ((videoWriter != null) && (modifiedInputImage != null))
@@ -546,7 +541,7 @@ namespace SkyCombImage.RunSpace
                 var thisBlock = ProcessFactory.NewBlock(this);
                 ProcessAll.Blocks.AddBlock(thisBlock, this, Drone);
 
-                var inputImage = CurrInputVideoFrame.Clone();
+                var inputImage = CurrInputImage.Clone();
 
                 // Process (analyse) a single image (using any one ProcessName) and returns an image.
                 DrawImage.Draw(RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, ref inputImage);

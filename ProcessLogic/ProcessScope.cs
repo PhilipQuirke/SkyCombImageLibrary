@@ -1,6 +1,5 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved. 
+﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using Emgu.CV;
-using Emgu.CV.Face;
 using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
@@ -13,7 +12,7 @@ namespace SkyCombImage.ProcessLogic
     public class ProcessScope : FlightStepSummaryModel
     {
         // All drone input data: video(definitely), flight(maybe) and ground(maybe) data
-        public Drone Drone { get; set; }
+        public Drone? Drone { get; set; }
 
         public ProcessScopeModel PSM { get; }
 
@@ -24,8 +23,12 @@ namespace SkyCombImage.ProcessLogic
         // Last step of flight data to process
         public int LastRunStepId { get { return MaxStepId; } }
 
+        public Image<Bgr, byte>? CurrInputImage { get; set; } = null;
+        public Image<Bgr, byte>? CurrDisplayImage { get; set; } = null;
 
-        public ProcessScope(Drone drone = null)
+
+
+        public ProcessScope(Drone? drone = null)
         {
             PSM = new();
             Drone = drone;
@@ -65,6 +68,17 @@ namespace SkyCombImage.ProcessLogic
                 Drone.FlightSteps.Steps.CalculateSettings_Summarise(this, fromStepId, toStepId);
             else
                 this.ResetSteps();
+
+            ResetCurrImages();
+        }
+
+
+        public void ResetCurrImages()
+        {
+            CurrInputImage?.Dispose();
+            CurrInputImage = null;
+            CurrDisplayImage?.Dispose();
+            CurrDisplayImage = null;
         }
 
 
@@ -148,10 +162,9 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Return current input video frame and corresponding display video frame (if any)
-        public (Image<Bgr, byte>? inputImage, Image<Bgr, byte>? displayImage) ConvertImages()
+        public void ConvertCurrImages()
         {
-            Image<Bgr, byte>? inputImage = null;
-            Image<Bgr, byte>? displayImage = null;
+            ResetCurrImages();
 
             if (Drone.HaveFrames())
             {
@@ -159,15 +172,12 @@ namespace SkyCombImage.ProcessLogic
 
                 CalculateSettings();
 
-                inputImage = inputMat.ToImage<Bgr, byte>();
+                CurrInputImage = inputMat.ToImage<Bgr, byte>();
                 if (displayMat != null)
-                    displayImage = displayMat.ToImage<Bgr, byte>();
+                    CurrDisplayImage = displayMat.ToImage<Bgr, byte>();
                 else
-                    displayImage = inputMat.ToImage<Bgr, byte>();
+                    CurrDisplayImage = inputMat.ToImage<Bgr, byte>();
             }
-
-            return (inputImage, displayImage);
         }
-
     }
 }

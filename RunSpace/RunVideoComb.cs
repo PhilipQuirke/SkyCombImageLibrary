@@ -80,14 +80,14 @@ namespace SkyCombImage.RunSpace
                     // Don't create features. Don't update objects.
                     return currBlock;
 
-                Image<Bgr, byte> imgInput = CurrInputVideoFrame.Clone();
+                Image<Bgr, byte> imgInput = CurrInputImage.Clone();
                 DrawImage.Smooth(RunConfig.ProcessConfig, ref imgInput);
 
                 Image<Gray, byte> imgThreshold = DrawImage.ToGrayScale(imgInput);
                 DrawImage.Threshold(RunConfig.ProcessConfig, ref imgThreshold);
 
                 ProcessFeatureList featuresInBlock = ProcessFactory.NewProcessFeatureList(CombProcess.ProcessConfig);
-                CombFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, currBlock, CurrInputVideoFrame, imgThreshold);
+                CombFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, currBlock, CurrInputImage, imgThreshold);
 
                 foreach (var feature in featuresInBlock)
                 {

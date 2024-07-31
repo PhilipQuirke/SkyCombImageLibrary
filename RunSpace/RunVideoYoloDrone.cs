@@ -58,7 +58,7 @@ namespace SkyCombImage.RunSpace
             {
                 var thisBlock = ProcessAll.AddBlock(this);
 
-                var currGray = DrawImage.ToGrayScale(CurrInputVideoFrame);
+                var currGray = DrawImage.ToGrayScale(CurrInputImage);
 
                 // Set pixels hotter than ThresholdValue to 1. Set other pixels to 0.
                 var imgThreshold = currGray.Clone();
@@ -66,7 +66,7 @@ namespace SkyCombImage.RunSpace
 
                 DetectionResult result = YoloProcess.YoloDetect.Detect(currGray.ToBitmap());
 
-                int numSig = YoloProcess.ProcessBlock(this, currGray, CurrInputVideoFrame, imgThreshold, result);
+                int numSig = YoloProcess.ProcessBlock(this, currGray, CurrInputImage, imgThreshold, result);
 
                 thisBlock.NumSig = numSig; 
 
