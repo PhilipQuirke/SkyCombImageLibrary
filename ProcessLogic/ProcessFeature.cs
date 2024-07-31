@@ -71,6 +71,12 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        public void ClearHotPixels()
+        {
+            Pixels = null;
+        }
+
+
         // Does this Feature's PixelBox and the specified object's rectangle overlap significantly?
         public bool SignificantPixelBoxIntersection(Rectangle objectExpectedLocation)
         {

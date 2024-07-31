@@ -57,6 +57,16 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Save memory (if compatible with Config settings) by deleting pixel data
+        // For Comb, we only care about pixel data for objects / features in legs
+        public void ClearHotPixels()
+        {
+            foreach (var feature in ProcessFeatures)
+                feature.Value.ClearHotPixels();
+                // NumHotPixels is not cleared 
+        }
+
+
         // Number of real features owned by this object.
         public int NumRealFeatures()
         {

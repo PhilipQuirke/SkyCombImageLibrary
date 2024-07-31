@@ -37,8 +37,8 @@ namespace SkyCombImage.ProcessLogic
 
         // Evaluate the MinHeat, MaxHeat and PixelSize of this feature
         public void CalculateHeat(
-            Image<Bgr, byte> imgOriginal,
-            Image<Gray, byte> imgThreshold)
+            in Image<Bgr, byte> imgOriginal,        // read-only
+            in Image<Gray, byte> imgThreshold)      // read-only
         {
             MinHeat = 255 + 255 + 255;
             MaxHeat = 0;

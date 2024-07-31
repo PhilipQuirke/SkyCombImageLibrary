@@ -51,7 +51,7 @@ namespace SkyCombImage.ProcessModel
         // Theshold Process. Takes values binary, binaryinv, tozero, tozeroinv, trunc, none. Lowercase
         public ThresholdProcessEnum ThresholdProcess { get; set; } = ThresholdProcessEnum.Binary;
         // Pixel gray-scale value that ThresholdProcess uses. Takes values from 50 to 255
-        public int HeatThresholdValue { get; set; } = 235;
+        public int HeatThresholdValue { get; set; } = 180;
 
 
         // Comb:

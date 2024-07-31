@@ -216,7 +216,8 @@ namespace SkyCombImage.DrawSpace
             RunProcessEnum runProcess,
             ProcessConfigModel processConfig, DrawImageConfig drawConfig, Drone drone,
             ProcessBlockModel block, ProcessAll processAll, int focusObjectId,
-            Image<Bgr, byte> inputFrame, Image<Bgr, byte> displayFrame)
+            in Image<Bgr, byte> inputFrame, // Read-only
+            in Image<Bgr, byte> displayFrame) // Read-only
         {
             try
             {
@@ -465,6 +466,7 @@ namespace SkyCombImage.DrawSpace
 
                     CalculateStepWidthAndStride(DroneDrawScope.FirstDrawMs, DroneDrawScope.LastDrawMs);
 
+                    BaseImage?.Dispose();
                     BaseImage = image.Clone();
                 }
             }

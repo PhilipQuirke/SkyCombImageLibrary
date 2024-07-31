@@ -67,19 +67,13 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Save memory (if compatible with Config settings) by deleting pixel data
-        // For Comb, we only care about pixel data for objects / features in legs
+        // Save memory by deleting pixel data
         public void DeleteFeaturePixelsForObjects()
         {
             foreach (var theObject in ProcessObjects)
             {
                 var combObject = theObject.Value;
-                if (combObject.FlightLegId <= 0)
-                    foreach (var feature in combObject.ProcessFeatures)
-                    {
-                        feature.Value.Pixels?.Clear();
-                        // NumHotPixels is not cleared 
-                    }
+                 combObject.ClearHotPixels();
             }
         }
 

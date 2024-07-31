@@ -46,8 +46,8 @@ namespace SkyCombImage.ProcessLogic
         //      - The search can SHRINK horizontally (left or right) one pixel on one row
         public void PixelNeighborSearch(
             ref bool[] inputSearched,
-            Image<Bgr, byte> imgOriginal,
-            Image<Gray, byte> imgThreshold,
+            in Image<Bgr, byte> imgOriginal,        // read-only
+            in Image<Gray, byte> imgThreshold,      // read-only
             int startY,
             int startX)
         {
@@ -175,7 +175,7 @@ namespace SkyCombImage.ProcessLogic
                 Pixels.AddRange(otherFeature.Pixels);
                 CalcNumHotPixels();
 
-                otherFeature.Pixels = null;
+                otherFeature.ClearHotPixels();
                 otherFeature.NumHotPixels = 0;
             }
 
@@ -201,8 +201,8 @@ namespace SkyCombImage.ProcessLogic
             CombProcess combProcess,
             ProcessFeatureList featuresInBlock,
             ProcessBlock block,
-            Image<Bgr, byte> imgOriginal,
-            Image<Gray, byte> imgThreshold)
+            in Image<Bgr, byte> imgOriginal,    // read-only
+            in Image<Gray, byte> imgThreshold)  // read-only
         {
             int y = 0;
             int x = 0;
@@ -232,7 +232,7 @@ namespace SkyCombImage.ProcessLogic
 
                                 feature.PixelNeighborSearch(
                                     ref inputSearched,
-                                    imgOriginal, imgThreshold,
+                                    imgOriginal, imgThreshold,  
                                     y, x);
 
                                 featuresInBlock.AddFeature(feature);

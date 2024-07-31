@@ -153,9 +153,9 @@ namespace SkyCombImage.ProcessLogic
         // Else create a new object to own the feature.
         public int ProcessBlock(
             ProcessScope scope,
-            Image<Gray, byte> currGray,
-            Image<Bgr, byte> imgOriginal,
-            Image<Gray, byte> imgThreshold,
+            in Image<Gray, byte> currGray, // read-only
+            in Image<Bgr, byte> imgOriginal, // read-only
+            in Image<Gray, byte> imgThreshold, // read-only
             DetectionResult? result)
         {
             int Phase = 0;

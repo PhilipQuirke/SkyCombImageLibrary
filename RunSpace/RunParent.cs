@@ -12,10 +12,7 @@ namespace SkyCombImage.RunSpace
 
         public abstract void RefreshAll();
 
-        public abstract void DrawUI(
-            RunVideo runVideo,
-            Image<Bgr, byte> inputFrame,
-            Image<Bgr, byte> displayFrame);
+        public abstract void DrawUI(RunVideo runVideo);
 
         public abstract void DrawObjectGrid(RunVideo runVideo, bool showObjectGrid);
 

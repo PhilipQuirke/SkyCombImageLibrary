@@ -49,6 +49,11 @@ namespace SkyCombImage.RunSpace
         int ProcessDurationMs = 0;
 
 
+        public Image<Bgr, byte>? ModifiedInputImage = null; 
+        public Image<Bgr, byte>? ModifiedDisplayImage = null;
+
+
+
         // How to draw various graphs and charts
         public ProcessDrawScope ProcessDrawScope;
         public CombDrawPath CombDrawPath;
@@ -146,6 +151,15 @@ namespace SkyCombImage.RunSpace
         }
 
 
+        public void ResetModifiedImages()
+        {
+            ModifiedInputImage?.Dispose();
+            ModifiedInputImage = null;
+            ModifiedDisplayImage?.Dispose();
+            ModifiedDisplayImage = null;
+        }
+
+
         // The input video file name to process.
         public virtual string InputVideoFileName()
         {
@@ -205,18 +219,21 @@ namespace SkyCombImage.RunSpace
 
 
         // Process a single input and (maybe) display video frame for the specified block, returning the modified input&display frames to show 
-        public virtual (Image<Bgr, byte>, Image<Bgr, byte>) DrawVideoFrames(ProcessBlockModel block, Image<Bgr, byte> inputFrame, Image<Bgr, byte> displayFrame)
+        public void DrawVideoFrames(ProcessBlockModel block)
         {
-            (var modifiedInputFrame, var modifiedDisplayFrame) =
+            ResetModifiedImages();
+
+            if (CurrInputImage == null)
+                return;
+
+            (ModifiedInputImage, ModifiedDisplayImage) =
                 DrawSpace.DrawVideoFrames.Draw(
                     RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, Drone,
-                    block, ProcessAll, UnknownValue, 
-                    inputFrame, displayFrame);
+                    block, ProcessAll, UnknownValue,
+                    CurrInputImage, CurrDisplayImage);
 
-            if(modifiedInputFrame != null)
-                DrawYawPitchZoom.Draw(ref modifiedInputFrame, Drone, CurrRunFlightStep);
-
-            return (modifiedInputFrame, modifiedDisplayFrame);
+            if(ModifiedInputImage != null)
+                DrawYawPitchZoom.Draw(ref ModifiedInputImage, Drone, CurrRunFlightStep);
         }
 
 
@@ -245,6 +262,7 @@ namespace SkyCombImage.RunSpace
             ProcessDurationMs = 0;
 
             ResetCurrImages();
+            ResetModifiedImages();
             ConfigureModelScope();
             ProcessDrawScope.Reset(this, Drone);
             CombDrawPath.Reset(ProcessDrawScope);
@@ -254,9 +272,7 @@ namespace SkyCombImage.RunSpace
 
 
         // Update (draw) the graph(s), labels etc.
-        public void DrawUI(
-            Image<Bgr, byte> inputFrame,
-            Image<Bgr, byte> displayFrame)
+        public void DrawUI()
         {
             if (PSM.CurrBlockId == 1)
             {
@@ -264,7 +280,7 @@ namespace SkyCombImage.RunSpace
                 CombDrawPath.Reset(ProcessDrawScope);
             }
 
-            RunParent.DrawUI(this, inputFrame, displayFrame);
+            RunParent.DrawUI(this);
         }
 
 
@@ -318,7 +334,7 @@ namespace SkyCombImage.RunSpace
                 ProcessDurationMs = 0;
                 var elapsedWatch = Stopwatch.StartNew();
 
-                // Create a video file writer to output the processed input video to.
+                // Create an output video file writer (if user wants MP4 output)
                 (var videoWriter, var outputVideoFilename) =
                     StandardSave.CreateVideoWriter(RunConfig, InputVideoFileName(), VideoBase.Fps, VideoBase.ImageSize);
 
@@ -340,16 +356,13 @@ namespace SkyCombImage.RunSpace
 
                 while (true)
                 {
-                    Image<Bgr, byte>? modifiedInputImage = null;
-                    Image<Bgr, byte>? modifiedDisplayImage = null;
-
                     int prevLegId = PSM.CurrRunLegId;
 
                     // Move to the next video frame, processing block, and maybe flight section
                     PSM.CurrBlockId++;
 
                     // If process at max speed then (mostly) suppress processing of DisplayFrame and updating of UI
-                    bool suppressUiUpdates =
+                    bool suppressUiUpdate =
                         RunConfig.MaxRunSpeed &&
                         (PSM.CurrBlockId != 1) &&                   // Always show the first block
                         (PSM.CurrBlockId < PSM.LastBlockId - 1) &&  // Always show the last block
@@ -385,7 +398,7 @@ namespace SkyCombImage.RunSpace
                         // If we have just ended a leg change, then may have just calculated FixAltM
                         // so display the UI so the object-feature-lines are redrawn using the refined locations.
                         if (PSM.CurrRunLegId <= 0)
-                            suppressUiUpdates = false;
+                            suppressUiUpdate = false;
                     }
 
                     // Frames occur say every 1/30 second.
@@ -407,30 +420,24 @@ namespace SkyCombImage.RunSpace
                     Assert(inputVideo.CurrFrameId == thisBlock.InputFrameId, "RunVideo.Run: Bad FrameId 2");
 
                     // If we need it, draw the output for this new frame
-                    modifiedInputImage = null;
-                    modifiedDisplayImage = null;
-                    if ((videoWriter != null) || (!suppressUiUpdates))
-                        (modifiedInputImage, modifiedDisplayImage) =
-                            DrawVideoFrames(thisBlock, CurrInputImage, CurrDisplayImage);
+                    if ((videoWriter != null) || (!suppressUiUpdate))
+                        DrawVideoFrames(thisBlock);
 
                     // Save the output frame to disk. 
-                    if ((videoWriter != null) && (modifiedInputImage != null))
-                        videoWriter.Write(modifiedInputImage.Mat);
+                    if ((videoWriter != null) && (ModifiedInputImage != null))
+                        videoWriter.Write(ModifiedInputImage.Mat);
 
                     // Calc effort excludes UI updates
                     ProcessDurationMs += (int)calcWatch.Elapsed.TotalMilliseconds;
 
                     // Show summary of processing effort
                     ShowStepProgress();
-                    if (!suppressUiUpdates)
+                    if (!suppressUiUpdate)
                     {
                         // Show input/display images & update the graphs
-                        DrawUI(modifiedInputImage, modifiedDisplayImage);
+                        DrawUI();
                         RefreshAll();
                     }
-                    // Free the image memory
-                    modifiedInputImage = null;
-                    modifiedDisplayImage = null;
 
                     // Has user clicked the Stop button?
                     if (StopRunning)
@@ -481,8 +488,10 @@ namespace SkyCombImage.RunSpace
                 // & save changes to the datastore.
                 SafeEndRunning();
 
+                DrawUI();
+                ResetModifiedImages();
+                ResetCurrImages();
 
-                // DrawUI(modifiedInputImage, modifiedDisplayImage);
                 RunParent.DrawObjectGrid(this, true);
                 RunParent.ShowRunSummary(
                     string.Format("{0}\nFrames: {1} of {2}\nSaving video",

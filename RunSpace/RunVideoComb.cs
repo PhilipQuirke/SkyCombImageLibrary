@@ -87,7 +87,9 @@ namespace SkyCombImage.RunSpace
                 DrawImage.Threshold(RunConfig.ProcessConfig, ref imgThreshold);
 
                 ProcessFeatureList featuresInBlock = ProcessFactory.NewProcessFeatureList(CombProcess.ProcessConfig);
-                CombFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, currBlock, CurrInputImage, imgThreshold);
+                CombFeatureLogic.CreateFeaturesFromImage(
+                    CombProcess, featuresInBlock, currBlock, 
+                    CurrInputImage, imgThreshold ); // read-only  images
 
                 foreach (var feature in featuresInBlock)
                 {
@@ -102,6 +104,9 @@ namespace SkyCombImage.RunSpace
                 else
                     // Outside legs, we store the features so we can draw them on the video frame later.
                     CombProcess.ProcessBlockForFeatures(featuresInBlock);
+
+                imgInput.Dispose();
+                imgThreshold.Dispose();
 
                 return currBlock;
             }
