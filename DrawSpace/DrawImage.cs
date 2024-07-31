@@ -47,23 +47,46 @@ namespace SkyCombImage.DrawSpace
         // Can generate new pixel colors not in original image.
         public static void Threshold(ProcessConfigModel config, ref Image<Gray, byte> imgInput)
         {
-            switch( config.ThresholdProcess )
+            if (imgInput == null)
+                throw new ArgumentNullException(nameof(imgInput));
+
+            Image<Gray, byte>? result = null;
+            try
             {
-                case ThresholdProcessEnum.Binary: 
-                    imgInput = imgInput.ThresholdBinary(new Gray(config.HeatThresholdValue), new Gray(255)); 
-                    break;
-                case ThresholdProcessEnum.BinaryInv: 
-                    imgInput = imgInput.ThresholdBinaryInv(new Gray(config.HeatThresholdValue), new Gray(255)); 
-                    break;
-                case ThresholdProcessEnum.ToZero: 
-                    imgInput = imgInput.ThresholdToZero(new Gray(config.HeatThresholdValue)); 
-                    break;
-                case ThresholdProcessEnum.ToZeroInv: 
-                    imgInput = imgInput.ThresholdToZeroInv(new Gray(config.HeatThresholdValue)); 
-                    break;
-                case ThresholdProcessEnum.Trunc: 
-                    imgInput = imgInput.ThresholdTrunc(new Gray(config.HeatThresholdValue)); 
-                    break;
+                switch (config.ThresholdProcess)
+                {
+                    case ThresholdProcessEnum.Binary:
+                        result = imgInput.ThresholdBinary(new Gray(config.HeatThresholdValue), new Gray(255));
+                        break;
+                    case ThresholdProcessEnum.BinaryInv:
+                        result = imgInput.ThresholdBinaryInv(new Gray(config.HeatThresholdValue), new Gray(255));
+                        break;
+                    case ThresholdProcessEnum.ToZero:
+                        result = imgInput.ThresholdToZero(new Gray(config.HeatThresholdValue));
+                        break;
+                    case ThresholdProcessEnum.ToZeroInv:
+                        result = imgInput.ThresholdToZeroInv(new Gray(config.HeatThresholdValue));
+                        break;
+                    case ThresholdProcessEnum.Trunc:
+                        result = imgInput.ThresholdTrunc(new Gray(config.HeatThresholdValue));
+                        break;
+                    default:
+                        throw new ArgumentException("Invalid ThresholdProcess value", nameof(config.ThresholdProcess));
+                }
+
+                // If we've made it this far, swap the new image with the input
+                if (result != null)
+                {
+                    var temp = imgInput;
+                    imgInput = result;
+                    result = null;  // Prevent disposal in finally block
+                    temp.Dispose();
+                }
+            }
+            finally
+            {
+                // Dispose of the result if it wasn't assigned to imgInput
+                result?.Dispose();
             }
         }
 

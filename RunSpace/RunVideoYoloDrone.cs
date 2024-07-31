@@ -66,9 +66,10 @@ namespace SkyCombImage.RunSpace
 
                 DetectionResult result = YoloProcess.YoloDetect.Detect(currGray.ToBitmap());
 
-                int numSig = YoloProcess.ProcessBlock(this, currGray, CurrInputImage, imgThreshold, result);
+                thisBlock.NumSig = YoloProcess.ProcessBlock(this, currGray, CurrInputImage, imgThreshold, result);
 
-                thisBlock.NumSig = numSig; 
+                currGray.Dispose();
+                imgThreshold.Dispose();
 
                 return thisBlock;
             }
