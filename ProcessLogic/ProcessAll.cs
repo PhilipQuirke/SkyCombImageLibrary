@@ -1,10 +1,9 @@
-﻿// Copyright SkyComb Limited 2023. All rights reserved. 
+﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using SkyCombDrone.DroneLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
-using Emgu.CV.XFeatures2D;
-using static System.Formats.Asn1.AsnWriter;
+
 
 
 namespace SkyCombImage.ProcessLogic
@@ -12,12 +11,14 @@ namespace SkyCombImage.ProcessLogic
     // Hook types
     public enum ProcessEventEnum
     {
-        ProcessStart,
+        RunStart,
+        IntervalStart,
         LegStart_Before,
         LegStart_After,
         LegEnd_Before,
         LegEnd_After,
-        ProcessEnd
+        IntervalEnd,
+        RunEnd
     }
 
 
@@ -144,7 +145,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Reset the process model, ready for a process run to start
-        protected virtual void ProcessStart()
+        public virtual void RunStart()
         {
             ProcessObject.NextObjectId = 0;
             ProcessFeature.NextFeatureId = 0;
@@ -155,13 +156,6 @@ namespace SkyCombImage.ProcessLogic
             ProcessObject.NextObjectId = 0;
             ProcessSpans.Clear();
             ResetSpanData();
-        }
-
-
-        public void ProcessStartWrapper()
-        {
-            ProcessStart();
-            OnObservation(ProcessEventEnum.ProcessStart);
         }
 
 
@@ -240,25 +234,17 @@ namespace SkyCombImage.ProcessLogic
 
 
         // The process run has ended
-        protected virtual void ProcessEnd()
+        public void EndInterval()
         {
             EnsureObjectsNamed();
 
             // If we have been tracking some significant objects, create a ProcessSpan for them
             ProcessSpan_Create();
 
-            if (Drone.HasInputVideo)
-                Drone.InputVideo.ResetCurrFrame();
-            if (Drone.HasDisplayVideo)
-                Drone.DisplayVideo.ResetCurrFrame();
-        }
+            Drone.InputVideo?.ResetCurrFrame();
+            Drone.DisplayVideo?.ResetCurrFrame();
 
-
-        public void ProcessEndWrapper()
-        {
-            ProcessEnd();
-
-            OnObservation(ProcessEventEnum.ProcessEnd);
+            OnObservation(ProcessEventEnum.IntervalEnd);
         }
 
 

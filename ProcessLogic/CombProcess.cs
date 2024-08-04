@@ -20,11 +20,11 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Reset any internal state of the model, so it can be re-used in another run immediately
-        protected override void ProcessStart()
+        protected override void RunStart()
         {
             FlightLeg_SigObjects = 0;
  
-            base.ProcessStart();
+            base.RunStart();
 
             // We want the category information to be retained between runs, so don't clear it.
             // Categories.Clear();

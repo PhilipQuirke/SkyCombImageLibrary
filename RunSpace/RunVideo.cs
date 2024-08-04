@@ -19,6 +19,15 @@ using SkyCombImageLibrary.RunSpace;
 // Some classes contain code that persists information between frames
 namespace SkyCombImage.RunSpace
 {
+    public class DroneIntervalList : List<DroneIntervalModel>
+    {
+        public void Add(float startS, float endS)
+        {
+            Add(new DroneIntervalModel(startS, endS));
+        }
+    }
+
+
     // Base video class that does not persist information betweem frames
     abstract public class RunVideo : ProcessScope
     {
@@ -26,7 +35,9 @@ namespace SkyCombImage.RunSpace
 
         // The configuration data used in processing the video
         public RunConfig RunConfig { get; set; }
-
+        // We may be given a series of intervals to process
+        public DroneIntervalList? RunIntervals { get; set; } = null;
+ 
         // All drone input data: video (definitely), flight (maybe) and ground (maybe) data 
         // public Drone Drone { get; set; }
 
@@ -245,7 +256,7 @@ namespace SkyCombImage.RunSpace
 
 
         // Do any final activity at the end processing (aka running) of video / flight data
-        public virtual void EndRunning()
+        public virtual void EndRun()
         {
         }
 
@@ -256,18 +267,24 @@ namespace SkyCombImage.RunSpace
 
         // Reset any internal state of the run or model, so they can be re-used in another run ResetRun().
         // Do not change input or drone data. Do not delete config references.
-        public virtual void RunStart()
+        public void StartRun_Process()
         {
             StopRunning = false;
             ProcessDurationMs = 0;
 
+            ProcessAll?.RunStart();
+
+            ProcessAll?.OnObservation(ProcessEventEnum.RunStart);
+        }
+        public void StartRun_Interval()
+        {
             ResetCurrImages();
             ResetModifiedImages();
             ConfigureModelScope();
             ProcessDrawScope.Reset(this, Drone);
             CombDrawPath.Reset(ProcessDrawScope);
-
-            ProcessAll?.ProcessStartWrapper();
+            
+            ProcessAll?.OnObservation(ProcessEventEnum.IntervalStart);
         }
 
 
@@ -300,19 +317,87 @@ namespace SkyCombImage.RunSpace
         }
 
 
+        public void ShowRunSummary(string suffix)
+        {
+            RunParent.ShowRunSummary(
+                string.Format("{0}\nFrames: {1} of {2}\n{3}",
+                    DescribeSignificantObjects(), PSM.CurrBlockId, PSM.LastBlockId, suffix));
+        }
+
+
         // End running the model process & save changes to the datastore.
-        public void SafeEndRunning()
+        public void SafeEndRun()
         {
             try
             {
                 DataStore.Open();
-                EndRunning();
+                EndRun();
                 DataStore.Close();
+
+                ProcessAll.OnObservation(ProcessEventEnum.RunEnd);
             }
             catch (Exception ex)
             {
-                throw ThrowException("RunSpace.RunVideo.SafeEndRunning", ex);
+                throw ThrowException("RunSpace.RunVideo.SafeEndRun", ex);
             }
+        }
+
+
+        // Pause after processing of each frame - allowing user click the Stop button
+        public void WaitKey()
+        { 
+            switch (RunConfig.RunSpeed)
+            {
+                case RunSpeedEnum.Max: break; // No pause
+                default:
+                case RunSpeedEnum.Fast: CvInvoke.WaitKey(5); break;
+                case RunSpeedEnum.Medium: CvInvoke.WaitKey(50); break;
+                case RunSpeedEnum.Slow: CvInvoke.WaitKey(500); break;
+            }
+        }
+
+
+        // Should we stop processing?
+        public bool StopProcessing_Part1()
+        {
+            // Frames occur say every 1/30 second.
+            // User can specify any end point in ms.
+            // Ensure we don't exceed the user specified end point.
+            if (PSM.CurrInputFrameMs > PSM.LastVideoFrameMs)
+                return true;
+
+            // On rare occassions, the CurrRunVideoFrameMs to CurrRunStepId translation wobble can 
+            // position us one frame outside the approved range. This "unapproved" step may have values
+            // outside the TardisSummary values, causing the graphing code to fail its Asserts.
+            if ((Drone.HasFlightSteps) && (PSM.CurrRunStepId > MaxTardisId))
+                return true;
+
+            return false;
+        }
+
+
+        // Should we stop processing?
+        public bool StopProcessing_Part2()
+        {
+            if (StopRunning)
+                // User has clicked the Stop button
+                return true;
+
+            if (Drone.HasFlightSteps)
+            {
+                if (PSM.CurrRunStepId == MaxTardisId)
+                    // We have reached the end of the flight step scope
+                    return true;
+            }
+            else
+            {
+                // Rare case for video only processing
+                if (PSM.CurrInputFrameMs >= PSM.LastVideoFrameMs)
+                    // We have reached the end of the video time scope
+                    return true;
+            }
+
+            return false;
         }
 
 
@@ -320,6 +405,21 @@ namespace SkyCombImage.RunSpace
         {
             RunParent.RefreshAll();
         }
+
+
+        private DroneIntervalList SafeDroneIntervals()
+        {
+            if (RunIntervals != null)
+                return RunIntervals;
+
+            // Normal case there is exactly one interval
+            DroneIntervalList answer = new();
+            answer.Add(
+                RunConfig.DroneConfig.RunVideoFromS,
+                RunConfig.DroneConfig.RunVideoToS);
+            return answer;
+        }
+
 
 
         // Process the input video frame by frame and display/save the output video
@@ -331,177 +431,146 @@ namespace SkyCombImage.RunSpace
 
                 RunParent.DrawObjectGrid(this, false);
 
-                ProcessDurationMs = 0;
-                var elapsedWatch = Stopwatch.StartNew();
+                StartRun_Process();
 
                 // Create an output video file writer (if user wants MP4 output)
-                (var videoWriter, var outputVideoFilename) =
+                (var videoWriter, var _) =
                     StandardSave.CreateVideoWriter(RunConfig, InputVideoFileName(), VideoBase.Fps, VideoBase.ImageSize);
 
-                RunStart();
-                PSM.CurrBlockId = 0;
-                RefreshAll();
-
-                if (PSM.InputVideoDurationMs < 0)
+                var safeDroneIntervals = SafeDroneIntervals();
+                foreach (var interval in safeDroneIntervals)
                 {
-                    RunParent.BadDuration(this);
-                    return;
-                }
+                    RunConfig.DroneConfig.RunVideoFromS = interval.RunVideoFromS;
+                    RunConfig.DroneConfig.RunVideoToS = interval.RunVideoToS;
 
-                ShowStepProgress();
-                RefreshAll();
+                    StartRun_Interval();
+                    PSM.CurrBlockId = 0;
+                    RefreshAll();
 
-                // Ensure we trigger a ProcessFlightLegChange start event on the first block (if needed)
-                PSM.CurrRunLegId = UnknownValue;
-
-                while (true)
-                {
-                    int prevLegId = PSM.CurrRunLegId;
-
-                    // Move to the next video frame, processing block, and maybe flight section
-                    PSM.CurrBlockId++;
-
-                    // If process at max speed then (mostly) suppress processing of DisplayFrame and updating of UI
-                    bool suppressUiUpdate =
-                        RunConfig.MaxRunSpeed &&
-                        (PSM.CurrBlockId != 1) &&                   // Always show the first block
-                        (PSM.CurrBlockId < PSM.LastBlockId - 1) &&  // Always show the last block
-                        (PSM.CurrBlockId % 100 != 0);               // Always show every 100th block
-
-                    var calcWatch = Stopwatch.StartNew();
-
-                    if (!Drone.HaveFrames())
-                        break;
-
-                    // Convert the already loaded Mat(s) into Image(s)
-                    ConvertCurrImages();
-
-                    if (prevLegId != PSM.CurrRunLegId)
+                    if (PSM.InputVideoDurationMs < 0)
                     {
-                        if (PSM.CurrRunLegId > 0)
-                            // Surprisingly, a long series of sequential "seek next frame" GetVideoFrames 
-                            // calls can give a CurrVideoFrameMs value that is, after 100 seconds, 400ms different
-                            // from the CurrVideoFrameMs value if we seek direct to CurrVideoFrameID!
-                            // So at the start of each new Leg we do a direct (slow) seek.
-                            Drone.SetAndGetCurrFrames(PSM.CurrInputFrameId);
+                        RunParent.BadDuration(this);
+                        return;
+                    }
+
+                    ShowStepProgress();
+                    RefreshAll();
+
+                    // Ensure we trigger a ProcessFlightLegChange start event on the first block (if needed)
+                    PSM.CurrRunLegId = UnknownValue;
+
+                    while (true)
+                    {
+                        int prevLegId = PSM.CurrRunLegId;
+
+                        // Move to the next video frame, processing block, and maybe flight section
+                        PSM.CurrBlockId++;
+
+                        // If process at max speed then (mostly) suppress processing of DisplayFrame and updating of UI
+                        bool suppressUiUpdate =
+                            RunConfig.MaxRunSpeed &&
+                            (PSM.CurrBlockId != 1) &&                   // Always show the first block
+                            (PSM.CurrBlockId < PSM.LastBlockId - 1) &&  // Always show the last block
+                            (PSM.CurrBlockId % 100 != 0);               // Always show every 100th block
+
+                        var calcWatch = Stopwatch.StartNew();
 
                         if (!Drone.HaveFrames())
                             break;
 
+                        // Convert the already loaded Mat(s) into Image(s)
                         ConvertCurrImages();
 
-                        Assert(inputVideo.CurrFrameId == PSM.CurrInputFrameId, "RunVideo.Run: Bad FrameId 1");
+                        if (prevLegId != PSM.CurrRunLegId)
+                        {
+                            if (PSM.CurrRunLegId > 0)
+                                // Surprisingly, a long series of sequential "seek next frame" GetVideoFrames 
+                                // calls can give a CurrVideoFrameMs value that is, after 100 seconds, 400ms different
+                                // from the CurrVideoFrameMs value if we seek direct to CurrVideoFrameID!
+                                // So at the start of each new Leg we do a direct (slow) seek.
+                                Drone.SetAndGetCurrFrames(PSM.CurrInputFrameId);
 
-                        // Process start &/or end of drone flight legs.
-                        ProcessFlightLegChange(this, prevLegId, PSM.CurrRunLegId);
+                            if (!Drone.HaveFrames())
+                                break;
 
-                        // If we have just ended a leg change, then may have just calculated FixAltM
-                        // so display the UI so the object-feature-lines are redrawn using the refined locations.
-                        if (PSM.CurrRunLegId <= 0)
-                            suppressUiUpdate = false;
-                    }
+                            ConvertCurrImages();
 
-                    // Frames occur say every 1/30 second.
-                    // User can specify any end point in ms.
-                    // Ensure we don't exceed the user specified end point.
-                    if (PSM.CurrInputFrameMs > PSM.LastVideoFrameMs)
-                        break;
+                            Assert(inputVideo.CurrFrameId == PSM.CurrInputFrameId, "RunVideo.Run: Bad FrameId 1");
 
+                            // Process start &/or end of drone flight legs.
+                            ProcessFlightLegChange(this, prevLegId, PSM.CurrRunLegId);
 
-                    // On rare occassions, the CurrRunVideoFrameMs to CurrRunStepId translation wobble can 
-                    // position us one frame outside the approved range. This "unapproved" step may have values
-                    // outside the TardisSummary values, causing the graphing code to fail its Asserts.
-                    if ((Drone.HasFlightSteps) && (PSM.CurrRunStepId > MaxTardisId))
-                        break;
+                            // If we have just ended a leg change, then may have just calculated FixAltM
+                            // so display the UI so the object-feature-lines are redrawn using the refined locations.
+                            if (PSM.CurrRunLegId <= 0)
+                                suppressUiUpdate = false;
+                        }
 
-                    // Apply process model to this new frame
-                    var thisBlock = AddBlockAndProcessInputVideoFrame();
+                        // Should we stop processing?
+                        if (StopProcessing_Part1())
+                            break;
 
-                    Assert(inputVideo.CurrFrameId == thisBlock.InputFrameId, "RunVideo.Run: Bad FrameId 2");
+                        // Apply process model to this new frame
+                        var thisBlock = AddBlockAndProcessInputVideoFrame();
 
-                    // If we need it, draw the output for this new frame
-                    if ((videoWriter != null) || (!suppressUiUpdate))
-                        DrawVideoFrames(thisBlock);
+                        Assert(inputVideo.CurrFrameId == thisBlock.InputFrameId, "RunVideo.Run: Bad FrameId 2");
 
-                    // Save the output frame to disk. 
-                    if ((videoWriter != null) && (ModifiedInputImage != null))
-                        videoWriter.Write(ModifiedInputImage.Mat);
+                        // If we need it, draw the output for this new frame
+                        if ((videoWriter != null) || (!suppressUiUpdate))
+                            DrawVideoFrames(thisBlock);
 
-                    // Calc effort excludes UI updates
-                    ProcessDurationMs += (int)calcWatch.Elapsed.TotalMilliseconds;
+                        // Save the output frame to disk. 
+                        if ((videoWriter != null) && (ModifiedInputImage != null))
+                            videoWriter.Write(ModifiedInputImage.Mat);
 
-                    // Show summary of processing effort
-                    ShowStepProgress();
-                    if (!suppressUiUpdate)
-                    {
-                        // Show input/display images & update the graphs
-                        DrawUI();
-                        RefreshAll();
-                    }
+                        // Calc effort excludes UI updates
+                        ProcessDurationMs += (int)calcWatch.Elapsed.TotalMilliseconds;
 
-                    // Has user clicked the Stop button?
-                    if (StopRunning)
-                        break;
+                        // Show summary of processing effort
+                        ShowStepProgress();
+                        if (!suppressUiUpdate)
+                        {
+                            // Show input/display images & update the graphs
+                            DrawUI();
+                            RefreshAll();
+                        }
 
-                    // Should we stop processing?
-                    if (Drone.HasFlightSteps)
-                    {
-                        if (PSM.CurrRunStepId == MaxTardisId)
+                        // Pause after processing of each frame - allowing user click the Stop button
+                        WaitKey();
+
+                        // Should we stop processing?
+                        if (StopProcessing_Part2())
+                            break;
+
+                        // Move to the next frame(s)
+                        if (!Drone.GetNextFrames())
                             break;
                     }
-                    else
-                    {
-                        if (PSM.CurrInputFrameMs >= PSM.LastVideoFrameMs)
-                            break;
-                    }
 
-                    // Pause after processing of each frame - allowing user click the Stop button
-                    switch (RunConfig.RunSpeed)
-                    {
-                        case RunSpeedEnum.Max: break; // No pause
-                        default:
-                        case RunSpeedEnum.Fast: CvInvoke.WaitKey(5); break;
-                        case RunSpeedEnum.Medium: CvInvoke.WaitKey(50); break;
-                        case RunSpeedEnum.Slow: CvInvoke.WaitKey(500); break;
-                    }
+                    // End the last leg (if any)
+                    if (PSM.CurrRunLegId > 0)
+                        ProcessFlightLegChange(this, PSM.CurrRunLegId, UnknownValue);
 
-                    // Move to the next frame(s)
-                    if (!Drone.GetNextFrames())
-                        break;
+                    ProcessAll.EndInterval();
                 }
 
-                // End the last leg (if any)
-                if (PSM.CurrRunLegId > 0)
-                    ProcessFlightLegChange(this, PSM.CurrRunLegId, UnknownValue);
-                ProcessAll.ProcessEndWrapper();
-
-                var saveWatch = Stopwatch.StartNew();
-
+                ShowRunSummary("Finalise video");
                 // Finalise video content on disk. Quick.
                 videoWriter?.Dispose(); // This finalises the video 
 
-                RunParent.ShowRunSummary(
-                    string.Format("{0}\nFrames: {1} of {2}\nUpdating datastore",
-                        DescribeSignificantObjects(), PSM.CurrBlockId, PSM.LastBlockId));
-
+                ShowRunSummary("Update datastore");
                 // End running (update) the model process
                 // & save changes to the datastore.
-                SafeEndRunning();
+                SafeEndRun();
 
                 DrawUI();
                 ResetModifiedImages();
                 ResetCurrImages();
-
-                RunParent.DrawObjectGrid(this, true);
-                RunParent.ShowRunSummary(
-                    string.Format("{0}\nFrames: {1} of {2}\nSaving video",
-                        DescribeSignificantObjects(), PSM.CurrBlockId, PSM.LastBlockId));
+                RunParent.DrawObjectGrid(this, true)
                 RefreshAll();
 
                 // Show finalised process results
-                RunParent.ShowRunSummary(
-                    string.Format("{0}\nFrames: {1} of {2}\nSaved all",
-                        DescribeSignificantObjects(), PSM.CurrBlockId, PSM.LastBlockId));
+                ShowRunSummary("Saved all");
 
                 videoWriter = null;
             }
@@ -565,11 +634,11 @@ namespace SkyCombImage.RunSpace
 
 
         // Do any final activity at the end processing of video
-        public override void EndRunning()
+        public override void EndRun()
         {
             StandardSave dataWriter = new(Drone, DataStore);
             dataWriter.StandardProcess(RunConfig, GetEffort(), GetSettings(), this, ProcessAll);
-            base.EndRunning();
+            base.EndRun();
         }
 
 

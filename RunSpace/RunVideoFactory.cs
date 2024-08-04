@@ -16,7 +16,7 @@ namespace SkyCombImage.RunSpace
     {
 
         // Create the appropriate VideoRunner object
-        public static RunVideo CreateRunVideo(RunParent parent, RunConfig runConfig, DroneDataStore dataStore, Drone drone, ObservationHandler<ProcessAll> processHook)
+        public static RunVideo CreateRunVideo(RunParent parent, RunConfig runConfig, DroneDataStore dataStore, Drone drone, DroneIntervalList intervals, ObservationHandler<ProcessAll> processHook)
         {
             RunVideo? answer = null;
 
@@ -38,7 +38,8 @@ namespace SkyCombImage.RunSpace
                     answer = new RunVideoStandard(parent, runConfig, dataStore, drone);
                     break;
             }
-            
+            answer.RunIntervals = intervals; 
+
             answer.LoadDataStoreConfigSettings();
 
             // Reload the Category and Object Category data (if any) from the Datastore.
@@ -54,7 +55,7 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        public static RunVideo Create(RunParent parent, RunConfig runConfig, DroneDataStore dataStore, Drone drone, ObservationHandler<ProcessAll> processHook)
+        public static RunVideo Create(RunParent parent, RunConfig runConfig, DroneDataStore dataStore, Drone drone, DroneIntervalList intervals, ObservationHandler<ProcessAll> processHook)
         {
             try
             {
@@ -83,7 +84,7 @@ namespace SkyCombImage.RunSpace
                     if (theRunModel == RunProcessEnum.None)
                         runConfig.ProcessConfig.SaveAnnotatedVideo = false;
 
-                return CreateRunVideo(parent, runConfig, dataStore, drone, processHook);
+                return CreateRunVideo(parent, runConfig, dataStore, drone, intervals, processHook);
             }
             catch (Exception ex)
             {
