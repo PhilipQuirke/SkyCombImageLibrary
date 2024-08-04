@@ -40,7 +40,10 @@ namespace SkyCombImage.RunSpace
         // Describe the objects found
         public override string DescribeSignificantObjects()
         {
-            return "#Objects=" + YoloProcess.ProcessObjects.Count;
+            return
+                "#Objects=" + YoloProcess.ProcessObjects.Count +
+                ", #Features=" + YoloProcess.ProcessFeatures.Count;
+
         }
 
 
