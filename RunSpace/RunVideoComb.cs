@@ -125,7 +125,7 @@ namespace SkyCombImage.RunSpace
 
 
         // Do any final activity at the end processing of video
-        public override void EndRun()
+        public override void RunEnd()
         {
             // Calculate object summary data
             ProcessAll?.ProcessObjects?.CalculateSettings(this);
@@ -133,7 +133,7 @@ namespace SkyCombImage.RunSpace
             StandardSave dataWriter = new(Drone, DataStore);
             dataWriter.ProcessAll(DataStore, RunConfig, GetEffort(), GetSettings(), this, CombProcess, true);
 
-            base.EndRun();
+            base.RunEnd();
         }
 
 

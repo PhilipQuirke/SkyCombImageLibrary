@@ -256,7 +256,7 @@ namespace SkyCombImage.RunSpace
 
 
         // Do any final activity at the end processing (aka running) of video / flight data
-        public virtual void EndRun()
+        public virtual void RunEnd()
         {
         }
 
@@ -267,7 +267,7 @@ namespace SkyCombImage.RunSpace
 
         // Reset any internal state of the run or model, so they can be re-used in another run ResetRun().
         // Do not change input or drone data. Do not delete config references.
-        public void StartRun_Process()
+        public void RunStart_Process()
         {
             StopRunning = false;
             ProcessDurationMs = 0;
@@ -276,7 +276,7 @@ namespace SkyCombImage.RunSpace
 
             ProcessAll?.OnObservation(ProcessEventEnum.RunStart);
         }
-        public void StartRun_Interval()
+        public void RunStart_Interval()
         {
             ResetCurrImages();
             ResetModifiedImages();
@@ -326,19 +326,19 @@ namespace SkyCombImage.RunSpace
 
 
         // End running the model process & save changes to the datastore.
-        public void SafeEndRun()
+        public void SafeRunEnd()
         {
             try
             {
                 DataStore.Open();
-                EndRun();
+                RunEnd();
                 DataStore.Close();
 
                 ProcessAll.OnObservation(ProcessEventEnum.RunEnd);
             }
             catch (Exception ex)
             {
-                throw ThrowException("RunSpace.RunVideo.SafeEndRun", ex);
+                throw ThrowException("RunSpace.RunVideo.SafeRunEnd", ex);
             }
         }
 
@@ -431,7 +431,7 @@ namespace SkyCombImage.RunSpace
 
                 RunParent.DrawObjectGrid(this, false);
 
-                StartRun_Process();
+                RunStart_Process();
 
                 // Create an output video file writer (if user wants MP4 output)
                 (var videoWriter, var _) =
@@ -443,7 +443,7 @@ namespace SkyCombImage.RunSpace
                     RunConfig.DroneConfig.RunVideoFromS = interval.RunVideoFromS;
                     RunConfig.DroneConfig.RunVideoToS = interval.RunVideoToS;
 
-                    StartRun_Interval();
+                    RunStart_Interval();
                     PSM.CurrBlockId = 0;
                     RefreshAll();
 
@@ -561,12 +561,12 @@ namespace SkyCombImage.RunSpace
                 ShowRunSummary("Update datastore");
                 // End running (update) the model process
                 // & save changes to the datastore.
-                SafeEndRun();
+                SafeRunEnd();
 
                 DrawUI();
                 ResetModifiedImages();
                 ResetCurrImages();
-                RunParent.DrawObjectGrid(this, true)
+                RunParent.DrawObjectGrid(this, true);
                 RefreshAll();
 
                 // Show finalised process results
@@ -634,11 +634,11 @@ namespace SkyCombImage.RunSpace
 
 
         // Do any final activity at the end processing of video
-        public override void EndRun()
+        public override void RunEnd()
         {
             StandardSave dataWriter = new(Drone, DataStore);
             dataWriter.StandardProcess(RunConfig, GetEffort(), GetSettings(), this, ProcessAll);
-            base.EndRun();
+            base.RunEnd();
         }
 
 

@@ -37,7 +37,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Reset any internal state of the model, so it can be re-used in another run immediately
-        protected override void RunStart()
+        public override void RunStart()
         {
             LegFrameFeatures.Clear();
             FlightLeg_SigObjects = 0;

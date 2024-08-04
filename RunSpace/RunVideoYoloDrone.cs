@@ -88,12 +88,12 @@ namespace SkyCombImage.RunSpace
 
 
         // Do any final activity at the end processing of video
-        public override void EndRun()
+        public override void RunEnd()
         {
             StandardSave dataWriter = new(Drone, DataStore);
             dataWriter.ProcessAll(DataStore, RunConfig, GetEffort(), GetSettings(), this, YoloProcess, true);
 
-            base.EndRun();
+            base.RunEnd();
         }
 
 
