@@ -45,6 +45,17 @@ namespace SkyCombImage.PersistModel
         }
 
 
+        // Load the number of significant objects (if the video has been processed)
+        public int GetNumSigObjects()
+        {
+            var settings = Data.GetColumnSettingsIfAvailable(ProcessTabName, ResultsTitle, ResultsTitleRow, MidColOffset);
+            if ((settings != null) && (settings.Count >= 3))
+                return ConfigBase.StringToNonNegInt(settings[2]);
+
+            return 0;
+        }
+
+
         // Load all ProcessFeatures from the datastore
         public void ProcessFeatures(ProcessAll model)
         {
