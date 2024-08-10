@@ -141,9 +141,10 @@ namespace SkyCombImage.ProcessLogic
             }
             catch (Exception ex)
             {
-                throw ThrowException("YoloProcess.ProcessFlightLegEnd" +
-                    "(CurrBlockId=" + scope.PSM.CurrBlockId +
-                    ",LastBlockId=" + scope.PSM.LastBlockId + ")", ex);
+                throw ThrowException("YoloProcess.FlightLegEnd" +
+                    "(Leg=" + legId.ToString() +
+                    ",CurrBlock = " + scope.PSM.CurrBlockId +
+                    ",LastBlock=" + scope.PSM.LastBlockId + ")", ex);
             }
         }
 

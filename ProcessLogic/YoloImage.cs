@@ -1,6 +1,7 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using System.Data;
 using System.Drawing;
+using System.Reflection.Metadata;
 using Accord.MachineLearning;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
@@ -74,54 +75,67 @@ namespace SkyCombImage.ProcessLogic
     public class YoloTracker
     {
 
-
+        // yMovePerTimeSlice is the estimated image movement in y direction measured in pixels / frame.
         static public YoloObjectSeenList CalculateObjectsInLeg(double yMovePerTimeSlice, YoloFeatureSeenList features)
         {
             YoloObjectSeenList answer = new();
+
+            int phase = 0;
+            int nClusters = 0;
+            double[][] data = null;
+            int[] clusterLabels = null;
+            List<string>? validationErrors = null;
 
             try
             {
                 if (features.Count > 0)
                 {
+                    phase = 1;
                     var minFrameId = features[0].BlockId;
                     var maxFrameId = features[^1].BlockId;
 
                     var dataTable = features.ToDataTable();
 
+                    // In drone videos, The largest change in object location, from frame to frame, is a steady change in y axis value.
+                    // Roughly removing this change from the Y values helps hot images associated with say 8 objects to cluster into 8 groups.
                     foreach (DataRow row in dataTable.Rows)
-                    {
                         row["Y"] = (double)row["Y"] - (double)row["Time"] * yMovePerTimeSlice;
-                    }
 
                     // Estimate the optimal number of clusters
-                    int nClusters = EstimateClustersSilhouette(dataTable, 50);
+                    phase = 2;
+                    int maxClusters = Math.Max(1, features.Count / 4);
+                    nClusters = EstimateClustersSilhouette(dataTable, maxClusters);
 
                     // Initial clustering
-                    double[][] data = dataTable.AsEnumerable().Select(row => new double[] { (double)row["X"], (double)row["Y"], (double)row["Time"] }).ToArray();
+                    phase = 3;
+                    data = dataTable.AsEnumerable().Select(row => new double[] { (double)row["X"], (double)row["Y"], (double)row["Time"] }).ToArray();
                     KMeans kmeans = new(nClusters);
                     KMeansClusterCollection clusters = kmeans.Learn(data);
-                    int[] clusterLabels = clusters.Decide(data);
+                    clusterLabels = clusters.Decide(data);
 
                     // Assign cluster labels to each data point
+                    phase = 4;
                     for (int i = 0; i < dataTable.Rows.Count; i++)
-                    {
                         dataTable.Rows[i]["Cluster"] = clusterLabels[i];
-                    }
 
-                    var validationErrors = ValidateClusters(yMovePerTimeSlice, dataTable);
-
+                    phase = 5;
+                    validationErrors = ValidateClusters(yMovePerTimeSlice, dataTable);
 
                     // Adjust clusters to meet the criteria
+                    phase = 6;
                     var adjustedTable = AdjustClusters(yMovePerTimeSlice, dataTable, features.Count);
 
                     // Validate the clusters
+                    phase = 7;
                     validationErrors = ValidateClusters(yMovePerTimeSlice, adjustedTable);
 
                     // Identify features not contained in the adjusted clusters
+                    phase = 8;
                     //var adjustedFeatureIndices = adjustedTable.AsEnumerable().Select(row => dataTable.Rows.IndexOf(row)).ToList();
                     //var allFeatureIndices = Enumerable.Range(0, dataTable.Rows.Count).ToList();
                     //var unclusteredFeatures = allFeatureIndices.Except(adjustedFeatureIndices).ToList();
 
+                    phase = 9;
                     foreach (var cluster in adjustedTable.AsEnumerable().Select(row => row.Field<int>("Cluster")).Distinct())
                     {
                         var objSeen = new YoloObjectSeen();
@@ -141,7 +155,8 @@ namespace SkyCombImage.ProcessLogic
             }
             catch (Exception ex)
             {
-                throw BaseConstants.ThrowException("YoloTracker.CalculateObjectsInLeg", ex);
+                // Exception seen: Not enough points.There should be more points than the number K of clusters. (Parameter 'x')
+                throw BaseConstants.ThrowException("YoloTracker.CalculateObjectsInLeg(nClusters=" + nClusters.ToString() + ", Phase=" + phase.ToString() + ")", ex);
             }
 
             return answer;
