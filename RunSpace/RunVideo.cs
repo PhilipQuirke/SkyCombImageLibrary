@@ -311,9 +311,9 @@ namespace SkyCombImage.RunSpace
 
 
         // Show initial summary of step processing effort
-        public void ShowStepProgress()
+        public void ShowStepProgress(int intervalCount, int stepCount)
         {
-            RunParent.ShowStepProgress(this);
+            RunParent.ShowStepProgress(this, intervalCount, stepCount);
         }
 
 
@@ -437,9 +437,11 @@ namespace SkyCombImage.RunSpace
                 (var videoWriter, var _) =
                     StandardSave.CreateVideoWriter(RunConfig, InputVideoFileName(), VideoBase.Fps, VideoBase.ImageSize);
 
+                int intervalCount = 0;
                 var safeDroneIntervals = SafeDroneIntervals();
                 foreach (var interval in safeDroneIntervals)
                 {
+                    intervalCount++;
                     RunConfig.DroneConfig.RunVideoFromS = interval.RunVideoFromS;
                     RunConfig.DroneConfig.RunVideoToS = interval.RunVideoToS;
 
@@ -453,7 +455,8 @@ namespace SkyCombImage.RunSpace
                         return;
                     }
 
-                    ShowStepProgress();
+                    int stepCount = 0;
+                    ShowStepProgress(intervalCount, stepCount);
                     RefreshAll();
 
                     // Ensure we trigger a ProcessFlightLegChange start event on the first block (if needed)
@@ -465,6 +468,7 @@ namespace SkyCombImage.RunSpace
 
                         // Move to the next video frame, processing block, and maybe flight section
                         PSM.CurrBlockId++;
+                        stepCount++;
 
                         // If process at max speed then (mostly) suppress processing of DisplayFrame and updating of UI
                         bool suppressUiUpdate =
@@ -527,7 +531,7 @@ namespace SkyCombImage.RunSpace
                         ProcessDurationMs += (int)calcWatch.Elapsed.TotalMilliseconds;
 
                         // Show summary of processing effort
-                        ShowStepProgress();
+                        ShowStepProgress(intervalCount, stepCount);
                         if (!suppressUiUpdate)
                         {
                             // Show input/display images & update the graphs

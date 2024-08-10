@@ -45,7 +45,7 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // Load the number of significant objects (if the video has been processed)
+        // Load the number of significant objects (only non-zero if the video has been processed)
         public int GetNumSigObjects()
         {
             var settings = Data.GetColumnSettingsIfAvailable(ProcessTabName, ResultsTitle, ResultsTitleRow, MidColOffset);

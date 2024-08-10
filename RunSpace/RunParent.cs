@@ -1,6 +1,4 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved.
-using Emgu.CV.Structure;
-using Emgu.CV;
 
 
 namespace SkyCombImage.RunSpace
@@ -16,7 +14,7 @@ namespace SkyCombImage.RunSpace
 
         public abstract void DrawObjectGrid(RunVideo runVideo, bool showObjectGrid);
 
-        public abstract void ShowStepProgress(RunVideo runVideo);
+        public abstract void ShowStepProgress(RunVideo runVideo, int intervalCount, int stepCount);
 
         public abstract void BadDuration(RunVideo runVideo);
 
