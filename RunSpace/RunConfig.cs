@@ -2,11 +2,10 @@
 using SkyCombDrone.DrawSpace;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
-using SkyCombGroundLibrary.CommonSpace;
 using SkyCombImage.ProcessModel;
 
 
-namespace SkyCombImageLibrary.RunSpace
+namespace SkyCombImage.RunSpace
 {
     public enum RunProcessEnum { Comb, Yolo, Threshold, GFTT, None };
 

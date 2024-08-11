@@ -8,7 +8,7 @@ using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using System.Drawing;
 using System.Drawing.Imaging;
-using SkyCombImageLibrary.RunSpace;
+using SkyCombImage.RunSpace;
 
 
 namespace SkyCombImage.PersistModel

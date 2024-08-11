@@ -81,7 +81,8 @@ namespace SkyCombImage.ProcessLogic
             YoloObjectSeenList answer = new();
 
             int phase = 0;
-            int nClusters = 0;
+            int maxClusters = 0;
+            int estClusters = 0;
             double[][] data = null;
             int[] clusterLabels = null;
             List<string>? validationErrors = null;
@@ -103,13 +104,13 @@ namespace SkyCombImage.ProcessLogic
 
                     // Estimate the optimal number of clusters
                     phase = 2;
-                    int maxClusters = Math.Max(1, features.Count / 4);
-                    nClusters = EstimateClustersSilhouette(dataTable, maxClusters);
+                    maxClusters = Math.Max(2, features.Count / 4);
+                    estClusters = EstimateClustersSilhouette(dataTable, maxClusters);
 
                     // Initial clustering
                     phase = 3;
                     data = dataTable.AsEnumerable().Select(row => new double[] { (double)row["X"], (double)row["Y"], (double)row["Time"] }).ToArray();
-                    KMeans kmeans = new(nClusters);
+                    KMeans kmeans = new(estClusters);
                     KMeansClusterCollection clusters = kmeans.Learn(data);
                     clusterLabels = clusters.Decide(data);
 
@@ -156,7 +157,8 @@ namespace SkyCombImage.ProcessLogic
             catch (Exception ex)
             {
                 // Exception seen: Not enough points.There should be more points than the number K of clusters. (Parameter 'x')
-                throw BaseConstants.ThrowException("YoloTracker.CalculateObjectsInLeg(nClusters=" + nClusters.ToString() + ", Phase=" + phase.ToString() + ")", ex);
+                // Exception seen: Sequence contains no elements
+                throw BaseConstants.ThrowException("YoloTracker.CalculateObjectsInLeg(nClusters=" + estClusters.ToString() + ", Phase=" + phase.ToString() + ")", ex);
             }
 
             return answer;
