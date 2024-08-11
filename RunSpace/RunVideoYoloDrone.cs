@@ -16,7 +16,7 @@ namespace SkyCombImage.RunSpace
     // YOLO (You only look once) V8 video processing.
     class RunVideoYoloDrone : RunVideoPersist
     {
-        public RunVideoYoloDrone(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
+        public RunVideoYoloDrone(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
             : base(parent, config, dataStore, drone, ProcessFactory.NewYoloProcess(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig, config.YoloDirectory))
         {
         }

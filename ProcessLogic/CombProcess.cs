@@ -86,7 +86,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 inScopeObjects.EnsureObjectsNamed();
 
-                int sigObjects = inScopeObjects.NumSignificantObjects();
+                int sigObjects = inScopeObjects.NumSignificantObjects;
                 if (sigObjects > 0)
                 {
                     if (FlightSteps_PrevSigObjects == 0)

@@ -3,9 +3,9 @@
 
 namespace SkyCombImage.RunSpace
 {
-    abstract public class RunParent
+    abstract public class RunUserInterface
     {
-        protected RunParent() { }
+        protected RunUserInterface() { }
 
 
         public abstract void RefreshAll();

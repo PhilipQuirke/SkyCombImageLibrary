@@ -16,7 +16,7 @@ namespace SkyCombImage.RunSpace
     {
 
         // Create the appropriate VideoRunner object
-        public static RunVideo CreateRunVideo(RunParent parent, RunConfig runConfig, DroneDataStore dataStore, Drone drone, DroneIntervalList intervals, ObservationHandler<ProcessAll> processHook)
+        public static RunVideo CreateRunVideo(RunUserInterface parent, RunConfig runConfig, DroneDataStore dataStore, Drone drone, DroneIntervalList intervals, ObservationHandler<ProcessAll> processHook)
         {
             RunVideo? answer = null;
 
@@ -55,7 +55,7 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        public static RunVideo Create(RunParent parent, RunConfig runConfig, DroneDataStore dataStore, Drone drone, DroneIntervalList intervals, ObservationHandler<ProcessAll> processHook)
+        public static RunVideo Create(RunUserInterface parent, RunConfig runConfig, DroneDataStore dataStore, Drone drone, DroneIntervalList intervals, ObservationHandler<ProcessAll> processHook)
         {
             try
             {

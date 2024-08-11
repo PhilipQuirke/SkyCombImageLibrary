@@ -596,9 +596,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-
-        public int NumSignificantObjects()
-        {
+        public int NumSignificantObjects {  get { 
             int answer = 0;
 
             foreach (var theObj in this)
@@ -606,7 +604,7 @@ namespace SkyCombImage.ProcessLogic
                     answer++;
 
             return answer;
-        }
+        } }
 
 
         // Number of objects that have ever been significant. 

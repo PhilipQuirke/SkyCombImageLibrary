@@ -31,7 +31,7 @@ namespace SkyCombImage.RunSpace
     // Base video class that does not persist information betweem frames
     abstract public class RunVideo : ProcessScope
     {
-        public RunParent RunParent { get; }
+        public RunUserInterface RunParent { get; }
 
         // The configuration data used in processing the video
         public RunConfig RunConfig { get; set; }
@@ -77,7 +77,7 @@ namespace SkyCombImage.RunSpace
         public DrawLeg DrawLeg;
 
 
-        public RunVideo(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone, ProcessAll processAll) : base(drone)
+        public RunVideo(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone, ProcessAll processAll) : base(drone)
         {
             RunParent = parent;
             RunConfig = config;
@@ -423,8 +423,10 @@ namespace SkyCombImage.RunSpace
 
 
         // Process the input video frame by frame and display/save the output video
-        public void Run()
+        public int Run()
         {
+            int numSigObjs = 0;
+
             try
             {
                 var inputVideo = Drone.InputVideo;
@@ -452,7 +454,7 @@ namespace SkyCombImage.RunSpace
                     if (PSM.InputVideoDurationMs < 0)
                     {
                         RunParent.BadDuration(this);
-                        return;
+                        return numSigObjs;
                     }
 
                     int stepCount = 0;
@@ -556,6 +558,7 @@ namespace SkyCombImage.RunSpace
                         ProcessFlightLegChange(this, PSM.CurrRunLegId, UnknownValue);
 
                     ProcessAll.EndInterval();
+                    numSigObjs += ProcessAll.ProcessObjects.NumSignificantObjects;
                 }
 
                 ShowRunSummary("Finalise video");
@@ -582,6 +585,8 @@ namespace SkyCombImage.RunSpace
             {
                 throw ThrowException("RunSpace.RunVideo.Run", ex);
             }
+
+            return numSigObjs;
         }
 
 
@@ -606,7 +611,7 @@ namespace SkyCombImage.RunSpace
     // Video class that uses the ImageStandard techniques. No persistance of info between frames
     internal class RunVideoStandard : RunVideo
     {
-        public RunVideoStandard(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
+        public RunVideoStandard(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
             : base(parent, config, dataStore, drone, ProcessFactory.NewProcessModel(config.ProcessConfig, drone))
         {
         }
@@ -660,7 +665,7 @@ namespace SkyCombImage.RunSpace
     // Class to implement processing of a video, with information persisted from frame to frame in member data.
     abstract public class RunVideoPersist : RunVideo
     {
-        public RunVideoPersist(RunParent parent, RunConfig config, DroneDataStore dataStore, Drone drone, ProcessAll processAll) 
+        public RunVideoPersist(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone, ProcessAll processAll) 
             : base(parent, config, dataStore, drone, processAll)
         {
         }
