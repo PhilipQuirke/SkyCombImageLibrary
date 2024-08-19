@@ -81,15 +81,17 @@ namespace SkyCombImage.ProcessLogic
             YoloObjectSeenList answer = new();
 
             int phase = 0;
+            int numFeatures = 0;
             int maxClusters = 0;
             int estClusters = 0;
-            double[][] data = null;
-            int[] clusterLabels = null;
+            double[][]? data = null;
+            int[]? clusterLabels = null;
             List<string>? validationErrors = null;
 
             try
             {
-                if (features.Count > 0)
+                // Cant detect clusters with 1 feature
+                if (features.Count >= 2)
                 {
                     phase = 1;
                     var minFrameId = features[0].BlockId;
@@ -101,6 +103,7 @@ namespace SkyCombImage.ProcessLogic
                     // Roughly removing this change from the Y values helps hot images associated with say 8 objects to cluster into 8 groups.
                     foreach (DataRow row in dataTable.Rows)
                         row["Y"] = (double)row["Y"] - (double)row["Time"] * yMovePerTimeSlice;
+                    numFeatures = dataTable.Rows.Count;
 
                     // Estimate the optimal number of clusters
                     phase = 2;
