@@ -92,7 +92,7 @@ namespace SkyCombImage.PersistModel
             LoadObjectCategories(categoryAll.ObjectCategories);
 
             if (!initialIsOpen)
-                Data.Close();
+                Data.FreeResources();
         }
     }
 }

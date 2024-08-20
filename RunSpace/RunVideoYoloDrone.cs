@@ -105,7 +105,7 @@ namespace SkyCombImage.RunSpace
             DataStore.Open();
             StandardSave datawriter = new(Drone, DataStore);
             datawriter.ProcessAll(DataStore, RunConfig, GetEffort(), GetSettings(), this, YoloProcess, false);
-            DataStore.Close();
+            DataStore.FreeResources();
         }
     }
 }

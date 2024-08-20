@@ -331,7 +331,7 @@ namespace SkyCombImage.RunSpace
             {
                 DataStore.Open();
                 RunEnd();
-                DataStore.Close();
+                DataStore.FreeResources();
 
                 ProcessAll.OnObservation(ProcessEventEnum.RunEnd);
             }
@@ -656,7 +656,7 @@ namespace SkyCombImage.RunSpace
             DataStore.Open();
             StandardSave datawriter = new(Drone, DataStore);
             datawriter.StandardProcess(RunConfig, GetEffort(), GetSettings(), this, ProcessAll);
-            DataStore.Close();
+            DataStore.FreeResources();
         }
     };
 
