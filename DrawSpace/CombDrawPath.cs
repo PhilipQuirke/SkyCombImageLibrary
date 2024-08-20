@@ -25,12 +25,12 @@ namespace SkyCombImage.DrawSpace
         // Scope of objects to draw. May be null.
         public ObjectDrawScope ObjectDrawScope { get; }
         // Scope of objects to draw. May be null.
-        public ProcessObjList ProcessObjList { get; set; }
+        public ProcessObjList? ProcessObjList { get; set; }
         // Object user has hovered mouse over. May be null.
         public ProcessObject? HoverObject { get; set; }
 
 
-        public CombDrawPath(ProcessDrawScope processDrawScope, ProcessObjList processObjList, ObjectDrawScope objectScope) : base(processDrawScope, true)
+        public CombDrawPath(ProcessDrawScope processDrawScope, ProcessObjList? processObjList, ObjectDrawScope objectScope) : base(processDrawScope, true)
         {
             ProcessDrawScope = processDrawScope;
             ObjectDrawScope = objectScope;
