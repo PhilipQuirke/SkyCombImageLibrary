@@ -27,7 +27,7 @@ namespace SkyCombImage.RunSpace
 
 
         public abstract RunConfig? RunConfig();
-        public virtual void LegsForm_CopyMainFormButtonState(object legsForm) { }
+        public abstract void LegsForm_CopyMainFormButtonState(object legsForm);
         public virtual Button? MainForm_ButtonRun() { return null; }
         public virtual void MainForm_ButtonRun_Click(object sender, EventArgs args) { }
         public virtual void MainForm_LegNButton_Click(object sender, EventArgs args) { }
