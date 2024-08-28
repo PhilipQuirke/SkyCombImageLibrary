@@ -615,7 +615,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 int numSig = 0;
                 foreach (var theObject in this)
-                    if (theObject.Value.NumSigBlocks > 0)
+                    if ((theObject.Value.NumSigBlocks > 0) && (theObject.Value.SeenForMinDurations() >= 1))
                         numSig++;
                 return numSig;
             }

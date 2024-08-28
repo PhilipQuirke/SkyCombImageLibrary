@@ -134,8 +134,8 @@ namespace SkyCombImage.ProcessLogic
         // Y = 1 is the top of the image, closest to the drone. 
         public (double xFraction, double yFraction) CentroidImageFractions()
         {
-            double xCenterPixels = PixelBox.X + PixelBox.Width / 2.0;
-            double yCenterPixels = PixelBox.Y + PixelBox.Height / 2.0;
+            double xCenterPixels = Math.Min(PixelBox.X + PixelBox.Width / 2.0, ProcessAll.VideoData.ImageWidth);
+            double yCenterPixels = Math.Min(PixelBox.Y + PixelBox.Height / 2.0, ProcessAll.VideoData.ImageHeight);
 
             // Calculate position of center of feature as fraction of drone image area.
             double xFraction = xCenterPixels / ProcessAll.VideoData.ImageWidth;

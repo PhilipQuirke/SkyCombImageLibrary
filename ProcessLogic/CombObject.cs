@@ -247,47 +247,4 @@ namespace SkyCombImage.ProcessLogic
 
     };
 
-
-
-    // A list of Comb objects
-    public class CombObjs
-    {
-        private readonly CombProcess Model;
-
-        public ProcessObjList CombObjList;
-
-
-        public CombObjs(CombProcess model)
-        {
-            Model = model;
-            CombObjList = new();
-        }
-
-
-        public void Add(ProcessScope scope, CombFeature firstFeature)
-        {
-            var theObject = ProcessFactory.NewCombObject(scope, Model, firstFeature);
-            CombObjList.AddObject(theObject);
-        }
-
-
-        // Number of objects that have ever been significant. 
-        // Not same as num objs significant in the current Block, as objects can become insignificant. 
-        public int NumEverSignificantObjects
-        {
-            get
-            {
-                return CombObjList.NumEverSignificantObjects;
-            }
-        }
-
-
-        public void StopTracking()
-        {
-            CombObjList.StopTracking();
-        }
-
-
-
-    }
 }
