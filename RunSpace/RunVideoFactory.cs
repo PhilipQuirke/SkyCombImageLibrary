@@ -15,7 +15,7 @@ namespace SkyCombImage.RunSpace
     {
 
         // Create the appropriate VideoRunner object
-        public static RunVideo CreateRunVideo(RunUserInterface parent, RunConfig runConfig, DroneDataStore dataStore, Drone drone, DroneIntervalList? intervals, ObservationHandler<ProcessAll> processHook)
+        public static RunVideo CreateRunVideo(RunUserInterface parent, RunConfig runConfig, DroneDataStore dataStore, Drone drone, DroneIntervalList? intervals, ObservationHandler<ProcessAll>? processHook)
         {
             RunVideo? answer = null;
 
@@ -24,13 +24,15 @@ namespace SkyCombImage.RunSpace
                 case RunProcessEnum.Yolo:
                     var yoloRunner = new RunVideoYoloDrone(parent, runConfig, dataStore, drone);
                     yoloRunner.ProcessDrawScope.Process = yoloRunner.ProcessAll;
-                    yoloRunner.YoloProcess.Observation += processHook;
+                    if(processHook != null)
+                        yoloRunner.YoloProcess.Observation += processHook;
                     answer = yoloRunner;
                     break;
                 case RunProcessEnum.Comb:
                     var combRunner = new RunVideoCombDrone(parent, runConfig, dataStore, drone);
                     combRunner.ProcessDrawScope.Process = combRunner.ProcessAll;
-                    combRunner.CombProcess.Observation += processHook;
+                    if (processHook != null)
+                        combRunner.CombProcess.Observation += processHook;
                     answer = combRunner;
                     break;
                 default:

@@ -12,17 +12,17 @@ namespace SkyCombImage.ProcessLogic
     public class YoloFeature : ProcessFeature
     {
         // Results of YoloDetect image processing
-        public YoloV8Class? Class { get; init; } = null;
+        public YoloName? YoloName { get; init; } = null;
         public float Confidence { get; init; } = 0f;
 
 
-        public YoloFeature(YoloProcess yoloProcess, int blockId, BoundingBox? box) : base(yoloProcess, blockId, FeatureTypeEnum.Real)
+        public YoloFeature(YoloProcess yoloProcess, int blockId, Detection box) : base(yoloProcess, blockId, FeatureTypeEnum.Real)
         {
             ResetCalcedMemberData();
 
             PixelBox = new System.Drawing.Rectangle(box.Bounds.Left, box.Bounds.Top, box.Bounds.Width, box.Bounds.Height);
             Significant = true;
-            Class = box.Class;
+            YoloName = box.Name;
             Confidence = box.Confidence;
         }
 
@@ -30,39 +30,40 @@ namespace SkyCombImage.ProcessLogic
         // Constructor used when loaded objects from the datastore
         public YoloFeature(YoloProcess yoloProcess, List<string> settings) : base(yoloProcess, settings)
         {
-            Class = null;
+            YoloName = null;
             Confidence = 0f;
         }
 
 
         // Evaluate the MinHeat, MaxHeat and PixelSize of this feature
         public void CalculateHeat(
-            in Image<Bgr, byte> imgOriginal,        // read-only
-            in Image<Gray, byte> imgThreshold)      // read-only
+           in Image<Bgr, byte> imgOriginal,
+           in Image<Gray, byte> imgThreshold)
         {
-            MinHeat = 255 + 255 + 255;
+            MinHeat = 255 * 3;
             MaxHeat = 0;
             NumHotPixels = 0;
 
-            // Test each pixel in the bounding box. If the image pixel exceeds the threshold, update the MaxHeat, MinHeat and pixelCount
-            for (int y = PixelBox.Top; y < PixelBox.Bottom; y++)
-                for (int x = PixelBox.Left; x < PixelBox.Right; x++)
+            int left = Math.Max(PixelBox.Left, 0);
+            int top = Math.Max(PixelBox.Top, 0);
+            int right = Math.Min(PixelBox.Right, imgOriginal.Width);
+            int bottom = Math.Min(PixelBox.Bottom, imgOriginal.Height);
+
+            for (int y = top; y < bottom; y++)
+            {
+                for (int x = left; x < right; x++)
+                {
+                    if (imgThreshold[y, x].Intensity > 0)
                     {
-                        if (imgThreshold.Data[y, x, 0] > 0)
-                        {
-                            // Evaluate the heat from the original image (not the smooth / threshold image)
-                            int currHeat = (
-                                imgOriginal.Data[y, x, 0] +
-                                imgOriginal.Data[y, x, 1] +
-                                imgOriginal.Data[y, x, 2]) / 3;
-
-                            MinHeat = Math.Min(MinHeat, currHeat);
-                            MaxHeat = Math.Max(MaxHeat, currHeat);
-                            NumHotPixels++;
-                        }
+                        Bgr color = imgOriginal[y, x];
+                        int currHeat = (int)((color.Blue + color.Green + color.Red) / 3);
+                        MinHeat = Math.Min(MinHeat, currHeat);
+                        MaxHeat = Math.Max(MaxHeat, currHeat);
+                        NumHotPixels++;
                     }
+                }
+            }
 
-            // Is this feature significant?
             Significant = (NumHotPixels >= ProcessAll.ProcessConfig.FeatureMinPixels);
             IsTracked = Significant;
         }

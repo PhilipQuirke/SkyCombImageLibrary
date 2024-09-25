@@ -20,8 +20,8 @@ namespace SkyCombImage.ProcessLogic
     // Uses a SkyComb-specific pre-trained model to detect objects in an image.
     public class YoloDetect : BaseConstants
     {
-        YoloV8Predictor? Detector = null;
-        YoloV8Configuration DetectorConfig;
+        YoloPredictor? Detector = null;
+        YoloConfiguration DetectorConfig;
 
 
         public YoloDetect(string yoloDirectory, float confidence, float iou)
@@ -41,7 +41,8 @@ namespace SkyCombImage.ProcessLogic
             try
             {
                 // Load the model. Takes a few seconds.
-                Detector = YoloV8Predictor.Create(yoloDirectory);
+                Detector = new YoloPredictor(yoloDirectory);
+                // Detector.ToDevice( 'cuda'); PQR
             }
             catch (Exception ex)
             {
@@ -49,7 +50,7 @@ namespace SkyCombImage.ProcessLogic
                 throw ThrowException("YoloDetect.Constructor failed: " + ex.Message);
             }
 
-            DetectorConfig = new YoloV8Configuration();
+            DetectorConfig = new YoloConfiguration();
             DetectorConfig.Confidence = confidence;
             DetectorConfig.IoU = iou; 
         }
@@ -71,7 +72,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        async Task<SixLabors.ImageSharp.Image?> AsyncGetImage(DetectionResult result, System.Drawing.Image raw_image)
+        async Task<SixLabors.ImageSharp.Image?> AsyncGetImage(YoloResult<Detection> result, System.Drawing.Image raw_image)
         {
             if (Detector == null)
                 return null;
@@ -93,7 +94,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        SixLabors.ImageSharp.Image? GetImage(DetectionResult result, System.Drawing.Image raw_image)
+        SixLabors.ImageSharp.Image? GetImage(YoloResult<Detection> result, System.Drawing.Image raw_image)
         {
             if (Detector == null)
                 return null;
@@ -115,7 +116,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public async Task<DetectionResult?> AsyncDetect(System.Drawing.Image raw_image)
+        public async Task<YoloResult<Detection>?> AsyncDetect(System.Drawing.Image raw_image)
         {
             if (Detector == null)
                 return null;
@@ -124,7 +125,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 using SixLabors.ImageSharp.Image image = ConvertToImageSharp(raw_image);
 
-                DetectionResult? result = await Detector.DetectAsync(image);
+                YoloResult<Detection>? result = await Detector.DetectAsync(image);
 
                 return result;
             }
@@ -135,7 +136,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public DetectionResult? Detect(System.Drawing.Image raw_image)
+        public YoloResult<Detection>? Detect(System.Drawing.Image raw_image)
         {
             if (Detector == null)
                 return null;

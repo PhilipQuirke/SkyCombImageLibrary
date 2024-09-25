@@ -3,6 +3,7 @@ using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
+using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
 
 
@@ -113,6 +114,10 @@ namespace SkyCombImage.ProcessLogic
 
             PSM.LastInputFrameId = lastBlock.InputFrameId;
             PSM.LastVideoFrameMs = lastBlock.InputFrameMs;
+
+            BaseConstants.Assert(PSM.FirstInputFrameId <= PSM.LastInputFrameId, "SetInputScope");
+            BaseConstants.Assert(PSM.FirstVideoFrameMs <= PSM.LastVideoFrameMs, "SetInputScope");
+
         }
 
 

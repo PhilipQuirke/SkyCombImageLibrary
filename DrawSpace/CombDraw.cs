@@ -116,13 +116,13 @@ namespace SkyCombImage.DrawSpace
         public static void CombImage(
             DrawImageConfig drawConfig, ProcessConfigModel processConfig,
             int focusObjectId, ref Image<Bgr, byte> outputImg,
-            ProcessAll process, ProcessBlockModel block, Transform transform)
+            ProcessAll process, ProcessBlockModel? block, Transform transform)
         {
             try
             {
                 bool thermalImage = (transform.XMargin == 0);
 
-                if (process != null)
+                if ((process != null) && (block != null))
                 {
                     // Draw the leg name on the image (if any) at bottom right
                     if (thermalImage && (block.FlightLegId > 0))
@@ -215,7 +215,7 @@ namespace SkyCombImage.DrawSpace
         public static (Image<Bgr, byte>?, Image<Bgr, byte>?) Draw(
             RunProcessEnum runProcess,
             ProcessConfigModel processConfig, DrawImageConfig drawConfig, Drone drone,
-            ProcessBlockModel block, ProcessAll processAll, int focusObjectId,
+            ProcessBlockModel? block, ProcessAll processAll, int focusObjectId,
             in Image<Bgr, byte> inputFrame, // Read-only
             in Image<Bgr, byte> displayFrame) // Read-only
         {
@@ -228,18 +228,20 @@ namespace SkyCombImage.DrawSpace
                 {
                     modifiedInputFrame = inputFrame.Clone();
                     DrawImage.Palette(drawConfig, ref modifiedInputFrame);
-                    if (runProcess == RunProcessEnum.Comb)
-                        // Draw hot objects
-                        CombImage(drawConfig, processConfig, focusObjectId,
-                            ref modifiedInputFrame, processAll, block, new());
-                    else if (runProcess == RunProcessEnum.Yolo)
-                        // Draw hot objects
-                        YoloImage(drawConfig, processConfig, focusObjectId,
-                            ref modifiedInputFrame, processAll, block, new());
-                    else
-                        // Handles RunModel = Contour, GFTT, etc.
-                        DrawImage.Draw(runProcess, processConfig, drawConfig, ref modifiedInputFrame);
-
+                    if (block != null)
+                    {
+                        if (runProcess == RunProcessEnum.Comb)
+                            // Draw hot objects
+                            CombImage(drawConfig, processConfig, focusObjectId,
+                                ref modifiedInputFrame, processAll, block, new());
+                        else if (runProcess == RunProcessEnum.Yolo)
+                            // Draw hot objects
+                            YoloImage(drawConfig, processConfig, focusObjectId,
+                                ref modifiedInputFrame, processAll, block, new());
+                        else
+                            // Handles RunModel = Contour, GFTT, etc.
+                            DrawImage.Draw(runProcess, processConfig, drawConfig, ref modifiedInputFrame);
+                    }
                     if (displayFrame != null)
                     {
                         modifiedDisplayFrame = displayFrame.Clone();
@@ -256,8 +258,9 @@ namespace SkyCombImage.DrawSpace
                         var inputToDisplayTransform = Transform.ImageToImageTransform(
                             inputFrame.Size, displayFrame.Size, drone.ExcludeDisplayMarginRatio);
 
-                        CombImage(newDrawConfig, processConfig, focusObjectId,
-                            ref modifiedDisplayFrame, processAll, block, inputToDisplayTransform);
+                        if (block != null)
+                            CombImage(newDrawConfig, processConfig, focusObjectId,
+                                ref modifiedDisplayFrame, processAll, block, inputToDisplayTransform);
                     }
                 }
                 return (modifiedInputFrame, modifiedDisplayFrame);

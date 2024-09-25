@@ -1,10 +1,10 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+using Compunet.YoloV8.Data;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
-using Compunet.YoloV8.Data;
 using SkyCombGround.GroundLogic;
 using System.Drawing;
 
@@ -73,7 +73,7 @@ namespace SkyCombImage.ProcessLogic
         {
             BaseConstants.Assert(firstFeature != null, "YoloObjectList.AddObject: No firstFeature");
 
-            string className = firstFeature.Class != null? firstFeature.Class.Name : "??";
+            string className = firstFeature.YoloName != null? firstFeature.YoloName.Name : "??";
             float classConfidence = firstFeature.Confidence;
             /*
             newObject.ClassId = box.Class.Id;
@@ -157,34 +157,39 @@ namespace SkyCombImage.ProcessLogic
             in Image<Gray, byte> currGray, // read-only
             in Image<Bgr, byte> imgOriginal, // read-only
             in Image<Gray, byte> imgThreshold, // read-only
-            DetectionResult? result)
+            YoloResult<Detection>? result)
         {
             int Phase = 0;
+            int blockID = 0;
 
             try
             {
                 if (result == null)
                     return 0;
-                var numSig = result.Boxes.Count();
+                var numSig = result.Count();
 
                 Phase = 1;
                 var currBlock = Blocks.LastBlock;
-                int blockID = currBlock.BlockId;
-
+                blockID = currBlock.BlockId;
 
                 // Convert Yolo Bounding Boxes to YoloFeatures
+                Phase = 2;
                 ProcessFeatureList featuresInBlock = new(this.ProcessConfig);
-                foreach (var box in result.Boxes)
+                foreach (var box in result)
                 {
                     // We have found a new feature/object
                     var newFeature = new YoloFeature(this, blockID, box);
+                    Phase = 3;
                     newFeature.CalculateHeat(imgOriginal, imgThreshold);
+                    Phase = 4;
                     featuresInBlock.AddFeature(newFeature);
+                    Phase = 5;
                     LegFrameFeatures.Add(new YoloFeatureSeen { BlockId = blockID, Box = newFeature.PixelBox, FeatureId = newFeature.FeatureId });
                 }
 
-                Phase = 5;
+                Phase = 6;
                 currBlock.AddFeatureList(featuresInBlock);
+                Phase = 7;
                 ProcessFeatures.AddFeatureList(featuresInBlock);
 
                 return numSig;

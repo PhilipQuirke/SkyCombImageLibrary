@@ -66,7 +66,7 @@ namespace SkyCombImage.RunSpace
                 var imgThreshold = currGray.Clone();
                 DrawImage.Threshold(RunConfig.ProcessConfig, ref imgThreshold);
 
-                DetectionResult result = YoloProcess.YoloDetect.Detect(currGray.ToBitmap());
+                YoloResult<Detection> result = YoloProcess.YoloDetect.Detect(currGray.ToBitmap());
 
                 thisBlock.NumSig = YoloProcess.ProcessBlock(this, currGray, CurrInputImage, imgThreshold, result);
 

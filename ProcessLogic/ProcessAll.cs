@@ -212,6 +212,8 @@ namespace SkyCombImage.ProcessLogic
 
                 if (Drone.UseFlightLegs)
                     OnObservation(ProcessEventEnum.LegEnd_After, new ProcessEventArgs(scope, legId));
+
+                BaseConstants.GcFreeMemory();
             }
             catch (Exception ex)
             {

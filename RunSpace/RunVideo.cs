@@ -229,7 +229,7 @@ namespace SkyCombImage.RunSpace
 
 
         // Process a single input and (maybe) display video frame for the specified block, returning the modified input&display frames to show 
-        public void DrawVideoFrames(ProcessBlockModel block)
+        public void DrawVideoFrames(ProcessBlockModel? block = null)
         {
             ResetModifiedImages();
 
