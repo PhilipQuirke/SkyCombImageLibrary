@@ -1,7 +1,6 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using System.Data;
 using System.Drawing;
-using System.Reflection.Metadata;
 using Accord.MachineLearning;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;

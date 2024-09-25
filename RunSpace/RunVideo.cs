@@ -28,7 +28,7 @@ namespace SkyCombImage.RunSpace
 
 
     // Base video class that does not persist information betweem frames
-    abstract public class RunVideo : ProcessScope
+    abstract public class RunVideo : ProcessScope, IDisposable
     {
         public RunUserInterface RunParent { get; }
 
@@ -603,6 +603,38 @@ namespace SkyCombImage.RunSpace
                 answer.Add("Finally", "Finished");
 
             return answer;
+        }
+
+
+        private bool disposed = false;
+
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                    // Dispose managed resources
+                    ModifiedInputImage?.Dispose();
+                    ModifiedDisplayImage?.Dispose();
+                    DataStore?.Dispose();
+                }
+
+                disposed = true;
+            }
+        }
+
+
+        ~RunVideo()
+        {
+            Dispose(false);
         }
     }
 

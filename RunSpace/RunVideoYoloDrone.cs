@@ -72,12 +72,13 @@ namespace SkyCombImage.RunSpace
 
                 currGray.Dispose();
                 imgThreshold.Dispose();
+                result = null;
 
                 return thisBlock;
             }
             catch (Exception ex)
             {
-                throw ThrowException("RunVideoYolo.AddBlockAndProcessInputVideoFrame", ex);
+                throw ThrowException("RunVideoYoloDrone.AddBlockAndProcessInputVideoFrame", ex);
             }
         }
 

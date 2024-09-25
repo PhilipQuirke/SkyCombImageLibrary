@@ -3,15 +3,12 @@
 // Refer https://github.com/dme-compunet/YOLOv8
 using Compunet.YoloV8;
 using Compunet.YoloV8.Data;
-using Compunet.YoloV8.Plotting;
 using Emgu.CV;
 
 // Refer https://sixlabors.com/products/imagesharp/
-using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
 using SkyCombGround.CommonSpace;
-
 
 
 namespace SkyCombImage.ProcessLogic
@@ -42,7 +39,6 @@ namespace SkyCombImage.ProcessLogic
             {
                 // Load the model. Takes a few seconds.
                 Detector = new YoloPredictor(yoloDirectory);
-                // Detector.ToDevice( 'cuda'); PQR
             }
             catch (Exception ex)
             {
@@ -52,105 +48,38 @@ namespace SkyCombImage.ProcessLogic
 
             DetectorConfig = new YoloConfiguration();
             DetectorConfig.Confidence = confidence;
-            DetectorConfig.IoU = iou; 
-        }
-
-
-        public static Image<Rgba32> ConvertToImageSharp(System.Drawing.Image drawingImage)
-        {
-            using (var memoryStream = new MemoryStream())
-            {
-                // Save the System.Drawing.Image to a memory stream
-                drawingImage.Save(memoryStream, System.Drawing.Imaging.ImageFormat.Png);
-
-                // Reset the position of the stream to the beginning
-                memoryStream.Position = 0;
-
-                // Load the stream into an ImageSharp Image
-                return SixLabors.ImageSharp.Image.Load<Rgba32>(memoryStream);
-            }
-        }
-
-
-        async Task<SixLabors.ImageSharp.Image?> AsyncGetImage(YoloResult<Detection> result, System.Drawing.Image raw_image)
-        {
-            if (Detector == null)
-                return null;
-
-            try
-            {
-                using SixLabors.ImageSharp.Image image = ConvertToImageSharp(raw_image);
-
-                using var plotted = await result.PlotImageAsync(image);
-
-                image.Dispose();
-
-                return plotted;
-            }
-            catch (Exception ex)
-            {
-                throw ThrowException("YoloDetect.AsyncGetImage failed: " + ex.Message);
-            }
-        }
-
-
-        SixLabors.ImageSharp.Image? GetImage(YoloResult<Detection> result, System.Drawing.Image raw_image)
-        {
-            if (Detector == null)
-                return null;
-
-            try
-            {
-                using SixLabors.ImageSharp.Image image = ConvertToImageSharp(raw_image);
-
-                using var plotted = result.PlotImage(image);
-
-                image.Dispose();
-
-                return plotted;
-            }
-            catch (Exception ex)
-            {
-                throw ThrowException("YoloDetect.GetImage failed: " + ex.Message);
-            }
-        }
-
-
-        public async Task<YoloResult<Detection>?> AsyncDetect(System.Drawing.Image raw_image)
-        {
-            if (Detector == null)
-                return null;
-
-            try
-            {
-                using SixLabors.ImageSharp.Image image = ConvertToImageSharp(raw_image);
-
-                YoloResult<Detection>? result = await Detector.DetectAsync(image);
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                throw ThrowException("YoloDetect.AsyncDetect failed: " + ex.Message);
-            }
+            DetectorConfig.IoU = iou;
         }
 
 
         public YoloResult<Detection>? Detect(System.Drawing.Image raw_image)
         {
-            if (Detector == null)
-                return null;
+            YoloResult<Detection>? answer = null;
 
             try
             {
-                using SixLabors.ImageSharp.Image image = ConvertToImageSharp(raw_image);
+                if (Detector != null)
+                {
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        raw_image.Save(memoryStream, System.Drawing.Imaging.ImageFormat.Bmp);
 
-                return Detector.Detect(image, DetectorConfig);
+                        memoryStream.Position = 0;
+
+                        using (var image = SixLabors.ImageSharp.Image.Load<Rgba32>(memoryStream))
+                        {
+                            answer = Detector.Detect(image, DetectorConfig);
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
                 throw ThrowException("YoloDetect.Detect failed: " + ex.Message);
             }
+
+            return answer;
         }
+
     }
 }
