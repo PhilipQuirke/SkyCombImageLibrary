@@ -79,7 +79,6 @@ namespace SkyCombImage.RunSpace
                     return currBlock;
 
                 Image<Bgr, byte> imgInput = CurrInputImage.Clone();
-                DrawImage.Smooth(RunConfig.ProcessConfig, ref imgInput);
 
                 Image<Gray, byte> imgThreshold = DrawImage.ToGrayScale(imgInput);
                 DrawImage.Threshold(RunConfig.ProcessConfig, ref imgThreshold);

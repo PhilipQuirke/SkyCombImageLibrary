@@ -6,10 +6,6 @@ using SkyCombGround.CommonSpace;
 // Models are used in-memory and to persist/load data to/from the datastore
 namespace SkyCombImage.ProcessModel
 {
-    public enum SmoothProcessEnum { Blur, Gaussian, Median, None };
-
-    public enum ThresholdProcessEnum { Binary, BinaryInv, ToZero, ToZeroInv, Trunc, None };
-
     public enum SaveObjectDataEnum { All, Significant, None };
 
 
@@ -42,14 +38,8 @@ namespace SkyCombImage.ProcessModel
 
         // --------------------- Process Techniques --------------------- 
 
-        // Smooth Process
-        public SmoothProcessEnum SmoothProcess { get; set; } = SmoothProcessEnum.None;
-        public int SmoothPixels { get; set; } = 3;
-
 
         // Theshold:
-        // Theshold Process. Takes values binary, binaryinv, tozero, tozeroinv, trunc, none. Lowercase
-        public ThresholdProcessEnum ThresholdProcess { get; set; } = ThresholdProcessEnum.Binary;
         // Pixel gray-scale value that ThresholdProcess uses. Takes values from 50 to 255
         public int HeatThresholdValue { get; set; } = 180;
 
@@ -189,9 +179,6 @@ namespace SkyCombImage.ProcessModel
         {
             return new DataPairList
             {
-                { "Smooth Process", SmoothProcess.ToString() },
-                { "Smooth Pixels", SmoothPixels },
-                { "Threshold Process", ThresholdProcess.ToString() },
                 { "Threshold Value", HeatThresholdValue },
                 { "Feature Min Pixels", FeatureMinPixels },
                 { "Feature MinDensity Perc", FeatureMinDensityPerc },
@@ -222,9 +209,6 @@ namespace SkyCombImage.ProcessModel
         public void LoadModelSettings(List<string> settings)
         {
             int i = 0;
-            SmoothProcess = (SmoothProcessEnum)Enum.Parse(typeof(SmoothProcessEnum), settings[i++]);
-            SmoothPixels = StringToNonNegInt(settings[i++]);
-            ThresholdProcess = (ThresholdProcessEnum)Enum.Parse(typeof(ThresholdProcessEnum), settings[i++]);
             HeatThresholdValue = StringToNonNegInt(settings[i++]);
             FeatureMinPixels = StringToNonNegInt(settings[i++]);
             FeatureMinDensityPerc = StringToNonNegInt(settings[i++]);

@@ -23,71 +23,11 @@ namespace SkyCombImage.DrawSpace
         }
 
 
-        // Smooth
-        // Refer https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html for explanation of methods
-        // Can generate new pixel colors not in original image.
-        public static void Smooth(ProcessConfigModel config, ref Image<Bgr, byte> imgInput)
-        {
-            switch(config.SmoothProcess)
-            {
-                case SmoothProcessEnum.Blur: 
-                    imgInput = imgInput.SmoothBlur(config.SmoothPixels, config.SmoothPixels); 
-                    break;
-                case SmoothProcessEnum.Gaussian: 
-                    imgInput = imgInput.SmoothGaussian(config.SmoothPixels); 
-                    break;
-                case SmoothProcessEnum.Median: 
-                    imgInput = imgInput.SmoothMedian(config.SmoothPixels); 
-                    break;
-            }
-        }
-
-
         // Threshold
         // Can generate new pixel colors not in original image.
         public static void Threshold(ProcessConfigModel config, ref Image<Gray, byte> imgInput)
         {
-            if (imgInput == null)
-                throw new ArgumentNullException(nameof(imgInput));
-
-            Image<Gray, byte>? result = null;
-            try
-            {
-                switch (config.ThresholdProcess)
-                {
-                    case ThresholdProcessEnum.Binary:
-                        result = imgInput.ThresholdBinary(new Gray(config.HeatThresholdValue), new Gray(255));
-                        break;
-                    case ThresholdProcessEnum.BinaryInv:
-                        result = imgInput.ThresholdBinaryInv(new Gray(config.HeatThresholdValue), new Gray(255));
-                        break;
-                    case ThresholdProcessEnum.ToZero:
-                        result = imgInput.ThresholdToZero(new Gray(config.HeatThresholdValue));
-                        break;
-                    case ThresholdProcessEnum.ToZeroInv:
-                        result = imgInput.ThresholdToZeroInv(new Gray(config.HeatThresholdValue));
-                        break;
-                    case ThresholdProcessEnum.Trunc:
-                        result = imgInput.ThresholdTrunc(new Gray(config.HeatThresholdValue));
-                        break;
-                    default:
-                        throw new ArgumentException("Invalid ThresholdProcess value", nameof(config.ThresholdProcess));
-                }
-
-                // If we've made it this far, swap the new image with the input
-                if (result != null)
-                {
-                    var temp = imgInput;
-                    imgInput = result;
-                    result = null;  // Prevent disposal in finally block
-                    temp.Dispose();
-                }
-            }
-            finally
-            {
-                // Dispose of the result if it wasn't assigned to imgInput
-                result?.Dispose();
-            }
+            imgInput = imgInput.ThresholdBinary(new Gray(config.HeatThresholdValue), new Gray(255));
         }
 
 
@@ -117,8 +57,6 @@ namespace SkyCombImage.DrawSpace
         // Return altered input image using a OpenCV Threshold feature.
         public static Image<Gray, byte> DrawThreshold(ProcessConfigModel config, ref Image<Bgr, byte> imgInput)
         {
-            Smooth(config, ref imgInput);
-
             var answer = ToGrayScale(imgInput);
 
             Threshold(config, ref answer);  
