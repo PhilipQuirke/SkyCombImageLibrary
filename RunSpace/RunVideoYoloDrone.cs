@@ -1,6 +1,7 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using Compunet.YoloV8.Data;
 using Emgu.CV;
+using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
 using SkyCombImage.DrawSpace;
@@ -60,19 +61,19 @@ namespace SkyCombImage.RunSpace
             {
                 var thisBlock = ProcessAll.AddBlock(this);
 
-                var currGray = DrawImage.ToGrayScale(CurrInputImage);
+                using (var currGray = DrawImage.ToGrayScale(CurrInputImage))
+                {
+                    using (var currBmp = currGray.ToBitmap())
+                    {
+                        // Set pixels hotter than ThresholdValue to 1. Set other pixels to 0.
+                        using (var imgThreshold = currGray.ThresholdBinary(new Gray(RunConfig.ProcessConfig.HeatThresholdValue), new Gray(255)))
+                        {
+                            YoloResult<Detection> result = YoloProcess.YoloDetect.Detect(currBmp);
 
-                // Set pixels hotter than ThresholdValue to 1. Set other pixels to 0.
-                var imgThreshold = currGray.Clone();
-                DrawImage.Threshold(RunConfig.ProcessConfig, ref imgThreshold);
-
-                YoloResult<Detection> result = YoloProcess.YoloDetect.Detect(currGray.ToBitmap());
-
-                thisBlock.NumSig = YoloProcess.ProcessBlock(this, currGray, CurrInputImage, imgThreshold, result);
-
-                currGray.Dispose();
-                imgThreshold.Dispose();
-                result = null;
+                            thisBlock.NumSig = YoloProcess.ProcessBlock(this, CurrInputImage, imgThreshold, result);
+                        }
+                    }
+                }
 
                 return thisBlock;
             }

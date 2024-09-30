@@ -154,7 +154,6 @@ namespace SkyCombImage.ProcessLogic
         // Else create a new object to own the feature.
         public int ProcessBlock(
             ProcessScope scope,
-            in Image<Gray, byte> currGray, // read-only
             in Image<Bgr, byte> imgOriginal, // read-only
             in Image<Gray, byte> imgThreshold, // read-only
             YoloResult<Detection>? result)
