@@ -21,6 +21,10 @@ The code folders are:
 - **RunSpace:** Code to run the image processing on videos
 
 
+## FFMpeg
+Use "choco install ffmpeg" or download from [ffmpeg.org](https://ffmpeg.org/download.html) 
+Add "C:\ProgramData\chocolatey\lib\ffmpeg\tools\ffmpeg\bin" (or similar) to the Windows PATH variable.
+
 ## GPU and YOLO frameworks
 For speed, the code assumes the existance of a GPU it can to process the YOLO v8 model calculations.
 The setup of a PC with a GPU includes manually installing GPU-related frameworks:

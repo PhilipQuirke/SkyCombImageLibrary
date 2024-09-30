@@ -1,9 +1,8 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using Compunet.YoloV8.Data;
-using Compunet.YoloV8.Metadata;
 using Emgu.CV.Structure;
 using Emgu.CV;
 using SkyCombImage.ProcessModel;
+using YoloDotNet.Models;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -12,25 +11,25 @@ namespace SkyCombImage.ProcessLogic
     public class YoloFeature : ProcessFeature
     {
         // Results of YoloDetect image processing
-        public YoloName? YoloName { get; init; } = null;
-        public float Confidence { get; init; } = 0f;
+        public LabelModel? Label { get; init; } = null;
+        public double Confidence { get; init; } = 0f;
 
 
-        public YoloFeature(YoloProcess yoloProcess, int blockId, Detection box) : base(yoloProcess, blockId, FeatureTypeEnum.Real)
+        public YoloFeature(YoloProcess yoloProcess, int blockId, ObjectDetection result) : base(yoloProcess, blockId, FeatureTypeEnum.Real)
         {
             ResetCalcedMemberData();
 
-            PixelBox = new System.Drawing.Rectangle(box.Bounds.Left, box.Bounds.Top, box.Bounds.Width, box.Bounds.Height);
+            PixelBox = new System.Drawing.Rectangle(result.BoundingBox.Left, result.BoundingBox.Top, result.BoundingBox.Width, result.BoundingBox.Height);
             Significant = true;
-            YoloName = box.Name;
-            Confidence = box.Confidence;
+            Label = result.Label;
+            Confidence = result.Confidence;
         }
 
 
         // Constructor used when loaded objects from the datastore
         public YoloFeature(YoloProcess yoloProcess, List<string> settings) : base(yoloProcess, settings)
         {
-            YoloName = null;
+            Label = null;
             Confidence = 0f;
         }
 

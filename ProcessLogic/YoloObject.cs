@@ -10,10 +10,10 @@ namespace SkyCombImage.ProcessLogic
     {
         public string ClassName { get; set; }
         public Color ClassColor { get; set; }
-        public float ClassConfidence { get; set; }
+        public double ClassConfidence { get; set; }
 
 
-        public YoloObject(YoloProcess yoloProcess, ProcessScope scope, int legId, YoloFeature firstFeature, string className, Color classColor, float classConfidence) : base(yoloProcess, scope)
+        public YoloObject(YoloProcess yoloProcess, ProcessScope scope, int legId, YoloFeature firstFeature, string className, Color classColor, double classConfidence) : base(yoloProcess, scope)
         {
             Assert(firstFeature.Type == FeatureTypeEnum.Real, "Initial feature must be Real");
 

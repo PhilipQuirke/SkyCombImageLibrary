@@ -1,5 +1,4 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using Compunet.YoloV8.Data;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
@@ -7,6 +6,7 @@ using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using System.Drawing;
+using YoloDotNet.Models;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -27,9 +27,9 @@ namespace SkyCombImage.ProcessLogic
 
 
 
-        public YoloProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config, string yoloDirectory) : base(ground, video, drone, config)
+        public YoloProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config, string yoloPath) : base(ground, video, drone, config)
         {
-            YoloDetect = new YoloDetect(yoloDirectory, config.YoloDetectConfidence, config.YoloIoU);
+            YoloDetect = new YoloDetect(yoloPath, config.YoloDetectConfidence, config.YoloIoU);
             LegFrameFeatures = new();
             FlightLeg_SigObjects = 0;
             FlightLeg_StartObjects = 0;
@@ -73,8 +73,8 @@ namespace SkyCombImage.ProcessLogic
         {
             BaseConstants.Assert(firstFeature != null, "YoloObjectList.AddObject: No firstFeature");
 
-            string className = firstFeature.YoloName != null? firstFeature.YoloName.Name : "??";
-            float classConfidence = firstFeature.Confidence;
+            string className = firstFeature.Label != null? firstFeature.Label.Name : "??";
+            double classConfidence = firstFeature.Confidence;
             /*
             newObject.ClassId = box.Class.Id;
             newObject.ClassType = box.Class.Type;
@@ -156,16 +156,16 @@ namespace SkyCombImage.ProcessLogic
             ProcessScope scope,
             in Image<Bgr, byte> imgOriginal, // read-only
             in Image<Gray, byte> imgThreshold, // read-only
-            YoloResult<Detection>? result)
+            List<ObjectDetection>? results)
         {
             int Phase = 0;
             int blockID = 0;
 
             try
             {
-                if (result == null)
+                if (results == null)
                     return 0;
-                var numSig = result.Count();
+                var numSig = results.Count();
 
                 Phase = 1;
                 var currBlock = Blocks.LastBlock;
@@ -174,10 +174,10 @@ namespace SkyCombImage.ProcessLogic
                 // Convert Yolo Bounding Boxes to YoloFeatures
                 Phase = 2;
                 ProcessFeatureList featuresInBlock = new(this.ProcessConfig);
-                foreach (var box in result)
+                foreach (var result in results)
                 {
                     // We have found a new feature/object
-                    var newFeature = new YoloFeature(this, blockID, box);
+                    var newFeature = new YoloFeature(this, blockID, result);
                     Phase = 3;
                     newFeature.CalculateHeat(imgOriginal, imgThreshold);
                     Phase = 4;
