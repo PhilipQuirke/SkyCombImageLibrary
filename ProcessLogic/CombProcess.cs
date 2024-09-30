@@ -274,14 +274,21 @@ namespace SkyCombImage.ProcessLogic
         // We store the features so we can draw them on the video frame later.
         public void ProcessBlockForFeatures(ProcessFeatureList featuresInBlock)
         {
-            foreach (var feature in featuresInBlock)
+            try
             {
-                feature.Value.IsTracked = false;
-                feature.Value.Significant = false;
-            }
+                foreach (var feature in featuresInBlock)
+                {
+                    feature.Value.IsTracked = false;
+                    feature.Value.Significant = false;
+                }
 
-            Blocks.LastBlock.AddFeatureList(featuresInBlock);
-            ProcessFeatures.AddFeatureList(featuresInBlock);
+                Blocks.LastBlock.AddFeatureList(featuresInBlock);
+                ProcessFeatures.AddFeatureList(featuresInBlock);
+            }
+            catch (Exception ex)
+            {
+                throw ThrowException("ProcessBlockForFeatures", ex);
+            }
         }
     }
 }
