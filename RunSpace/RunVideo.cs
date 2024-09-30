@@ -266,7 +266,7 @@ namespace SkyCombImage.RunSpace
 
         // Reset any internal state of the run or model, so they can be re-used in another run ResetRun().
         // Do not change input or drone data. Do not delete config references.
-        public void RunStart_Process()
+        public virtual void RunStart_Process()
         {
             StopRunning = false;
             ProcessDurationMs = 0;

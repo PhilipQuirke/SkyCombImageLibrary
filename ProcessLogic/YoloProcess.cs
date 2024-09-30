@@ -17,6 +17,9 @@ namespace SkyCombImage.ProcessLogic
     {
         // YOLO (You only look once) V8 image processing
         public YoloDetect YoloDetect;
+        
+        // Do we process all frames in the video or just the user specified range?
+        public bool YoloProcessAllFrames;
 
         // List of features detected in each frame in a leg by YoloDetect 
         public YoloFeatureSeenList LegFrameFeatures;
@@ -30,6 +33,7 @@ namespace SkyCombImage.ProcessLogic
         public YoloProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config, string yoloPath) : base(ground, video, drone, config)
         {
             YoloDetect = new YoloDetect(yoloPath, config.YoloDetectConfidence, config.YoloIoU);
+            YoloProcessAllFrames = false;
             LegFrameFeatures = new();
             FlightLeg_SigObjects = 0;
             FlightLeg_StartObjects = 0;
@@ -166,6 +170,8 @@ namespace SkyCombImage.ProcessLogic
                 if (results == null)
                     return 0;
                 var numSig = results.Count();
+                if (numSig == 0)
+                    return 0;
 
                 Phase = 1;
                 var currBlock = Blocks.LastBlock;

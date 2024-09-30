@@ -1,14 +1,11 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 
 // https://github.com/NickSwardh/YoloDotNet
+using SkiaSharp;
+using SkyCombGround.CommonSpace;
 using YoloDotNet;
 using YoloDotNet.Enums;
 using YoloDotNet.Models;
-using YoloDotNet.Extensions;
-using SkiaSharp;
-
-using SkyCombGround.CommonSpace;
-
 
 
 namespace SkyCombImage.ProcessLogic
@@ -59,7 +56,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public List<ObjectDetection>? Detect(System.Drawing.Image raw_image)
+        public List<ObjectDetection>? DetectFrame(System.Drawing.Image raw_image)
         {
             List<ObjectDetection>? answer = null;
 
@@ -89,21 +86,21 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public Dictionary<int,List<ObjectDetection>>? Detect(string videoFileName, string outputFileName)
+        public Dictionary<int,List<ObjectDetection>>? DetectVideo(string videoFileName)
         {
             // Set video options
             var options = new VideoOptions
             {
                 VideoFile = videoFileName,
-                OutputDir = outputFileName,
+                OutputDir = "",
                 GenerateVideo = false,
-                //DrawLabels = false,
+                DrawLabels = false,
                 //FPS = 30,
                 //Width = 640,  // Resize video...
                 //Height = -2,  // -2 automatically calculate dimensions to keep proportions
                 //Quality = 28,
-                //DrawConfidence = true,
-                //KeepAudio = true,
+                DrawConfidence = false,
+                KeepAudio = false,
                 //KeepFrames = false,
                 //DrawSegment = DrawSegment.Default,
                 //PoseOptions = MyPoseMarkerConfiguration // Your own pose marker configuration...

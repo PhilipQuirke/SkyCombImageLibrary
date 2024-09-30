@@ -6,6 +6,7 @@ using SkyCombDrone.PersistModel;
 using SkyCombImage.DrawSpace;
 using SkyCombImage.PersistModel;
 using SkyCombImage.ProcessLogic;
+using YoloDotNet.Models;
 
 
 // Namespace for processing of a video made up of multiple images (frames).
@@ -15,6 +16,9 @@ namespace SkyCombImage.RunSpace
     // YOLO (You only look once) V8 video processing.
     class RunVideoYoloDrone : RunVideoPersist
     {
+        Dictionary<int, List<ObjectDetection>>? RawYoloObjects = null;
+
+
         public RunVideoYoloDrone(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
             : base(parent, config, dataStore, drone, ProcessFactory.NewYoloProcess(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig, config.YoloDirectory))
         {
@@ -45,6 +49,17 @@ namespace SkyCombImage.RunSpace
 
         }
 
+        public override void RunStart_Process()
+        {
+            base.RunStart_Process();
+
+            // Yolo processing frame by frame takes approximately twice as long per frame as processing the whole video.
+            // Process all frames if user has specified a time range that is >= 50% of the video duration.
+            YoloProcess.YoloProcessAllFrames = PSM.InputVideoDurationMs >= Drone.InputVideo.DurationMs / 2;
+
+            RawYoloObjects = null;
+        }
+
 
         // Process start &/or end of drone flight legs.
         public override void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId)
@@ -60,6 +75,10 @@ namespace SkyCombImage.RunSpace
             {
                 var thisBlock = ProcessAll.AddBlock(this);
 
+                if((YoloProcess.YoloProcessAllFrames) && (thisBlock.BlockId == 1))
+                    // Process the entire video file, using YOLO and GPU, for speed. Do not create an output file.
+                    RawYoloObjects = YoloProcess.YoloDetect.DetectVideo(InputVideoFileName());
+
                 using (var currGray = DrawImage.ToGrayScale(CurrInputImage))
                 {
                     using (var currBmp = currGray.ToBitmap())
@@ -67,7 +86,17 @@ namespace SkyCombImage.RunSpace
                         // Set pixels hotter than ThresholdValue to 1. Set other pixels to 0.
                         using (var imgThreshold = currGray.ThresholdBinary(new Gray(RunConfig.ProcessConfig.HeatThresholdValue), new Gray(255)))
                         {
-                            var results = YoloProcess.YoloDetect.Detect(currBmp);
+                            List<ObjectDetection>? results = null;
+                            if (YoloProcess.YoloProcessAllFrames)
+                                try {
+                                    results = RawYoloObjects[thisBlock.BlockId];
+                                }
+                                catch
+                                {
+                                    results = null;
+                                }
+                            else
+                                results = YoloProcess.YoloDetect.DetectFrame(currBmp);
 
                             thisBlock.NumSig = YoloProcess.ProcessBlock(this, CurrInputImage, imgThreshold, results);
                         }
