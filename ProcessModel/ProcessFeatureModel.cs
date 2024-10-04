@@ -136,7 +136,7 @@ namespace SkyCombImage.ProcessModel
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
-        virtual public DataPairList GetSettings()
+        public virtual DataPairList GetSettings()
         {
             // If have blank Attributes, the row will stop at blank, and so not load fully from DataStore
             var theAttributes = (Attributes == null || Attributes == "") ? "No" : Attributes;
@@ -168,10 +168,10 @@ namespace SkyCombImage.ProcessModel
         public void LoadSettings(List<string> settings)
         {
             FeatureId = StringToNonNegInt(settings[FeatureIdSetting - 1]);
-            IsTracked = settings[IsTrackedSetting-1] == "true";
-            Significant = settings[SignificantSetting-1] == "true";
-            Attributes = settings[NotesSetting-1];
-            ObjectId = StringToNonNegInt(settings[ObjectIdSetting-1]);
+            IsTracked = settings[IsTrackedSetting - 1] == "true";
+            Significant = settings[SignificantSetting - 1] == "true";
+            Attributes = settings[NotesSetting - 1];
+            ObjectId = StringToNonNegInt(settings[ObjectIdSetting - 1]);
 
             BlockId = StringToNonNegInt(settings[BlockIdSetting - 1]);
             Type = (FeatureTypeEnum)Enum.Parse(typeof(FeatureTypeEnum), settings[TypeSetting - 1]);

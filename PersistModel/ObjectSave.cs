@@ -2,11 +2,11 @@
 using OfficeOpenXml;
 using OfficeOpenXml.Drawing.Chart;
 using OfficeOpenXml.Table.PivotTable;
+using SkyCombDrone.CommonSpace;
 using SkyCombDrone.DroneModel;
+using SkyCombDrone.PersistModel;
 using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
-using SkyCombDrone.CommonSpace;
-using SkyCombDrone.PersistModel;
 using System.Drawing;
 
 
@@ -26,7 +26,7 @@ namespace SkyCombImage.PersistModel
 
 
         public void SaveFeatureList(ProcessAll process, bool saveAll)
-        { 
+        {
             Data.SelectOrAddWorksheet(FeaturesTabName);
             int featureRow = 0;
             foreach (var feature in process.ProcessFeatures)
@@ -98,23 +98,23 @@ namespace SkyCombImage.PersistModel
         // Add a speed graph for objects and features and ground speed
         public void AddProcessGroundFeatureObjectSpeedGraph(int maxBlockId)
         {
-/* PQR
-            const string ChartName = "GroundFeatureObjectSpeed";
-            const string ChartTitle = "Ground, Feature & Object speed (in pixels / block)";
+            /* PQR
+                        const string ChartName = "GroundFeatureObjectSpeed";
+                        const string ChartTitle = "Ground, Feature & Object speed (in pixels / block)";
 
-            (var chartWs, var lastRow) = Data.PrepareChartArea(Objects2TabName, ChartName, Objects1TabName);
-            if (lastRow > 0)
-            {
-                var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
-                Data.SetChart(chart, ChartTitle, 0, 0, StandardChartRows);
-                Data.SetAxises(chart, "Block", "Speed", "0");
-                chart.XAxis.MinValue = 0;
-                chart.XAxis.MaxValue = maxBlockId;
+                        (var chartWs, var lastRow) = Data.PrepareChartArea(Objects2TabName, ChartName, Objects1TabName);
+                        if (lastRow > 0)
+                        {
+                            var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
+                            Data.SetChart(chart, ChartTitle, 0, 0, StandardChartRows);
+                            Data.SetAxises(chart, "Block", "Speed", "0");
+                            chart.XAxis.MinValue = 0;
+                            chart.XAxis.MaxValue = maxBlockId;
 
-                Data.AddScatterSerie(chart, FeaturesTabName, "Feature", ProcessFeatureModel.ObjSpeedPxlsSetting, ProcessFeatureModel.BlockIdSetting, DroneColors.RealFeatureColor);
-                Data.AddScatterSerie(chart, Objects1TabName, "Objects", ProcessObjectModel.SpeedInPxPerBlockSetting, ProcessObjectModel.CenterBlockSetting, DroneColors.InScopeObjectColor, 6);
-            }
-*/
+                            Data.AddScatterSerie(chart, FeaturesTabName, "Feature", ProcessFeatureModel.ObjSpeedPxlsSetting, ProcessFeatureModel.BlockIdSetting, DroneColors.RealFeatureColor);
+                            Data.AddScatterSerie(chart, Objects1TabName, "Objects", ProcessObjectModel.SpeedInPxPerBlockSetting, ProcessObjectModel.CenterBlockSetting, DroneColors.InScopeObjectColor, 6);
+                        }
+            */
         }
 
 

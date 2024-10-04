@@ -1,7 +1,7 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using SkyCombImage.CategorySpace;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
+using SkyCombImage.CategorySpace;
 
 
 // Models are used in-memory and to persist/load data to/from the datastore
@@ -232,7 +232,7 @@ namespace SkyCombImage.ProcessModel
                 { "Size CM2", SizeCM2, AreaCM2Ndp },
                 { "Size Rnd CM2", (SizeCM2 == UnknownValue ? UnknownHeight : ((int)(SizeCM2 / 100f)) * 100), AreaCM2Ndp },
                 { "Avg Range M", AvgRangeM },
-                { "Max Heat", MaxHeat}, 
+                { "Max Heat", MaxHeat},
                 { "Dem M", DemM, ElevationNdp },
                 { "Leg", (FlightLegId == UnknownValue ? 0 : FlightLegId) },
                 { "Attributes", Attributes },

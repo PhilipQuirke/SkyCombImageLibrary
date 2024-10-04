@@ -57,7 +57,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public static CombProcess NewCombProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config )
+        public static CombProcess NewCombProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config)
         {
             return new CombProcess(ground, video, drone, config);
         }

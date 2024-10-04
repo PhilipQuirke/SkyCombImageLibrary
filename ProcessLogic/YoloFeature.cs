@@ -1,6 +1,6 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using Emgu.CV.Structure;
 using Emgu.CV;
+using Emgu.CV.Structure;
 using SkyCombImage.ProcessModel;
 using YoloDotNet.Models;
 

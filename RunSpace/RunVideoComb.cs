@@ -1,6 +1,6 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using Emgu.CV.Structure;
 using Emgu.CV;
+using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
 using SkyCombImage.DrawSpace;
@@ -25,9 +25,9 @@ namespace SkyCombImage.RunSpace
     // The thermal flight data associated provides drone location, altitude, timestamp & speed information for each frame.
     public class RunVideoCombDrone : RunVideoPersist
     {
-        public RunVideoCombDrone(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
+        public RunVideoCombDrone(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone)
             : base(parent, config, dataStore, drone,
-                  ProcessFactory.NewCombProcess(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig ))
+                  ProcessFactory.NewCombProcess(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig))
         {
         }
 
@@ -85,8 +85,8 @@ namespace SkyCombImage.RunSpace
 
                 ProcessFeatureList featuresInBlock = ProcessFactory.NewProcessFeatureList(CombProcess.ProcessConfig);
                 CombFeatureLogic.CreateFeaturesFromImage(
-                    CombProcess, featuresInBlock, currBlock, 
-                    CurrInputImage, imgThreshold ); // read-only  images
+                    CombProcess, featuresInBlock, currBlock,
+                    CurrInputImage, imgThreshold); // read-only  images
 
                 foreach (var feature in featuresInBlock)
                 {
@@ -95,7 +95,7 @@ namespace SkyCombImage.RunSpace
                 }
 
                 // Unless legs are not used, we only do comb processing during "legs". 
-                if ( (!Drone.UseFlightLegs) || (PSM.CurrRunLegId > 0))
+                if ((!Drone.UseFlightLegs) || (PSM.CurrRunLegId > 0))
                     // Process the features, by preference associated them with existing CombObjects, else creating new objects.
                     CombProcess.ProcessBlockForObjects(this, featuresInBlock);
                 else

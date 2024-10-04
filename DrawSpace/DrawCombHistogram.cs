@@ -15,9 +15,9 @@ namespace SkyCombImage.DrawSpace
     {
         public ProcessDrawScope DrawScope { get; }
 
-        private List<int> Values;
-        private int MaxFreq;
-        private int Scale;
+        private readonly List<int> Values;
+        private readonly int MaxFreq;
+        private readonly int Scale;
 
 
         // Sometimes user chooses to view a subset of the raw data.
@@ -71,7 +71,7 @@ namespace SkyCombImage.DrawSpace
                     for (int rectNum = 0; rectNum < Values.Count; rectNum++)
                     {
                         int value = Values[rectNum];
-                        if( value <= 0)
+                        if (value <= 0)
                             continue;
 
                         var horizValue = rectNum * Scale + MinHorizRaw;
@@ -91,7 +91,7 @@ namespace SkyCombImage.DrawSpace
 
                             var x = StepToWidth(horizValue) / Scale + 1;
                             var width = Math.Max(1, (int)StepWidthPxs - 2);
-                            var rect = new Rectangle( x, pxsDown, width, OriginPixel.Y - pxsDown);
+                            var rect = new Rectangle(x, pxsDown, width, OriginPixel.Y - pxsDown);
                             image.Draw(rect, theColor, thickness);
                         }
                     }

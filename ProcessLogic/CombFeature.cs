@@ -1,8 +1,8 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using Emgu.CV;
 using Emgu.CV.Structure;
-using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
+using SkyCombImage.ProcessModel;
 using System.Drawing;
 
 
@@ -12,7 +12,7 @@ namespace SkyCombImage.ProcessLogic
     // A Comb feature, is a dense cluster of hot pixels, associated 1-1 with a Block
     public class CombFeature : ProcessFeature
     {
-        public CombFeature( CombProcess combProcess, ProcessBlock block, FeatureTypeEnum type) : base(combProcess, block.BlockId, type)
+        public CombFeature(CombProcess combProcess, ProcessBlock block, FeatureTypeEnum type) : base(combProcess, block.BlockId, type)
         {
             if (type != FeatureTypeEnum.Unreal)
                 Pixels = new();
@@ -28,8 +28,8 @@ namespace SkyCombImage.ProcessLogic
 
         public void CalcNumHotPixels()
         {
-            NumHotPixels = (Pixels == null ? 0 : Pixels.Count() );
-        }   
+            NumHotPixels = (Pixels == null ? 0 : Pixels.Count());
+        }
 
 
         // Search for hot neighbours of an initial hot pixel
@@ -110,8 +110,8 @@ namespace SkyCombImage.ProcessLogic
                         if (currX == startX + fromX)
                         {
                             if (currPixelIsHot)
-                                // CASE: EXPAND LEFT. Applies to THIS row search. Covered in reloop code above
-                                { }
+                            // CASE: EXPAND LEFT. Applies to THIS row search. Covered in reloop code above
+                            { }
                             else
                                 // CASE: SHRINK LEFT. Applies to NEXT row search
                                 fromX++;
@@ -185,7 +185,7 @@ namespace SkyCombImage.ProcessLogic
 
 
     // A list of Comb features bound to a specific Block
-    public class CombFeatureLogic 
+    public class CombFeatureLogic
     {
         // Analyse input image using Comb specific approach:
         // - PreReq: Convert image to gray scale, smooth and threshold => imgThreshold
@@ -219,7 +219,7 @@ namespace SkyCombImage.ProcessLogic
                     for (x = 0; x < imageWidth; x++)
                     {
                         var index = y * imageWidth + x;
-                        if (! inputSearched[index])
+                        if (!inputSearched[index])
                         {
                             // Set inputSearched[y,x] = true
                             inputSearched[index] = true;
@@ -232,7 +232,7 @@ namespace SkyCombImage.ProcessLogic
 
                                 feature.PixelNeighborSearch(
                                     ref inputSearched,
-                                    imgOriginal, imgThreshold,  
+                                    imgOriginal, imgThreshold,
                                     y, x);
 
                                 featuresInBlock.AddFeature(feature);

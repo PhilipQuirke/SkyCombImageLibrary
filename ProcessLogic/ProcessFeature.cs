@@ -1,7 +1,7 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
+using SkyCombImage.ProcessModel;
 using System.Drawing;
 
 
@@ -403,8 +403,8 @@ namespace SkyCombImage.ProcessLogic
 
                 // Calculation is based on where object appears in the thermal camera field of view (FOV).
                 // If object does not appear to have changed image position then this method will not work.
-                double firstPixelY = firstRealFeature.PixelBox.Y + ((double)firstRealFeature.PixelBox.Height) / 2.0;
-                double lastPixelY = this.PixelBox.Y + ((double)this.PixelBox.Height) / 2.0;
+                double firstPixelY = firstRealFeature.PixelBox.Y + firstRealFeature.PixelBox.Height / 2.0;
+                double lastPixelY = this.PixelBox.Y + PixelBox.Height / 2.0;
                 if (firstPixelY == lastPixelY)
                 {
                     SetHeightAlgorithmError("BL_SameY");
@@ -460,7 +460,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore)
-        override public DataPairList GetSettings()
+        public override DataPairList GetSettings()
         {
             var settings = base.GetSettings();
 
@@ -672,7 +672,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public  (int minHeat, int maxHeat, int maxPixels) HeatSummary()
+        public (int minHeat, int maxHeat, int maxPixels) HeatSummary()
         {
             int maxHeat = 0;
             int minHeat = 255;

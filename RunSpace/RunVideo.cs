@@ -2,15 +2,15 @@
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.DrawSpace;
-using SkyCombDrone.PersistModel;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
+using SkyCombDrone.PersistModel;
+using SkyCombGround.CommonSpace;
 using SkyCombImage.CategorySpace;
 using SkyCombImage.DrawSpace;
 using SkyCombImage.PersistModel;
 using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
-using SkyCombGround.CommonSpace;
 using System.Diagnostics;
 
 
@@ -28,7 +28,7 @@ namespace SkyCombImage.RunSpace
 
 
     // Base video class that does not persist information betweem frames
-    abstract public class RunVideo : ProcessScope, IDisposable
+    public abstract class RunVideo : ProcessScope, IDisposable
     {
         public RunUserInterface RunParent { get; }
 
@@ -36,7 +36,7 @@ namespace SkyCombImage.RunSpace
         public RunConfig RunConfig { get; set; }
         // We may be given a series of intervals to process
         public DroneIntervalList? RunIntervals { get; set; } = null;
- 
+
         // All drone input data: video (definitely), flight (maybe) and ground (maybe) data 
         // public Drone Drone { get; set; }
 
@@ -59,7 +59,7 @@ namespace SkyCombImage.RunSpace
         int ProcessDurationMs = 0;
 
 
-        public Image<Bgr, byte>? ModifiedInputImage = null; 
+        public Image<Bgr, byte>? ModifiedInputImage = null;
         public Image<Bgr, byte>? ModifiedDisplayImage = null;
 
 
@@ -242,12 +242,12 @@ namespace SkyCombImage.RunSpace
                     block, ProcessAll, UnknownValue,
                     CurrInputImage, CurrDisplayImage);
 
-            if(ModifiedInputImage != null)
+            if (ModifiedInputImage != null)
                 DrawYawPitchZoom.Draw(ref ModifiedInputImage, Drone, CurrRunFlightStep);
         }
 
 
-         // Return the data to show in the ObjectGrid in the Main Form
+        // Return the data to show in the ObjectGrid in the Main Form
         public virtual List<object[]> GetObjectGridData(bool mainForm)
         {
             return null;
@@ -282,7 +282,7 @@ namespace SkyCombImage.RunSpace
             ConfigureModelScope();
             ProcessDrawScope.Reset(this, Drone);
             CombDrawPath.Reset(ProcessDrawScope);
-            
+
             ProcessAll?.OnObservation(ProcessEventEnum.IntervalStart);
         }
 
@@ -344,7 +344,7 @@ namespace SkyCombImage.RunSpace
 
         // Pause after processing of each frame - allowing user click the Stop button
         public void WaitKey()
-        { 
+        {
             switch (RunConfig.RunSpeed)
             {
                 case RunSpeedEnum.Max: break; // No pause
@@ -642,13 +642,13 @@ namespace SkyCombImage.RunSpace
     // Video class that uses the ImageStandard techniques. No persistance of info between frames
     internal class RunVideoStandard : RunVideo
     {
-        public RunVideoStandard(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
+        public RunVideoStandard(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone)
             : base(parent, config, dataStore, drone, ProcessFactory.NewProcessModel(config.ProcessConfig, drone))
         {
         }
 
 
-        public override void ProcessFlightLegChange(ProcessScope scope,int prevLegId, int currLegId) { }
+        public override void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId) { }
 
 
         // Process/analyse a single frame at a time.
@@ -694,9 +694,9 @@ namespace SkyCombImage.RunSpace
 
 
     // Class to implement processing of a video, with information persisted from frame to frame in member data.
-    abstract public class RunVideoPersist : RunVideo
+    public abstract class RunVideoPersist : RunVideo
     {
-        public RunVideoPersist(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone, ProcessAll processAll) 
+        public RunVideoPersist(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone, ProcessAll processAll)
             : base(parent, config, dataStore, drone, processAll)
         {
         }

@@ -1,9 +1,9 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
+using SkyCombGround.CommonSpace;
 using SkyCombImage.PersistModel;
 using SkyCombImage.ProcessLogic;
-using SkyCombGround.CommonSpace;
 
 
 // Continuation of RunVideo.cs, contains both Skycomb-specific runners
@@ -24,7 +24,7 @@ namespace SkyCombImage.RunSpace
                 case RunProcessEnum.Yolo:
                     var yoloRunner = new RunVideoYoloDrone(parent, runConfig, dataStore, drone);
                     yoloRunner.ProcessDrawScope.Process = yoloRunner.ProcessAll;
-                    if(processHook != null)
+                    if (processHook != null)
                         yoloRunner.YoloProcess.Observation += processHook;
                     answer = yoloRunner;
                     break;
@@ -39,7 +39,7 @@ namespace SkyCombImage.RunSpace
                     answer = new RunVideoStandard(parent, runConfig, dataStore, drone);
                     break;
             }
-            answer.RunIntervals = intervals; 
+            answer.RunIntervals = intervals;
 
             answer.LoadDataStoreConfigSettings();
 

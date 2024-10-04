@@ -3,11 +3,11 @@ using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Features2D;
 using Emgu.CV.Structure;
-using SkyCombImage.ProcessModel;
 using SkyCombDrone.DrawSpace;
 using SkyCombGround.CommonSpace;
-using System.Drawing;
+using SkyCombImage.ProcessModel;
 using SkyCombImage.RunSpace;
+using System.Drawing;
 
 
 namespace SkyCombImage.DrawSpace
@@ -59,7 +59,7 @@ namespace SkyCombImage.DrawSpace
         {
             var answer = ToGrayScale(imgInput);
 
-            Threshold(config, ref answer);  
+            Threshold(config, ref answer);
 
             return answer;
         }
@@ -123,11 +123,11 @@ namespace SkyCombImage.DrawSpace
         {
             switch (runProcess)
             {
-                case RunProcessEnum.GFTT: 
+                case RunProcessEnum.GFTT:
                     DrawGftt(processConfig, drawConfig, ref imgInput);
                     break;
 
-                case RunProcessEnum.Threshold: 
+                case RunProcessEnum.Threshold:
                     DrawThreshold(processConfig, ref imgInput);
                     break;
             }

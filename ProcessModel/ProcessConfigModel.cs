@@ -100,7 +100,7 @@ namespace SkyCombImage.ProcessModel
         // Create annotated video file as output MP4
         public bool SaveAnnotatedVideo { get; set; } = false;
         // Save the objects and features to the datastore. Takes values all, significant, none.
-        public SaveObjectDataEnum SaveObjectData { get; set; } = SaveObjectDataEnum.Significant; 
+        public SaveObjectDataEnum SaveObjectData { get; set; } = SaveObjectDataEnum.Significant;
 
 
         // --------------------- Error Thresholds --------------------- 

@@ -25,7 +25,7 @@ namespace SkyCombImage.PersistModel
         // Load run config data from the datastore 
         public void LoadRunConfigSettings(RunConfig runConfig)
         {
-            runConfig.LoadSettings(RunConfigSettings());    
+            runConfig.LoadSettings(RunConfigSettings());
         }
 
 
@@ -74,10 +74,10 @@ namespace SkyCombImage.PersistModel
 
                         // Load the non-blank cells in this row into a CombFeature
                         var settings = Data.GetRowSettings(row, 1);
-                        if( model is CombProcess)
+                        if (model is CombProcess)
                             model.ProcessFeatures.AddFeature(
                                 ProcessFactory.NewCombFeature(model as CombProcess, settings));
-                        else if( model is YoloProcess)
+                        else if (model is YoloProcess)
                             model.ProcessFeatures.AddFeature(
                                 ProcessFactory.NewYoloFeature(model as YoloProcess, settings));
 
@@ -114,10 +114,10 @@ namespace SkyCombImage.PersistModel
 
                         // Load the non-blank cells in this row into a Object
                         var settings = Data.GetRowSettings(row, 1);
-                        if ( model is CombProcess)
+                        if (model is CombProcess)
                             model.ProcessObjects.AddObject(
                                 ProcessFactory.NewCombObject(model as CombProcess, settings));
-                        else 
+                        else
                             model.ProcessObjects.AddObject(
                                 ProcessFactory.NewYoloObject(model as YoloProcess, settings));
 

@@ -438,10 +438,10 @@ namespace SkyCombImage.CategorySpace
     public class CategoryAll
     {
         // Master list of object categories used for annotations
-        public MasterCategoryList MasterCategories { get; set; } 
+        public MasterCategoryList MasterCategories { get; set; }
 
         // List of object-specific annotations added by user to detected objects
-        public ObjectCategoryList ObjectCategories { get; set; } 
+        public ObjectCategoryList ObjectCategories { get; set; }
 
 
         public CategoryAll()

@@ -89,7 +89,7 @@ namespace SkyCombImage.RunSpace
                             ProcessConfig.YoloDetectConfidence.ToString() + "/" +
                             ProcessConfig.YoloIoU.ToString() + "\r\n";
 
-                    if(ProcessConfig.SaveAnnotatedVideo)
+                    if (ProcessConfig.SaveAnnotatedVideo)
                         answer += "Save Annotated Video\r\n";
 
                     if (ProcessConfig.SaveObjectData == SaveObjectDataEnum.Significant)

@@ -16,14 +16,14 @@ namespace SkyCombImage.ProcessLogic
         public CombProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config) : base(ground, video, drone, config)
         {
             FlightLeg_SigObjects = 0;
-         }
+        }
 
 
         // Reset any internal state of the model, so it can be re-used in another run immediately
         public override void RunStart()
         {
             FlightLeg_SigObjects = 0;
- 
+
             base.RunStart();
 
             // We want the category information to be retained between runs, so don't clear it.
@@ -73,7 +73,7 @@ namespace SkyCombImage.ProcessLogic
             foreach (var theObject in ProcessObjects)
             {
                 var combObject = theObject.Value;
-                 combObject.ClearHotPixels();
+                combObject.ClearHotPixels();
             }
         }
 

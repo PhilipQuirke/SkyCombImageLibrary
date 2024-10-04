@@ -63,7 +63,7 @@ namespace SkyCombImage.ProcessLogic
         {
             foreach (var feature in ProcessFeatures)
                 feature.Value.ClearHotPixels();
-                // NumHotPixels is not cleared 
+            // NumHotPixels is not cleared 
         }
 
 
@@ -596,15 +596,19 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public int NumSignificantObjects {  get { 
-            int answer = 0;
+        public int NumSignificantObjects
+        {
+            get
+            {
+                int answer = 0;
 
-            foreach (var theObj in this)
-                if (theObj.Value.Significant)
-                    answer++;
+                foreach (var theObj in this)
+                    if (theObj.Value.Significant)
+                        answer++;
 
-            return answer;
-        } }
+                return answer;
+            }
+        }
 
 
         // Number of objects that have ever been significant. 
@@ -801,7 +805,7 @@ namespace SkyCombImage.ProcessLogic
         // Calculate settings based on owned ProcessObjects 
         public void CalculateSettings()
         {
-           CalculateSettings(this);
+            CalculateSettings(this);
         }
         // Calculate settings based on in-scope ProcessObjects 
         public void CalculateSettings(ProcessScope scope)

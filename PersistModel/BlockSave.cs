@@ -1,5 +1,4 @@
-﻿using Emgu.CV;
-using SkyCombDrone.DrawSpace;
+﻿using SkyCombDrone.DrawSpace;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombDrone.PersistModel;

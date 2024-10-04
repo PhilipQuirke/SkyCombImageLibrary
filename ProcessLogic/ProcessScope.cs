@@ -46,7 +46,7 @@ namespace SkyCombImage.ProcessLogic
         // Return the child FlightStep
         public override TardisModel? GetTardisModel(int index)
         {
-             return Drone == null ? null : Drone.FlightSteps.GetTardisModel(index);
+            return Drone == null ? null : Drone.FlightSteps.GetTardisModel(index);
         }
 
 
@@ -129,7 +129,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public void ConfigureScope_SetFramePos( float inputVideoFromS, float inputVideoToS)
+        public void ConfigureScope_SetFramePos(float inputVideoFromS, float inputVideoToS)
         {
             Drone.ResetCurrFrames();
 

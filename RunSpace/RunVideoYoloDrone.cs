@@ -19,7 +19,7 @@ namespace SkyCombImage.RunSpace
         Dictionary<int, List<ObjectDetection>>? RawYoloObjects = null;
 
 
-        public RunVideoYoloDrone(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone) 
+        public RunVideoYoloDrone(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone)
             : base(parent, config, dataStore, drone, ProcessFactory.NewYoloProcess(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig, config.YoloDirectory))
         {
         }
@@ -75,7 +75,7 @@ namespace SkyCombImage.RunSpace
             {
                 var thisBlock = ProcessAll.AddBlock(this);
 
-                if((YoloProcess.YoloProcessAllFrames) && (thisBlock.BlockId == 1))
+                if ((YoloProcess.YoloProcessAllFrames) && (thisBlock.BlockId == 1))
                     // Process the entire video file, using YOLO and GPU, for speed. Do not create an output file.
                     RawYoloObjects = YoloProcess.YoloDetect.DetectVideo(InputVideoFileName());
 
@@ -88,7 +88,8 @@ namespace SkyCombImage.RunSpace
                         {
                             List<ObjectDetection>? results = null;
                             if (YoloProcess.YoloProcessAllFrames)
-                                try {
+                                try
+                                {
                                     results = RawYoloObjects[thisBlock.BlockId];
                                 }
                                 catch

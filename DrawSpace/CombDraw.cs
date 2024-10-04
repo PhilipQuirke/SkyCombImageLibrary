@@ -5,11 +5,11 @@ using Emgu.CV.Structure;
 using SkyCombDrone.CommonSpace;
 using SkyCombDrone.DrawSpace;
 using SkyCombDrone.DroneLogic;
+using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
-using SkyCombGround.CommonSpace;
-using System.Drawing;
 using SkyCombImage.RunSpace;
+using System.Drawing;
 
 
 namespace SkyCombImage.DrawSpace
@@ -128,8 +128,8 @@ namespace SkyCombImage.DrawSpace
                     if (thermalImage && (block.FlightLegId > 0))
                     {
                         var video = process.Drone.InputVideo;
-                        int theY = (int)(video.ImageHeight * 98 / 100); // pixels
-                        int theX = (int)(video.ImageWidth * 92 / 100); // pixels
+                        int theY = video.ImageHeight * 98 / 100; // pixels
+                        int theX = video.ImageWidth * 92 / 100; // pixels
                         var fontScale = video.FontScale;
                         Text(ref outputImg, "Leg " + block.FlightLegName,
                                 new Point(theX, theY), fontScale / 2.0f, DroneColors.LegNameBgr, fontScale);

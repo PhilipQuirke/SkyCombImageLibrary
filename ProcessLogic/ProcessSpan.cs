@@ -87,7 +87,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 NumSignificantObjects = theObjs.Count;
 
-                if((theSteps.Count == 0) || (NumSignificantObjects == 0))
+                if ((theSteps.Count == 0) || (NumSignificantObjects == 0))
                     return;
 
                 int maxTestAbsM = 8;
@@ -140,14 +140,14 @@ namespace SkyCombImage.ProcessLogic
         // Summarise the blocks in this leg
         private void SummariseSteps(FlightStepList steps)
         {
-            if(steps.Count > 0)
+            if (steps.Count > 0)
             {
                 MinStepId = steps.First().Value.StepId;
                 MaxStepId = steps.Last().Value.StepId;
             }
 
             ResetTardis();
-            foreach(var step in steps)
+            foreach (var step in steps)
                 SummariseTardis(step.Value);
         }
 
@@ -174,11 +174,12 @@ namespace SkyCombImage.ProcessLogic
         // Lock in the FlightSteps.FixAltM value that reduces the location most.
         public void CalculateSettings_from_FlightSteps(int minStepId, int maxStepId)
         {
-            try { 
+            try
+            {
                 ResetBest();
                 ResetTardis();
 
-                if((Process.Drone.FlightSteps != null) && (Process.ProcessObjects.Count > 0))
+                if ((Process.Drone.FlightSteps != null) && (Process.ProcessObjects.Count > 0))
                 {
                     // Get the FlightSteps corresponding to the block range
                     FlightStepList theSteps = new();
@@ -286,16 +287,16 @@ namespace SkyCombImage.ProcessLogic
 
         public void SetFixAltMAfterLoad(VideoModel videoData, Drone drone)
         {
-            if( drone.FlightSteps == null )
+            if (drone.FlightSteps == null)
                 return;
 
             var steps = drone.FlightSteps.Steps;
 
             foreach (var theSpan in this)
-                if( theSpan.Value.BestFixAltM != 0 )
-                    for(int stepId = theSpan.Value.MinStepId; stepId <= theSpan.Value.MaxStepId; stepId++)
+                if (theSpan.Value.BestFixAltM != 0)
+                    for (int stepId = theSpan.Value.MinStepId; stepId <= theSpan.Value.MaxStepId; stepId++)
                     {
-                        if( steps.TryGetValue(stepId, out var step) )
+                        if (steps.TryGetValue(stepId, out var step))
                         {
                             step.FixAltM = theSpan.Value.BestFixAltM;
                             step.CalculateSettings_InputImageCenterDemDsm(videoData, drone.GroundData);

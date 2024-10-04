@@ -1,15 +1,15 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved.
-using SkyCombImage.ProcessLogic;
-using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DrawSpace;
+using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
+using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
 
 
 namespace SkyCombImage.DrawSpace
 {
     // Code to draw images related to drone & process data in charts, graphs,etc.
-    public class ProcessDrawScope : DroneDrawScope  
+    public class ProcessDrawScope : DroneDrawScope
     {
         // The Video, Drone & model scope of a processing run
         public ProcessScope ProcessScope;
@@ -72,7 +72,7 @@ namespace SkyCombImage.DrawSpace
         public override float MaxSpeedMps { get { return ProcessScope.MaxSpeedMps; } }
 
 
-        public ProcessDrawScope(ProcessAll process, ProcessScope processScope, Drone drone) : base (drone)
+        public ProcessDrawScope(ProcessAll process, ProcessScope processScope, Drone drone) : base(drone)
         {
             Process = process;
             ProcessScope = processScope;
@@ -90,7 +90,7 @@ namespace SkyCombImage.DrawSpace
 
             // We need to draw all the steps in the flight
             ProcessScope.TardisMaxKey = ProcessScope.LastRunStepId;
-            if(Drone != null)
+            if (Drone != null)
                 ProcessScope.TardisMaxKey = Drone.FlightSteps.TardisMaxKey;
 
 

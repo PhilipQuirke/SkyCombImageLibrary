@@ -1,8 +1,8 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using SkyCombDrone.DroneLogic;
-using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
+using SkyCombImage.ProcessModel;
 
 
 
@@ -26,12 +26,12 @@ namespace SkyCombImage.ProcessLogic
     public class ProcessEventArgs : EventArgs
     {
         public ProcessScope Scope { get; private set; }
-        public int LegId{ get; private set; }
+        public int LegId { get; private set; }
 
         public ProcessEventArgs(ProcessScope scope, int legId)
         {
             Scope = scope;
-            LegId = legId;  
+            LegId = legId;
         }
     }
 
@@ -137,7 +137,7 @@ namespace SkyCombImage.ProcessLogic
 
         public void OnObservation(ProcessEventEnum processEvent, ProcessEventArgs args = null)
         {
-            if( args == null)
+            if (args == null)
                 args = new ProcessEventArgs(null, 0);
 
             Observation?.Invoke(this, processEvent, args);
@@ -160,7 +160,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // A new drone flight leg has started.
-        protected virtual void ProcessFlightLegStart(ProcessScope scope, int legId) 
+        protected virtual void ProcessFlightLegStart(ProcessScope scope, int legId)
         {
         }
 
@@ -261,7 +261,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        virtual public DataPairList GetSettings()
+        public virtual DataPairList GetSettings()
         {
             int numHotPixels = 0;
             foreach (var feature in ProcessFeatures)
@@ -302,7 +302,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        virtual public DataPairList GetSettings()
+        public virtual DataPairList GetSettings()
         {
             return new DataPairList
             {

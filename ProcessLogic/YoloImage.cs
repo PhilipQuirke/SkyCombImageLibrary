@@ -1,9 +1,9 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using System.Data;
-using System.Drawing;
 using Accord.MachineLearning;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
+using System.Data;
+using System.Drawing;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -75,7 +75,7 @@ namespace SkyCombImage.ProcessLogic
     {
 
         // yMovePerTimeSlice is the estimated image movement in y direction measured in pixels / frame.
-        static public YoloObjectSeenList CalculateObjectsInLeg(double yMovePerTimeSlice, YoloFeatureSeenList features)
+        public static YoloObjectSeenList CalculateObjectsInLeg(double yMovePerTimeSlice, YoloFeatureSeenList features)
         {
             YoloObjectSeenList answer = new();
 
@@ -263,7 +263,7 @@ namespace SkyCombImage.ProcessLogic
                         DataRow nextFeature = clusterRows[i];
                         if (i == 0)
                             validFeatures.Add(nextFeature);
-                        else if( IsGoodNextFeature(yMovePerTimeSlice, lastFeature, nextFeature) )
+                        else if (IsGoodNextFeature(yMovePerTimeSlice, lastFeature, nextFeature))
                             validFeatures.Add(nextFeature);
                         lastFeature = nextFeature;
                     }
@@ -284,7 +284,7 @@ namespace SkyCombImage.ProcessLogic
                 DataTable adjustedDf = newClusters.Count > 0 ? newClusters.Aggregate((dt1, dt2) => { dt1.Merge(dt2); return dt1; }) : orgClusters.Clone();
                 var orphanedFeaturesSet = orgClusters.AsEnumerable()
                         .Where(row => !adjustedDf.AsEnumerable().Any(adjustedRow => adjustedRow.Field<int>("Feature") == row.Field<int>("Feature")));
-                if( orphanedFeaturesSet.Count() == 0 )
+                if (orphanedFeaturesSet.Count() == 0)
                     return adjustedDf;
 
                 double maxYPixels = ProcessConfigModel.YoloMaxYPixelsDeltaPerFrame - yMovePerTimeSlice;

@@ -1,7 +1,7 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using SkyCombGround.CommonSpace;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
+using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
 
 
@@ -145,7 +145,7 @@ namespace SkyCombImage.ProcessLogic
             else if (prevBlock != null)
             {
                 travelM = RelativeLocation.TravelM(prevBlock.DroneLocnM, DroneLocnM);
-                TimeMs = (int)(InputFrameMs - prevBlock.InputFrameMs);
+                TimeMs = InputFrameMs - prevBlock.InputFrameMs;
                 int advanceMS = blockMs - beforeStepMs;
                 Assert(advanceMS >= 0, "CalculateSettings_FromSteps: Logic 10");
                 StartTime += TimeSpan.FromMilliseconds(advanceMS);
@@ -229,7 +229,7 @@ namespace SkyCombImage.ProcessLogic
     };
 
 
-    public class ProcessBlockList : SortedList<int,ProcessBlock>
+    public class ProcessBlockList : SortedList<int, ProcessBlock>
     {
         public void AddBlock(ProcessBlock newBlock, ProcessScope? scope, Drone drone)
         {
@@ -248,12 +248,16 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public ProcessBlock? LastBlock { get {
-            if (Count > 0)
-                return this.Last().Value;  
+        public ProcessBlock? LastBlock
+        {
+            get
+            {
+                if (Count > 0)
+                    return this.Last().Value;
 
-            return null;
-        } }
+                return null;
+            }
+        }
 
 
         // Returns the distance in meters between the fromBlock and the toBlock locations

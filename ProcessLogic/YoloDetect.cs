@@ -14,9 +14,9 @@ namespace SkyCombImage.ProcessLogic
     // Uses a SkyComb-specific pre-trained model to detect objects in an image.
     public class YoloDetect : BaseConstants
     {
-        Yolo? YoloTool = null;
-        float Confidence = UnknownValue;
-        float IoU = UnknownValue;
+        readonly Yolo? YoloTool = null;
+        readonly float Confidence = UnknownValue;
+        readonly float IoU = UnknownValue;
 
 
         public YoloDetect(string yoloPath, float confidence, float iou)
@@ -86,7 +86,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public Dictionary<int,List<ObjectDetection>>? DetectVideo(string videoFileName)
+        public Dictionary<int, List<ObjectDetection>>? DetectVideo(string videoFileName)
         {
             // Set video options
             var options = new VideoOptions

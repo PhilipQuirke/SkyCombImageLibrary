@@ -79,7 +79,7 @@ namespace SkyCombImage.DrawSpace
                     var unrealBgr = DroneColors.UnrealFeatureBgr;     // Yellow
 
                     var processConfig = ProcessDrawScope.Process.ProcessConfig;
-                    bool showAllFeatures = (processConfig != null && 
+                    bool showAllFeatures = (processConfig != null &&
                         (processConfig.SaveObjectData == SaveObjectDataEnum.All));
 
 
@@ -189,7 +189,7 @@ namespace SkyCombImage.DrawSpace
             if (HoverObject != null)
             {
                 var objName = HoverObject.Name;
-                var objHeight = (HoverObject.HeightM <= ProcessObjectModel.UnknownHeight ? "N/A" : Math.Round(HoverObject.HeightM,1).ToString() + " m");
+                var objHeight = (HoverObject.HeightM <= ProcessObjectModel.UnknownHeight ? "N/A" : Math.Round(HoverObject.HeightM, 1).ToString() + " m");
                 var objSize = ((int)HoverObject.SizeCM2).ToString() + " cm2";
                 var objHeat = HoverObject.MaxHeat.ToString();
                 var objRange = HoverObject.AvgRangeM.ToString() + " m"; // Distance from drone to object

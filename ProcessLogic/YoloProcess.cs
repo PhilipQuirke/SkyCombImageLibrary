@@ -2,9 +2,9 @@
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
-using SkyCombImage.ProcessModel;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
+using SkyCombImage.ProcessModel;
 using System.Drawing;
 using YoloDotNet.Models;
 
@@ -17,7 +17,7 @@ namespace SkyCombImage.ProcessLogic
     {
         // YOLO (You only look once) V8 image processing
         public YoloDetect YoloDetect;
-        
+
         // Do we process all frames in the video or just the user specified range?
         public bool YoloProcessAllFrames;
 
@@ -77,7 +77,7 @@ namespace SkyCombImage.ProcessLogic
         {
             BaseConstants.Assert(firstFeature != null, "YoloObjectList.AddObject: No firstFeature");
 
-            string className = firstFeature.Label != null? firstFeature.Label.Name : "??";
+            string className = firstFeature.Label != null ? firstFeature.Label.Name : "??";
             double classConfidence = firstFeature.Confidence;
             /*
             newObject.ClassId = box.Class.Id;
@@ -203,7 +203,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 throw ThrowException("YoloProcessModel.ProcessBlock" +
                     "(CurrBlockId=" + scope.PSM.CurrBlockId +
-                    ",LastBlockId=" + scope.PSM.LastBlockId + 
+                    ",LastBlockId=" + scope.PSM.LastBlockId +
                     ",Phase=" + Phase + ")", ex);
             }
         }
