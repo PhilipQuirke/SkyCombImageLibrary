@@ -65,9 +65,9 @@ namespace SkyCombImage.ProcessLogic
                 // Average pixel density based on encompassing pixel block of each real feature.
                 var minDensity = ProcessConfig.ObjectMinDensityPerc / 100.0F;
                 var density = RealDensityPx();
-                var densityOk = (density > minDensity); // Say 33%
-                var densityGood = (density > 1.5 * minDensity); // Say 50%
-                var densityGreat = (density > 2 * minDensity); // Say 66%
+                var densityOk = (density > minDensity); // Say 20%
+                var densityGood = (density > 1.5 * minDensity); // Say 25%
+                var densityGreat = (density > 2 * minDensity); // Say 40%
 
                 // TIME
                 // Aka duration. Proxy for numRealFeatures.

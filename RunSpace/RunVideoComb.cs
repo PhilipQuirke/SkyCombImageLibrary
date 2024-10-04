@@ -114,10 +114,10 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        // Return the data to show in the ObjectGrid in the Main Form
-        public override List<object[]> GetObjectGridData(bool mainForm)
+        // Return the data to show in the ObjectGrid
+        public override List<object[]> GetObjectGridData()
         {
-            return ProcessAll.ProcessObjects.GetObjectGridData(this, RunConfig.ProcessConfig, mainForm, CategoryAll.ObjectCategories);
+            return ProcessAll.ProcessObjects.GetObjectGridData(this, RunConfig.ProcessConfig, CategoryAll.ObjectCategories);
         }
 
 

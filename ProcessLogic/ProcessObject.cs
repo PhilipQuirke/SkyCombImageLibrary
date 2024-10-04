@@ -459,7 +459,7 @@ namespace SkyCombImage.ProcessLogic
                                 ProcessFeatures.AverageFlightStepFixedAltitudeM());
                 }
                 else
-                    lastFeature.SetHeightAlgorithmError("BL_TooShort"); // Either in time or distance.
+                    lastFeature.SetHeightAlgorithmError("BL TooShort"); // Either in time or distance.
 
                 // Calculate OBJECT height and object height error (as average over real features).
                 Calculate_HeightM_and_HeightErrM();
@@ -738,9 +738,8 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Returns key attributes of objects and associated user annotations (if any)
-        // to show in the ObjectGrid in the Main Form or the ObjectList in the Object Form
-        public List<object[]> GetObjectGridData(ProcessScope scope, ProcessConfigModel processConfig, bool mainForm, ObjectCategoryList annotations)
+        // Returns key attributes of objects and associated user annotations (if any) to show in the ObjectGrid
+        public List<object[]> GetObjectGridData(ProcessScope scope, ProcessConfigModel processConfig, ObjectCategoryList annotations)
         {
             var answer = new List<object[]>();
 
@@ -751,7 +750,7 @@ namespace SkyCombImage.ProcessLogic
                 if (annotations != null)
                     annotation = annotations.GetData(theObject.Value.Name);
 
-                answer.Add(theObject.Value.GetObjectGridData(processConfig, mainForm, annotation));
+                answer.Add(theObject.Value.GetObjectGridData(processConfig, annotation));
             }
 
             return answer;

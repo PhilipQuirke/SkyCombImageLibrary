@@ -225,9 +225,9 @@ namespace SkyCombImage.ProcessModel
                 { "Locn Err M", LocationErrM, LocationNdp },
                 { "Lineal M", AvgSumLinealM, LocationNdp },
                 { "Height M", (HeightM == UnknownValue ? UnknownHeight : HeightM), HeightNdp },
-                { "Min Hght M", MinHeightM, HeightNdp },
-                { "Max Hght M", MaxHeightM, HeightNdp },
-                { "Hght Err M", HeightErrM, HeightNdp },
+                { "Min Hght M", (MinHeightM == UnknownValue ? UnknownHeight : MinHeightM), HeightNdp }, 
+                { "Max Hght M", (MaxHeightM == UnknownValue ? UnknownHeight : MaxHeightM), HeightNdp }, 
+                { "Hght Err M", (HeightErrM == UnknownValue? UnknownHeight : HeightErrM), HeightNdp }, 
                 { "Hght Rnd M", (HeightM == UnknownValue ? UnknownHeight : ((int)(HeightM * 2f)) / 2f), HeightNdp },
                 { "Size CM2", SizeCM2, AreaCM2Ndp },
                 { "Size Rnd CM2", (SizeCM2 == UnknownValue ? UnknownHeight : ((int)(SizeCM2 / 100f)) * 100), AreaCM2Ndp },
@@ -262,7 +262,7 @@ namespace SkyCombImage.ProcessModel
             LocationErrM = StringToNonNegFloat(settings[i++]);
             AvgSumLinealM = StringToNonNegFloat(settings[i++]);
 
-            HeightM = StringToFloat(settings[i++]); // Can be UnknownHeight that is -2
+            HeightM = StringToFloat(settings[i++]); 
             MinHeightM = StringToFloat(settings[i++]);
             MaxHeightM = StringToFloat(settings[i++]);
             HeightErrM = StringToFloat(settings[i++]);
@@ -282,7 +282,12 @@ namespace SkyCombImage.ProcessModel
             MaxRealPixelHeight = StringToInt(settings[ProcessObjectModel.MaxRealPixelHeightSetting - 1]);
             FirstFwdDownDeg = StringToFloat(settings[ProcessObjectModel.FirstFwdDownDegSetting - 1]);
             LastFwdDownDeg = StringToFloat(settings[ProcessObjectModel.LastFwdDownDegSetting - 1]);
-            // RangeFwdDownDeg = setting[ProcessObjectModel.RangeFwdDownDegSetting-1]
+            // RangeFwdDownDeg 
+
+            if (HeightM == UnknownHeight) HeightM = UnknownValue;
+            if (MinHeightM == UnknownHeight) MinHeightM = UnknownValue;
+            if (MaxHeightM == UnknownHeight) MaxHeightM = UnknownValue;
+            if (HeightErrM == UnknownHeight) HeightErrM = UnknownValue;
         }
 
 
@@ -300,6 +305,7 @@ namespace SkyCombImage.ProcessModel
         public const int GridHeightErrMSetting = 10;
         public const int GridLocationGoodSetting = 11; // Used for coloring cell
         public const int GridHeightGoodSetting = 12; // Used for coloring cell
+        public const int GridAnnotationSetting = 13;
 
 
         // Get object's settings shown in the object grid & object form
@@ -325,38 +331,30 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        // Return the details of a significant object to display in the ObjectGrid in MainForm or ObjectForm
-        public object[] GetObjectGridData(ProcessConfigModel config, bool mainForm, ObjectCategoryModel annotation)
+        // Return the details of a significant object to display in the ObjectGrid
+        public object[] GetObjectGridData(ProcessConfigModel config, ObjectCategoryModel annotation)
         {
             // Use GetSettings to get the same formatting as used in the DataStore.
             var settings_grid = GetSettings_Grid(annotation);
 
-            if (mainForm)
-                return new object[] {
-                    settings_grid[GridObjectNameSetting].Value,
-                    settings_grid[GridCategorySetting].Value,
-                    settings_grid[GridIncludeSetting].Value,
-                    settings_grid[GridHeightMSetting].Value,
-                    settings_grid[GridSizeCM2Setting].Value,
-                    settings_grid[GridFromSecSetting].Value,
-                    settings_grid[GridForSecSetting].Value,
-                    settings_grid[GridLocationMSetting].Value,
-                    settings_grid[GridAttributesSetting].Value,
-                    settings_grid[GridLocationErrMSetting].Value,
-                    settings_grid[GridHeightErrMSetting].Value,
+            return new object[] {
+                settings_grid[GridObjectNameSetting].Value,
+                settings_grid[GridCategorySetting].Value,
+                settings_grid[GridIncludeSetting].Value,
+                settings_grid[GridHeightMSetting].Value,
+                settings_grid[GridSizeCM2Setting].Value,
+                settings_grid[GridFromSecSetting].Value,
+                settings_grid[GridForSecSetting].Value,
+                settings_grid[GridLocationMSetting].Value,
+                settings_grid[GridAttributesSetting].Value,
+                settings_grid[GridLocationErrMSetting].Value,
+                settings_grid[GridHeightErrMSetting].Value,
 
-                    // We color the Location cell is "good", "bad" or leave white for neutral.
-                    ( LocationErrM < config.GoodLocationErrM ? "good" : ( LocationErrM > config.BadLocationErrM ? "bad" : "" ) ),
-                    // We color the Height cell is "good", "bad" or leave white for neutral.
-                    ( HeightErrM < config.GoodHeightErrM ? "good" : ( HeightErrM > config.BadHeightErrM ? "bad" : "" ) ),
-                };
-            else
-                // Return data for the ObjectList in the ObjectForm
-                return new object[] {
-                    settings_grid[GridObjectNameSetting].Value,
-                    settings_grid[GridCategorySetting].Value,
-                    settings_grid[GridIncludeSetting].Value,
-                    (annotation == null ? "" : annotation.Notes)
+                // We color the Location cell is "good", "bad" or leave white for neutral.
+                ( LocationErrM < config.GoodLocationErrM ? "good" : ( LocationErrM > config.BadLocationErrM ? "bad" : "" ) ),
+                // We color the Height cell is "good", "bad" or leave white for neutral.
+                ( HeightErrM < config.GoodHeightErrM ? "good" : ( HeightErrM > config.BadHeightErrM ? "bad" : "" ) ),
+                (annotation == null ? "" : annotation.Notes),
             };
         }
     }

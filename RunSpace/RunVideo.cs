@@ -248,9 +248,9 @@ namespace SkyCombImage.RunSpace
 
 
         // Return the data to show in the ObjectGrid in the Main Form
-        public virtual List<object[]> GetObjectGridData(bool mainForm)
+        public virtual List<object[]> GetObjectGridData()
         {
-            return null;
+            return new List<object[]>();
         }
 
 

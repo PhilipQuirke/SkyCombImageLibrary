@@ -114,9 +114,9 @@ namespace SkyCombImage.RunSpace
 
 
         // Return the data to show in the ObjectGrid in the Main Form
-        public override List<object[]> GetObjectGridData(bool mainForm)
+        public override List<object[]> GetObjectGridData()
         {
-            return YoloProcess.ProcessObjects.GetObjectGridData(this, RunConfig.ProcessConfig, mainForm, CategoryAll.ObjectCategories);
+            return YoloProcess.ProcessObjects.GetObjectGridData(this, RunConfig.ProcessConfig, CategoryAll.ObjectCategories);
         }
 
 

@@ -305,7 +305,7 @@ namespace SkyCombImage.ProcessLogic
                     float testDsmM = groundModel.GetElevationByDroneLocn(testLocnM);
                     if (testDsmM == UnknownValue)
                     {
-                        SetHeightAlgorithmError("LOS_NoDsm");
+                        SetHeightAlgorithmError("LOS NoDsm");
                         continue;
                     }
 
@@ -342,10 +342,10 @@ namespace SkyCombImage.ProcessLogic
                                 HeightAlgorithm = LineOfSightHeightAlgorithm;
                             }
                             else
-                                SetHeightAlgorithmError("LOS_NoDem");
+                                SetHeightAlgorithmError("LOS NoDem");
                         }
                         else
-                            SetHeightAlgorithmError("LOS_NoDem");
+                            SetHeightAlgorithmError("LOS NoDem");
 
                         break;
                     }
@@ -380,7 +380,7 @@ namespace SkyCombImage.ProcessLogic
                     (this.Block == null) || // Last real feature
                     (this.Block.FlightStep == null))
                 {
-                    SetHeightAlgorithmError("BL_TooFew");
+                    SetHeightAlgorithmError("BL TooFew");
                     return;
                 }
 
@@ -389,7 +389,7 @@ namespace SkyCombImage.ProcessLogic
                 float droneDistanceDownM = lastStep.FixedDistanceDown;
                 if (droneDistanceDownM < 5)
                 {
-                    SetHeightAlgorithmError("BL_TooLow");
+                    SetHeightAlgorithmError("BL TooLow");
                     return;
                 }
 
@@ -407,7 +407,7 @@ namespace SkyCombImage.ProcessLogic
                 double lastPixelY = this.PixelBox.Y + PixelBox.Height / 2.0;
                 if (firstPixelY == lastPixelY)
                 {
-                    SetHeightAlgorithmError("BL_SameY");
+                    SetHeightAlgorithmError("BL SameY");
                     return;
                 }
 
@@ -426,9 +426,9 @@ namespace SkyCombImage.ProcessLogic
                 // If the difference in vertical angle moved in direct of flight is too small,
                 // this method will be too inaccurate to be useful.
                 // Can occur when 1) camera is near horizontal and the target is far away or 2) drone is not moving.
-                if (Math.Abs(fwdTanDiff) < 0.1) // 0.1 rads = ~6 degrees
+                if (Math.Abs(fwdTanDiff) < 0.04) // ~2.3 degrees
                 {
-                    SetHeightAlgorithmError("BL_TanDiff");
+                    SetHeightAlgorithmError("BL Tan:" + fwdTanDiff.ToString("0.000"));
                     return;
                 }
 
@@ -444,13 +444,14 @@ namespace SkyCombImage.ProcessLogic
 
                 var featureHeightM = (float)(groundDownM - trigDownM);
 
-                if (featureHeightM >= 0)
+                // We show unknown heights as -2. If height is >= -1.9 show it.
+                if (featureHeightM >= UnknownHeight + 0.1f)
                 {
                     HeightM = featureHeightM;
                     HeightAlgorithm = BaseLineHeightAlgorithm;
                 }
                 else
-                    SetHeightAlgorithmError("BL_Neg");
+                    SetHeightAlgorithmError("BL Neg:" + featureHeightM.ToString("0.000"));
             }
             catch (Exception ex)
             {
