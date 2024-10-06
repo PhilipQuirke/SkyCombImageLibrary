@@ -57,9 +57,9 @@ namespace SkyCombImage.ProcessLogic
                 // PIXELS
                 // Maximum pixel count per real feature
                 var maxPixels = MaxRealHotPixels;
-                var countOk = (maxPixels > ProcessConfig.ObjectMinPixels); // Say 5 pixels
-                var countGood = (maxPixels > 2 * ProcessConfig.ObjectMinPixels); // Say 10 pixels 
-                var countGreat = (maxPixels > 4 * ProcessConfig.ObjectMinPixels); // Say 20 pixels
+                var pixelsOk = (maxPixels > ProcessConfig.ObjectMinPixels); // Say 5 pixels
+                var pixelsGood = (maxPixels > 2 * ProcessConfig.ObjectMinPixels); // Say 10 pixels 
+                var pixelsGreat = (maxPixels > 4 * ProcessConfig.ObjectMinPixels); // Say 20 pixels
 
                 // TIME
                 // Aka duration. Proxy for numRealFeatures.
@@ -76,20 +76,20 @@ namespace SkyCombImage.ProcessLogic
 
                 // Key calculation of Comb algorithm for identifying significant objects
                 Significant =
-                    countOk &&
+                    pixelsOk &&
                     timeOk &&
                     (
                         elevationGood ||
-                        countGood 
+                        pixelsGood 
                     );
 
                 if (Significant)
                     NumSigBlocks++;
 
                 // Summarise why object is significant or not. Gets displayed in UI and saved to xls.
-                Attributes = String.Format("{0}: {1} {2} {3}",
-                    Significant ? "Yes" : "No",
-                    countGreat ? "C3" : (countGood ? "C2" : (countOk ? "C1" : "c")),
+                Attributes = String.Format("{0}{1} {2} {3}",
+                    Significant ? "Sig " : "",
+                    pixelsGreat ? "P3" : (pixelsGood ? "P2" : (pixelsOk ? "P1" : "p")),
                     timeGreat ? "T3" : (timeGood ? "T2" : (timeOk ? "T1" : "t")),
                     elevationGreat ? "E3" : (elevationGood ? "E2" : (elevationOK ? "E1" : "e")));
             }

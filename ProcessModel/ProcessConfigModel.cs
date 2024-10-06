@@ -90,22 +90,13 @@ namespace SkyCombImage.ProcessModel
 
         // --------------------- Error Thresholds --------------------- 
         // The maximum +/- inaccuracy (in meters) in an object's estimated location to be considered "good" 
-        public float GoodLocationErrM { get; set; } = 0.5f;
-        // The minimum +/- inaccuracy (in meters) in an object's estimated location to be considered "bad" 
-        public float BadLocationErrM { get; set; } = 1.0f;
+        public float GoodLocationErrM { get; set; } = 1;
         // The maximum +/- inaccuracy (in meters) in an object's estimated height to be considered "good" 
-        public float GoodHeightErrM { get; set; } = 0.5f;
-        // The minimum +/- inaccuracy (in meters) in an object's estimated height to be considered "bad" 
-        public float BadHeightErrM { get; set; } = 1.0f;
+        public float GoodHeightErrM { get; set; } = 1;
+
 
 
         // --------------------- Processing Limits --------------------- 
-
-        // We set a maximum distance and ignore objects detected beyond that distance.
-        // SkyComb Analyst is not designed to detect things in the far distance (as they would need to be very large).
-        // Things detected by 
-        public int MaxFeatureDistanceM { get; set; } = 150; // Min 50, Max 250
-
 
         // The ThresholdValue should be in range 50 to 255.
         // A user may mistake the range for 0.0 to 1.0, so we set the min value to 50
@@ -116,16 +107,6 @@ namespace SkyCombImage.ProcessModel
 
             if (HeatThresholdValue > 255)
                 HeatThresholdValue = 255;
-        }
-
-
-        public void ValidateMaxFeatureDistanceM()
-        {
-            if (MaxFeatureDistanceM < 50)
-                MaxFeatureDistanceM = 50;
-
-            if (MaxFeatureDistanceM > 250)
-                MaxFeatureDistanceM = 250;
         }
 
 
@@ -214,10 +195,8 @@ namespace SkyCombImage.ProcessModel
                 { "Save Annotated Video", SaveAnnotatedVideo },
                 { "Save Object Data", SaveObjectData.ToString() },
                 { "Good Location Err M", GoodLocationErrM, LocationNdp },
-                { "Bad Location Err M", BadLocationErrM, LocationNdp },
                 { "Good Height Err M", GoodHeightErrM, HeightNdp },
-                { "Bad Height Err M", BadHeightErrM, HeightNdp },
-                { "Max Feature Distance M", MaxFeatureDistanceM },
+
             };
         }
 
@@ -230,10 +209,8 @@ namespace SkyCombImage.ProcessModel
             SaveAnnotatedVideo = Convert.ToBoolean(settings[i++]);
             SaveObjectData = (SaveObjectDataEnum)Enum.Parse(typeof(SaveObjectDataEnum), settings[i++]);
             GoodLocationErrM = StringToNonNegFloat(settings[i++]);
-            BadLocationErrM = StringToNonNegFloat(settings[i++]);
             GoodHeightErrM = StringToNonNegFloat(settings[i++]);
-            BadHeightErrM = StringToNonNegFloat(settings[i++]);
-            MaxFeatureDistanceM = StringToNonNegInt(settings[i++]);
+
         }
 
 

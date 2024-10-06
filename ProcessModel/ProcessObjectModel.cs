@@ -337,6 +337,12 @@ namespace SkyCombImage.ProcessModel
             // Use GetSettings to get the same formatting as used in the DataStore.
             var settings_grid = GetSettings_Grid(annotation);
 
+
+            var HeightErrColor = "none";
+            if (HeightM != UnknownValue)
+                // We color the Height cell is "good", "bad" or leave white for neutral.
+                HeightErrColor = (HeightErrM < config.GoodHeightErrM ? "good" : "bad" );
+
             return new object[] {
                 settings_grid[GridObjectNameSetting].Value,
                 settings_grid[GridCategorySetting].Value,
@@ -351,9 +357,9 @@ namespace SkyCombImage.ProcessModel
                 settings_grid[GridHeightErrMSetting].Value,
 
                 // We color the Location cell is "good", "bad" or leave white for neutral.
-                ( LocationErrM < config.GoodLocationErrM ? "good" : ( LocationErrM > config.BadLocationErrM ? "bad" : "" ) ),
+                ( LocationErrM < config.GoodLocationErrM ? "good" : "bad" ),
                 // We color the Height cell is "good", "bad" or leave white for neutral.
-                ( HeightErrM < config.GoodHeightErrM ? "good" : ( HeightErrM > config.BadHeightErrM ? "bad" : "" ) ),
+                HeightErrColor,
                 (annotation == null ? "" : annotation.Notes),
             };
         }
