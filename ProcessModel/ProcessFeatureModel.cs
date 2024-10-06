@@ -31,8 +31,6 @@ namespace SkyCombImage.ProcessModel
         public bool IsTracked { get; set; }
         // Is this feature significant?
         public bool Significant { get; set; }
-        // Attributes about this feature
-        public string Attributes { get; set; } = "";
         // A feature can be associated with an object
         public int ObjectId { get; set; }
 
@@ -88,7 +86,6 @@ namespace SkyCombImage.ProcessModel
         {
             IsTracked = true;
             Significant = false;
-            Attributes = "";
             ObjectId = 0;
             LocationM = null;
             HeightM = ProcessObjectModel.UnknownHeight;
@@ -114,39 +111,32 @@ namespace SkyCombImage.ProcessModel
         public const int FeatureIdSetting = 1;
         public const int IsTrackedSetting = 2;
         public const int SignificantSetting = 3;
-        public const int NotesSetting = 4;
-        public const int ObjectIdSetting = 5;
-        public const int BlockIdSetting = 6;
-        public const int TypeSetting = 7;
-        public const int NorthingMSetting = 8;
-        public const int EastingMSetting = 9;
-        public const int HeightMSetting = 10;
-        public const int HeightAlgorithmSetting = 11;
-        public const int PixelBoxXSetting = 12;
-        public const int PixelBoxYSetting = 13;
-        public const int PixelBoxWidthSetting = 14;
-        public const int PixelBoxHeightSetting = 15;
-        public const int MinHeatSetting = 16;
-        public const int MaxHeatSetting = 17;
-        public const int NumHotPixelsSetting = 18;
-        public const int DensityPercSetting = 19;
-        public const int PixelDensityGoodSetting = 20;
-        public const int LegIdSetting = 21;
-        public const int RangeMSetting = 22;
+        public const int ObjectIdSetting = 4;
+        public const int BlockIdSetting = 5;
+        public const int TypeSetting = 6;
+        public const int NorthingMSetting = 7;
+        public const int EastingMSetting = 8;
+        public const int HeightMSetting = 9;
+        public const int HeightAlgorithmSetting = 10;
+        public const int PixelBoxXSetting = 11;
+        public const int PixelBoxYSetting = 12;
+        public const int PixelBoxWidthSetting = 13;
+        public const int PixelBoxHeightSetting = 14;
+        public const int MinHeatSetting = 15;
+        public const int MaxHeatSetting = 16;
+        public const int NumHotPixelsSetting = 17;
+        public const int LegIdSetting = 18;
+        public const int RangeMSetting = 19;
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
         public virtual DataPairList GetSettings()
         {
-            // If have blank Attributes, the row will stop at blank, and so not load fully from DataStore
-            var theAttributes = (Attributes == null || Attributes == "") ? "No" : Attributes;
-
             return new DataPairList
             {
                 { "Feature", FeatureId },
                 { "Is Tracked", IsTracked},
                 { "Significant", Significant },
-                { "Attributes", theAttributes },
                 { "Object", ObjectId },
                 { "Block", BlockId },
                 { "Type", Type.ToString() },
@@ -170,7 +160,6 @@ namespace SkyCombImage.ProcessModel
             FeatureId = StringToNonNegInt(settings[FeatureIdSetting - 1]);
             IsTracked = settings[IsTrackedSetting - 1] == "true";
             Significant = settings[SignificantSetting - 1] == "true";
-            Attributes = settings[NotesSetting - 1];
             ObjectId = StringToNonNegInt(settings[ObjectIdSetting - 1]);
 
             BlockId = StringToNonNegInt(settings[BlockIdSetting - 1]);

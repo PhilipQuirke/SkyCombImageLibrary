@@ -136,25 +136,13 @@ namespace SkyCombImage.ProcessLogic
                     int rectBottom = currY;
                     PixelBox = new Rectangle(rectLeft, rectTop, rectRight - rectLeft + 1, rectBottom - rectTop + 1);
 
-                    // If the rectangle density is lower than the density threshold then stop expanding. Avoids large, difuse features.
-                    if (!PixelDensityGood)
-                        break;
-
                     // If this fearure is larger than allowed then stop expanding
                     if (FeatureOverSized)
                         break;
                 }
 
                 // Is this feature significant?
-                bool sizeOk = (NumHotPixels >= ProcessAll.ProcessConfig.FeatureMinPixels);
-                bool densityOk = PixelDensityGood;
-                Significant = sizeOk && densityOk;
-                if (Significant)
-                    Attributes = "Yes";
-                else
-                    Attributes = string.Format("No: {0}{1}",
-                        sizeOk ? "P" : "p",
-                        densityOk ? "D" : "d");
+                Significant = (NumHotPixels >= ProcessAll.ProcessConfig.FeatureMinPixels);
                 IsTracked = Significant;
             }
             catch (Exception ex)

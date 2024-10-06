@@ -48,8 +48,6 @@ namespace SkyCombImage.ProcessModel
         // SkyComb-specific detection method "Comb".
         // Minimum number of hot pixels required inside a bounding rectangle, to draw a red rect in output
         public int FeatureMinPixels { get; set; } = 8;
-        // Minimum percentage of hot pixels required inside a bounding rectangle, to create a feature
-        public int FeatureMinDensityPerc { get; set; } = 10;
         // Maximum feature size (aka length or width) in pixels
         // Sometimes the algorithm generates absurdly large features e.g. 100. This reduces this issue.
         // ToDo: Value should be based on physically realities e.g. the maximum mammal size given standard drone altitude 
@@ -62,19 +60,8 @@ namespace SkyCombImage.ProcessModel
         public int ObjectMinDurationMs { get; set; } = 500;
         // Minimum percentage difference between ground speed and object speed for object to be considered above ground.
         public int ObjectMaxUnrealBlocks { get; set; } = 5;
-        // To be highlighted, an object must have this many hot pixels per real step
-        public int ObjectMinPixelsPerBlock { get; set; } = 5;
-        // To be highlighted, an object must have this percentage of hot pixels inside bounding rectangle per step
-        public int ObjectMinDensityPerc { get; set; } = 20;
-
-
-        // Distance process:
-        public int DistanceMinGray { get; set; } = 1;
-        public int DistanceMaskSize { get; set; } = 0;
-
-
-        // Contour process:
-        public double ContourMinArea { get; set; } = 5;
+        // To be highlighted, an object must have this many hot pixels in at least one real step
+        public int ObjectMinPixels { get; set; } = 5;
 
 
         // Good Feature To Track (Gftt) process:
@@ -179,16 +166,11 @@ namespace SkyCombImage.ProcessModel
             {
                 { "Threshold Value", HeatThresholdValue },
                 { "Feature Min Pixels", FeatureMinPixels },
-                { "Feature MinDensity Perc", FeatureMinDensityPerc },
                 { "Feature Max Size", FeatureMaxSize },
                 { "Feature Min Overlap Perc", FeatureMinOverlapPerc },
                 { "Object Min Duration Ms", ObjectMinDurationMs },
                 { "Object Max Unreal Blocks", ObjectMaxUnrealBlocks },
-                { "Object Min Pixels Per Block", ObjectMinPixelsPerBlock },
-                { "Object Min Density Perc", ObjectMinDensityPerc },
-                { "Contour Min Area", ContourMinArea.ToString() },
-                { "Distance Min Gray", DistanceMinGray },
-                { "Distance Mask Size", DistanceMaskSize },
+                { "Object Min Pixels", ObjectMinPixels },
                 { "Gftt Max Corners", GfttMaxCorners },
                 { "Gftt Quality Level", GfttQualityLevel.ToString() },
                 { "Gftt Min Distance", GfttMinDistance },
@@ -208,16 +190,11 @@ namespace SkyCombImage.ProcessModel
             int i = 0;
             HeatThresholdValue = StringToNonNegInt(settings[i++]);
             FeatureMinPixels = StringToNonNegInt(settings[i++]);
-            FeatureMinDensityPerc = StringToNonNegInt(settings[i++]);
             FeatureMaxSize = StringToNonNegInt(settings[i++]);
             FeatureMinOverlapPerc = StringToNonNegInt(settings[i++]);
             ObjectMinDurationMs = StringToNonNegInt(settings[i++]);
             ObjectMaxUnrealBlocks = StringToNonNegInt(settings[i++]);
-            ObjectMinPixelsPerBlock = StringToNonNegInt(settings[i++]);
-            ObjectMinDensityPerc = StringToNonNegInt(settings[i++]);
-            ContourMinArea = StringToDouble(settings[i++]);
-            DistanceMinGray = StringToNonNegInt(settings[i++]);
-            DistanceMaskSize = StringToNonNegInt(settings[i++]);
+            ObjectMinPixels = StringToNonNegInt(settings[i++]);
             GfttMaxCorners = StringToNonNegInt(settings[i++]);
             GfttQualityLevel = StringToDouble(settings[i++]);
             GfttMinDistance = StringToNonNegInt(settings[i++]);

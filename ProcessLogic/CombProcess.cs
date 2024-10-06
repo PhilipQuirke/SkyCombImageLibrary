@@ -176,12 +176,21 @@ namespace SkyCombImage.ProcessLogic
 
                             bool claimedFeatures = false;
                             foreach (var feature in featuresInBlock)
+                            {
+                                if (feature.Value.ObjectId > 0)
+                                    // Feature has already been claimed.
+                                    continue;
+
                                 // Object will claim feature if the object remains viable after claiming feature
                                 if (combObject.MaybeClaimFeature(feature.Value as CombFeature, expectedObjectLocation))
                                 {
                                     availFeatures.Remove(feature.Value.FeatureId);
                                     claimedFeatures = true;
+
+                                    // With Comb process, need to claim multiple features per object per block
+                                    // break;
                                 }
+                            }
                             if (claimedFeatures)
                                 availObjects.Remove(combObject.ObjectId);
                         }

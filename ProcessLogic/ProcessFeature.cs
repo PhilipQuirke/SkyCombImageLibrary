@@ -39,26 +39,6 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Percentage of PixelBox which is hot pixels
-        public int DensityPerc
-        {
-            get
-            {
-                return (int)((100.0f * NumHotPixels) / (PixelBox.Width * PixelBox.Height));
-            }
-        }
-
-
-        // Is this feature's hot pixel density percentage above the minimum?
-        public bool PixelDensityGood
-        {
-            get
-            {
-                return DensityPerc >= ProcessConfig.FeatureMinDensityPerc;
-            }
-        }
-
-
         // Is this feature larger than the largest allowed?
         public bool FeatureOverSized
         {
@@ -120,7 +100,6 @@ namespace SkyCombImage.ProcessLogic
             // Keep otherFeature pointing at ObjectID so we know which object decided to consume it.
             // otherFeature.ObjectID = 0;
 
-            otherFeature.Attributes = "";
             otherFeature.Significant = false;
             otherFeature.IsTracked = false;
             otherFeature.Type = FeatureTypeEnum.Consumed;
@@ -367,7 +346,7 @@ namespace SkyCombImage.ProcessLogic
         // Object at the left/right edge of the image are slightly further from the drone
         // than objects directly under the drone.
         // Only works if the drone has moved horizontally a distance. Works at 1m. Better at 5m
-        // If drone is not moving now, calculated HeightM will be the same as last feature (within Gimbal wobble). 
+        // Works better if CameraDownAngle is close to 90 degrees.
         public void Calculate_HeightM_BaseLineMovement(
                     ProcessFeature firstRealFeature,
                     float demM,
@@ -435,7 +414,6 @@ namespace SkyCombImage.ProcessLogic
 
                 // Returns the average tan of the sideways-down-angles
                 // of the object in the first frame detected and the last frame detected.
-                // Drone may be stationary but rotating.
                 // double avgSideRads = Math.Abs(Calculate_Image_AvgSidewaysRads());
                 // double avgSideTan = Math.Tan(avgSideRads);
                 // PQR TODO Integrate avgSideTan into calcs?? Or too small to matter?
@@ -466,8 +444,6 @@ namespace SkyCombImage.ProcessLogic
             var settings = base.GetSettings();
 
             // Derived data that is saved but not reloaded.
-            settings.Add("Density Perc", DensityPerc); // 0 to 100
-            settings.Add("Density Good", PixelDensityGood);
             settings.Add("Leg", (Block != null ? Block.FlightLegId : 0));
             // Horizontal distance from feature to drone.
             settings.Add("RangeM", (Block != null ? RelativeLocation.DistanceM(LocationM, Block.DroneLocnM) : 0), LocationNdp);
@@ -482,7 +458,6 @@ namespace SkyCombImage.ProcessLogic
             return new DataPairList
             {
                 { "Feature", FeatureId },
-                { "Attributes", Attributes },
                 { "NorthingDiffCM", ( LocationM != null ? (LocationM.NorthingM - objectLocation.NorthingM ) * 100 : 0), 0},
                 { "EastingDiffCM", ( LocationM != null ? (LocationM.EastingM - objectLocation.EastingM) * 100 : 0), 0},
                 { "HeightCM", HeightM * 100, 0 },

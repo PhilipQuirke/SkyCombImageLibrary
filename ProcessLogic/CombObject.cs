@@ -54,20 +54,12 @@ namespace SkyCombImage.ProcessLogic
         {
             try
             {
-                // COUNT
+                // PIXELS
                 // Maximum pixel count per real feature
-                var maxCount = MaxRealHotPixels;
-                var countOk = (maxCount > ProcessConfig.ObjectMinPixelsPerBlock); // Say 5 pixels / Block
-                var countGood = (maxCount > 2 * ProcessConfig.ObjectMinPixelsPerBlock); // Say 10 pixels / Block
-                var countGreat = (maxCount > 4 * ProcessConfig.ObjectMinPixelsPerBlock); // Say 20 pixels / Block
-
-                // DENSITY
-                // Average pixel density based on encompassing pixel block of each real feature.
-                var minDensity = ProcessConfig.ObjectMinDensityPerc / 100.0F;
-                var density = RealDensityPx();
-                var densityOk = (density > minDensity); // Say 20%
-                var densityGood = (density > 1.5 * minDensity); // Say 25%
-                var densityGreat = (density > 2 * minDensity); // Say 40%
+                var maxPixels = MaxRealHotPixels;
+                var countOk = (maxPixels > ProcessConfig.ObjectMinPixels); // Say 5 pixels
+                var countGood = (maxPixels > 2 * ProcessConfig.ObjectMinPixels); // Say 10 pixels 
+                var countGreat = (maxPixels > 4 * ProcessConfig.ObjectMinPixels); // Say 20 pixels
 
                 // TIME
                 // Aka duration. Proxy for numRealFeatures.
@@ -85,23 +77,19 @@ namespace SkyCombImage.ProcessLogic
                 // Key calculation of Comb algorithm for identifying significant objects
                 Significant =
                     countOk &&
-                    densityOk &&
                     timeOk &&
                     (
-                        elevationGreat ||
-                        countGreat ||
-                        densityGreat ||
-                        (densityGood && countGood)
+                        elevationGood ||
+                        countGood 
                     );
 
                 if (Significant)
                     NumSigBlocks++;
 
                 // Summarise why object is significant or not. Gets displayed in UI and saved to xls.
-                Attributes = String.Format("{0}: {1} {2} {3} {4}",
+                Attributes = String.Format("{0}: {1} {2} {3}",
                     Significant ? "Yes" : "No",
                     countGreat ? "C3" : (countGood ? "C2" : (countOk ? "C1" : "c")),
-                    densityGreat ? "D3" : (densityGood ? "D2" : (densityOk ? "D1" : "d")),
                     timeGreat ? "T3" : (timeGood ? "T2" : (timeOk ? "T1" : "t")),
                     elevationGreat ? "E3" : (elevationGood ? "E2" : (elevationOK ? "E1" : "e")));
             }
@@ -117,23 +105,14 @@ namespace SkyCombImage.ProcessLogic
         // This "VaguelySignificant" object code mirrors the feature "Significant" code
         public bool VaguelySignificant()
         {
-            // COUNT
-            // Maximum pixel count per real feature
             var maxCount = MaxRealHotPixels;
-            var maxCountOk = (maxCount > ProcessConfig.ObjectMinPixelsPerBlock); // Say 5 pixels / Block
-
-            // Density
-            var minDensity = ProcessConfig.ObjectMinDensityPerc / 100.0F;
-            var density = RealDensityPx();
-            var densityOk = (density > minDensity); // Say 20%
-
-            return maxCountOk && densityOk;
+            return  (MaxRealHotPixels > ProcessConfig.ObjectMinPixels); // Say 5 pixels / Block
         }
 
 
         // Object will claim ownership of this feature extending the objects lifetime and improving its "Significant" score.
         // In rare cases, object can claim multiple features from a single block (e.g. a tree branch bisects a heat spot into two features) 
-        // But only if the object reamins viable after claiming feature (e.g. doesn't get too big or density too low).
+        // But only if the object remains viable after claiming feature (e.g. doesn't get too big or density too low).
         public override bool ClaimFeature(ProcessFeature theFeature)
         {
             try
@@ -147,14 +126,9 @@ namespace SkyCombImage.ProcessLogic
 
                     if (theFeature.FeatureOverSized)
                         return false;
-                    if (!theFeature.PixelDensityGood)
-                        return false;
 
                     // ToDo: This approach allows one bad block before it stops growth. Bad. May make object insignificant.
                     if (lastFeature.FeatureOverSized)
-                        return false;
-                    if ((lastFeature.Type == FeatureTypeEnum.Real) && // Unreal features have no density
-                        !lastFeature.PixelDensityGood)
                         return false;
                 }
 
@@ -213,7 +187,6 @@ namespace SkyCombImage.ProcessLogic
                 // Copy these details to the feature to be saved in the DataStore.
                 // Useful for understanding the feature by feature progression of values that are refined over time.
                 LastFeature.Significant = Significant & (LastFeature.Type == FeatureTypeEnum.Real);
-                LastFeature.Attributes = Attributes;
                 if (Significant && !wasSignificant)
                     // This object has just become significant. Two use cases:
                     // - After 5 real features, enough time has based for object to become significant on 6th real feature.
@@ -233,21 +206,16 @@ namespace SkyCombImage.ProcessLogic
 
         // Object will claim ownership of this feature extending the objects lifetime and improving its "Significant" score.
         // In rare cases, object can claim multiple features from a single block (e.g. a tree branch bisects a heat spot into two features) 
-        // But only if the object reamins viable after claiming feature (e.g. doesn't get too big or density too low).
+        // But only if the object remains viable after claiming feature (e.g. doesn't get too big or density too low).
         public bool MaybeClaimFeature(CombFeature feature, Rectangle objectExpectedPixelBox)
         {
             int test = 3;
 
             if (feature.ObjectId == 0) // Not claimed yet
                 if (feature.Significant || this.Significant)
-                {
-                    if ((this.ObjectId == 6) && (feature.FeatureId == 423))
-                        test++;
-
                     if (feature.SignificantPixelBoxIntersection(objectExpectedPixelBox))
                         // Object will claim feature if the object remains viable after claiming feature
                         return ClaimFeature(feature);
-                }
 
             return false;
         }

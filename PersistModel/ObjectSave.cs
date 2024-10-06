@@ -33,8 +33,6 @@ namespace SkyCombImage.PersistModel
                 if (saveAll || feature.Value.Significant)
                     Data.SetDataListRowKeysAndValues(ref featureRow, feature.Value.GetSettings());
 
-            Data.SetColumnWidth(ProcessFeatureModel.NotesSetting, 20);
-
             Data.SetNumberColumnNdp(ProcessFeatureModel.NorthingMSetting, LocationNdp);
             Data.SetNumberColumnNdp(ProcessFeatureModel.EastingMSetting, LocationNdp);
             Data.SetNumberColumnNdp(ProcessFeatureModel.HeightMSetting, HeightNdp);
