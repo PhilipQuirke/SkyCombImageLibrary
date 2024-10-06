@@ -236,11 +236,18 @@ namespace SkyCombImage.ProcessLogic
         // But only if the object reamins viable after claiming feature (e.g. doesn't get too big or density too low).
         public bool MaybeClaimFeature(CombFeature feature, Rectangle objectExpectedPixelBox)
         {
+            int test = 3;
+
             if (feature.ObjectId == 0) // Not claimed yet
                 if (feature.Significant || this.Significant)
+                {
+                    if ((this.ObjectId == 6) && (feature.FeatureId == 423))
+                        test++;
+
                     if (feature.SignificantPixelBoxIntersection(objectExpectedPixelBox))
                         // Object will claim feature if the object remains viable after claiming feature
                         return ClaimFeature(feature);
+                }
 
             return false;
         }

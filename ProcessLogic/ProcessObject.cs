@@ -169,9 +169,9 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Given this object's last known position, and the object's
-        // average velocity, where do we expect the object to be this block?
-        public Rectangle ExpectedLocationThisBlock()
+        // Given this object's last known pixel position, and the object's
+        // movement across the image, where do we expect the object to be this block?
+        public Rectangle ExpectedLocationThisBlock(int xScale = 1, int yScale = 2)
         {
             Rectangle answer;
 
@@ -181,39 +181,45 @@ namespace SkyCombImage.ProcessLogic
             var firstBox = firstFeat.PixelBox;
             var lastBox = lastFeat.PixelBox;
 
-            int lastWidth = lastBox.Width;
-            int lastHeight = lastBox.Height;
+            if ((this.ObjectId==31) && (lastFeat.FeatureId==675))
+                answer = answer = new Rectangle(
+                    lastBox.X,
+                    lastBox.Y,
+                    lastBox.Width,
+                    lastBox.Height);
 
             var numBlockSteps = lastFeat.BlockId - firstFeat.BlockId + 1;
             if (numBlockSteps >= 2)
             {
-                // In DJI_0118 leg 3, Object 1 starts large but fades
-                // so that LastFeature().PixelBox is very small.
-                // The expected location should use the maximum object size.
-                int addWidth = Math.Max(0, MaxRealPixelWidth - lastWidth);
-                int addHeight = Math.Max(0, MaxRealPixelHeight - lastHeight);
-
-                // We have multiple features. Use their difference in location.
+                // We have multiple features. Use their difference in location as velocity in pixels/frame.
                 var distanceX = 1.0F * lastBox.X + lastBox.Width / 2.0F - firstBox.X - lastBox.Width / 2.0F;
                 var distanceY = 1.0F * lastBox.Y + lastBox.Height / 2.0F - firstBox.Y - lastBox.Height / 2.0F;
-                var numMoves = numBlockSteps - 1;
+                var numMoves = 1.0f * numBlockSteps - 1;
+                var xPixelsPerBlock = distanceX / numMoves;
+                var yPixelsPerBlock = distanceY / numMoves;
+
+                // The object may, over a few frames, be progressively obscured by a branch, then reappear,
+                // so we use the largest pixel box seen for the object over previous features.
+                int maxHeight = MaxRealPixelHeight;
+                int maxWidth = MaxRealPixelWidth;
+                var halfHeightDiff = (maxHeight - lastBox.Height) / 2.0f;
+                var halfWidthDiff = (maxWidth - lastBox.Width) / 2.0f;
 
                 // Advance one average stride from the previous location.
                 answer = new Rectangle(
-                    (int)(
-                    lastBox.X + distanceX / numMoves - addWidth / 2.0f),
-                    (int)(lastBox.Y + distanceY / numMoves - addHeight / 2.0f),
-                    lastWidth + addWidth,
-                    lastHeight + addHeight);
+                    (int)(lastBox.X + xPixelsPerBlock - halfWidthDiff),
+                    (int)(lastBox.Y + yPixelsPerBlock - halfHeightDiff),
+                    maxWidth * xScale,
+                    maxHeight * yScale);
             }
             else
                 // With one feature we dont know the object's velocity across the image.
                 // Rely on image overlap
-                answer = new Rectangle(
+                answer = new Rectangle( 
                     lastBox.X,
                     lastBox.Y,
-                    lastWidth,
-                    lastHeight);
+                    lastBox.Width,
+                    lastBox.Height);
 
             if (lastFeat.Type == FeatureTypeEnum.Real)
                 // We don't want a drone wobble to break the object feature sequence
@@ -459,7 +465,7 @@ namespace SkyCombImage.ProcessLogic
                                 ProcessFeatures.AverageFlightStepFixedAltitudeM());
                 }
                 else
-                    lastFeature.SetHeightAlgorithmError("BL TooShort"); // Either in time or distance.
+                    lastFeature.SetHeightAlgorithmError("BL Short"); // Either in time or distance.
 
                 // Calculate OBJECT height and object height error (as average over real features).
                 Calculate_HeightM_and_HeightErrM();

@@ -49,21 +49,19 @@ namespace SkyCombImage.ProcessModel
         // Minimum number of hot pixels required inside a bounding rectangle, to draw a red rect in output
         public int FeatureMinPixels { get; set; } = 8;
         // Minimum percentage of hot pixels required inside a bounding rectangle, to create a feature
-        public int FeatureMinDensityPerc { get; set; } = 20;
+        public int FeatureMinDensityPerc { get; set; } = 10;
         // Maximum feature size (aka length or width) in pixels
         // Sometimes the algorithm generates absurdly large features e.g. 100. This reduces this issue.
         // ToDo: Value should be based on physically realities e.g. the maximum mammal size given standard drone altitude 
         public int FeatureMaxSize { get; set; } = 100;
         // Minimum overlap percentage between two features that is considered significant
-        public int FeatureMinOverlapPerc { get; set; } = 25;
+        public int FeatureMinOverlapPerc { get; set; } = 5;
 
 
         // Duration (in milliseconds) that object must be tracked for before it is highlighted
         public int ObjectMinDurationMs { get; set; } = 500;
         // Minimum percentage difference between ground speed and object speed for object to be considered above ground.
-        public int ObjectMinSpeedDiffPerc { get; set; } = 10;
-        // Persist searching for an object (usign unreal features) for this many steps
-        public int ObjectMaxUnrealBlocks { get; set; } = 3;
+        public int ObjectMaxUnrealBlocks { get; set; } = 5;
         // To be highlighted, an object must have this many hot pixels per real step
         public int ObjectMinPixelsPerBlock { get; set; } = 5;
         // To be highlighted, an object must have this percentage of hot pixels inside bounding rectangle per step
@@ -185,7 +183,6 @@ namespace SkyCombImage.ProcessModel
                 { "Feature Max Size", FeatureMaxSize },
                 { "Feature Min Overlap Perc", FeatureMinOverlapPerc },
                 { "Object Min Duration Ms", ObjectMinDurationMs },
-                { "Object Min Speed Diff Perc", ObjectMinSpeedDiffPerc },
                 { "Object Max Unreal Blocks", ObjectMaxUnrealBlocks },
                 { "Object Min Pixels Per Block", ObjectMinPixelsPerBlock },
                 { "Object Min Density Perc", ObjectMinDensityPerc },
@@ -215,7 +212,6 @@ namespace SkyCombImage.ProcessModel
             FeatureMaxSize = StringToNonNegInt(settings[i++]);
             FeatureMinOverlapPerc = StringToNonNegInt(settings[i++]);
             ObjectMinDurationMs = StringToNonNegInt(settings[i++]);
-            ObjectMinSpeedDiffPerc = StringToNonNegInt(settings[i++]);
             ObjectMaxUnrealBlocks = StringToNonNegInt(settings[i++]);
             ObjectMinPixelsPerBlock = StringToNonNegInt(settings[i++]);
             ObjectMinDensityPerc = StringToNonNegInt(settings[i++]);
