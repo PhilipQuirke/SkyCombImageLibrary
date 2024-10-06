@@ -340,77 +340,73 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Estimate last FEATURE height above ground based on distance down from drone
-        // calculated using trigonometry and first/last real feature camera-view-angles.
-        // This is a "look down" trig method. Accuracy limited by the accuracy of the drone altitude.
-        // Object at the left/right edge of the image are slightly further from the drone
-        // than objects directly under the drone.
-        // Only works if the drone has moved horizontally a distance. Works at 1m. Better at 5m
-        // Works better if CameraDownAngle is close to 90 degrees.
+        // Estimate last FEATURE height above ground (which is the best estimate of OBJECT height above ground).
+        // Requires drone to have moved horizontally a distance.
+        // Requires hot spot to have moved in the image.
+        // Uses a "look down" trigonometry method based on difference in camera-view-angles from first to last feature.
+        // Hotspot may be 10m to left and 40m in front of the drone location.
+        // More accurate if CameraDownAngle is close to 90 degrees.
+        // More accurate if object is near to the vertical center of the image.
+        // Accuracy limited by the accuracy of the drone altitude.
+        // Object at the left/right edge of the image are slightly further from the drone than objects directly under the drone.
         public void Calculate_HeightM_BaseLineMovement(
                     ProcessFeature firstRealFeature,
-                    float demM,
-                    float averageFlightStepFixedAltitudeM)
+                    float objectDemM,
+                    float avgDroneFlightStepFixedAltitudeM) // Measured under the drone
         {
             try
             {
                 if ((firstRealFeature == null) ||
                     (firstRealFeature.FeatureId == this.FeatureId) || // Need multiple real distinct features
-                    (this.Block == null) || // Last real feature
+                    (this.Block == null) ||
                     (this.Block.FlightStep == null))
                 {
-                    SetHeightAlgorithmError("BL TooFew");
+                    SetHeightAlgorithmError("TooFew");
                     return;
                 }
 
-                // If drone is too low this method will not work.
-                var lastStep = this.Block.FlightStep;
-                float droneDistanceDownM = lastStep.FixedDistanceDown;
-                if (droneDistanceDownM < 5)
+                if (this.Block.FlightStep.FixedDistanceDown < 10)
                 {
-                    SetHeightAlgorithmError("BL TooLow");
+                    // Drone is too low. This method will not work.
+                    SetHeightAlgorithmError("TooLow: " + this.Block.FlightStep.FixedDistanceDown.ToString("0.0"));
                     return;
                 }
 
+                double firstPixelY = firstRealFeature.PixelBox.Y + firstRealFeature.PixelBox.Height / 2.0;
+                double lastPixelY = this.PixelBox.Y + PixelBox.Height / 2.0;
+                if (firstPixelY == lastPixelY)
+                {
+                    // Object has no changed image position. This method will not work.
+                    SetHeightAlgorithmError("SameY");
+                    return;
+                }
 
                 // Drone moved from point A to point B (base-line distance L) in metres.
                 double baselineM = RelativeLocation.DistanceM(firstRealFeature.Block.DroneLocnM, this.Block.DroneLocnM);
 
                 // The object may be 10m to left and 40m in front of the drone location
-                // Calculate the height of the drone above the OBJECT's location DemM.
-                var groundDownM = averageFlightStepFixedAltitudeM - demM;
-
                 // Calculation is based on where object appears in the thermal camera field of view (FOV).
-                // If object does not appear to have changed image position then this method will not work.
-                double firstPixelY = firstRealFeature.PixelBox.Y + firstRealFeature.PixelBox.Height / 2.0;
-                double lastPixelY = this.PixelBox.Y + PixelBox.Height / 2.0;
-                if (firstPixelY == lastPixelY)
-                {
-                    SetHeightAlgorithmError("BL SameY");
-                    return;
-                }
-
 
                 // Get forward-down-angles of the object in the first / last frame detected.
-                // In DJI_0116, leg 4, objects are detected from +15 to -4 degrees.
+                // A stationary object may be detected from +20 to +15 degrees, or +15 to -4 degrees, or -6 to -8 degrees.
                 double firstFwdDegs = firstRealFeature.Calculate_Image_FwdDeg();
                 double lastFwdDegs = this.Calculate_Image_FwdDeg();
+
+                // This is the change in angle from drone to object over the first/lastRealFeature frames.
+                var fwdDegDiff = firstFwdDegs - lastFwdDegs;
+                if (Math.Abs(fwdDegDiff) < 2 )
+                {
+                    // A small difference in vertical angle moved in direct of flight makes this method too inaccurate to be useful.
+                    // Can occur when 1) camera is near horizontal and the target is far away or 2) drone is not moving.
+                    SetHeightAlgorithmError("FwdDiffLow: " + fwdDegDiff.ToString("0.0"));
+                    return;
+                }
 
                 double firstFwdTan = Math.Tan(firstFwdDegs * BaseConstants.DegreesToRadians); // Often postive
                 double lastFwdTan = Math.Tan(lastFwdDegs * BaseConstants.DegreesToRadians); // Often negative
 
-                // This is the change in angle from drone to object over the first/lastRealFeature frames.
                 double fwdTanDiff = firstFwdTan - lastFwdTan;
-
-                // If the difference in vertical angle moved in direct of flight is too small,
-                // this method will be too inaccurate to be useful.
-                // Can occur when 1) camera is near horizontal and the target is far away or 2) drone is not moving.
-                if (Math.Abs(fwdTanDiff) < 0.04) // ~2.3 degrees
-                {
-                    SetHeightAlgorithmError("BL Tan:" + fwdTanDiff.ToString("0.000"));
-                    return;
-                }
-
+                var trigDownM = baselineM / fwdTanDiff;
 
                 // Returns the average tan of the sideways-down-angles
                 // of the object in the first frame detected and the last frame detected.
@@ -418,14 +414,16 @@ namespace SkyCombImage.ProcessLogic
                 // double avgSideTan = Math.Tan(avgSideRads);
                 // PQR TODO Integrate avgSideTan into calcs?? Or too small to matter?
 
-                var trigDownM = baselineM / fwdTanDiff;
+                // Last feature altitude and height
+                var featureAltitudeM = avgDroneFlightStepFixedAltitudeM - trigDownM;
 
-                var featureHeightM = (float)(groundDownM - trigDownM);
+                // Calculate the height of the drone above the OBJECT's location DemM.
+                var featureHeightM = featureAltitudeM - objectDemM;
 
                 // We show unknown heights as -2. If height is >= -1.9 show it.
                 if (featureHeightM >= UnknownHeight + 0.1f)
                 {
-                    HeightM = featureHeightM;
+                    HeightM = (float)featureHeightM;
                     HeightAlgorithm = BaseLineHeightAlgorithm;
                 }
                 else

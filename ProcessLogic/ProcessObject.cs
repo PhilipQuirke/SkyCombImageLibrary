@@ -452,16 +452,11 @@ namespace SkyCombImage.ProcessLogic
                 var lastFeature = LastFeature;
                 if ((SeenForMinDurations() >= 1) && HasMoved())
                 {
-                    // Estimate last FEATURE height above ground based on distance down from drone
-                    // calculated using trigonometry and first/last real feature camera-view-angles.
-                    // This is a "look down" trig method. Accuracy limited by the accuracy of the drone altitude.
-                    // Object at the left/right edge of the image are slightly further from the drone
-                    // than objects directly under the drone.
-                    // If drone is not moving now, calculated HeightM will be the same as last feature (within Gimbal wobble). 
+                    // Estimate last FEATURE height above ground 
                     if (lastFeature.Type == FeatureTypeEnum.Real) // PQR    && is moving now.
                         lastFeature.Calculate_HeightM_BaseLineMovement(
                                 FirstFeature,
-                                DemM,
+                                this.DemM,
                                 ProcessFeatures.AverageFlightStepFixedAltitudeM());
                 }
                 else

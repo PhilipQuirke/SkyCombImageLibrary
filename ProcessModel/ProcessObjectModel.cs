@@ -319,7 +319,7 @@ namespace SkyCombImage.ProcessModel
                 { "Object", Name },
                 { "Category", category },
                 { "Include", include },
-                { "Height (cm)", (HeightM<0 ? UnknownValue : HeightM * 100), 0 },
+                { "Height (cm)", (HeightM <= UnknownValue ? UnknownValue : HeightM * 100), 0 },
                 { "Size (cm2)", SizeCM2, 0 },
                 { "From (m:ss)", VideoModel.DurationSecToString(RunFromVideoS, 1) },
                 { "For (s)", RunToVideoS - RunFromVideoS, 1 },
