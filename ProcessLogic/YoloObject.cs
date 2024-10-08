@@ -39,30 +39,5 @@ namespace SkyCombImage.ProcessLogic
 
             LoadSettings(settings);
         }
-
-
-        // This object claims this feature
-        public override bool ClaimFeature(ProcessFeature theFeature)
-        {
-            Assert(theFeature.ObjectId <= 0, "YoloObject.ClaimFeature: Feature is already owned");
-
-            theFeature.ObjectId = this.ObjectId;
-
-            ProcessFeatures.AddFeature(theFeature);
-
-            LastRealFeatureId = theFeature.FeatureId;
-            RunToVideoS = (float)(theFeature.Block.InputFrameMs / 1000.0);
-            NumSigBlocks = theFeature.BlockId - FirstFeature.BlockId + 1;
-            MaxRealPixelWidth = Math.Max(MaxRealPixelWidth, theFeature.PixelBox.Width);
-            MaxRealPixelHeight = Math.Max(MaxRealPixelHeight, theFeature.PixelBox.Height);
-            MaxRealHotPixels = Math.Max(MaxRealHotPixels, theFeature.NumHotPixels);
-            Significant = true;
-
-            // Calculate the simple member data (int, float, VelocityF, etc) of this real object.
-            // Calculates DemM, LocationM, LocationErrM, HeightM, HeightErrM, AvgSumLinealM, etc.
-            Calculate_RealObject_SimpleMemberData();
-
-            return true;
-        }
     };
 }

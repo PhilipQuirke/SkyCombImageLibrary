@@ -102,12 +102,18 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public virtual void EnsureObjectsNamed() { }
+        // Ensure each object has at least an "insignificant" name e.g. #16
+        public virtual void EnsureObjectsNamed() 
+        {
+            ProcessObjects.EnsureObjectsNamed();
+        }
 
 
         // Ensure that significant objects, in the current FlightStep, have a name
-        protected int EnsureObjectsNamed(int sigObjects, ProcessObjList theObjects, FlightStep? currRunFlightStep)
+        protected int EnsureObjectsNamed(ProcessObjList theObjects, FlightStep? currRunFlightStep)
         {
+            int sigObjects = 0;
+
             foreach (var theObject in theObjects)
             {
                 var theObj = theObject.Value;
@@ -120,6 +126,7 @@ namespace SkyCombImage.ProcessLogic
                     theObj.SetName(sigObjects);
                 }
             }
+
             return sigObjects;
         }
 
@@ -162,6 +169,10 @@ namespace SkyCombImage.ProcessLogic
         // A new drone flight leg has started.
         protected virtual void ProcessFlightLegStart(ProcessScope scope, int legId)
         {
+            if (Drone.UseFlightLegs)
+                // For process robustness, we want to process each leg independently.
+                // So at the start and end of each leg we stop tracking all objects.
+                ProcessObjects.StopTracking();
         }
 
 
@@ -174,6 +185,121 @@ namespace SkyCombImage.ProcessLogic
 
             if (Drone.UseFlightLegs)
                 OnObservation(ProcessEventEnum.LegStart_After, new ProcessEventArgs(scope, legId));
+        }
+
+
+        // Process the features found in the current block/frame, which is part of a leg,
+        // by preference adding them to existing objects (created in previous blocks/frames),
+        // else creating new objects to hold the features.
+        public (ProcessObjList, ProcessObjList, ProcessFeatureList) ProcessBlockForObjects_Core(ProcessScope scope, ProcessFeatureList featuresInBlock)
+        {
+            int Phase = 0;
+
+            try
+            {
+                Phase = 1;
+                var currBlock = Blocks.LastBlock;
+                int blockID = currBlock.BlockId;
+
+
+                // We only want to consider objects that are active.
+                // For long flights most objects will have become inactive seconds or minutes ago.
+                Phase = 2;
+                ProcessObjList inScopeObjects = new();
+                ProcessObjList availObjects = new();
+                foreach (var theObject in ProcessObjects)
+                {
+                    var thisObject = theObject.Value;
+                    if ((thisObject.LastFeature != null) &&
+                        (thisObject.LastFeature.Block.BlockId == blockID - 1) &&
+                        thisObject.VaguelySignificant())
+                    {
+                        inScopeObjects.AddObject(thisObject);
+                        availObjects.AddObject(thisObject);
+                    }
+                }
+
+                // Each feature can only be claimed once. Clone the list (not the features).
+                ProcessFeatureList availFeatures = featuresInBlock.Clone();
+
+
+                // For each active object, consider each feature (significant or not)
+                // found in this frame to see if it overlaps.
+                // This priviledges objects with multiple real features,
+                // as they can more accurately estimate their expected location.
+                // We priviledge objects with a "real" last feature over objects with a "unreal" last feature.
+                Phase = 3;
+                for (int pass = 0; pass < 2; pass++)
+                    foreach (var theObject in inScopeObjects)
+                    {
+                        var thisObject = theObject.Value;
+                        var lastFeat = thisObject.LastFeature;
+                        if ((lastFeat.Block.BlockId == blockID - 1) &&
+                            (pass == 0 ? lastFeat.Type == FeatureTypeEnum.Real : lastFeat.Type != FeatureTypeEnum.Unreal))
+                        {
+                            // If one or more features overlaps the object's expected location,
+                            // claim ownership of the feature(s), and mark them as Significant.
+                            var expectedObjectLocation = thisObject.ExpectedLocationThisBlock();
+
+                            bool claimedFeatures = false;
+                            foreach (var feature in featuresInBlock)
+                            {
+                                if (feature.Value.ObjectId > 0)
+                                    // Feature has already been claimed.
+                                    continue;
+
+                                // Object will claim feature if the object remains viable after claiming feature
+                                if (thisObject.MaybeClaimFeature(feature.Value, expectedObjectLocation))
+                                {
+                                    availFeatures.Remove(feature.Value.FeatureId);
+                                    claimedFeatures = true;
+
+                                    // With this process, need to claim multiple features per object per block
+                                    // break;
+                                }
+                            }
+                            if (claimedFeatures)
+                                availObjects.Remove(thisObject.ObjectId);
+                        }
+                    }
+
+                // An active object with exactly one real feature can't estimate its expected location at all.
+                // An active object with two features has a lot of wobble in its expected movement/location.
+                // If the object is moving in the image quickly, the object location
+                // and feature location will not overlap. Instead the feature will (usually)
+                // be vertically below the object estimated location.
+                Phase = 4;
+                foreach (var theObject in availObjects)
+                {
+                    var thisObject = theObject.Value;
+                    if (thisObject.NumRealFeatures() <= 2)
+                    {
+                        // If one or more features overlaps the object's expected location,
+                        // claim ownership of the feature(s), and mark them as Significant.
+                        var expectedObjectLocation = thisObject.ExpectedLocationThisBlock();
+
+                        // Search higher in the image 
+                        expectedObjectLocation = new System.Drawing.Rectangle(
+                            expectedObjectLocation.X,
+                            expectedObjectLocation.Y + ProcessConfigModel.CombHigherPixels, // Higher
+                            expectedObjectLocation.Width,
+                            expectedObjectLocation.Height);
+
+                        foreach (var feature in availFeatures)
+                            thisObject.MaybeClaimFeature(feature.Value, expectedObjectLocation);
+                    }
+                }
+
+                Phase = 5;
+                currBlock.AddFeatureList(featuresInBlock);
+                ProcessFeatures.AddFeatureList(featuresInBlock);
+
+                return (inScopeObjects, availObjects, availFeatures);
+            }
+            catch (Exception ex)
+            {
+                throw ThrowException("ProcessBlockForObjects.Phase=" + Phase, ex);
+            }
         }
 
 

@@ -11,23 +11,17 @@ using YoloDotNet.Models;
 
 namespace SkyCombImage.ProcessLogic
 {
-    // A class to hold all Yolo feature and block data associated with a video
-    // Ignores thermal threshold.
+    // Process video frames, gathering Yolo features and block data, and generating ProcessFeatures
     public class YoloProcess : ProcessAll
     {
         // YOLO (You only look once) V8 image processing
         public YoloDetect YoloDetect;
 
-        // Do we process all frames in the video or just the user specified range?
+        // For speed, do we process all frames in the video or just the user specified range?
         public bool YoloProcessAllFrames;
 
         // List of features detected in each frame in a leg by YoloDetect 
         public YoloFeatureSeenList LegFrameFeatures;
-
-        // If UseFlightLegs, how many significant objects have been found in this FlightLeg?
-        public int FlightLeg_SigObjects { get; set; }
-        public int FlightLeg_StartObjects { get; set; }
-
 
 
         public YoloProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config, string yoloPath) : base(ground, video, drone, config)
@@ -35,8 +29,6 @@ namespace SkyCombImage.ProcessLogic
             YoloDetect = new YoloDetect(yoloPath, config.YoloDetectConfidence, config.YoloIoU);
             YoloProcessAllFrames = false;
             LegFrameFeatures = new();
-            FlightLeg_SigObjects = 0;
-            FlightLeg_StartObjects = 0;
         }
 
 
@@ -44,32 +36,18 @@ namespace SkyCombImage.ProcessLogic
         public override void RunStart()
         {
             LegFrameFeatures.Clear();
-            FlightLeg_SigObjects = 0;
-            FlightLeg_StartObjects = 0;
 
             base.RunStart();
-        }
-
-
-        // Ensure each object has at least an "insignificant" name e.g. #16
-        public override void EnsureObjectsNamed()
-        {
-            ProcessObjects.EnsureObjectsNamed();
         }
 
 
         // For process robustness, we want to process each leg independently.
         protected override void ProcessFlightLegStart(ProcessScope scope, int legId)
         {
+            base.ProcessFlightLegStart(scope, legId);
+
             if (Drone.UseFlightLegs)
-            {
-                // For process robustness, we want to process each leg independently.
-                // So at the start and end of each leg we stop tracking all objects.
-                ProcessObjects.StopTracking();
                 LegFrameFeatures.Clear();
-                FlightLeg_SigObjects = 0;
-                FlightLeg_StartObjects = ProcessObjects.Count;
-            }
         }
 
 
@@ -97,7 +75,6 @@ namespace SkyCombImage.ProcessLogic
             {
                 if (Drone.UseFlightLegs)
                 {
-                    FlightLeg_SigObjects = 0;
                     ProcessObjList legObjs = new();
 
                     if (LegFrameFeatures.Count > 0)
@@ -131,7 +108,7 @@ namespace SkyCombImage.ProcessLogic
                         }
                     }
 
-                    FlightLeg_SigObjects = EnsureObjectsNamed(0, legObjs, null);
+                    EnsureObjectsNamed(legObjs, null);
 
                     // For process robustness, we want to process each leg independently.
                     LegFrameFeatures.Clear();
@@ -156,14 +133,14 @@ namespace SkyCombImage.ProcessLogic
         // Process the image using YOLO to find features. 
         // For each feature found, if it overlaps an object (from previous frame), object claims the feature.
         // Else create a new object to own the feature.
-        public int ProcessBlock(
+        public virtual int ProcessBlock(
             ProcessScope scope,
             in Image<Bgr, byte> imgOriginal, // read-only
             in Image<Gray, byte> imgThreshold, // read-only
             List<ObjectDetection>? results)
         {
             int Phase = 0;
-            int blockID = 0;
+            int blockID;
 
             try
             {

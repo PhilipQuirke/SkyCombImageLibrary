@@ -32,7 +32,7 @@ namespace SkyCombImage.ProcessLogic
         public ProcessFeature? LastFeature { get { return ProcessFeatures.LastFeature; } }
 
 
-        public ProcessObject(ProcessAll processAll, ProcessScope scope) : base()
+        public ProcessObject(ProcessAll processAll, ProcessScope? scope) : base()
         {
             ProcessAll = processAll;
             ProcessFeatures = new(ProcessAll.ProcessConfig);
@@ -47,7 +47,94 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public virtual bool ClaimFeature(ProcessFeature theFeature) { return false; }
+        public virtual bool ClaimFeature(ProcessFeature theFeature) 
+        {
+            try
+            {
+                // Associate the feature with this object.
+                Assert(theFeature.ObjectId <= 0, "ProcessObject.ClaimFeature: Feature is already owned.");
+                theFeature.ObjectId = this.ObjectId;
+
+                bool wasSignificant = Significant;
+
+                // Is object a real feature?
+                if (theFeature.Type == FeatureTypeEnum.Real)
+                {
+                    theFeature.IsTracked = true;
+                    MaxRealHotPixels = Math.Max(MaxRealHotPixels, theFeature.NumHotPixels);
+
+                    var theBlock = theFeature.Block;
+
+                    if ((LastRealFeature == null) || (LastRealFeature.Block.BlockId < theBlock.BlockId))
+                    {
+                        // First real feature claimed by this object for THIS block
+                        ProcessFeatures.AddFeature(theFeature);
+                        LastRealFeatureId = theFeature.FeatureId;
+                        RunToVideoS = (float)(theFeature.Block.InputFrameMs / 1000.0);
+                        MaxRealPixelWidth = Math.Max(MaxRealPixelWidth, theFeature.PixelBox.Width);
+                        MaxRealPixelHeight = Math.Max(MaxRealPixelHeight, theFeature.PixelBox.Height);
+                    }
+                    else
+                    {
+                        // This object is claiming a second or third feature for this block.
+                        // Use case is a large rectangle in previous block, getting replaced by 2 or 3 smaller rectangles in this block.
+                        // For better visualisation we want to combine all features in this block into one.
+
+                        // The first real feature for the last block consumes theFeature, leaving theFeature empty.
+                        LastRealFeature.Consume(theFeature);
+                        theFeature.ObjectId = UnknownValue;
+
+                        MaxRealPixelWidth = Math.Max(MaxRealPixelWidth, LastRealFeature.PixelBox.Width);
+                        MaxRealPixelHeight = Math.Max(MaxRealPixelHeight, LastRealFeature.PixelBox.Height);
+                    }
+
+                    // Calculate the simple member data (int, float, VelocityF, etc) of this real object.
+                    // Calculates DemM, LocationM, LocationErrM, HeightM, HeightErrM, AvgSumLinealM, etc.
+                    Calculate_RealObject_SimpleMemberData();
+                }
+                else if (theFeature.Type == FeatureTypeEnum.Unreal)
+                {
+                    // theFeature is unreal - it is a persistance object
+                    ProcessFeatures.AddFeature(theFeature);
+
+                    LastFeature.HeightM = HeightM;
+                    LastFeature.HeightAlgorithm = CombFeature.UnrealCopyHeightAlgorithm;
+                }
+
+
+                // Copy these details to the feature to be saved in the DataStore.
+                // Useful for understanding the feature by feature progression of values that are refined over time.
+                LastFeature.Significant = Significant & (LastFeature.Type == FeatureTypeEnum.Real);
+                if (Significant && !wasSignificant)
+                    // This object has just become significant. Two use cases:
+                    // - After 5 real features, enough time has based for object to become significant on 6th real feature.
+                    // - Object had 20 real features, then 5 unreal features, then another 1 real features.
+                    // Mark all (real and unreal) features associated with this object as significant.
+                    foreach (var feature in ProcessFeatures)
+                        feature.Value.Significant = true;
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw ThrowException("ProcessObject.ClaimFeature", ex);
+            }
+        }
+
+
+        // Object will claim ownership of this feature extending the objects lifetime and improving its "Significant" score.
+        // In rare cases, object can claim multiple features from a single block (e.g. a tree branch bisects a heat spot into two features) 
+        // But only if the object remains viable after claiming feature (e.g. doesn't get too big or density too low).
+        public bool MaybeClaimFeature(ProcessFeature feature, Rectangle objectExpectedPixelBox)
+        {
+            if (feature.ObjectId == 0) // Not claimed yet
+                if (feature.Significant || this.Significant)
+                    if (feature.SignificantPixelBoxIntersection(objectExpectedPixelBox))
+                        // Object will claim feature if the object remains viable after claiming feature
+                        return ClaimFeature(feature);
+
+            return false;
+        }
 
 
         public override void ResetCalcedMemberData()
@@ -243,9 +330,77 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Key logic of the Comb model to distinguish significant objects from insignificant, based on data collected.
+        //
+        // Label this object as "Significant" based on these characteristics:
+        // 1) Count: the object has >= 5 hot pixels per block
+        //      (avoids very small objects. Includes unreal blocks between real blocks, so unreal blocks work against success)
+        // 2) Density: The object's rectangle is at least 20% filled with hot pixels
+        //      (deselects large sparce rectangles)
+        // 3) Time: Duration we have seen the object for. 
+        // 4) Elevation: The object and ground elevations differ significantly - parallex implies object is above ground.
+        //
+        // Key use cases:
+        // 1) Animal in tree, partially visible through foliage, moving faster than ground.
+        // 2) Animal on open ground, fully visible, very dense, stationary.
+        // 3) Animal on open ground, fully visible, very dense, moving very slowly.
         public virtual void Calculate_Significant()
         {
-            Significant = ProcessFeatures.Count > 0;
+            try
+            {
+                // PIXELS
+                // Maximum pixel count per real feature
+                var maxPixels = MaxRealHotPixels;
+                var pixelsOk = (maxPixels > ProcessConfig.ObjectMinPixels); // Say 5 pixels
+                var pixelsGood = (maxPixels > 2 * ProcessConfig.ObjectMinPixels); // Say 10 pixels 
+                var pixelsGreat = (maxPixels > 4 * ProcessConfig.ObjectMinPixels); // Say 20 pixels
+
+                // TIME
+                // Aka duration. Proxy for numRealFeatures.
+                var seenForMinDurations = SeenForMinDurations();
+                var timeOk = (seenForMinDurations >= 1); // Say 500ms
+                var timeGood = (seenForMinDurations >= 2); // Say 1000ms
+                var timeGreat = (seenForMinDurations >= 4); // Say 2000ms
+
+                // ELEVATION
+                // Object with a significant height above ground are more interesting 
+                var elevationOK = (HeightM >= 0);
+                var elevationGood = (HeightM > 2);
+                var elevationGreat = (HeightM > 4);
+
+                // Key calculation of Comb algorithm for identifying significant objects
+                Significant =
+                    pixelsOk &&
+                    timeOk &&
+                    (
+                        elevationGood ||
+                        pixelsGood
+                    );
+
+                if (Significant)
+                    NumSigBlocks++;
+
+                // Summarise why object is significant or not. Gets displayed in UI and saved to xls.
+                Attributes = String.Format("{0}{1} {2} {3}",
+                    Significant ? "Sig " : "",
+                    pixelsGreat ? "P3" : (pixelsGood ? "P2" : (pixelsOk ? "P1" : "p")),
+                    timeGreat ? "T3" : (timeGood ? "T2" : (timeOk ? "T1" : "t")),
+                    elevationGreat ? "E3" : (elevationGood ? "E2" : (elevationOK ? "E1" : "e")));
+            }
+            catch (Exception ex)
+            {
+                throw ThrowException("ProcessObject.Calculate_Significant", ex);
+            }
+        }
+
+
+        // An Object can't be significant until Config.ObjectMinDurationMs has passed.
+        // A Feature can be significant immediately.
+        // This "VaguelySignificant" object code mirrors the feature "Significant" code
+        public bool VaguelySignificant()
+        {
+            var maxCount = MaxRealHotPixels;
+            return (MaxRealHotPixels > ProcessConfig.ObjectMinPixels); // Say 5 pixels / Block
         }
 
 
