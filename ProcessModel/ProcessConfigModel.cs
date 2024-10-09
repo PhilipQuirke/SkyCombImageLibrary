@@ -22,7 +22,7 @@ namespace SkyCombImage.ProcessModel
     {
         // In legs objects move down the Y axis between frames.
         // When associating objects in successive frames, we sometimes search higher in the image.
-        public const int CombHigherPixels = 20;
+        public const int SearchHigherPixels = 20;
 
         // Single frame Yolo detection confidence
         public const float YoloDetectConfidenceDefault = 0.66f;

@@ -3,6 +3,7 @@ using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
+using System.Drawing;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -54,6 +55,12 @@ namespace SkyCombImage.ProcessLogic
         public static YoloObject NewYoloObject(YoloProcess model, List<string> settings)
         {
             return new YoloObject(model, settings);
+        }
+
+
+        public static YoloObject NewYoloObject(YoloProcess yoloProcess, ProcessScope scope, int legId, YoloFeature firstFeature, string className, Color classColor, double classConfidence)
+        {
+            return new YoloObject(yoloProcess, scope, legId, firstFeature, className, classColor, classConfidence);
         }
 
 

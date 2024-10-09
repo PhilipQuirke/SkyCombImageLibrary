@@ -69,6 +69,9 @@ namespace SkyCombImage.ProcessLogic
         public event ObservationHandler<ProcessAll> Observation;
 
 
+        // If UseFlightLegs, how many significant objects have been found in this FlightLeg?
+        public int FlightLeg_SigObjects { get; set; }
+
         // If !UseFlightLegs, we need to generate ProcessSpans for each cluster of significant objects (over a series of FlightSteps)
         public int FlightSteps_PrevSigObjects { get; set; }
         public int FlightSteps_MinStepId { get; set; }
@@ -87,6 +90,7 @@ namespace SkyCombImage.ProcessLogic
             ProcessFeatures = new(config);
             ProcessObjects = new();
             ProcessSpans = new();
+            FlightLeg_SigObjects = 0;
             ResetSpanData();
 
             ProcessObject.NextObjectId = 0;
@@ -110,10 +114,8 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Ensure that significant objects, in the current FlightStep, have a name
-        protected int EnsureObjectsNamed(ProcessObjList theObjects, FlightStep? currRunFlightStep)
+        protected int EnsureObjectsNamed(int sigObjects, ProcessObjList theObjects, FlightStep? currRunFlightStep)
         {
-            int sigObjects = 0;
-
             foreach (var theObject in theObjects)
             {
                 var theObj = theObject.Value;
@@ -142,6 +144,25 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        public virtual ProcessFeature? NewPersistFeature() { return null; }
+
+
+        // Create an unreal feature, with no pixels, with a rectangle calculated from the object's 
+        // last bounding rectangle, maximum pixel box, and the average object movement.
+        public void AddPersistFeature(ProcessObject theObject)
+        {
+            var theBlock = Blocks.LastBlock;
+
+            var theFeature = NewPersistFeature();
+            theFeature.PixelBox = theObject.ExpectedLocationThisBlock();
+            ProcessFeatures.AddFeature(theFeature);
+
+            Assert(Blocks.Count == theFeature.Block.BlockId, "AddPersistFeature: Bad Blocks count");
+
+            theObject.ClaimFeature(theFeature);
+        }
+
+
         public void OnObservation(ProcessEventEnum processEvent, ProcessEventArgs args = null)
         {
             if (args == null)
@@ -162,6 +183,7 @@ namespace SkyCombImage.ProcessLogic
             ProcessObjects.Clear();
             ProcessObject.NextObjectId = 0;
             ProcessSpans.Clear();
+            FlightLeg_SigObjects = 0;
             ResetSpanData();
         }
 
@@ -170,9 +192,12 @@ namespace SkyCombImage.ProcessLogic
         protected virtual void ProcessFlightLegStart(ProcessScope scope, int legId)
         {
             if (Drone.UseFlightLegs)
+            {
                 // For process robustness, we want to process each leg independently.
                 // So at the start and end of each leg we stop tracking all objects.
                 ProcessObjects.StopTracking();
+                FlightLeg_SigObjects = 0;
+            }
         }
 
 
@@ -281,7 +306,7 @@ namespace SkyCombImage.ProcessLogic
                         // Search higher in the image 
                         expectedObjectLocation = new System.Drawing.Rectangle(
                             expectedObjectLocation.X,
-                            expectedObjectLocation.Y + ProcessConfigModel.CombHigherPixels, // Higher
+                            expectedObjectLocation.Y + ProcessConfigModel.SearchHigherPixels, // Higher
                             expectedObjectLocation.Width,
                             expectedObjectLocation.Height);
 
@@ -293,6 +318,21 @@ namespace SkyCombImage.ProcessLogic
                 Phase = 5;
                 currBlock.AddFeatureList(featuresInBlock);
                 ProcessFeatures.AddFeatureList(featuresInBlock);
+
+                // For each active object, where the above code did not find an 
+                // overlapping feature in this Block, if it is worth continuing tracking...
+                Phase = 10;
+                foreach (var theObject in inScopeObjects)
+                {
+                    var thisObject = theObject.Value;
+                    if (thisObject.BeingTracked &&
+                       (thisObject.LastRealFeatureId > 0) &&
+                       (thisObject.LastRealFeature.Block.BlockId < blockID) &&
+                       thisObject.KeepTracking(blockID))
+                        // ... persist this object another Block. Create an unreal feature, with no pixels, with a rectangle   
+                        // calculated from the object's last bounding rectangle and the average frame movement.
+                        AddPersistFeature(thisObject);
+                }
 
                 return (inScopeObjects, availObjects, availFeatures);
             }
@@ -373,6 +413,49 @@ namespace SkyCombImage.ProcessLogic
             Drone.DisplayVideo?.ResetCurrFrame();
 
             OnObservation(ProcessEventEnum.IntervalEnd);
+        }
+
+
+        // If !UseFlightLegs, track significant objects, based on their corresponding FlightSteps.
+        // Does not make use of FlightLegs.
+        protected void ProcessObjectsFlightSteps(ProcessObjList inScopeObjects, ProcessBlock currBlock)
+        {
+            if (!Drone.UseFlightLegs)
+            {
+                inScopeObjects.EnsureObjectsNamed();
+
+                int sigObjects = inScopeObjects.NumSignificantObjects;
+                if (sigObjects > 0)
+                {
+                    if (FlightSteps_PrevSigObjects == 0)
+                        // PROCESS SPAN START EVENT
+                        // Object(s) have just become significant. Last frame there were no significant objects.
+                        // It takes a few steps to become significant, so get the minimal FlightStep.StepID of the object(s).
+                        // ProcessSpan_MinFlightStepId is the starting step of a future ProcessSpan object.
+                        FlightSteps_MinStepId = inScopeObjects.GetMinStepId();
+
+                    FlightSteps_PrevSigObjects = Math.Max(FlightSteps_PrevSigObjects, sigObjects);
+                    FlightSteps_MaxStepId = currBlock.FlightStepId;
+                }
+                else
+                {
+                    // We have no significant objects 
+
+                    if (FlightSteps_PrevSigObjects > 0)
+                    {
+                        // We have unprocessed significant objects from previous blocks. 
+
+                        if (currBlock.FlightStepId - FlightSteps_MaxStepId > 8)
+                        {
+                            // PROCESS SPAN END EVENT
+                            // We tracked some significant objects, then they all became insignificant, and 8 frames have passed
+                            ProcessSpan_Create();
+
+                            ResetSpanData();
+                        }
+                    }
+                }
+            }
         }
 
 

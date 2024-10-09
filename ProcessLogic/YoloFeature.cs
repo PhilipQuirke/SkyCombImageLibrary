@@ -15,14 +15,20 @@ namespace SkyCombImage.ProcessLogic
         public double Confidence { get; init; } = 0f;
 
 
-        public YoloFeature(YoloProcess yoloProcess, int blockId, ObjectDetection result) : base(yoloProcess, blockId, FeatureTypeEnum.Real)
+        public YoloFeature(YoloProcess yoloProcess, int blockId, ObjectDetection? result, FeatureTypeEnum type = FeatureTypeEnum.Real) : base(yoloProcess, blockId, type)
         {
             ResetCalcedMemberData();
-
-            PixelBox = new System.Drawing.Rectangle(result.BoundingBox.Left, result.BoundingBox.Top, result.BoundingBox.Width, result.BoundingBox.Height);
             Significant = true;
-            Label = result.Label;
-            Confidence = result.Confidence;
+
+            if (result != null)
+            {
+                PixelBox = new System.Drawing.Rectangle(result.BoundingBox.Left, result.BoundingBox.Top, result.BoundingBox.Width, result.BoundingBox.Height);
+                Label = result.Label;
+                Confidence = result.Confidence;
+            }
+            else
+                PixelBox = new System.Drawing.Rectangle(0, 0, 0, 0);
+
         }
 
 

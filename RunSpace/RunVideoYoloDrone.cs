@@ -74,10 +74,14 @@ namespace SkyCombImage.RunSpace
             try
             {
                 var thisBlock = ProcessAll.AddBlock(this);
+                int blockID = thisBlock.BlockId;
 
                 if ((YoloProcess.YoloProcessAllFrames) && (thisBlock.BlockId == 1))
-                    // Process the entire video file, using YOLO and GPU, for speed. Do not create an output file.
+                    // Process the entire video file, using YOLO and GPU. Faster than frame by frame processing. Do not create an output file yet.
                     RawYoloObjects = YoloProcess.YoloDetect.DetectVideo(InputVideoFileName());
+
+                List<ObjectDetection>? results = null;
+                ProcessFeatureList featuresInBlock = new(RunConfig.ProcessConfig);
 
                 using (var currGray = DrawImage.ToGrayScale(CurrInputImage))
                 {
@@ -86,7 +90,6 @@ namespace SkyCombImage.RunSpace
                         // Set pixels hotter than ThresholdValue to 1. Set other pixels to 0.
                         using (var imgThreshold = currGray.ThresholdBinary(new Gray(RunConfig.ProcessConfig.HeatThresholdValue), new Gray(255)))
                         {
-                            List<ObjectDetection>? results = null;
                             if (YoloProcess.YoloProcessAllFrames)
                                 try
                                 {
@@ -98,11 +101,21 @@ namespace SkyCombImage.RunSpace
                                 }
                             else
                                 results = YoloProcess.YoloDetect.DetectFrame(currBmp);
-
-                            thisBlock.NumSig = YoloProcess.ProcessBlock(this, CurrInputImage, imgThreshold, results);
                         }
                     }
+
+                    if (results != null)
+                        foreach (var result in results)
+                        {
+                            YoloFeature thisFeature = new(YoloProcess, blockID, result, ProcessModel.FeatureTypeEnum.Real);
+                            thisFeature.CalculateHeat(CurrInputImage, currGray);
+                            featuresInBlock.AddFeature(thisFeature);
+                            YoloProcess.LegFrameFeatures.Add(new YoloFeatureSeen { BlockId = blockID, Box = thisFeature.PixelBox, FeatureId = thisFeature.FeatureId });
+                        }
                 }
+
+                // Deprecated thisBlock.NumSig = YoloProcess.ProcessBlock(this, CurrInputImage, imgThreshold, results);
+                YoloProcess.ProcessBlockForObjects(this, featuresInBlock);
 
                 return thisBlock;
             }
