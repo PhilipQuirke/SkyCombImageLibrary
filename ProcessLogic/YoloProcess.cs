@@ -4,6 +4,7 @@ using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
 using System.Drawing;
+using YoloDotNet.Models;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -16,6 +17,8 @@ namespace SkyCombImage.ProcessLogic
 
         // For speed, do we process all frames in the video or just the user specified range?
         public bool YoloProcessAllFrames;
+
+        public Dictionary<int, List<ObjectDetection>>? RawYoloObjects = null;
 
         // List of features detected in each frame in a leg by YoloDetect 
         public YoloFeatureSeenList LegFrameFeatures;
@@ -36,11 +39,20 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Reset any internal state of the model, so it can be re-used in another run immediately
-        public override void RunStart()
+        public override void RunStart(ProcessScope scope)
         {
             LegFrameFeatures.Clear();
 
-            base.RunStart();
+            // Yolo processing frame by frame takes approximately twice as long per frame as processing the whole video.
+            // Process all frames if user has specified a time range that is >= 50% of the video duration.
+            YoloProcessAllFrames = scope.PSM.InputVideoDurationMs >= Drone.InputVideo.DurationMs / 2;
+
+            RawYoloObjects = null;
+            if (YoloProcessAllFrames)
+                // Process the entire video file, using YOLO and GPU. Do not create an output file yet.
+                RawYoloObjects = YoloDetect.DetectVideo(Drone.InputVideo.FileName);
+
+            base.RunStart(scope);
         }
 
 

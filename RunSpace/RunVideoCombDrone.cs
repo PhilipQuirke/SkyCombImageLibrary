@@ -35,18 +35,6 @@ namespace SkyCombImage.RunSpace
         public CombProcess CombProcess { get { return ProcessAll as CombProcess; } }
 
 
-        // The input video file name to process.
-        // User may provide the optical video name in Config.InputFileName
-        // We base all output on the companion thermal video.
-        public override string InputVideoFileName()
-        {
-            if ((Drone != null) && Drone.HasInputVideo)
-                return Drone.InputVideo.FileName;
-
-            return RunConfig.InputFileName;
-        }
-
-
         public override string DescribeSignificantObjects()
         {
             return ProcessAll.ProcessObjects.DescribeSignificantObjects();

@@ -11,7 +11,7 @@ namespace SkyCombImage.RunSpace
 {
     // Given the Config, and the corresponding file(s) found on disk,
     // create the appropriate RunVideo object.
-    public class VideoRunnerFactory
+    public class RunVideoFactory
     {
 
         // Create the appropriate VideoRunner object

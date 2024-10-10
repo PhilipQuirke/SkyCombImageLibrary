@@ -266,12 +266,12 @@ namespace SkyCombImage.RunSpace
 
         // Reset any internal state of the run or model, so they can be re-used in another run ResetRun().
         // Do not change input or drone data. Do not delete config references.
-        public virtual void RunStart_Process()
+        public void RunStart_Process(ProcessScope scope)
         {
             StopRunning = false;
             ProcessDurationMs = 0;
 
-            ProcessAll?.RunStart();
+            ProcessAll?.RunStart(scope);
 
             ProcessAll?.OnObservation(ProcessEventEnum.RunStart);
         }
@@ -434,7 +434,7 @@ namespace SkyCombImage.RunSpace
 
                 RunParent.DrawObjectGrid(this, false);
 
-                RunStart_Process();
+                RunStart_Process(this);
 
                 // Create an output video file writer (if user wants MP4 output)
                 (var videoWriter, var _) =
@@ -701,6 +701,18 @@ namespace SkyCombImage.RunSpace
         public RunVideoPersist(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone, ProcessAll processAll)
             : base(parent, config, dataStore, drone, processAll)
         {
+        }
+
+
+        // The input video file name to process.
+        // User may provide the optical video name in Config.InputFileName
+        // We base all output on the companion thermal video.
+        public override string InputVideoFileName()
+        {
+            if ((Drone != null) && Drone.HasInputVideo)
+                return Drone.InputVideo.FileName;
+
+            return RunConfig.InputFileName;
         }
     }
 }
