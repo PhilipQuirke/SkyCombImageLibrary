@@ -428,6 +428,8 @@ namespace SkyCombImage.RunSpace
 
             try
             {
+                RunParent.ShowRunSummary("Starting run");
+
                 var inputVideo = Drone.InputVideo;
 
                 RunParent.DrawObjectGrid(this, false);

@@ -32,7 +32,6 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        // The Comb model 
         public CombProcess CombProcess { get { return ProcessAll as CombProcess; } }
 
 
@@ -48,7 +47,6 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        // Describe the objects found
         public override string DescribeSignificantObjects()
         {
             return ProcessAll.ProcessObjects.DescribeSignificantObjects();
@@ -60,7 +58,6 @@ namespace SkyCombImage.RunSpace
         {
             ProcessAll.ProcessFlightLegStartAndEnd(scope, prevLegId, currLegId);
 
-            // Save memory (if compatible with Config settings) by deleting pixel data
             CombProcess.DeleteFeaturePixelsForObjects();
         }
 

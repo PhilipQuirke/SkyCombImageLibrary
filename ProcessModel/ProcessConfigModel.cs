@@ -64,15 +64,6 @@ namespace SkyCombImage.ProcessModel
         public int ObjectMinPixels { get; set; } = 5;
 
 
-        // Good Feature To Track (Gftt) process:
-        public int GfttMaxCorners { get; set; } = 40; // Maximum number of corners to detect.
-        public double GfttQualityLevel { get; set; } = 0.3;
-        public int GfttMinDistance { get; set; } = 7;
-        public int GfttBlockSize { get; set; } = 3;
-        public bool GfttUseHarris { get; set; } = false;
-        public double GfttK { get; set; } = 0.04;
-
-
         // YOLO
         // Single frame Yolo detection confidence
         public float YoloDetectConfidence { get; set; } = ProcessConfigModel.YoloDetectConfidenceDefault;
@@ -152,12 +143,6 @@ namespace SkyCombImage.ProcessModel
                 { "Object Min Duration Ms", ObjectMinDurationMs },
                 { "Object Max Unreal Blocks", ObjectMaxUnrealBlocks },
                 { "Object Min Pixels", ObjectMinPixels },
-                { "Gftt Max Corners", GfttMaxCorners },
-                { "Gftt Quality Level", GfttQualityLevel.ToString() },
-                { "Gftt Min Distance", GfttMinDistance },
-                { "Gftt Block Size", GfttBlockSize },
-                { "Gftt Use Harris", GfttUseHarris.ToString() },
-                { "Gftt K", GfttK.ToString() },
                 { "Yolo Confidence", YoloDetectConfidence, 2 },
                 { "Yolo IoU", YoloIoU, 2 },
             };
@@ -176,12 +161,6 @@ namespace SkyCombImage.ProcessModel
             ObjectMinDurationMs = StringToNonNegInt(settings[i++]);
             ObjectMaxUnrealBlocks = StringToNonNegInt(settings[i++]);
             ObjectMinPixels = StringToNonNegInt(settings[i++]);
-            GfttMaxCorners = StringToNonNegInt(settings[i++]);
-            GfttQualityLevel = StringToDouble(settings[i++]);
-            GfttMinDistance = StringToNonNegInt(settings[i++]);
-            GfttBlockSize = StringToNonNegInt(settings[i++]);
-            GfttUseHarris = StringToBool(settings[i++]);
-            GfttK = StringToDouble(settings[i++]);
             YoloDetectConfidence = StringToFloat(settings[i++]);
             YoloIoU = StringToFloat(settings[i++]);
         }

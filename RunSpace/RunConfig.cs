@@ -7,7 +7,7 @@ using SkyCombImage.ProcessModel;
 
 namespace SkyCombImage.RunSpace
 {
-    public enum RunProcessEnum { Comb, Yolo, Threshold, GFTT, None };
+    public enum RunProcessEnum { Comb, Yolo, Threshold, None };
 
     public enum RunSpeedEnum { Max, Fast, Medium, Slow };
 
@@ -30,7 +30,7 @@ namespace SkyCombImage.RunSpace
         // InputDirectory with an optional file name. Trailing "\" (if any) is trimmed
         public string InputFileName { get; set; } = "";
 
-        // Name of main process to run: yolo, gftt, comb, threshold, none.
+        // Name of main process to run: yolo, comb, threshold, none.
         public RunProcessEnum RunProcess { get; set; } = RunProcessEnum.Yolo;
 
         // Between processing blocks, do we pause (slows down processing). That values max, fast, medium, slow. 

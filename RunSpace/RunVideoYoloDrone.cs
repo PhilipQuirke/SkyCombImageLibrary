@@ -58,6 +58,9 @@ namespace SkyCombImage.RunSpace
             YoloProcess.YoloProcessAllFrames = PSM.InputVideoDurationMs >= Drone.InputVideo.DurationMs / 2;
 
             RawYoloObjects = null;
+            if (YoloProcess.YoloProcessAllFrames)
+                // Process the entire video file, using YOLO and GPU. Do not create an output file yet.
+                RawYoloObjects = YoloProcess.YoloDetect.DetectVideo(InputVideoFileName());
         }
 
 
@@ -75,10 +78,6 @@ namespace SkyCombImage.RunSpace
             {
                 var thisBlock = ProcessAll.AddBlock(this);
                 int blockID = thisBlock.BlockId;
-
-                if ((YoloProcess.YoloProcessAllFrames) && (thisBlock.BlockId == 1))
-                    // Process the entire video file, using YOLO and GPU. Faster than frame by frame processing. Do not create an output file yet.
-                    RawYoloObjects = YoloProcess.YoloDetect.DetectVideo(InputVideoFileName());
 
                 List<ObjectDetection>? results = null;
                 ProcessFeatureList featuresInBlock = new(RunConfig.ProcessConfig);

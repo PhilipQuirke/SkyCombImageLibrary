@@ -239,7 +239,7 @@ namespace SkyCombImage.DrawSpace
                             YoloImage(drawConfig, processConfig, focusObjectId,
                                 ref modifiedInputFrame, processAll, block, new());
                         else
-                            // Handles RunModel = Contour, GFTT, etc.
+                            // Draw Threshold or None
                             DrawImage.Draw(runProcess, processConfig, drawConfig, ref modifiedInputFrame);
                     }
                     if (displayFrame != null)

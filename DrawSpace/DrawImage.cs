@@ -65,46 +65,6 @@ namespace SkyCombImage.DrawSpace
         }
 
 
-        // Detect GFTT points
-        public static MKeyPoint[] Detect_GFTT(ProcessConfigModel config, Image<Gray, byte> imgInput, int maxCorners = -1)
-        {
-            var detector = new GFTTDetector(
-                maxCorners > 0 ? maxCorners : config.GfttMaxCorners,
-                config.GfttQualityLevel,
-                config.GfttMinDistance,
-                config.GfttBlockSize,
-                config.GfttUseHarris,
-                config.GfttK);
-
-            return detector.Detect(imgInput);
-        }
-
-
-        // Analyse input image using OpenCV "Good Features To Track" (aka GFTT) feature
-        // No smoothing or thresholding on input. Just grayscale input before detecting corners.  
-        public static void DrawGftt(
-            ProcessConfigModel processConfig, DrawImageConfig drawConfig,
-            ref Image<Bgr, byte> imgInput)
-        {
-            Image<Gray, byte> imgInputGray = ToGrayScale(imgInput);
-
-            // Detect GFTT points on a grayscale image
-            var keypoints = Detect_GFTT(processConfig, imgInputGray);
-
-            var imgOutColor = imgInput.Clone();
-            foreach (MKeyPoint p in keypoints)
-            {
-                SkyCombDrone.DrawSpace.Draw.Circle(drawConfig, ref imgOutColor, Point.Round(p.Point));
-
-                // Debugging - from original code.
-                if (float.IsNaN(p.Point.X) || float.IsNaN(p.Point.Y))
-                    throw BaseConstants.ThrowException("Process.Image.Process_GFTT: IsNaN");
-            }
-
-            imgInput = imgOutColor;
-        }
-
-
         // We need to resize the theImage by a factor
         public static Mat ResizeImage(Image<Bgr, byte> theImage, double factor)
         {
@@ -115,22 +75,13 @@ namespace SkyCombImage.DrawSpace
         }
 
 
-        // Process (analyse) a single image (using any one ProcessName) and returns an image.
-        // The output image shows hot pixel in green, with red rectangles bounding significant features.
+        // Process a single image and returns an image.
         public static void Draw(
             RunProcessEnum runProcess, ProcessConfigModel processConfig, DrawImageConfig drawConfig,
             ref Image<Bgr, byte> imgInput)
         {
-            switch (runProcess)
-            {
-                case RunProcessEnum.GFTT:
-                    DrawGftt(processConfig, drawConfig, ref imgInput);
-                    break;
-
-                case RunProcessEnum.Threshold:
-                    DrawThreshold(processConfig, ref imgInput);
-                    break;
-            }
+            if (runProcess == RunProcessEnum.Threshold)
+                DrawThreshold(processConfig, ref imgInput);
         }
     }
 }
