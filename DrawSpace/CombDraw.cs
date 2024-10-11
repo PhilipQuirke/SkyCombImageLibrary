@@ -227,7 +227,6 @@ namespace SkyCombImage.DrawSpace
                 if (inputFrame != null)
                 {
                     modifiedInputFrame = inputFrame.Clone();
-                    DrawImage.Palette(drawConfig, ref modifiedInputFrame);
                     if (block != null)
                     {
                         if (runProcess == RunProcessEnum.Comb)
