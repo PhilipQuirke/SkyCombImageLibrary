@@ -30,7 +30,7 @@ namespace SkyCombImage.RunSpace
     // Base video class that does not persist information betweem frames
     public abstract class RunVideo : ProcessScope, IDisposable
     {
-        public RunUserInterface RunParent { get; }
+        public RunUserInterface RunUI { get; }
 
         // The configuration data used in processing the video
         public RunConfig RunConfig { get; set; }
@@ -78,7 +78,7 @@ namespace SkyCombImage.RunSpace
 
         public RunVideo(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone, ProcessAll processAll) : base(drone)
         {
-            RunParent = parent;
+            RunUI = parent;
             RunConfig = config;
             DataStore = dataStore;
             Drone = drone;
@@ -266,6 +266,10 @@ namespace SkyCombImage.RunSpace
 
         // Reset any internal state of the run or model, so they can be re-used in another run ResetRun().
         // Do not change input or drone data. Do not delete config references.
+        public void PreRunStart_Process(ProcessScope scope)
+        {
+            ProcessAll?.PreRunStart(scope);
+        }
         public void RunStart_Process(ProcessScope scope)
         {
             StopRunning = false;
@@ -296,7 +300,7 @@ namespace SkyCombImage.RunSpace
                 CombDrawPath.Reset(ProcessDrawScope);
             }
 
-            RunParent.DrawUI(this);
+            RunUI.DrawUI(this);
         }
 
 
@@ -312,13 +316,13 @@ namespace SkyCombImage.RunSpace
         // Show initial summary of step processing effort
         public void ShowStepProgress(int intervalCount, int stepCount)
         {
-            RunParent.ShowStepProgress(this, intervalCount, stepCount);
+            RunUI.ShowStepProgress(this, intervalCount, stepCount);
         }
 
 
         public void ShowRunSummary(string suffix)
         {
-            RunParent.ShowRunSummary(
+            RunUI.ShowRunSummary(
                 string.Format("{0}\nFrames: {1} of {2}\n{3}",
                     DescribeSignificantObjects(), PSM.CurrBlockId, PSM.LastBlockId, suffix));
         }
@@ -402,7 +406,7 @@ namespace SkyCombImage.RunSpace
 
         public void RefreshAll()
         {
-            RunParent.RefreshAll();
+            RunUI.RefreshAll();
         }
 
 
@@ -428,18 +432,19 @@ namespace SkyCombImage.RunSpace
 
             try
             {
-                RunParent.ShowRunSummary("Starting run");
+                RunUI.DrawObjectGrid(this, false);
 
-                var inputVideo = Drone.InputVideo;
+                RunUI.ShowRunSummary("Pre-run processing");
+                PreRunStart_Process(this);
 
-                RunParent.DrawObjectGrid(this, false);
-
+                RunUI.ShowRunSummary("Run processing");
                 RunStart_Process(this);
 
                 // Create an output video file writer (if user wants MP4 output)
                 (var videoWriter, var _) =
                     StandardSave.CreateVideoWriter(RunConfig, InputVideoFileName(), VideoBase.Fps, VideoBase.ImageSize);
 
+                var inputVideo = Drone.InputVideo;
                 int intervalCount = 0;
                 var safeDroneIntervals = SafeDroneIntervals();
                 foreach (var interval in safeDroneIntervals)
@@ -454,7 +459,7 @@ namespace SkyCombImage.RunSpace
 
                     if (PSM.InputVideoDurationMs < 0)
                     {
-                        RunParent.BadDuration(this);
+                        RunUI.BadDuration(this);
                         return numSigObjs;
                     }
 
@@ -574,7 +579,7 @@ namespace SkyCombImage.RunSpace
                 DrawUI();
                 ResetModifiedImages();
                 ResetCurrImages();
-                RunParent.DrawObjectGrid(this, true);
+                RunUI.DrawObjectGrid(this, true);
                 RefreshAll();
 
                 // Show finalised process results
@@ -644,8 +649,8 @@ namespace SkyCombImage.RunSpace
     // Video class that uses the ImageStandard techniques. No persistance of info between frames
     internal class RunVideoStandard : RunVideo
     {
-        public RunVideoStandard(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone)
-            : base(parent, config, dataStore, drone, ProcessFactory.NewProcessModel(config.ProcessConfig, drone))
+        public RunVideoStandard(RunUserInterface runUI, RunConfig config, DroneDataStore dataStore, Drone drone)
+            : base(runUI, config, dataStore, drone, ProcessFactory.NewProcessModel(config.ProcessConfig, drone, runUI))
         {
         }
 

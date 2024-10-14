@@ -1,6 +1,5 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using Emgu.CV;
-using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
 using SkyCombImage.DrawSpace;
@@ -16,8 +15,8 @@ namespace SkyCombImage.RunSpace
     // YOLO (You only look once) V8 video processing.
     class RunVideoYoloDrone : RunVideoPersist
     {
-        public RunVideoYoloDrone(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone)
-            : base(parent, config, dataStore, drone, ProcessFactory.NewYoloProcess(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig, config.YoloDirectory))
+        public RunVideoYoloDrone(RunUserInterface runUI, RunConfig config, DroneDataStore dataStore, Drone drone)
+            : base(runUI, config, dataStore, drone, ProcessFactory.NewYoloProcess(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig, runUI, config.YoloDirectory))
         {
         }
 
@@ -69,21 +68,7 @@ namespace SkyCombImage.RunSpace
                 {
                     using (var currBmp = currGray.ToBitmap())
                     {
-                        // Set pixels hotter than ThresholdValue to 1. Set other pixels to 0.
-                        using (var imgThreshold = currGray.ThresholdBinary(new Gray(RunConfig.ProcessConfig.HeatThresholdValue), new Gray(255)))
-                        {
-                            if (YoloProcess.YoloProcessAllFrames)
-                                try
-                                {
-                                    results = YoloProcess.RawYoloObjects[thisBlock.BlockId];
-                                }
-                                catch
-                                {
-                                    results = null;
-                                }
-                            else
-                                results = YoloProcess.YoloDetect.DetectFrame(currBmp);
-                        }
+                        results = YoloProcess.YoloDetectImage(currBmp, thisBlock);
                     }
 
                     if (results != null)

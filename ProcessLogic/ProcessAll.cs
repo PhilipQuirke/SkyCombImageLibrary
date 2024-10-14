@@ -3,6 +3,8 @@ using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
+using SkyCombImage.RunSpace;
+using System.Text;
 
 
 
@@ -51,6 +53,8 @@ namespace SkyCombImage.ProcessLogic
 
         public Drone Drone { get; }
 
+        protected RunUserInterface RunUI { get; }
+
 
         public ProcessConfigModel ProcessConfig;
 
@@ -79,11 +83,12 @@ namespace SkyCombImage.ProcessLogic
 
 
 
-        public ProcessAll(GroundData groundData, VideoData video, Drone drone, ProcessConfigModel config)
+        public ProcessAll(GroundData groundData, VideoData video, Drone drone, ProcessConfigModel config, RunUserInterface runUI)
         {
             GroundData = groundData;
             VideoData = video;
             Drone = drone;
+            RunUI = runUI;
 
             ProcessConfig = config;
             Blocks = new();
@@ -169,6 +174,12 @@ namespace SkyCombImage.ProcessLogic
                 args = new ProcessEventArgs(null, 0);
 
             Observation?.Invoke(this, processEvent, args);
+        }
+
+
+        // Do pre-run processing 
+        public virtual void PreRunStart(ProcessScope scope)
+        {
         }
 
 

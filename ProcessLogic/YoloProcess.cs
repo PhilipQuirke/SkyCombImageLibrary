@@ -3,7 +3,9 @@ using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
+using SkyCombImage.RunSpace;
 using System.Drawing;
+using System.Text;
 using YoloDotNet.Models;
 
 
@@ -15,20 +17,17 @@ namespace SkyCombImage.ProcessLogic
         // YOLO (You only look once) V8 image processing
         public YoloDetect YoloDetect;
 
-        // For speed, do we process all frames in the video or just the user specified range?
-        public bool YoloProcessAllFrames;
-
-        public Dictionary<int, List<ObjectDetection>>? RawYoloObjects = null;
+        public Dictionary<int, List<ObjectDetection>> RawYoloResults;
 
         // List of features detected in each frame in a leg by YoloDetect 
         public YoloFeatureSeenList LegFrameFeatures;
 
 
-        public YoloProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config, string yoloPath) : base(ground, video, drone, config)
+        public YoloProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config, RunUserInterface runUI, string yoloPath) : base(ground, video, drone, config, runUI)
         {
             YoloDetect = new YoloDetect(yoloPath, config.YoloDetectConfidence, config.YoloIoU);
-            YoloProcessAllFrames = false;
             LegFrameFeatures = new();
+            RawYoloResults = new();
         }
 
 
@@ -38,19 +37,56 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Do pre-run processing 
+        public override void PreRunStart(ProcessScope scope)
+        {
+            // Fails:
+            // Assert (!Drone.InputVideo.IsOpen, "Input video is open");
+
+            RawYoloResults = new();
+            if (Drone.UseFlightLegs)
+            {
+                // "Frame inaccuracies" builds up when processing long sequences of frames.
+                // To minimise this, we reset the video frame position at the start of each leg.
+                // As we only try to detect objects on legs this is not a problem.
+
+                // For each flight leg that overlaps the scope, detect hotspots over the entire leg, using YOLO and GPU.
+                foreach (var leg in Drone.FlightLegs.Legs)
+                {
+                    if ((leg.MinSumTimeMs >= scope.PSM.LastVideoFrameMs) || (leg.MaxSumTimeMs <= scope.PSM.FirstVideoFrameMs))
+                        continue;
+
+                    RunUI.ShowRunSummary("Pre-run processing: Leg " + leg.FlightLegId.ToString());
+
+                    var legResults = YoloDetect.DetectTimeRange(Drone.InputVideo.FileName, leg.MinSumTimeMs / 1000, leg.MaxSumTimeMs / 1000 + 1);
+                    foreach (var kvp in legResults)
+                        if (kvp.Value.Count > 0)
+                        {
+                            int stepID = leg.MinStepId + kvp.Key;
+                            if (stepID <= leg.MaxStepId)
+                                RawYoloResults.Add(stepID, kvp.Value);
+                        }
+
+                    System.Threading.Thread.Sleep(500);
+                }
+            }
+            else
+            {
+                // Yolo processing frame by frame takes approximately twice as long per frame as processing the whole video.
+                // Process all frames if user has specified a time range that is >= 50% of the video duration.
+                if (scope.PSM.InputVideoDurationMs >= Drone.InputVideo.DurationMs / 2)
+                    // Process the entire video file, using YOLO and GPU. Do not create an output file yet.
+                    RawYoloResults = YoloDetect.DetectVideo(Drone.InputVideo.FileName);
+                else
+                    RawYoloResults = YoloDetect.DetectTimeRange(Drone.InputVideo.FileName, scope.PSM.FirstVideoFrameMs / 1000, scope.PSM.LastVideoFrameMs / 1000 + 1);
+            }
+        }
+
+
         // Reset any internal state of the model, so it can be re-used in another run immediately
         public override void RunStart(ProcessScope scope)
         {
             LegFrameFeatures.Clear();
-
-            // Yolo processing frame by frame takes approximately twice as long per frame as processing the whole video.
-            // Process all frames if user has specified a time range that is >= 50% of the video duration.
-            YoloProcessAllFrames = scope.PSM.InputVideoDurationMs >= Drone.InputVideo.DurationMs / 2;
-
-            RawYoloObjects = null;
-            if (YoloProcessAllFrames)
-                // Process the entire video file, using YOLO and GPU. Do not create an output file yet.
-                RawYoloObjects = YoloDetect.DetectVideo(Drone.InputVideo.FileName);
 
             base.RunStart(scope);
         }
@@ -63,6 +99,12 @@ namespace SkyCombImage.ProcessLogic
 
             if (Drone.UseFlightLegs)
                 LegFrameFeatures.Clear();
+        }
+
+
+        protected override void ProcessFlightLegEnd(ProcessScope scope, int legId)
+        {
+            base.ProcessFlightLegEnd(scope, legId);
         }
 
 
@@ -103,6 +145,29 @@ namespace SkyCombImage.ProcessLogic
             }
         }
 
+
+        public List<ObjectDetection>? YoloDetectImage(Bitmap currBmp, ProcessBlock thisBlock)
+        {
+            List<ObjectDetection>? results = null;
+
+            if (RawYoloResults != null)
+            {
+                try
+                {
+                    results = RawYoloResults[thisBlock.BlockId];
+                }
+                catch
+                {
+                    results = null;
+                }
+            }
+            else
+            {
+                results = YoloDetect.DetectFrame(currBmp);
+            }
+
+            return results;
+        }
 
 
         // Process the features found in the current block/frame, which is part of a leg,

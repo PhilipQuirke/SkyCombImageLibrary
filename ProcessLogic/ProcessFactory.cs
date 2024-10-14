@@ -3,6 +3,7 @@ using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
+using SkyCombImage.RunSpace;
 using System.Drawing;
 
 
@@ -34,15 +35,15 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public static ProcessAll NewProcessModel(ProcessConfigModel config, Drone drone)
+        public static ProcessAll NewProcessModel(ProcessConfigModel config, Drone drone, RunUserInterface runUI)
         {
-            return new ProcessAll(null, drone.InputVideo, drone, config);
+            return new ProcessAll(null, drone.InputVideo, drone, config, runUI);
         }
 
 
-        public static YoloProcess NewYoloProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config, string yoloDirectory)
+        public static YoloProcess NewYoloProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config, RunUserInterface runUI, string yoloDirectory)
         {
-            return new YoloProcess(ground, video, drone, config, yoloDirectory);
+            return new YoloProcess(ground, video, drone, config, runUI, yoloDirectory);
         }
 
 
@@ -64,9 +65,9 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public static CombProcess NewCombProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config)
+        public static CombProcess NewCombProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config, RunUserInterface runUI)
         {
-            return new CombProcess(ground, video, drone, config);
+            return new CombProcess(ground, video, drone, config, runUI);
         }
 
 

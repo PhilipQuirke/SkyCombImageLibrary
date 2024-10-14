@@ -2,6 +2,7 @@
 using SkyCombDrone.DroneLogic;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
+using SkyCombImage.RunSpace;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -9,7 +10,7 @@ namespace SkyCombImage.ProcessLogic
     // A class to hold all feature data and Block data associated with a video
     public class CombProcess : ProcessAll
     {
-        public CombProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config) : base(ground, video, drone, config)
+        public CombProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config, RunUserInterface runUI) : base(ground, video, drone, config, runUI)
         {
         }
 
