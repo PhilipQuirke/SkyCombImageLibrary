@@ -108,16 +108,15 @@ namespace SkyCombImage.ProcessModel
         // One-based settings index values. Must align with GetSettings procedure below     
         public const int FlightStepIdSetting = FirstFreeSetting;
         public const int LegIdSetting = FirstFreeSetting + 1;
-        public const int VelYSetting = FirstFreeSetting + 2;
-        public const int InputFrameIdSetting = FirstFreeSetting + 3;
-        public const int InputFrameMsSetting = FirstFreeSetting + 4;
-        public const int DisplayFrameIdSetting = FirstFreeSetting + 5;
-        public const int DisplayFrameMsSetting = FirstFreeSetting + 6;
-        public const int MinFeatureIdSetting = FirstFreeSetting + 7;
-        public const int MaxFeatureIdSetting = FirstFreeSetting + 8;
-        public const int DsmMSetting = FirstFreeSetting + 9;
-        public const int DemMSetting = FirstFreeSetting + 10;
-        public const int HasLegSetting = FirstFreeSetting + 11;
+        public const int InputFrameIdSetting = FirstFreeSetting + 2;
+        public const int InputFrameMsSetting = FirstFreeSetting + 3;
+        public const int DisplayFrameIdSetting = FirstFreeSetting + 4;
+        public const int DisplayFrameMsSetting = FirstFreeSetting + 5;
+        public const int MinFeatureIdSetting = FirstFreeSetting + 6;
+        public const int MaxFeatureIdSetting = FirstFreeSetting + 7;
+        public const int DsmMSetting = FirstFreeSetting + 8;
+        public const int DemMSetting = FirstFreeSetting + 9;
+        public const int HasLegSetting = FirstFreeSetting + 10;
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
@@ -127,13 +126,13 @@ namespace SkyCombImage.ProcessModel
             answer[0].Key = "Block";
 
             answer.Add("Flight Step", FlightStepId);
-            answer.Add("Leg Id", (FlightLegId == UnknownValue ? 0 : FlightLegId));
+            answer.AddInt_UnknownIsBlank("Leg Id", FlightLegId);
             answer.Add("Input Frame Id", InputFrameId);
-            answer.Add("Input Frame Ms", InputFrameMs, MillisecondsNdp);
-            answer.Add("Display Frame Id", DisplayFrameId);
-            answer.Add("Display Frame Ms", DisplayFrameMs, MillisecondsNdp);
-            answer.Add("Min Feat Id", MinFeatureId);
-            answer.Add("Max Feat Id", MaxFeatureId);
+            answer.Add("Input Frame Ms", InputFrameMs);
+            answer.AddInt_UnknownIsBlank("Display Frame Id", DisplayFrameId);
+            answer.AddInt_UnknownIsBlank("Display Frame Ms", DisplayFrameMs);
+            answer.AddInt_UnknownIsBlank("Min Feat Id", MinFeatureId);
+            answer.AddInt_UnknownIsBlank("Max Feat Id", MaxFeatureId);
 
             return answer;
         }
@@ -147,13 +146,13 @@ namespace SkyCombImage.ProcessModel
 
             int i = FirstFreeSetting - 1;
             FlightStepId = StringToInt(settings[i++]);
-            FlightLegId = StringToNonNegInt(settings[i++]);
+            FlightLegId = StringToInt_BlankIsUnknown(settings[i++]);
             InputFrameId = StringToNonNegInt(settings[i++]);
             InputFrameMs = StringToNonNegInt(settings[i++]);
-            DisplayFrameId = StringToNonNegInt(settings[i++]);
-            DisplayFrameMs = StringToNonNegInt(settings[i++]);
-            MinFeatureId = StringToNonNegInt(settings[i++]);
-            MaxFeatureId = StringToNonNegInt(settings[i++]);
+            DisplayFrameId = StringToInt_BlankIsUnknown(settings[i++]);
+            DisplayFrameMs = StringToInt_BlankIsUnknown(settings[i++]);
+            MinFeatureId = StringToInt_BlankIsUnknown(settings[i++]);
+            MaxFeatureId = StringToInt_BlankIsUnknown(settings[i++]);
 
             if (FlightLegId == 0)
                 FlightLegId = UnknownValue;
