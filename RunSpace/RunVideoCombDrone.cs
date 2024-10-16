@@ -35,12 +35,6 @@ namespace SkyCombImage.RunSpace
         public CombProcess CombProcess { get { return ProcessAll as CombProcess; } }
 
 
-        public override string DescribeSignificantObjects()
-        {
-            return ProcessAll.ProcessObjects.DescribeSignificantObjects();
-        }
-
-
         // Process start &/or end of drone flight legs.
         public override void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId)
         {

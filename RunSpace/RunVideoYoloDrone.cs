@@ -36,16 +36,6 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        // Describe the objects found
-        public override string DescribeSignificantObjects()
-        {
-            return
-                "#Objects=" + YoloProcess.ProcessObjects.Count +
-                ", #Features=" + YoloProcess.ProcessFeatures.Count;
-
-        }
-
-
         // Process start &/or end of drone flight legs.
         public override void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId)
         {

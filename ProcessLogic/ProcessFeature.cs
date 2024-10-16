@@ -587,7 +587,7 @@ namespace SkyCombImage.ProcessLogic
                     (feature.Value.Type == FeatureTypeEnum.Real))
                 {
                     var featureHeight = feature.Value.HeightM;
-                    if (featureHeight > ProcessObjectModel.UnknownHeight)
+                    if (featureHeight > BaseConstants.UnknownHeight)
                     {
                         minHeight = Math.Min(featureHeight, minHeight);
                         maxHeight = Math.Max(featureHeight, maxHeight);
@@ -602,8 +602,8 @@ namespace SkyCombImage.ProcessLogic
                 }
 
             // Use BaseLine value if available, else the LOS value if available.
-            var heightM = (lastBLHeight > ProcessObjectModel.UnknownHeight ? lastBLHeight : (countLOS > ProcessObjectModel.UnknownHeight ? (float)(sumLOSHeight / countLOS) : BaseConstants.UnknownValue));
-            if (heightM > ProcessObjectModel.UnknownHeight)
+            var heightM = (lastBLHeight > BaseConstants.UnknownHeight ? lastBLHeight : (countLOS > BaseConstants.UnknownHeight ? (float)(sumLOSHeight / countLOS) : BaseConstants.UnknownValue));
+            if (heightM > BaseConstants.UnknownHeight)
                 return (
                     heightM,
                     Math.Max(

@@ -721,8 +721,8 @@ namespace SkyCombImage.ProcessLogic
             MinLocationErrM = BaseConstants.UnknownValue;
             MaxLocationErrM = BaseConstants.UnknownValue;
             SumLocationErrM = 0;
-            MinHeightM = ProcessObjectModel.UnknownHeight;
-            MaxHeightM = ProcessObjectModel.UnknownHeight;
+            MinHeightM = BaseConstants.UnknownHeight;
+            MaxHeightM = BaseConstants.UnknownHeight;
             MinHeightErrM = BaseConstants.UnknownValue;
             MaxHeightErrM = BaseConstants.UnknownValue;
             SumHeightM = 0;

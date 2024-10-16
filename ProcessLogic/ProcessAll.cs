@@ -183,7 +183,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Reset the process model, ready for a process run to start
+        // Reset the process model 
         public virtual void RunStart(ProcessScope scope)
         {
             ProcessObject.NextObjectId = 0;

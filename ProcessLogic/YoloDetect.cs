@@ -2,6 +2,7 @@
 
 // https://github.com/NickSwardh/YoloDotNet
 using SkiaSharp;
+using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
 using System.Diagnostics;
 using YoloDotNet;
@@ -11,6 +12,14 @@ using YoloDotNet.Models;
 
 namespace SkyCombImage.ProcessLogic
 {
+    public enum YoloProcessMode
+    {
+        ByFrame, // Process frame by frame. Most accurate but slowest
+        TimeRange, // Process leg by leg
+        FullVideo // Fastest processing per frame
+    }
+
+
     // YOLO (You only look once) V8 image object detector.
     // Uses a SkyComb-specific pre-trained model to detect objects in an image.
     public class YoloDetect : BaseConstants
@@ -19,20 +28,22 @@ namespace SkyCombImage.ProcessLogic
         readonly float Confidence = UnknownValue;
         readonly float IoU = UnknownValue;
 
+        public YoloProcessMode ProcessMode;
+        public Dictionary<int, List<ObjectDetection>> Results;
+
 
         public YoloDetect(string yoloPath, float confidence, float iou)
         {
+            Results = new();
+            ProcessMode = YoloProcessMode.FullVideo;
+
             Assert(yoloPath != "", "yoloPath is not specified");
 
             // If modelDirectory doesnt end in ".onnx" append suffix
             if (!yoloPath.EndsWith(".onnx"))
-            {
-                // First SkyComb-specific model was trained in Supervisely in June 2024 by fine-tuning a YOLO COCO V8 "medium" model
-                if (yoloPath.EndsWith("\\") || yoloPath.EndsWith("/"))
-                    yoloPath += "YoloV8_s_e100.onnx";
-                else
-                    yoloPath += "\\YoloV8_s_e100.onnx";
-            }
+                // Model "\YoloV8_14Oct24.onnx" was generated in and exported from Supervisely.
+                // More details in D:\SkyComb\Data_Yolo\YoloV8_14Oct\ModelTrainingDetails.docx
+                yoloPath = Path.Combine(yoloPath, "SkyCombYoloV8.onnx");
 
             try
             {
@@ -143,6 +154,24 @@ namespace SkyCombImage.ProcessLogic
             var results = YoloTool?.RunObjectDetection(options, Confidence, IoU);
 
             return results;
+        }
+
+
+        public void ProcessScope(ProcessScope scope, VideoData inputVideo)
+        {
+            // Yolo processing frame by frame takes approximately twice as long per frame as processing the whole video.
+            // Process all frames if user has specified a time range that is >= 50% of the video duration.
+            if (scope.PSM.InputVideoDurationMs >= inputVideo.DurationMs / 2)
+            {
+                // Process the entire video file, using YOLO and GPU. Do not create an output file yet.
+                ProcessMode = YoloProcessMode.FullVideo;
+                Results = DetectVideo(inputVideo.FileName);
+            }
+            else
+            {
+                ProcessMode = YoloProcessMode.TimeRange;
+                Results = DetectTimeRange(inputVideo.FileName, scope.PSM.FirstVideoFrameMs / 1000, scope.PSM.LastVideoFrameMs / 1000 + 1);
+            }
         }
 
 

@@ -168,24 +168,6 @@ namespace SkyCombImage.ProcessLogic
             if (prevBlock != null)
                 Assert(SumLinealM >= prevBlock.SumLinealM, "CalculateSettings_FromSteps: Logic 8");
 
-            // Estimate the approximate speed of the drone at this block in pixels per block.
-            // Based on drone speed, drone height, camera down angle & video resolution.
-            // Similar to the CalculateSettings_InputImageCenter code.
-            VelocityInYPixelsPerBlock = UnknownValue;
-            if ((beforeStep != null) && (beforeStep.DemM != UnknownValue) && (beforeStep.InputImageSizeM != null))
-            {
-                // Fraction of image traversed per second
-                var imageFractionPerSec = beforeStep.SpeedMps / beforeStep.InputImageSizeM.Value.Y;
-
-                var imagePixelsPerSec = imageFractionPerSec * drone.InputVideo.ImageHeight;
-
-                float imagePixelsPerBlock = (float)(imagePixelsPerSec / drone.InputVideo.Fps);
-
-                // The 0 below assumes drone is not yawing. But in leg,
-                // MaxLegStepDeltaYawDeg=4 & MaxLegSumDeltaYawDeg=10. Yaw is often much less.
-                VelocityInYPixelsPerBlock = imagePixelsPerBlock;
-            }
-
             if ((prevBlock != null) && (!badBlockMs))
                 Assert(prevBlock.StartTime < this.StartTime, "CalculateSettings_FromSteps: Logic 9");
             if (this.FlightStep != null)

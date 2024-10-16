@@ -25,10 +25,6 @@ namespace SkyCombImage.ProcessModel
         public string FlightLegName { get { return IdToLetter(FlightLegId); } }
 
 
-        // Approximate ground velocity in pixels per block
-        public float VelocityInYPixelsPerBlock { get; set; }
-
-
         // ------ Input Video Position Data -----
         // Position in the input video in Frames, corresponding to this block. One-based. No offsets applied - straight from input video.
         public int InputFrameId { get; set; }
@@ -57,7 +53,6 @@ namespace SkyCombImage.ProcessModel
         {
             FlightStepId = UnknownValue;
             FlightLegId = scope.CurrRunLegId;
-            VelocityInYPixelsPerBlock = UnknownValue;
             InputFrameId = scope.CurrInputFrameId;
             InputFrameMs = scope.CurrInputFrameMs;
             DisplayFrameId = scope.CurrDisplayFrameId;
@@ -133,7 +128,6 @@ namespace SkyCombImage.ProcessModel
 
             answer.Add("Flight Step", FlightStepId);
             answer.Add("Leg Id", (FlightLegId == UnknownValue ? 0 : FlightLegId));
-            answer.Add("Vel Pxs Y", VelocityInYPixelsPerBlock, PixelVelNdp);
             answer.Add("Input Frame Id", InputFrameId);
             answer.Add("Input Frame Ms", InputFrameMs, MillisecondsNdp);
             answer.Add("Display Frame Id", DisplayFrameId);
@@ -154,7 +148,6 @@ namespace SkyCombImage.ProcessModel
             int i = FirstFreeSetting - 1;
             FlightStepId = StringToInt(settings[i++]);
             FlightLegId = StringToNonNegInt(settings[i++]);
-            VelocityInYPixelsPerBlock = StringToFloat(settings[i++]);
             InputFrameId = StringToNonNegInt(settings[i++]);
             InputFrameMs = StringToNonNegInt(settings[i++]);
             DisplayFrameId = StringToNonNegInt(settings[i++]);

@@ -88,7 +88,7 @@ namespace SkyCombImage.ProcessModel
             Significant = false;
             ObjectId = 0;
             LocationM = null;
-            HeightM = ProcessObjectModel.UnknownHeight;
+            HeightM = BaseConstants.UnknownHeight;
             HeightAlgorithm = "";
             // NumHotPixels = 0; Derived from image processing. Can't be recalced. So excldued 
         }
@@ -104,8 +104,6 @@ namespace SkyCombImage.ProcessModel
                 HeightAlgorithm = theCase;
         }
 
-
-        public const int UnknownHeight = -2;
 
         // One-based settings index values. Must align with GetSettings procedure below     
         public const int FeatureIdSetting = 1;

@@ -216,7 +216,7 @@ namespace SkyCombImage.RunSpace
         // Describe the objects found
         public virtual string DescribeSignificantObjects()
         {
-            return "";
+            return ProcessAll.ProcessObjects.DescribeSignificantObjects();
         }
 
 
@@ -264,7 +264,7 @@ namespace SkyCombImage.RunSpace
         public abstract void SaveProcessSettings();
 
 
-        // Reset any internal state of the run or model, so they can be re-used in another run ResetRun().
+        // Reset any internal state of the run or model.
         // Do not change input or drone data. Do not delete config references.
         public void PreRunStart_Process(ProcessScope scope)
         {

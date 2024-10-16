@@ -192,7 +192,6 @@ namespace SkyCombImage.ProcessModel
         public const int AttributesSetting = 20;
         public const int SignificantSetting = 21;
         public const int NumSigBlocksSetting = 22;
-        // CombObject additional settings
         public const int FirstBlockSetting = 23;
         public const int CenterBlockSetting = 24;
         public const int LastRealBlockSetting = 25;
@@ -206,9 +205,6 @@ namespace SkyCombImage.ProcessModel
         public const int NumRealFeaturesSetting = 33;
         public const int RealDensityPxSetting = 34;
         public const int LocnErrPerFeatCMSetting = 35;
-
-
-        public const int UnknownHeight = -2;
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
@@ -238,7 +234,6 @@ namespace SkyCombImage.ProcessModel
                 { "Attributes", Attributes },
                 { "Significant", Significant },
                 { "# Sig Blocks", NumSigBlocks },
-
                 { "Max Real Hot Pxs", MaxRealHotPixels },
                 { "Max Real Px Width", MaxRealPixelWidth },
                 { "Max Real Px Height", MaxRealPixelHeight },
@@ -261,7 +256,6 @@ namespace SkyCombImage.ProcessModel
             LocationM = new DroneLocation(settings[i++], settings[i++]);
             LocationErrM = StringToNonNegFloat(settings[i++]);
             AvgSumLinealM = StringToNonNegFloat(settings[i++]);
-
             HeightM = StringToFloat(settings[i++]); 
             MinHeightM = StringToFloat(settings[i++]);
             MaxHeightM = StringToFloat(settings[i++]);
@@ -276,7 +270,6 @@ namespace SkyCombImage.ProcessModel
             Attributes = settings[i++];
             Significant = (settings[i++] == "true");
             NumSigBlocks = StringToNonNegInt(settings[i++]);
-
             MaxRealHotPixels = StringToInt(settings[ProcessObjectModel.MaxRealHotPixelsSetting - 1]);
             MaxRealPixelWidth = StringToInt(settings[ProcessObjectModel.MaxRealPixelWidthSetting - 1]);
             MaxRealPixelHeight = StringToInt(settings[ProcessObjectModel.MaxRealPixelHeightSetting - 1]);
