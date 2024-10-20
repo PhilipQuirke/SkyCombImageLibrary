@@ -25,7 +25,7 @@ namespace SkyCombImage.ProcessModel
         public const int SearchHigherPixels = 20;
 
         // Single frame Yolo detection confidence
-        public const float YoloDetectConfidenceDefault = 0.66f;
+        public const float YoloDetectConfidenceDefault = 0.33f;
         // Successive frame Yolo overlap threshold. Typically 0.2 to 0.4
         public const float YoloIoUDefault = 0.25f;
         // We are clustering features in objects while the drone is flying a leg. We expect very little change in the X values.
