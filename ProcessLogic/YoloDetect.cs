@@ -46,7 +46,7 @@ namespace SkyCombImage.ProcessLogic
                     {
                         OnnxModel = YoloPath,                   // Your Yolov8 or Yolov10 model in onnx format
                         ModelType = ModelType.ObjectDetection,  // Model type
-                        Cuda = true,                           // Use CPU or CUDA for GPU accelerated inference. Default = true
+                        Cuda = true,                            // Use CPU or CUDA for GPU accelerated inference. Default = true
                         GpuId = 0,                              // Select Gpu by id. Default = 0
                         PrimeGpu = false,                       // Pre-allocate GPU before first. Default = false
                     });
@@ -66,10 +66,10 @@ namespace SkyCombImage.ProcessLogic
 
             Assert(yoloPath != "", "yoloPath is not specified");
             YoloPath = yoloPath;
-            if (!yoloPath.EndsWith(".onnx"))
-                // Model "\YoloV8_14Oct24.onnx" was generated in and exported from Supervisely.
+            if (!YoloPath.EndsWith(".onnx"))
+                // The SkyComb Yolo models were generated in and exported from Supervisely.
                 // More details in D:\SkyComb\Data_Yolo\YoloV8_14Oct\ModelTrainingDetails.docx
-                yoloPath = Path.Combine(yoloPath, "SkyCombYoloV8.onnx");
+                YoloPath = Path.Combine(YoloPath, "SkyCombYoloV8.onnx");
 
             ProcessMode = YoloProcessMode.FullVideo;
             Results = new();
