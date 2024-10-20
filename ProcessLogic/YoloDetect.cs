@@ -24,53 +24,63 @@ namespace SkyCombImage.ProcessLogic
     // Uses a SkyComb-specific pre-trained model to detect objects in an image.
     public class YoloDetect : BaseConstants
     {
-        readonly Yolo? YoloTool = null;
         readonly float Confidence = UnknownValue;
         readonly float IoU = UnknownValue;
+        readonly string YoloPath;
 
+        Yolo ? YoloTool = null;
         public YoloProcessMode ProcessMode;
         public Dictionary<int, List<ObjectDetection>> Results;
 
 
+        // Processing requires GPU and CUDA libraries.
+        // Defers loading the model until processign starts.
+        // Allows SkyCombAnalyst to be used to view (but not re-process) an existing datastore
+        public void EnsureModelLoaded()
+        {
+            if (YoloTool == null)
+                try
+                {
+                    // Load the model. Takes a few seconds.
+                    YoloTool = new Yolo(new YoloOptions
+                    {
+                        OnnxModel = YoloPath,                   // Your Yolov8 or Yolov10 model in onnx format
+                        ModelType = ModelType.ObjectDetection,  // Model type
+                        Cuda = true,                           // Use CPU or CUDA for GPU accelerated inference. Default = true
+                        GpuId = 0,                              // Select Gpu by id. Default = 0
+                        PrimeGpu = false,                       // Pre-allocate GPU before first. Default = false
+                    });
+                }
+                catch (Exception ex)
+                {
+                    YoloTool = null;
+                    throw ThrowException("YoloDetect.LoadModel failed: " + ex.Message);
+                }
+        }
+
+
         public YoloDetect(string yoloPath, float confidence, float iou)
         {
-            Results = new();
-            ProcessMode = YoloProcessMode.FullVideo;
+            Confidence = confidence;
+            IoU = iou;
 
             Assert(yoloPath != "", "yoloPath is not specified");
-
-            // If modelDirectory doesnt end in ".onnx" append suffix
+            YoloPath = yoloPath;
             if (!yoloPath.EndsWith(".onnx"))
                 // Model "\YoloV8_14Oct24.onnx" was generated in and exported from Supervisely.
                 // More details in D:\SkyComb\Data_Yolo\YoloV8_14Oct\ModelTrainingDetails.docx
                 yoloPath = Path.Combine(yoloPath, "SkyCombYoloV8.onnx");
 
-            try
-            {
-                // Load the model. Takes a few seconds.
-                YoloTool = new Yolo(new YoloOptions
-                {
-                    OnnxModel = yoloPath,                   // Your Yolov8 or Yolov10 model in onnx format
-                    ModelType = ModelType.ObjectDetection,  // Model type
-                    Cuda = true,                           // Use CPU or CUDA for GPU accelerated inference. Default = true
-                    GpuId = 0,                              // Select Gpu by id. Default = 0
-                    PrimeGpu = false,                       // Pre-allocate GPU before first. Default = false
-                });
-            }
-            catch (Exception ex)
-            {
-                YoloTool = null;
-                throw ThrowException("YoloDetect.Constructor failed: " + ex.Message);
-            }
-
-            Confidence = confidence;
-            IoU = iou;
+            ProcessMode = YoloProcessMode.FullVideo;
+            Results = new();
         }
 
 
         public List<ObjectDetection>? DetectFrame(System.Drawing.Image raw_image)
         {
             List<ObjectDetection>? answer = null;
+
+            EnsureModelLoaded();
 
             try
             {
@@ -99,9 +109,10 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Run Yolo detection over the entire video file
-        public Dictionary<int, List<ObjectDetection>>? DetectVideo(string videoFileName)
+        private Dictionary<int, List<ObjectDetection>>? DetectVideo(string videoFileName)
         {
-            // Set video options
+            EnsureModelLoaded();
+
             var options = new VideoOptions
             {
                 VideoFile = videoFileName,
@@ -130,7 +141,8 @@ namespace SkyCombImage.ProcessLogic
 
         public Dictionary<int, List<ObjectDetection>>? DetectTimeRange(string videoFileName, int fromSecond, int toSecond)
         {
-            // Set video options
+            EnsureModelLoaded();
+
             var options = new VideoOptions
             {
                 VideoFile = videoFileName,
@@ -178,6 +190,8 @@ namespace SkyCombImage.ProcessLogic
         // Run both full-video and time-section detection tests on a single video.
         public void UnitTest()
         {
+            EnsureModelLoaded();
+
             string videoFileName = "D:\\SkyComb\\Data_Input\\CC\\2023-05-D\\DJI_20230531190425_0001_S.mp4";
             double time1 = 0;
             double time2 = 0;
