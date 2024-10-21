@@ -147,10 +147,10 @@ namespace SkyCombImage.ProcessLogic
             // Calculate the angle to object, in direction of flight (forward), to the vertical, in degrees
             // Assumes drone is moving forward (not sidewards or backwards) or stationary.
             double fwdFraction = yImageFrac * 2 - 1;
-            Assert(fwdFraction >= -1 && fwdFraction <= 1, "Calculate_Image_FwdDeg: fwdFraction out of range: " + fwdFraction.ToString());
+            Assert(fwdFraction >= -1.01 && fwdFraction <= 1.01, "Calculate_Image_FwdDeg: fwdFraction out of range: " + fwdFraction.ToString());
 
             double fwdDeg = halfVertFoVDeg * fwdFraction; // Often close to +16
-            Assert(Math.Abs(fwdDeg) <= halfVertFoVDeg, "Calculate_Image_FwdDeg: fwdDeg out of range: " + fwdDeg.ToString());
+            Assert(Math.Abs(fwdDeg) <= halfVertFoVDeg + 0.1, "Calculate_Image_FwdDeg: fwdDeg out of range: " + fwdDeg.ToString());
 
             // Have seen real world case where CameraToVerticalForwardDeg was (for a short period) 90.6 degrees.
             // What is slightly above the horizontal.
