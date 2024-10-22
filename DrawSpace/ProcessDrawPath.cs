@@ -12,7 +12,7 @@ using System.Drawing;
 namespace SkyCombImage.DrawSpace
 {
     // Code to draw drone flight path with process objects overlaid
-    public class CombDrawPath : DroneDrawPath
+    public class ProcessDrawPath : DroneDrawPath
     {
         // Pixels width when drawing feature locations as squares
         public int FeaturePixels = 4;
@@ -30,7 +30,7 @@ namespace SkyCombImage.DrawSpace
         public ProcessObject? HoverObject { get; set; }
 
 
-        public CombDrawPath(ProcessDrawScope processDrawScope, ProcessObjList? processObjList, ObjectDrawScope objectScope) : base(processDrawScope, true)
+        public ProcessDrawPath(ProcessDrawScope processDrawScope, ProcessObjList? processObjList, ObjectDrawScope objectScope) : base(processDrawScope, true)
         {
             ProcessDrawScope = processDrawScope;
             ObjectDrawScope = objectScope;
@@ -84,7 +84,7 @@ namespace SkyCombImage.DrawSpace
 
 
                     // This of objects in process scope
-                    ProcessObjList objList = ProcessObjList;
+                    var objList = ProcessObjList;
 
                     // Reduce list of objects by the user filter values.
                     if ((objList != null) && (ObjectDrawScope != null))
@@ -134,7 +134,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("DrawCombPath.CurrImage", ex);
+                throw ThrowException("ProcessDrawPath.CurrImage", ex);
             }
         }
 
@@ -175,7 +175,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("DrawCombPath.CurrImage", ex);
+                throw ThrowException("ProcessDrawPath.CurrImage", ex);
             }
         }
 

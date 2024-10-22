@@ -136,10 +136,6 @@ namespace SkyCombImage.DrawSpace
         public int MaxHeightM;
         public int MinSizeCM2;
         public int MaxSizeCM2;
-        public int MinHeat;
-        public int MaxHeat;
-        public int MinRangeM;
-        public int MaxRangeM;
 
         public int NumObjects;
         public int NumFilteredObjects;
@@ -172,10 +168,6 @@ namespace SkyCombImage.DrawSpace
             MaxHeightM = ProcessObjectModel.UnknownHeight;
             MinSizeCM2 = UnknownValue;
             MaxSizeCM2 = UnknownValue;
-            MinHeat = UnknownValue;
-            MaxHeat = UnknownValue;
-            MinRangeM = UnknownValue;
-            MaxRangeM = UnknownValue;
 
             NumObjects = 0;
             NumFilteredObjects = NumObjects;
@@ -192,10 +184,6 @@ namespace SkyCombImage.DrawSpace
                 MaxHeightM = (int)Math.Ceiling(objList.MaxHeightM);
                 MinSizeCM2 = (int)Math.Floor(objList.MinSizeCM2);
                 MaxSizeCM2 = (int)Math.Ceiling(objList.MaxSizeCM2);
-                MinHeat = objList.MinHeat;
-                MaxHeat = objList.MaxHeat;
-                MinRangeM = objList.MinRangeM;
-                MaxRangeM = objList.MaxRangeM;
 
                 NumObjects = objList.Count;
                 NumFilteredObjects = NumObjects;

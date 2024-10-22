@@ -39,7 +39,7 @@ namespace SkyCombImage.RunSpace
         // Process start &/or end of drone flight legs.
         public override void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId)
         {
-            YoloProcess.ProcessFlightLegStartAndEnd(scope, prevLegId, currLegId);
+            ProcessAll.ProcessFlightLegStartAndEnd(scope, prevLegId, currLegId);
         }
 
 

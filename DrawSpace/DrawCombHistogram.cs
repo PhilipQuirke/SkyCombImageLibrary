@@ -127,30 +127,4 @@ namespace SkyCombImage.DrawSpace
         }
     }
 
-
-    public class DrawHeatHistogram : DrawHistogram
-    {
-        public DrawHeatHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, ProcessObjList objs) :
-            base(drawScope, objs.HistogramHeat(), objs.MinHeat, objs.MaxHeat)
-        {
-            FilterMin = (drawObjectScope == null ? 235 : drawObjectScope.MinHeat);
-            FilterMax = (drawObjectScope == null ? 255 : drawObjectScope.MaxHeat);
-        }
-
-        public override void CurrImage(ref Image<Bgr, byte> image)
-        {
-            base.CurrImage(ref image);
-        }
-    }
-
-
-    public class DrawRangeHistogram : DrawHistogram
-    {
-        public DrawRangeHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, ProcessObjList objs) :
-            base(drawScope, objs.HistogramRangeM(), 0, objs.MaxRangeM)
-        {
-            FilterMin = (drawObjectScope == null ? 0 : drawObjectScope.MinRangeM);
-            FilterMax = (drawObjectScope == null ? 100 : drawObjectScope.MaxRangeM);
-        }
-    }
 }

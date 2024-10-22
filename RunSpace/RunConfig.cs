@@ -85,8 +85,8 @@ namespace SkyCombImage.RunSpace
                 {
                     answer += "Heat Threshold: " + ProcessConfig.HeatThresholdValue + "\r\n";
                     if (RunProcess == RunProcessEnum.Yolo)
-                        answer += "Detect/IoU/Merge: " +
-                            ProcessConfig.YoloDetectConfidence.ToString() + "/" +
+                        answer += "Confidence: " +
+                            ProcessConfig.YoloDetectConfidence.ToString() + ", IoU: " +
                             ProcessConfig.YoloIoU.ToString() + "\r\n";
 
                     if (ProcessConfig.SaveAnnotatedVideo)

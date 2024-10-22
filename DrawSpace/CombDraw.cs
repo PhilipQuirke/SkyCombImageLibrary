@@ -266,7 +266,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("DrawVideoFrames.DrawVideoFrames", ex);
+                throw ThrowException("DrawVideoFrames.Draw", ex);
             }
         }
     }
@@ -330,7 +330,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("CombDrawAltitudeByLinealM.GraphObjects", ex);
+                throw ThrowException("ProcessDrawAltitudeByLinealM.GraphObjects", ex);
             }
         }
 
@@ -417,7 +417,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("CombDrawAltitudeByTime.GraphObjects", ex);
+                throw ThrowException("ProcessDrawAltitudeByTime.GraphObjects", ex);
             }
         }
 
@@ -431,13 +431,13 @@ namespace SkyCombImage.DrawSpace
 
 
     // Code to draw comb object height - including feature estimates
-    public class CombDrawObjectHeight : DrawAltitudeByTime
+    public class DrawObjectHeight : DrawAltitudeByTime
     {
         private ProcessAll Process { get; }
         private ProcessDrawScope DrawScope { get; }
 
 
-        public CombDrawObjectHeight(ProcessAll process, ProcessDrawScope drawScope) : base(drawScope)
+        public DrawObjectHeight(ProcessAll process, ProcessDrawScope drawScope) : base(drawScope)
         {
             Process = process;
             DrawScope = drawScope;
@@ -475,7 +475,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("CombDrawObjectHeight.Initialise", ex);
+                throw ThrowException("DrawObjectHeight.Initialise", ex);
             }
         }
 
@@ -516,7 +516,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("CombDrawObjectHeight.CurrImage", ex);
+                throw ThrowException("DrawObjectHeight.CurrImage", ex);
             }
         }
     }

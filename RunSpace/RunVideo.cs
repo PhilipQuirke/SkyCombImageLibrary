@@ -66,7 +66,7 @@ namespace SkyCombImage.RunSpace
 
         // How to draw various graphs and charts
         public ProcessDrawScope ProcessDrawScope;
-        public CombDrawPath CombDrawPath;
+        public ProcessDrawPath ProcessDrawPath;
         //public DrawCombAltitudeByTime DrawCombAltitudeByTime;
         public ProcessDrawAltitudeByLinealM DrawCombAltitudeByLinealM;
         public DrawSpeed DrawSpeed;
@@ -105,7 +105,7 @@ namespace SkyCombImage.RunSpace
                     drawObjectScope.SetObjectRange(objList);
                 }
             }
-            CombDrawPath = new(ProcessDrawScope, objList, drawObjectScope);
+            ProcessDrawPath = new(ProcessDrawScope, objList, drawObjectScope);
 
             //DrawCombAltitudeByTime = new(processAll, DrawScope);
             DrawCombAltitudeByLinealM = new(processAll, ProcessDrawScope);
@@ -285,7 +285,7 @@ namespace SkyCombImage.RunSpace
             ResetModifiedImages();
             ConfigureModelScope();
             ProcessDrawScope.Reset(this, Drone);
-            CombDrawPath.Reset(ProcessDrawScope);
+            ProcessDrawPath.Reset(ProcessDrawScope);
 
             ProcessAll?.OnObservation(ProcessEventEnum.IntervalStart);
         }
@@ -297,7 +297,7 @@ namespace SkyCombImage.RunSpace
             if (PSM.CurrBlockId == 1)
             {
                 ProcessDrawScope.Reset(this, Drone);
-                CombDrawPath.Reset(ProcessDrawScope);
+                ProcessDrawPath.Reset(ProcessDrawScope);
             }
 
             RunUI.DrawUI(this);
