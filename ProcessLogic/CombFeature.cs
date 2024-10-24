@@ -14,8 +14,6 @@ namespace SkyCombImage.ProcessLogic
     {
         public CombFeature(CombProcess combProcess, ProcessBlock block, FeatureTypeEnum type) : base(combProcess, block.BlockId, type)
         {
-            if (type != FeatureTypeEnum.Unreal)
-                Pixels = new();
             ResetCalcedMemberData();
         }
 
@@ -23,12 +21,6 @@ namespace SkyCombImage.ProcessLogic
         // Constructor used when loaded objects from the datastore
         public CombFeature(CombProcess combProcess, List<string> settings) : base(combProcess, settings)
         {
-        }
-
-
-        public void CalcNumHotPixels()
-        {
-            NumHotPixels = (Pixels == null ? 0 : Pixels.Count());
         }
 
 
@@ -89,17 +81,9 @@ namespace SkyCombImage.ProcessLogic
                         {
                             hotPixelsInRow++;
 
-                            // Evaluate the heat from the original image (not the smooth / threshold image)
-                            int currHeat = (
-                                imgOriginal.Data[currY, currX, 0] +
-                                imgOriginal.Data[currY, currX, 1] +
-                                imgOriginal.Data[currY, currX, 2]) / 3;
-
-                            MinHeat = Math.Min(MinHeat, currHeat);
-                            MaxHeat = Math.Max(MaxHeat, currHeat);
-
-                            Pixels.Add(new PixelHeat(BlockId, FeatureId, currY, currX, currHeat));
-                            CalcNumHotPixels();
+                            // Evaluate the heat from the original image (not the threshold image)
+                            Bgr orgColor = imgOriginal[currY, currX];
+                            AddHotPixel(currY, currX, orgColor);
 
                             // Expand rectangle to include the hot pixel.
                             if (currX < rectLeft) rectLeft = currX;
@@ -164,7 +148,6 @@ namespace SkyCombImage.ProcessLogic
                 CalcNumHotPixels();
 
                 otherFeature.ClearHotPixels();
-                otherFeature.NumHotPixels = 0;
             }
 
             base.Consume(otherFeature);

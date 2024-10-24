@@ -15,16 +15,16 @@ namespace SkyCombImage.ProcessModel
         public int ObjectId { get; set; }
         // Defaults to ObjectId (e.g. #15), but for signficant objects
         // is set to C5 meaning 5th significant object in Leg C.
-        public string Name { get; set; }
+        public string Name { get; set; } = "";
 
         // Time this object was first seen
-        public float RunFromVideoS { get; set; }
+        public float RunFromVideoS { get; set; } = 0.0F;
         // Time this object was last seen
-        public float RunToVideoS { get; set; }
+        public float RunToVideoS { get; set; } = 0.0F;
 
 
         // Location (centroid) of this object relative to the drone's starting point.
-        public DroneLocation LocationM { get; set; }
+        public DroneLocation? LocationM { get; set; } = null;
         // Estimated error in object location, based on variance in child Feature locations.
         public float LocationErrM { get; set; }
         // The drone SumLinealM distance corresponding to the centroid of the object
@@ -48,11 +48,12 @@ namespace SkyCombImage.ProcessModel
         public float HeightErrM { get; set; }
 
 
-        // Best estimate of the size of the object in meters squared.
-        // Based on MAXIMUM number of hot pixels in any real feature.
-        // If object is in a tree and partially obscured may be an underestimate. 
-        // Don't keep a estimate of error in SizeCM2, as MINIMUM hot pixels is NOT a sensible error estimate.
+        // Best estimate of the size of the object in centimeters squared.
         public float SizeCM2 { get; set; }
+        // Maximum object "spine" pixel length over all real features
+        public float MaxSpinePixels { get; set; }
+        // Maximum object "girth" pixel (at right angles to spine) length over all real features
+        public float MaxGirthPixels { get; set; }
 
 
         // The average distance from the object to the drone in meters
@@ -66,13 +67,13 @@ namespace SkyCombImage.ProcessModel
         // Average height of the ground below the object (in meters above sea level)
         public float DemM { get; set; }
         // Significance attributes about this object
-        public string Attributes { get; set; }
+        public string Attributes { get; set; } = "";
         // Is this a significant object?
         public bool Significant { get; set; }
         // Number of blocks this object was a significant object. Objects can become insignificant, after being significant.
         public int NumSigBlocks { get; set; }
         // LegId of the FlightLeg (if any) this object was found during
-        public int FlightLegId { get; set; }
+        public int FlightLegId { get; set; } = 0;
         public string FlightLegName { get { return IdToLetter(FlightLegId); } }
 
         // Last Real feature claimed by this object (excluding Consumed features).
@@ -120,6 +121,8 @@ namespace SkyCombImage.ProcessModel
             MaxHeightM = ProcessObjectModel.UnknownHeight;
             HeightErrM = UnknownValue;
             SizeCM2 = 0;
+            MaxSpinePixels = 0;
+            MaxGirthPixels = 0;
             AvgRangeM = UnknownValue;
             MaxHeat = 0;
             DemM = 0;
@@ -202,9 +205,8 @@ namespace SkyCombImage.ProcessModel
         public const int FirstFwdDownDegSetting = 30;
         public const int LastFwdDownDegSetting = 31;
         public const int RangeFwdDownDegSetting = 32;
-        public const int NumRealFeaturesSetting = 33;
-        public const int RealDensityPxSetting = 34;
-        public const int LocnErrPerFeatCMSetting = 35;
+        public const int MaxSpinePixelsSetting = 33;
+        public const int MaxGirthPixelsSetting = 34;
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
@@ -240,6 +242,8 @@ namespace SkyCombImage.ProcessModel
                 { "First Fwd Down Deg", FirstFwdDownDeg, DegreesNdp },
                 { "Last Fwd Down Deg", LastFwdDownDeg, DegreesNdp },
                 { "Range Fwd Down Deg", FirstFwdDownDeg - LastFwdDownDeg, DegreesNdp },
+                { "Max Spine Pxs", MaxSpinePixels, 2 },
+                { "Max Girth Pxs", MaxGirthPixels, 2 },
             };
         }
 
@@ -276,6 +280,10 @@ namespace SkyCombImage.ProcessModel
             FirstFwdDownDeg = StringToFloat(settings[ProcessObjectModel.FirstFwdDownDegSetting - 1]);
             LastFwdDownDeg = StringToFloat(settings[ProcessObjectModel.LastFwdDownDegSetting - 1]);
             // RangeFwdDownDeg 
+            if(settings.Count > ProcessObjectModel.MaxSpinePixelsSetting - 1)
+                MaxSpinePixels = StringToInt(settings[ProcessObjectModel.MaxSpinePixelsSetting - 1]);
+            if (settings.Count > ProcessObjectModel.MaxGirthPixelsSetting - 1)
+                MaxGirthPixels = StringToInt(settings[ProcessObjectModel.MaxGirthPixelsSetting - 1]);
 
             if (HeightM == UnknownHeight) HeightM = UnknownValue;
             if (MinHeightM == UnknownHeight) MinHeightM = UnknownValue;

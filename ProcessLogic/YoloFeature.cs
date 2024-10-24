@@ -2,6 +2,7 @@
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombImage.ProcessModel;
+using System.Drawing;
 using YoloDotNet.Models;
 
 
@@ -40,8 +41,9 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Evaluate the MinHeat, MaxHeat and PixelSize of this feature
-        public void CalculateHeat(
+        // Shrink the result.BoundingBox to a smaller bounding box tight around the hot pixels.
+        // Evaluate the MinHeat, MaxHeat, NumHotPixels and PixelBox of this feature
+        public void CalculateHeat_ShrinkBox(
            in Image<Bgr, byte> imgOriginal,
            in Image<Gray, byte> imgThreshold)
         {
@@ -54,20 +56,34 @@ namespace SkyCombImage.ProcessLogic
             int right = Math.Min(PixelBox.Right, imgOriginal.Width);
             int bottom = Math.Min(PixelBox.Bottom, imgOriginal.Height);
 
+            // Initialize variables to find the tight bounding box
+            int minX = right;
+            int maxX = left;
+            int minY = bottom;
+            int maxY = top;
+
             for (int y = top; y < bottom; y++)
             {
                 for (int x = left; x < right; x++)
                 {
                     if (imgThreshold[y, x].Intensity > 0)
                     {
-                        Bgr color = imgOriginal[y, x];
-                        int currHeat = (int)((color.Blue + color.Green + color.Red) / 3);
-                        MinHeat = Math.Min(MinHeat, currHeat);
-                        MaxHeat = Math.Max(MaxHeat, currHeat);
-                        NumHotPixels++;
+                        // Update the tight bounding box coordinates
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+
+                        // Evaluate the heat from the original image (not the threshold image)
+                        Bgr orgColor = imgOriginal[y, x];
+                        AddHotPixel(y, x, orgColor);
                     }
                 }
             }
+
+            if (NumHotPixels > 0)
+                // Set (shrink) PixelBox to the tight bounding box around hot pixels
+                PixelBox = new Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
 
             Significant = (NumHotPixels >= ProcessAll.ProcessConfig.FeatureMinPixels);
             IsTracked = Significant;

@@ -10,6 +10,65 @@ using System.Drawing;
 
 namespace SkyCombImage.ProcessLogic
 {
+    public class BoundingBoxAnalyzer
+    {
+        private Point _topLeft;
+        private Point _topRight;
+        private Point _bottomLeft;
+        private Point _bottomRight;
+        private Point[] _diagonalPoints;
+
+        public BoundingBoxAnalyzer(int minX, int minY, int maxX, int maxY)
+        {
+            _bottomLeft = new Point(minX, minY);
+            _bottomRight = new Point(maxX, minY);
+            _topLeft = new Point(minX, maxY);
+            _topRight = new Point(maxX, maxY);
+
+            // Store both diagonals
+            _diagonalPoints = new Point[]
+            {
+            _bottomLeft, _topRight,    // First diagonal
+            _topLeft, _bottomRight     // Second diagonal
+            };
+        }
+
+        // The diagonal of a pixel box bounding an animal is a good proxy for the animal's spine length (in pixels)
+        public double CalcSpineLength()
+        {
+            int width = _bottomRight.X - _bottomLeft.X;
+            int height = _topLeft.Y - _bottomLeft.Y;
+            return Math.Sqrt(width * width + height * height);
+        }
+
+        // The greatest perpendicular distance from the diagonal of a pixel box bounding an animal is a good proxy for the animal's girth (in pixels)
+        public double CalcMaxPerpendicularDistance(Point start, Point end, PixelHeatList points)
+        {
+            // Calculate line equation coefficients (ax + by + c = 0)
+            double a = end.Y - start.Y;
+            double b = start.X - end.X;
+            double c = end.X * start.Y - start.X * end.Y;
+            double denominator = Math.Sqrt(a * a + b * b);
+
+            double maxPointDistance = 0;
+            foreach (var point in points)
+            {
+                double distance = Math.Abs(a * point.X + b * point.Y + c) / denominator;
+                maxPointDistance = Math.Max(maxPointDistance, distance);
+            }
+            return maxPointDistance;
+        }
+
+        // Animal could be orientated NW to SE or NE to SW.
+        public double CalcGirthLength(PixelHeatList points)
+        {
+            double girth1 = CalcMaxPerpendicularDistance(_bottomLeft, _topRight, points);
+            double girth2 = CalcMaxPerpendicularDistance(_bottomRight, _topLeft, points);
+            return Math.Min(girth1, girth2);
+        }
+    }
+
+
     // A significant object - a logical object derived from overlapping features over successive frames. 
     public class ProcessObject : ProcessObjectModel
     {
@@ -512,7 +571,13 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Calculate the size of the object in square centimeters.
-        // Based on MAXIMUM number of hot pixels in any real feature.
+        //
+        // Objects may be partially obscured by branches in some frames.
+        // The object may be moving across the ground or a long a branch during the frames.
+        //
+        // The object's (maximum over frames) "spine" length, is a proxy for size. 
+        // The object's (maximum over frames) "girth" length (at right angles to the spine length), is a proxy for size. 
+        // If unobscured, these are very good proxies, else they are lower bounds.
         protected void Calculate_SizeCM2()
         {
             if ((ProcessAll == null) || (ProcessAll.VideoData == null))
@@ -525,6 +590,18 @@ namespace SkyCombImage.ProcessLogic
                 (lastFeature.Block.FlightStep == null) ||
                 (lastFeature.Block.FlightStep.InputImageSizeM == null))
                 return;
+
+            var area = lastFeature.PixelBox;
+
+            BoundingBoxAnalyzer analyzer = new(area.X, area.Y, area.X + area.Width, area.Y + area.Height);
+            double thisSpinePixels = analyzer.CalcSpineLength();
+            double thisGirthPixels = lastFeature.Pixels != null ? analyzer.CalcGirthLength(lastFeature.Pixels) : thisSpinePixels / 4.0f;
+            Assert(thisSpinePixels >= 0, "Calculate_SizeCM2: maxSpineM <= 0");
+            Assert(thisGirthPixels >= 0, "Calculate_SizeCM2: maxGirthM <= 0");
+            Assert(thisSpinePixels + 1 >= thisGirthPixels, "Calculate_SizeCM2: maxSpineM < maxGirthM");
+
+            MaxSpinePixels = Math.Max(MaxSpinePixels, (float)thisSpinePixels);
+            MaxGirthPixels = Math.Max(MaxGirthPixels, (float)thisGirthPixels);
 
             // The number of hot pixels in the last (real) feature.
             float hotPixels = lastFeature.NumHotPixels;

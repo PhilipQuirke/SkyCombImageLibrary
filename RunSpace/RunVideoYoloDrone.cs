@@ -54,21 +54,28 @@ namespace SkyCombImage.RunSpace
                 List<ObjectDetection>? results = null;
                 ProcessFeatureList featuresInBlock = new(RunConfig.ProcessConfig);
 
-                using (var currGray = DrawImage.ToGrayScale(CurrInputImage))
                 {
-                    using (var currBmp = currGray.ToBitmap())
-                    {
-                        results = YoloProcess.YoloDetectImage(currBmp, thisBlock);
-                    }
+                    var currGray = DrawImage.ToGrayScale(CurrInputImage);
+                    var currBmp = currGray.ToBitmap();
 
+                    DrawImage.Threshold(RunConfig.ProcessConfig, ref currGray);
+
+                    results = YoloProcess.YoloDetectImage(currBmp, thisBlock);
                     if (results != null)
                         foreach (var result in results)
                         {
                             YoloFeature thisFeature = new(YoloProcess, blockID, result, ProcessModel.FeatureTypeEnum.Real);
-                            thisFeature.CalculateHeat(CurrInputImage, currGray);
+
+                            // The Yolo bounding box is not tight around the hotspot. For Comb it is.
+                            // Shrink PixelBox to a smaller bounding box tight around the hot pixels.
+                            thisFeature.CalculateHeat_ShrinkBox(CurrInputImage, currGray);
+
                             featuresInBlock.AddFeature(thisFeature);
                             YoloProcess.LegFrameFeatures.Add(new YoloFeatureSeen { BlockId = blockID, Box = thisFeature.PixelBox, FeatureId = thisFeature.FeatureId });
                         }
+
+                    currGray.Dispose();
+                    currBmp.Dispose();
                 }
 
                 // Deprecated thisBlock.NumSig = YoloProcess.ProcessBlock(this, CurrInputImage, imgThreshold, results);

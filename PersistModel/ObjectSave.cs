@@ -343,6 +343,7 @@ namespace SkyCombImage.PersistModel
         // Save population summary data, pivots and graphs
         public void SavePopulation(ProcessObjList objects)
         {
+            int phase = 0;
             try
             {
                 Data.SelectOrAddWorksheet(PopulationTabName);
@@ -355,20 +356,31 @@ namespace SkyCombImage.PersistModel
                 (var objectWs, int maxObjRow) = Data.EndRow(Objects1TabName);
                 if (maxObjRow > 2)
                 {
+                    phase = 1;
                     AddObjectHeightPivot(objectWs, maxObjRow);
+                    
+                    phase = 2;
                     AddObjectSizePivot(objectWs, maxObjRow);
+
+                    phase = 3;
                     AddObjectHeatPivot(objectWs, maxObjRow);
 
+                    phase = 4;
                     AddObjectHeightGraph();
+
+                    phase = 5;
                     AddObjectSizeGraph();
+
+                    phase = 6;
                     AddObjectHeatGraph();
                 }
 
+                phase = 7;
                 Data.SetLastUpdateDateTime(PopulationTabName);
             }
             catch (Exception ex)
             {
-                throw ThrowException("ProcessSaveObject.SavePopulation", ex);
+                throw ThrowException("ProcessSaveObject.SavePopulation: Phase " + phase.ToString(), ex);
             }
         }
     }

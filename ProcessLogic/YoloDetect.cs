@@ -76,6 +76,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Run Yolo object detection on a single frame (image)
         public List<ObjectDetection>? DetectFrame(System.Drawing.Image raw_image)
         {
             List<ObjectDetection>? answer = null;

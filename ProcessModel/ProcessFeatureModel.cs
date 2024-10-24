@@ -140,7 +140,7 @@ namespace SkyCombImage.ProcessModel
                 { "Type", Type.ToString() },
                 { "Northing M", (LocationM != null ? LocationM.NorthingM : 0), LocationNdp },
                 { "Easting M", (LocationM != null ? LocationM.EastingM : 0), LocationNdp },
-                { "Height M", (HeightM == UnknownValue ? UnknownHeight : HeightM), HeightNdp },
+                { "HeightM", (HeightM == UnknownValue ? UnknownHeight : HeightM), HeightNdp },
                 { "Ht Algorithm", HeightAlgorithm },
                 { "Box.X", PixelBox.X },
                 { "Box.Y", PixelBox.Y },

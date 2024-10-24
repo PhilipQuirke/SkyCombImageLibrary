@@ -1,4 +1,5 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+using Emgu.CV.Structure;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
@@ -28,6 +29,8 @@ namespace SkyCombImage.ProcessLogic
 
             ProcessAll = processAll;
             Block = processAll.Blocks[blockId];
+            if (type != FeatureTypeEnum.Unreal)
+                Pixels = new();
         }
 
 
@@ -51,9 +54,28 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        protected void CalcNumHotPixels()
+        {
+            NumHotPixels = (Pixels == null ? 0 : Pixels.Count());
+        }
+
+
         public void ClearHotPixels()
         {
             Pixels = null;
+            CalcNumHotPixels();
+        }
+
+
+        protected void AddHotPixel(int currY, int currX, Bgr currColor)
+        {
+            int currHeat = (int)((currColor.Blue + currColor.Green + currColor.Red) / 3);
+
+            MinHeat = Math.Min(MinHeat, currHeat);
+            MaxHeat = Math.Max(MaxHeat, currHeat);
+
+            Pixels.Add(new PixelHeat(BlockId, FeatureId, currY, currX, currHeat));
+            CalcNumHotPixels();
         }
 
 
