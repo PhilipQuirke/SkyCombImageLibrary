@@ -112,11 +112,6 @@ namespace SkyCombImage.CategorySpace
         // Maximum valid size of this category of object in cm2
         public float MaxSizeCM2 { get; set; }
 
-        // Minimum valid temperature of this category of object
-        public float MinTemp { get; set; }
-        // Maximum valid temperature of this category of object
-        public float MaxTemp { get; set; }
-
 
         public MasterCategoryModel(
             string category = "",
@@ -124,15 +119,11 @@ namespace SkyCombImage.CategorySpace
             string notes = "",
             bool terrestrial = true,
             float minSizeCM2 = 0.0f,
-            float maxSizeCM2 = 0.0f,
-            float minTemp = 0.0f,
-            float maxTemp = 0.0f) : base(category, include, notes)
+            float maxSizeCM2 = 0.0f) : base(category, include, notes)
         {
             Terrestrial = terrestrial;
             MinSizeCM2 = minSizeCM2;
             MaxSizeCM2 = maxSizeCM2;
-            MinTemp = minTemp;
-            MaxTemp = maxTemp;
         }
 
 
@@ -150,9 +141,8 @@ namespace SkyCombImage.CategorySpace
                 base.Equals(other) &&
                 this.Terrestrial == other.Terrestrial &&
                 this.MinSizeCM2 == other.MinSizeCM2 &&
-                this.MaxSizeCM2 == other.MaxSizeCM2 &&
-                this.MinTemp == other.MinTemp &&
-                this.MaxTemp == other.MaxTemp;
+                this.MaxSizeCM2 == other.MaxSizeCM2;
+
         }
 
 
@@ -172,8 +162,6 @@ namespace SkyCombImage.CategorySpace
             answer.Add("Terrestrial", Terrestrial);
             answer.Add("MinSizeCM2", MinSizeCM2, AreaCM2Ndp);
             answer.Add("MaxSizeCM2", MaxSizeCM2, AreaCM2Ndp);
-            answer.Add("MinTemp", MinTemp, TemperatureNdp);
-            answer.Add("MaxTemp", MaxTemp, TemperatureNdp);
 
             return answer;
         }
@@ -188,10 +176,55 @@ namespace SkyCombImage.CategorySpace
             Terrestrial = StringToBool(settings[TerrestrialSetting - 1]);
             MinSizeCM2 = StringToNonNegFloat(settings[MinSizeCM2Setting - 1]);
             MaxSizeCM2 = StringToNonNegFloat(settings[MaxSizeCM2Setting - 1]);
-            MinTemp = StringToNonNegFloat(settings[MinTempSetting - 1]);
-            MaxTemp = StringToNonNegFloat(settings[MaxTempSetting - 1]);
         }
     };
+
+
+    public class MasterAreaModel
+    {
+        public string Name { get; }
+
+        // Top-down area range in cm²
+        public int MinAreaCM2 { get; }
+        public int MaxAreaCM2 { get; }
+
+        // Animals in this category
+        public string Animals { get; }
+
+        public MasterAreaModel(string name, int minAreaCM2, int maxAreaCM2, string animals)
+        {
+            Name = name;
+            MinAreaCM2 = minAreaCM2;
+            MaxAreaCM2 = maxAreaCM2;
+            Animals = animals;
+        }   
+    }
+
+
+    public class MasterAreaList : List<MasterAreaModel>
+    {
+        public MasterAreaList()
+        {
+            Add(new("XXS", 0, 100, "Mouse, Rats, Birds"));
+            Add(new("XS", 100, 500, "Rats, Rabbits, Possums, Birds"));
+            Add(new("S", 500, 1000, "Cats, Possums, Rabbits, Dogs, Person, Birds"));
+            Add(new("M", 1000, 2500, "Wallabies, Rabbits, Dogs, Goats, Person, Birds"));
+            Add(new("L", 2500, 5000, "Dogs, Goats, Sheep, Pigs, Deer"));
+            Add(new("XL", 5000, 10000, "Sheep, Pigs, Deer, Cows"));
+            Add(new("XXL", 10000, 20000, "Cows, Deer"));
+            Add(new("XXL", 20000, int.MaxValue, "Water"));
+        }
+
+        // Return the MasterAreaModel Name that bestr matches the szie
+        public string AreaCM2ToClass(int areaCM2)
+        {
+            foreach( var areaModel in this)
+                if((areaModel.MinAreaCM2 <= areaCM2) && (areaModel.MaxAreaCM2 >= areaCM2))
+                    return areaModel.Name;
+
+            return "Unknown";
+        }
+    }
 
 
     // An "MasterCategoryList" represents all the MasterCategoryModel supported.
@@ -204,22 +237,71 @@ namespace SkyCombImage.CategorySpace
         }
 
 
-        // Default NZ values
+        // Default NZ values. Areas assume animal seen from above has a ellipsoid shape.
         public void Default()
         {
             Clear();
-            Add(new("Bird", true, "", false));
-            Add(new("Cat", true, "", false, 120, 600)); // PQR TODO TBC
-            Add(new("Dog", true, "", true, 120, 800)); // PQR TODO TBC
+
+            Add(new("Mouse", true, "", false, 19, 24));
+            // Smallest(standing): House mouse (~8 cm × ~3 cm) = 19 cm²
+            // Largest(lying down): Slightly larger house mouse (~10 cm × ~3 cm) = 24 cm²
+
+            Add(new("Rat", true, "", false, 63, 137));
+            // Smallest(standing): Ship rat (~16 cm × ~5 cm) = 63 cm²
+            // Largest(lying down): Norway rat (~25 cm × ~7 cm) = 137 cm²
+
+            Add(new("Rabbit", true, "", true, 157, 1885));
+            // Smallest(standing): Netherland Dwarf (~20 cm × ~10 cm) = 157 cm²
+            // Largest(lying down): Flemish Giant (~80 cm × ~30 cm) = 1,885 cm²
+
+            Add(new("Cat", true, "", false, 541, 942));
+            // Smallest(standing): Small domestic cat (~46 cm × ~15 cm) = 541 cm²
+            // Largest(lying down): Large domestic cat (~60 cm × ~20 cm) = 942 cm²
+
+            Add(new("Possum", true, "", false, 377, 911));
+            // Smallest(standing): Common brushtail possum (~32 cm × ~15 cm) = 377 cm²
+            // Largest(lying down): Larger brushtail possum (~58 cm × ~20 cm) = 911 cm²
+
+            Add(new("Bird", true, "", false, 39, 3162));
+            // Smallest(standing): Fantail (~10 cm × ~5 cm) = 39 cm²
+            // Largest(lying down): Royal albatross (~115 cm × ~35 cm) = 3,162 cm²
+
+            Add(new("Wallaby", true, "", true, 785, 1767)); 
+            // Smallest(standing): Dama wallaby (~50 cm × ~20 cm) = 785 cm²
+            // Largest(lying down): Bennett's wallaby (~90 cm × ~25 cm) = 1,767 cm²
+
+            Add(new("Dog", true, "", true, 353, 2827));
+            // Smallest(standing): Jack Russell Terrier(~30 cm × ~15 cm) = 353 cm²
+            // Largest(lying down): German Shepherd(~100 cm × ~36 cm) = 2,827 cm²
+
+            Add(new("Goat", true, "", true, 1767, 4712));
+            // Smallest(standing): Arapawa goat(~75 cm × ~30 cm) = 1,767 cm²
+            // Largest(lying down): Boer goat(~120 cm × ~50 cm) = 4,712 cm²
+
+            Add(new("Sheep", true, "", true, 3142, 6123));
+            // Smallest(standing): Merino sheep(~100 cm × ~40 cm) = 3,142 cm²
+            // Largest(lying down): Romney sheep(~130 cm × ~60 cm) = 6,123 cm²
+
+            Add(new("Pig", true, "", true, 3927, 9889));
+            // Smallest(standing): Kunekune pig (~100 cm × ~50 cm) = 3,927 cm²
+            // Largest(lying down): Large White pig(~180 cm × ~70 cm) = 9,889 cm²
+
+            Add(new("Deer", true, "", true, 3024, 10996));
+            // Smallest(standing): Fallow deer (~110 cm × ~35 cm) = 3,024 cm²
+            // Largest(lying down): Red deer (~200 cm × ~70 cm) = 10,996 cm²
+
+            Add(new("Cow", true, "", true, 9889, 18850));
+            // Smallest(standing): Jersey cow (~180 cm × ~70 cm) = 9,889 cm²
+            // Largest(lying down): Holstein Friesian cow (~240 cm × ~100 cm) = 18,850 cm²
+
+            Add(new("Person", false, "", true, 943, 1571));
+            // Smallest(standing): Adult of smaller stature (~30 cm × ~40 cm) = 943 cm²
+            // Largest(lying down): Taller adult (~40 cm × ~50 cm) = 1,571 cm²
+
             Add(new("Inanimate", false, "", true));
-            Add(new("Mammal", true, "4 legged animal")); // PQR TODO TBC
-            Add(new("Person", false, "", false, 250, 1200)); // PQR TODO TBC
-            Add(new("Pig", true, "", true, 120, 800)); // PQR TODO TBC
-            Add(new("Possum", true, "", false, 120, 700));
-            Add(new("Rabbit", true, "Rabbit or wallaby", true, 50, 180)); // PQR TODO TBC
-            Add(new("Rat", true, "Rat, hedgehog, ferret or stoat", true, 10, 60)); // PQR TODO TBC
-            Add(new("Stone", false, "Stone or concrete", true));
-            Add(new("Ungulate", true, "Cow, horse, deer or lama", true, 250, 3000)); // PQR TODO TBC
+
+            Add(new("Stone", false, "", true));
+
             Add(new("Water", false, "", true));
         }
 
