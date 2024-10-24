@@ -201,24 +201,28 @@ namespace SkyCombImage.CategorySpace
     }
 
 
-    public class MasterAreaList : List<MasterAreaModel>
+    public class MasterAreaList
     {
-        public MasterAreaList()
+        static public List<MasterAreaModel> Get()
         {
-            Add(new("XXS", 0, 100, "Mouse, Rats, Birds"));
-            Add(new("XS", 100, 500, "Rats, Rabbits, Possums, Birds"));
-            Add(new("S", 500, 1000, "Cats, Possums, Rabbits, Dogs, Person, Birds"));
-            Add(new("M", 1000, 2500, "Wallabies, Rabbits, Dogs, Goats, Person, Birds"));
-            Add(new("L", 2500, 5000, "Dogs, Goats, Sheep, Pigs, Deer"));
-            Add(new("XL", 5000, 10000, "Sheep, Pigs, Deer, Cows"));
-            Add(new("XXL", 10000, 20000, "Cows, Deer"));
-            Add(new("XXL", 20000, int.MaxValue, "Water"));
+            List<MasterAreaModel> answer = new();
+
+            answer.Add(new("XXS", 0, 100, "Mouse, Rats, Birds"));
+            answer.Add(new("XS", 100, 500, "Rats, Rabbits, Possums, Birds"));
+            answer.Add(new("S", 500, 1000, "Cats, Possums, Rabbits, Dogs, Person, Birds"));
+            answer.Add(new("M", 1000, 2500, "Wallabies, Rabbits, Dogs, Goats, Person, Birds"));
+            answer.Add(new("L", 2500, 5000, "Dogs, Goats, Sheep, Pigs, Deer"));
+            answer.Add(new("XL", 5000, 10000, "Sheep, Pigs, Deer, Cows"));
+            answer.Add(new("XXL", 10000, 20000, "Cows, Deer"));
+            answer.Add(new("XXL", 20000, int.MaxValue, "Water"));
+
+            return answer;
         }
 
         // Return the MasterAreaModel Name that bestr matches the szie
-        public string AreaCM2ToClass(int areaCM2)
+        static public string AreaCM2ToClass(int areaCM2)
         {
-            foreach( var areaModel in this)
+            foreach( var areaModel in Get())
                 if((areaModel.MinAreaCM2 <= areaCM2) && (areaModel.MaxAreaCM2 >= areaCM2))
                     return areaModel.Name;
 

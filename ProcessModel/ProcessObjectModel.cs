@@ -314,6 +314,7 @@ namespace SkyCombImage.ProcessModel
         {
             var category = (annotation == null ? "" : annotation.Category);
             var include = (annotation == null ? "Yes" : (annotation.Include ? "Yes" : "No"));
+            var areaClass = MasterAreaList.AreaCM2ToClass((int)SizeCM2);
 
             return new DataPairList
             {
@@ -321,7 +322,7 @@ namespace SkyCombImage.ProcessModel
                 { "Category", category },
                 { "Include", include },
                 { "Height (cm)", (HeightM <= UnknownValue ? UnknownValue : HeightM * 100), 0 },
-                { "Size (cm2)", SizeCM2, 0 },
+                { "Size", areaClass },
                 { "From (m:ss)", VideoModel.DurationSecToString(RunFromVideoS, 1) },
                 { "For (s)", RunToVideoS - RunFromVideoS, 1 },
                 { "Location (m,m)", (LocationM != null ? LocationM.ToString() : "" ) },
