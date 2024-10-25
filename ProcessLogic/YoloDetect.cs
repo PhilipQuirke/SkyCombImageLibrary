@@ -140,6 +140,8 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        /* This relies on the PQ modified version of YoloDotNet
+          
         public Dictionary<int, List<ObjectDetection>>? DetectTimeRange(string videoFileName, int fromSecond, int toSecond)
         {
             EnsureModelLoaded();
@@ -168,23 +170,30 @@ namespace SkyCombImage.ProcessLogic
 
             return results;
         }
+        */
 
 
         public void ProcessScope(ProcessScope scope, VideoData inputVideo)
         {
-            // Yolo processing frame by frame takes approximately twice as long per frame as processing the whole video.
-            // Process all frames if user has specified a time range that is >= 50% of the video duration.
-            if (scope.PSM.InputVideoDurationMs >= inputVideo.DurationMs / 2)
-            {
-                // Process the entire video file, using YOLO and GPU. Do not create an output file yet.
-                ProcessMode = YoloProcessMode.FullVideo;
-                Results = DetectVideo(inputVideo.FileName);
-            }
-            else
-            {
-                ProcessMode = YoloProcessMode.TimeRange;
-                Results = DetectTimeRange(inputVideo.FileName, scope.PSM.FirstVideoFrameMs / 1000, scope.PSM.LastVideoFrameMs / 1000 + 1);
-            }
+            // Process the entire video file, using YOLO and GPU. Do not create an output file yet.
+            ProcessMode = YoloProcessMode.FullVideo;
+            Results = DetectVideo(inputVideo.FileName);
+
+            /* This relies on the PQ modified version of YoloDotNet
+                // Yolo processing frame by frame takes approximately twice as long per frame as processing the whole video.
+                // Process all frames if user has specified a time range that is >= 50% of the video duration.
+                if (scope.PSM.InputVideoDurationMs >= inputVideo.DurationMs / 2)
+                {
+                    // Process the entire video file, using YOLO and GPU. Do not create an output file yet.
+                    ProcessMode = YoloProcessMode.FullVideo;
+                    Results = DetectVideo(inputVideo.FileName);
+                }
+                else
+                {
+                    ProcessMode = YoloProcessMode.TimeRange;
+                    Results = DetectTimeRange(inputVideo.FileName, scope.PSM.FirstVideoFrameMs / 1000, scope.PSM.LastVideoFrameMs / 1000 + 1);
+                }
+            */
         }
 
 
@@ -193,6 +202,7 @@ namespace SkyCombImage.ProcessLogic
         {
             EnsureModelLoaded();
 
+            /* This relies on the PQ modified version of YoloDotNet
             string videoFileName = "D:\\SkyComb\\Data_Input\\CC\\2023-05-D\\DJI_20230531190425_0001_S.mp4";
             double time1 = 0;
             double time2 = 0;
@@ -238,6 +248,7 @@ namespace SkyCombImage.ProcessLogic
 
             var time = time1 + time2 + time3 + time4;
             var results = results1.Count + results2.Count + results3.Count + results4.Count;
+            */
         }
     }
 }

@@ -17,6 +17,7 @@
     <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.19.2" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu.Windows" Version="1.19.2" />
     <PackageReference Include="SkiaSharp" Version="2.88.8" />
+    <PackageReference Include="YoloDotNet" Version="2.2.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,12 +28,6 @@
   <ItemGroup>
     <None Include=".github\dependabot.yml" />
     <None Include="YoloDotNet.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="YoloDotNet">
-      <HintPath>C:\Users\phili\source\repos\YoloDotNet\YoloDotNet\bin\Debug\net8.0\YoloDotNet.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>

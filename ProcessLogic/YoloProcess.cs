@@ -37,8 +37,8 @@ namespace SkyCombImage.ProcessLogic
         public override void PreRunStart(ProcessScope scope)
         {
             YoloDetect.ProcessMode = YoloProcessMode.ByFrame;
-            return;
 
+            /* This relies on the PQ modified version of YoloDotNet
             if (Drone.UseFlightLegs)
             {
                 // "Frame inaccuracies" builds up when processing long sequences of frames.
@@ -72,6 +72,7 @@ namespace SkyCombImage.ProcessLogic
             else
                 // Process the entire scope, using YOLO and GPU. Do not create an output file yet.
                 YoloDetect.ProcessScope(scope, Drone.InputVideo);
+            */
         }
 
 
