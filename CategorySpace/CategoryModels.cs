@@ -214,7 +214,7 @@ namespace SkyCombImage.CategorySpace
             answer.Add(new("L", 2500, 5000, "Dogs, Goats, Sheep, Pigs, Deer"));
             answer.Add(new("XL", 5000, 10000, "Sheep, Pigs, Deer, Cows"));
             answer.Add(new("XXL", 10000, 20000, "Cows, Deer"));
-            answer.Add(new("XXL", 20000, int.MaxValue, "Water"));
+            answer.Add(new("XXL", 20000, 99999, "Water"));
 
             return answer;
         }
