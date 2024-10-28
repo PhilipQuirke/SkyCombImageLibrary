@@ -77,7 +77,11 @@ namespace SkyCombImage.CategorySpace
                 if (height >= minHeight && height <= maxHeight)
                     return (name, index);
             }
-            return ("Unknown", -1);
+
+            if (height < 0)
+                return ("??", 0);
+            else
+                return ("6+", NumHeights - 1);
         }
 
         // Return the count of objects in each height category

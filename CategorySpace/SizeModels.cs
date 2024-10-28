@@ -28,7 +28,7 @@ namespace SkyCombImage.CategorySpace
 
     public class MasterSizeModelList
     {
-        static public int NumAreas = 8;
+        static public int NumAreas = 7;
 
         // Cached master list of area models
         static private readonly List<MasterSizeModel> _sizeClasses;
@@ -49,7 +49,6 @@ namespace SkyCombImage.CategorySpace
                 new("L", 2500, 5000, "Dogs, Goats, Sheep, Pigs, Deer"),
                 new("XL", 5000, 10000, "Sheep, Pigs, Deer, Cows"),
                 new("XXL", 10000, 20000, "Cows, Deer"),
-                new("XXL", 20000, 99999, "Water")
             };
 
             _sizeClassIndices = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -82,7 +81,11 @@ namespace SkyCombImage.CategorySpace
                 if (areaCM2 >= minArea && areaCM2 <= maxArea)
                     return (name, index);
             }
-            return ("Unknown", -1);
+
+            if (areaCM2 < 0)
+                return ("XS", 0);
+            else
+                return ("XXL", NumAreas - 1);
         }
 
         // Return the count of objects in each size category

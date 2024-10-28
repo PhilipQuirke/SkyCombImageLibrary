@@ -3,8 +3,6 @@ using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.CommonSpace;
 using SkyCombDrone.DrawSpace;
-using SkyCombImage.ProcessLogic;
-using SkyCombImage.ProcessModel;
 using System.Drawing;
 
 
@@ -100,30 +98,6 @@ namespace SkyCombImage.DrawSpace
             {
                 throw ThrowException("DrawHistogram.CurrImage", ex);
             }
-        }
-    }
-
-
-    public class DrawHeightHistogram : DrawHistogram
-    {
-        public DrawHeightHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, ProcessObjList objs) :
-            base(drawScope, objs.HistogramHeightM(), 0, (int)Math.Ceiling(objs.MaxHeightM))
-        {
-            FilterMin = (drawObjectScope == null ? ProcessObjectModel.UnknownHeight : drawObjectScope.MinHeightIndex);
-            FilterMax = (drawObjectScope == null ? 10 : drawObjectScope.MaxHeightIndex);
-        }
-    }
-
-
-    public class DrawSizeHistogram : DrawHistogram
-    {
-        public const int Scale = 100; // Each bar represents a 100cm2 increase in size
-
-        public DrawSizeHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, ProcessObjList objs) :
-            base(drawScope, objs.HistogramSizeCm2(Scale), 0, (int)Math.Ceiling(objs.MaxSizeCM2), Scale)
-        {
-            FilterMin = 0;
-            FilterMax = (drawObjectScope == null ? 1000 : drawObjectScope.MaxSizeIndex);
         }
     }
 
