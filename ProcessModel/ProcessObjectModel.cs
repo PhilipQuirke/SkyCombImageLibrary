@@ -314,7 +314,7 @@ namespace SkyCombImage.ProcessModel
         {
             var category = (annotation == null ? "" : annotation.Category);
             var include = (annotation == null ? "Yes" : (annotation.Include ? "Yes" : "No"));
-            var areaClass = MasterAreaList.AreaCM2ToClass((int)SizeCM2);
+            (var areaClass, var _) = MasterSizeClassList.CM2ToClass((int)SizeCM2);
 
             return new DataPairList
             {

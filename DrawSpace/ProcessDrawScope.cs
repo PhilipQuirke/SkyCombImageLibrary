@@ -2,6 +2,7 @@
 using SkyCombDrone.DrawSpace;
 using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
+using SkyCombImage.CategorySpace;
 using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
 
@@ -124,7 +125,7 @@ namespace SkyCombImage.DrawSpace
 
 
     // Code to draw images related to process object data in charts, graphs,etc.
-    public class ObjectDrawScope : ProcessDrawScope // : DroneDrawScope : TardisDrawScope
+    public class ObjectDrawScope : ProcessDrawScope 
     {
         // First millisecond object visible
         public int FirstObjectMs;
@@ -134,8 +135,8 @@ namespace SkyCombImage.DrawSpace
         // Optional filters on the objects to draw
         public int MinHeightM;
         public int MaxHeightM;
-        public int MinSizeCM2;
-        public int MaxSizeCM2;
+        public int MinSizeClass;
+        public int MaxSizeClass;
 
         public int NumObjects;
         public int NumFilteredObjects;
@@ -166,8 +167,8 @@ namespace SkyCombImage.DrawSpace
             LastObjectMs = UnknownValue;
             MinHeightM = ProcessObjectModel.UnknownHeight;
             MaxHeightM = ProcessObjectModel.UnknownHeight;
-            MinSizeCM2 = UnknownValue;
-            MaxSizeCM2 = UnknownValue;
+            MinSizeClass = 0;
+            MaxSizeClass = MasterSizeClassList.NumAreas-1;
 
             NumObjects = 0;
             NumFilteredObjects = NumObjects;
@@ -182,8 +183,8 @@ namespace SkyCombImage.DrawSpace
             {
                 MinHeightM = (int)Math.Floor(objList.MinHeightM); // If we have negative heights show them
                 MaxHeightM = (int)Math.Ceiling(objList.MaxHeightM);
-                MinSizeCM2 = (int)Math.Floor(objList.MinSizeCM2);
-                MaxSizeCM2 = (int)Math.Ceiling(objList.MaxSizeCM2);
+                MinSizeClass = 0;
+                MaxSizeClass = MasterSizeClassList.NumAreas - 1;
 
                 NumObjects = objList.Count;
                 NumFilteredObjects = NumObjects;

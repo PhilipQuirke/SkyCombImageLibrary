@@ -55,7 +55,7 @@ namespace SkyCombImage.DrawSpace
             MaxHorizRaw--;
 
             if (BaseImage != null)
-                DrawAxisesAndLabels(ref BaseImage);
+                DrawAxises(ref BaseImage);
         }
 
 
@@ -123,7 +123,7 @@ namespace SkyCombImage.DrawSpace
             base(drawScope, objs.HistogramSizeCm2(Scale), 0, (int)Math.Ceiling(objs.MaxSizeCM2), Scale)
         {
             FilterMin = 0;
-            FilterMax = (drawObjectScope == null ? 1000 : drawObjectScope.MaxSizeCM2);
+            FilterMax = (drawObjectScope == null ? 1000 : drawObjectScope.MaxSizeClass);
         }
     }
 

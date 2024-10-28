@@ -462,7 +462,7 @@ namespace SkyCombImage.DrawSpace
                     MinVertRaw = (float)Math.Floor(focusObject.MinHeightM);
                     MaxVertRaw = (float)Math.Ceiling(focusObject.MaxHeightM);
 
-                    DrawAxisesAndLabels(ref image);
+                    DrawAxises(ref image);
                     SetHorizLabelsByTime();
                     SetVerticalLabels("m", "0");
 
