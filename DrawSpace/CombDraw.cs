@@ -283,8 +283,6 @@ namespace SkyCombImage.DrawSpace
         {
             Process = process;
             DrawScope = drawScope;
-            Description +=
-                "Object location and height and related error bars (in meters) are shown.";
         }
 
 
@@ -331,93 +329,6 @@ namespace SkyCombImage.DrawSpace
             catch (Exception ex)
             {
                 throw ThrowException("ProcessDrawAltitudeByLinealM.GraphObjects", ex);
-            }
-        }
-
-
-        // Draw altitude data based on Drone/GroundSpace & RunSpace data
-        public override void CurrImage(ref Image<Bgr, byte> image)
-        {
-            GraphObjects(ref image);
-        }
-    }
-
-
-
-    // Code to draw ground tree-top & drone altitudes against time, with objects overlaid
-    public class ProcessDrawAltitudeByTime : DrawAltitudeByTime
-    {
-        private ProcessAll Process { get; }
-        private ProcessDrawScope DrawScope { get; }
-
-
-        public ProcessDrawAltitudeByTime(ProcessAll process, ProcessDrawScope drawScope) : base(drawScope)
-        {
-            Process = process;
-            DrawScope = drawScope;
-            Description +=
-                "Object location, height, height error bar, and duration seen are shown.";
-        }
-
-
-        // Draw altitude data dependant on Drone/GroundSpace data (but not RunSpace data)
-        public override void Initialise(Size size)
-        {
-            base.Initialise(size);
-
-            GraphObjects(ref BaseImage);
-        }
-
-
-        // Draw object at best estimate of height and center of period seen
-        // Draw object "visible duration" as horizontally-stretched H
-        // Draw object "height error" as vertically-stretched H
-        public void GraphObjects(ref Image<Bgr, byte> currImage)
-        {
-            try
-            {
-                if ((DroneDrawScope.Drone != null) && (Process != null) && (Process.ProcessObjects.Count > 0))
-                {
-                    foreach (var thisObject in Process.ProcessObjects)
-                        if (thisObject.Value.Significant)
-                        {
-                            var avgHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.HeightM - MinVertRaw, VertRangeRaw));
-                            var minHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.MinHeightM - MinVertRaw, VertRangeRaw));
-                            var maxHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.MaxHeightM - MinVertRaw, VertRangeRaw));
-
-                            var firstFlightMs = (int)(thisObject.Value.RunFromVideoS * 1000);
-                            var lastFlightMs = (int)(thisObject.Value.RunToVideoS * 1000);
-
-                            var firstFlightStep = DroneDrawScope.Drone.MsToNearestFlightStep(firstFlightMs);
-                            var lastFlightStep = DroneDrawScope.Drone.MsToNearestFlightStep(lastFlightMs);
-
-                            if ((firstFlightStep != null) && (lastFlightStep != null))
-                            {
-                                var theBgr = DroneColors.OutScopeObjectBgr;
-                                if (thisObject.Value.InRunScope(DrawScope.ProcessScope))
-                                    theBgr = DroneColors.InScopeObjectBgr;
-
-                                int firstWidth = StepToWidthBySection(firstFlightStep.FlightSection.TardisId);
-                                int lastWidth = StepToWidthBySection(lastFlightStep.FlightSection.TardisId);
-                                int middleWidth = (firstWidth + lastWidth) / 2;
-
-                                if (DroneDrawScope.DrawFullFlight())
-                                {
-                                    Assert(!(firstWidth > Size.Width + 1 || firstWidth < 0), "DrawAltitudeByTime.GraphObjects: firstWidth out of bounds");
-                                    Assert(!(lastWidth > Size.Width + 1 || lastWidth < 0), "DrawAltitudeByTime.GraphObjects: lastWidth out of bounds");
-                                    Assert(!(middleWidth > Size.Width + 1 || middleWidth < 0), "DrawAltitudeByTime.GraphObjects: middleWidth out of bounds");
-                                }
-
-                                DrawObject(ref currImage, theBgr,
-                                    minHeight, avgHeight, maxHeight,
-                                    firstWidth, middleWidth, lastWidth);
-                            }
-                        }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ThrowException("ProcessDrawAltitudeByTime.GraphObjects", ex);
             }
         }
 
