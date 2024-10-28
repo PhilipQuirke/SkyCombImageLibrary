@@ -923,19 +923,20 @@ namespace SkyCombImage.ProcessLogic
             {
                 var theObj = theObject.Value;
 
-                if ((objectScope.MinHeightM != BaseConstants.UnknownValue))
+                if ((objectScope.MinHeightIndex != BaseConstants.UnknownValue))
                 {
-                    if (theObj.HeightM < objectScope.MinHeightM)
+                    (var _, var heightIndex) = MasterHeightModelList.HeightMToClass(theObj.HeightM);
+                    if (heightIndex < objectScope.MinHeightIndex)
                         continue;
-                    if (theObj.HeightM > objectScope.MaxHeightM)
+                    if (heightIndex > objectScope.MaxHeightIndex)
                         continue;
                 }
-                if ((theObj.SizeCM2 != BaseConstants.UnknownValue) && (objectScope.MinSizeClass != BaseConstants.UnknownValue))
+                if ((theObj.SizeCM2 != BaseConstants.UnknownValue) && (objectScope.MinSizeIndex != BaseConstants.UnknownValue))
                 {
-                    (var _, var sizeIndex) = MasterSizeClassList.CM2ToClass((int)theObj.SizeCM2);
-                    if (sizeIndex < objectScope.MinSizeClass)
+                    (var _, var sizeIndex) = MasterSizeModelList.CM2ToClass((int)theObj.SizeCM2);
+                    if (sizeIndex < objectScope.MinSizeIndex)
                         continue;
-                    if (sizeIndex > objectScope.MaxSizeClass)
+                    if (sizeIndex > objectScope.MaxSizeIndex)
                         continue;
                 }
 

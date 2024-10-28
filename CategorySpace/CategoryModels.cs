@@ -1,6 +1,5 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using SkyCombGround.CommonSpace;
-using SkyCombImage.ProcessLogic;
 
 
 // Models are used in-memory and to persist/load data to/from the datastore
@@ -106,7 +105,7 @@ namespace SkyCombImage.CategorySpace
     public class MasterCategoryModel : CategoryModel
     {
         // Is the animal restricted to the ground? That is, unable to climb or fly.
-        public bool Terrestrial { get; set; }
+        public bool Grounded { get; set; }
 
         // Minimum valid size of this category of object in cm2
         public float MinSizeCM2 { get; set; }
@@ -122,7 +121,7 @@ namespace SkyCombImage.CategorySpace
             float minSizeCM2 = 0.0f,
             float maxSizeCM2 = 0.0f) : base(category, include, notes)
         {
-            Terrestrial = terrestrial;
+            Grounded = terrestrial;
             MinSizeCM2 = minSizeCM2;
             MaxSizeCM2 = maxSizeCM2;
         }
@@ -140,7 +139,7 @@ namespace SkyCombImage.CategorySpace
         {
             return
                 base.Equals(other) &&
-                this.Terrestrial == other.Terrestrial &&
+                this.Grounded == other.Grounded &&
                 this.MinSizeCM2 == other.MinSizeCM2 &&
                 this.MaxSizeCM2 == other.MaxSizeCM2;
 
@@ -148,7 +147,7 @@ namespace SkyCombImage.CategorySpace
 
 
         // One-based settings index values. Must align with GetSettings procedure below     
-        public const int TerrestrialSetting = 4;
+        public const int GroundedSetting = 4;
         public const int MinSizeCM2Setting = 5;
         public const int MaxSizeCM2Setting = 6;
         public const int MinTempSetting = 7;
@@ -160,7 +159,7 @@ namespace SkyCombImage.CategorySpace
         {
             var answer = base.GetSettings();
 
-            answer.Add("Terrestrial", Terrestrial);
+            answer.Add("Grounded", Grounded);
             answer.Add("MinSizeCM2", MinSizeCM2, AreaCM2Ndp);
             answer.Add("MaxSizeCM2", MaxSizeCM2, AreaCM2Ndp);
 
@@ -174,106 +173,11 @@ namespace SkyCombImage.CategorySpace
         {
             base.LoadSettings_Internal(settings, 0);
 
-            Terrestrial = StringToBool(settings[TerrestrialSetting - 1]);
+            Grounded = StringToBool(settings[GroundedSetting - 1]);
             MinSizeCM2 = StringToNonNegFloat(settings[MinSizeCM2Setting - 1]);
             MaxSizeCM2 = StringToNonNegFloat(settings[MaxSizeCM2Setting - 1]);
         }
     };
-
-
-    public class MasterAreaModel
-    {
-        public string Name { get; }
-
-        // Top-down area range in cm²
-        public int MinAreaCM2 { get; }
-        public int MaxAreaCM2 { get; }
-
-        // Animals in this category
-        public string Animals { get; }
-
-        public MasterAreaModel(string name, int minAreaCM2, int maxAreaCM2, string animals)
-        {
-            Name = name;
-            MinAreaCM2 = minAreaCM2;
-            MaxAreaCM2 = maxAreaCM2;
-            Animals = animals;
-        }   
-    }
-
-
-    public class MasterSizeClassList
-    {
-        static public int NumAreas = 8;
-
-        // Cached master list of area models
-        static private readonly List<MasterAreaModel> _sizeClasses;
-        // Dictionary for quick name-to-index lookup
-        static private readonly Dictionary<string, int> _sizeClassIndices;
-        // List of tuples for area range lookup
-        static private readonly List<(int MinAreaCM2, int MaxAreaCM2, string Name, int Index)> _areaRanges;
-
-        // Static constructor to initialize data once
-        static MasterSizeClassList()
-        {
-            _sizeClasses = new List<MasterAreaModel>
-            {
-                new("XXS", 0, 100, "Mouse, Rats, Birds"),
-                new("XS", 100, 500, "Rats, Rabbits, Possums, Birds"),
-                new("S", 500, 1000, "Cats, Possums, Rabbits, Dogs, Person, Birds"),
-                new("M", 1000, 2500, "Wallabies, Rabbits, Dogs, Goats, Person, Birds"),
-                new("L", 2500, 5000, "Dogs, Goats, Sheep, Pigs, Deer"),
-                new("XL", 5000, 10000, "Sheep, Pigs, Deer, Cows"),
-                new("XXL", 10000, 20000, "Cows, Deer"),
-                new("XXL", 20000, 99999, "Water")
-            };
-
-            _sizeClassIndices = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            _areaRanges = new List<(int, int, string, int)>();
-
-            for (int i = 0; i < _sizeClasses.Count; i++)
-            {
-                var areaModel = _sizeClasses[i];
-                // Map name to index
-                if (!_sizeClassIndices.ContainsKey(areaModel.Name))
-                    _sizeClassIndices[areaModel.Name] = i;
-
-                // Prepare area ranges for lookup
-                _areaRanges.Add((areaModel.MinAreaCM2, areaModel.MaxAreaCM2, areaModel.Name, i));
-            }
-        }
-
-        static public List<MasterAreaModel> Get() => _sizeClasses;
-
-        static public int GetSizeClassIndex(string sizeClass)
-        {
-            return _sizeClassIndices.TryGetValue(sizeClass, out int index) ? index : -1;
-        }
-
-        // Return the MasterAreaModel Name that best matches the size
-        static public (string, int) CM2ToClass(int areaCM2)
-        {
-            foreach (var (minArea, maxArea, name, index) in _areaRanges)
-            {
-                if (areaCM2 >= minArea && areaCM2 <= maxArea)
-                    return (name, index);
-            }
-            return ("Unknown", -1);
-        }
-
-        // Return the count of objects in each size category
-        static public List<int> GetObjectCountBySizeClass(ProcessObjList objects)
-        {
-            var answer = new int[NumAreas];
-            foreach (var obj in objects)
-            {
-                var (_, index) = CM2ToClass((int)obj.Value.SizeCM2);
-                if (index >= 0 && index < NumAreas)
-                    answer[index]++;
-            }
-            return new List<int>(answer);
-        }
-    }
 
 
     // An "MasterCategoryList" represents all the MasterCategoryModel supported.

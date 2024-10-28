@@ -109,8 +109,8 @@ namespace SkyCombImage.DrawSpace
         public DrawHeightHistogram(ProcessDrawScope drawScope, ObjectDrawScope drawObjectScope, ProcessObjList objs) :
             base(drawScope, objs.HistogramHeightM(), 0, (int)Math.Ceiling(objs.MaxHeightM))
         {
-            FilterMin = (drawObjectScope == null ? ProcessObjectModel.UnknownHeight : drawObjectScope.MinHeightM);
-            FilterMax = (drawObjectScope == null ? 10 : drawObjectScope.MaxHeightM);
+            FilterMin = (drawObjectScope == null ? ProcessObjectModel.UnknownHeight : drawObjectScope.MinHeightIndex);
+            FilterMax = (drawObjectScope == null ? 10 : drawObjectScope.MaxHeightIndex);
         }
     }
 
@@ -123,7 +123,7 @@ namespace SkyCombImage.DrawSpace
             base(drawScope, objs.HistogramSizeCm2(Scale), 0, (int)Math.Ceiling(objs.MaxSizeCM2), Scale)
         {
             FilterMin = 0;
-            FilterMax = (drawObjectScope == null ? 1000 : drawObjectScope.MaxSizeClass);
+            FilterMax = (drawObjectScope == null ? 1000 : drawObjectScope.MaxSizeIndex);
         }
     }
 

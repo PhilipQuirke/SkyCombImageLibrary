@@ -133,10 +133,10 @@ namespace SkyCombImage.DrawSpace
         public int LastObjectMs;
 
         // Optional filters on the objects to draw
-        public int MinHeightM;
-        public int MaxHeightM;
-        public int MinSizeClass;
-        public int MaxSizeClass;
+        public int MinHeightIndex;
+        public int MaxHeightIndex;
+        public int MinSizeIndex;
+        public int MaxSizeIndex;
 
         public int NumObjects;
         public int NumFilteredObjects;
@@ -165,10 +165,10 @@ namespace SkyCombImage.DrawSpace
         {
             FirstObjectMs = UnknownValue;
             LastObjectMs = UnknownValue;
-            MinHeightM = ProcessObjectModel.UnknownHeight;
-            MaxHeightM = ProcessObjectModel.UnknownHeight;
-            MinSizeClass = 0;
-            MaxSizeClass = MasterSizeClassList.NumAreas-1;
+            MinHeightIndex = 0;
+            MaxHeightIndex = MasterHeightModelList.NumHeights - 1;
+            MinSizeIndex = 0;
+            MaxSizeIndex = MasterSizeModelList.NumAreas - 1;
 
             NumObjects = 0;
             NumFilteredObjects = NumObjects;
@@ -181,10 +181,10 @@ namespace SkyCombImage.DrawSpace
                 ResetMemberData();
             else
             {
-                MinHeightM = (int)Math.Floor(objList.MinHeightM); // If we have negative heights show them
-                MaxHeightM = (int)Math.Ceiling(objList.MaxHeightM);
-                MinSizeClass = 0;
-                MaxSizeClass = MasterSizeClassList.NumAreas - 1;
+                MinHeightIndex = 0;
+                MaxHeightIndex = MasterHeightModelList.NumHeights - 1;
+                MinSizeIndex = 0;
+                MaxSizeIndex = MasterSizeModelList.NumAreas - 1;
 
                 NumObjects = objList.Count;
                 NumFilteredObjects = NumObjects;
