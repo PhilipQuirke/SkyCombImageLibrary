@@ -341,7 +341,7 @@ namespace SkyCombImage.DrawSpace
     }
 
 
-    // Code to draw comb object height - including feature estimates
+    // Code to draw object height - including feature estimates
     public class DrawObjectHeight : DrawAltitudeByTime
     {
         private ProcessAll Process { get; }
@@ -361,28 +361,16 @@ namespace SkyCombImage.DrawSpace
         {
             try
             {
-                var image = Draw.NewLightGrayImage(size);
+                Title = "Drone Height";
 
-                if (DroneDrawScope.Drone == null)
-                {
-                    Title = "Drone Height";
-                    DrawNoData(ref image);
-                }
-                else
-                {
-                    MinVertRaw = (float)Math.Floor(focusObject.MinHeightM);
-                    MaxVertRaw = (float)Math.Ceiling(focusObject.MaxHeightM);
+                MinVertRaw = (float)Math.Max(0, Math.Floor(focusObject.MinHeightM));
+                MaxVertRaw = (float)Math.Ceiling(focusObject.MaxHeightM);
 
-                    DrawAxises(ref image);
-                    SetHorizLabelsByTime();
-                    SetVerticalLabels("m", "0");
+                SetVerticalLabels("m");
+                SetHorizLabelsByTime();
 
-                    CalculateStepWidthAndStride(DroneDrawScope.FirstDrawMs, DroneDrawScope.LastDrawMs);
-
-                    BaseImage?.Dispose();
-                    BaseImage = image.Clone();
-                }
-                image.Dispose();
+                NormalCase = false;
+                base.Initialise(size);
             }
             catch (Exception ex)
             {
