@@ -34,7 +34,7 @@ namespace SkyCombImage.RunSpace
         public virtual void MainForm_LegsAllButton_Click(object sender, EventArgs args) { }
         public virtual void MainForm_SetLegRange(int from, int to) { }
 
-        public virtual void StorePictures(Image<Bgr, byte> inputFrame, Image<Bgr, byte> displayFrame) { }
+        public virtual void StorePictures(Image<Bgr, byte> inputFrame) { }
         public virtual void DrawObjectGrid() { }
         public virtual void ShowObjectCategories() { }
     }
