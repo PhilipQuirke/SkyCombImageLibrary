@@ -296,8 +296,8 @@ namespace SkyCombImage.ProcessModel
         public const int GridObjectNameSetting = 0;
         public const int GridCategorySetting = 1;
         public const int GridIncludeSetting = 2;
-        public const int GridHeightMSetting = 3;
-        public const int GridSizeCM2Setting = 4;
+        public const int GridHeightClassSetting = 3;
+        public const int GridSizeClassSetting = 4;
         public const int GridFromSecSetting = 5;
         public const int GridForSecSetting = 6;
         public const int GridLocationMSetting = 7;
@@ -315,17 +315,18 @@ namespace SkyCombImage.ProcessModel
             var category = (annotation == null ? "" : annotation.Category);
             var include = (annotation == null ? "Yes" : (annotation.Include ? "Yes" : "No"));
             (var areaClass, var _) = MasterSizeModelList.CM2ToClass((int)SizeCM2);
+            (var heightClass, var _) = MasterHeightModelList.HeightMToClass(HeightM);
 
             return new DataPairList
             {
                 { "Object", Name },
                 { "Category", category },
                 { "Include", include },
-                { "Height (cm)", (HeightM <= UnknownValue ? UnknownValue : HeightM * 100), 0 },
+                { "Height", heightClass },
                 { "Size", areaClass },
                 { "From (m:ss)", VideoModel.DurationSecToString(RunFromVideoS, 1) },
                 { "For (s)", RunToVideoS - RunFromVideoS, 1 },
-                { "Location (m,m)", (LocationM != null ? LocationM.ToString() : "" ) },
+                { "Location (m,m)", (LocationM != null ? LocationM.NorthingM.ToString("0") + "," + LocationM.EastingM.ToString("0") : "" ) },
                 { "Attributes", Attributes },
                 { "Location Err (cm)", (LocationErrM<0 ? UnknownValue : LocationErrM * 100), 0 },
                 { "Height Err (cm)", (HeightErrM<0 ? UnknownValue : HeightErrM * 100), 0 },
@@ -349,8 +350,8 @@ namespace SkyCombImage.ProcessModel
                 settings_grid[GridObjectNameSetting].Value,
                 settings_grid[GridCategorySetting].Value,
                 settings_grid[GridIncludeSetting].Value,
-                settings_grid[GridHeightMSetting].Value,
-                settings_grid[GridSizeCM2Setting].Value,
+                settings_grid[GridHeightClassSetting].Value,
+                settings_grid[GridSizeClassSetting].Value,
                 settings_grid[GridFromSecSetting].Value,
                 settings_grid[GridForSecSetting].Value,
                 settings_grid[GridLocationMSetting].Value,

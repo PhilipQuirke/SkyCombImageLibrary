@@ -39,10 +39,10 @@ namespace SkyCombImage.DrawSpace
                             theCell.Style.BackColor = BadValueColor;
                     }
 
-                    if (objectGrid.Rows[i].Cells.Count > ProcessObject.GridHeightMSetting)
+                    if (objectGrid.Rows[i].Cells.Count > ProcessObject.GridHeightClassSetting)
                     {
                         var theColor = objectsData[i][ProcessObject.GridHeightGoodSetting].ToString();
-                        var theCell = objectGrid.Rows[i].Cells[ProcessObject.GridHeightMSetting];
+                        var theCell = objectGrid.Rows[i].Cells[ProcessObject.GridHeightClassSetting];
                         if (theColor == "good")
                             theCell.Style.BackColor = GoodValueColor;
                         else if (theColor == "bad")
