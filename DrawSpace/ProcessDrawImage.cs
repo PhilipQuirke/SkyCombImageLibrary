@@ -113,19 +113,17 @@ namespace SkyCombImage.DrawSpace
 
 
         // Draw all hot pixels for current block, bounding rectangles of the owned features
-        public static void CombImage(
+        public static void DrawRunProcess(
             DrawImageConfig drawConfig, ProcessConfigModel processConfig,
             int focusObjectId, ref Image<Bgr, byte> outputImg,
             ProcessAll process, ProcessBlockModel? block, Transform transform)
         {
             try
             {
-                bool thermalImage = (transform.XMargin == 0);
-
                 if ((process != null) && (block != null))
                 {
                     // Draw the leg name on the image (if any) at bottom right
-                    if (thermalImage && (block.FlightLegId > 0))
+                    if (block.FlightLegId > 0)
                     {
                         var video = process.Drone.InputVideo;
                         int theY = video.ImageHeight * 98 / 100; // pixels
@@ -140,7 +138,7 @@ namespace SkyCombImage.DrawSpace
                         if (process.ProcessFeatures.ContainsKey(featureId))
                         {
                             var feature = process.ProcessFeatures[featureId];
-                            Assert(feature.BlockId == block.BlockId, "CombImage: Bad logic");
+                            Assert(feature.BlockId == block.BlockId, "ProcessedImage: Bad logic");
 
                             // Draw all hot pixels for the current block 
                             HotPixels(drawConfig, processConfig, ref outputImg, feature, transform);
@@ -153,116 +151,40 @@ namespace SkyCombImage.DrawSpace
                         }
                     }
                 }
-
-                if (!thermalImage)
-                {
-                    int thickness = 4;
-                    var activeBgr = DroneColors.ActiveDroneBgr;
-
-                    // We are transforming input (thermal) data to display on this display (optical) video.
-                    // Show the portion of this video covered by the transformed input data.
-                    outputImg.Draw(
-                        new Rectangle(
-                            (int)transform.XMargin,
-                            (int)transform.YMargin,
-                            (int)(outputImg.Width - 2 * transform.XMargin),
-                            (int)(outputImg.Height - 2 * transform.YMargin)),
-                        activeBgr, thickness);
-
-                    Cross(ref outputImg,
-                        new Point(outputImg.Width / 2, outputImg.Height / 2),
-                        activeBgr, thickness, thickness * 4);
-                }
             }
             catch (Exception ex)
             {
-                throw ThrowException("DrawVideoFrames.CombImage", ex);
+                throw ThrowException("DrawVideoFrames.ProcessedImage", ex);
             }
         }
 
 
-        public static void YoloImage(
-            DrawImageConfig drawConfig, ProcessConfigModel processConfig,
-            int focusObjectId, ref Image<Bgr, byte> outputImg,
-            ProcessAll process, ProcessBlockModel block, Transform transform)
-        {
-            // Thickness of lines and circles.
-            int theThickness = 1;
-            if (outputImg.Width > 1000)
-                theThickness = 2;
-
-            // During processing of a video, the YoloProcess has YoloFeatures but not YoloObjects (until after the LegEnd event)
-            foreach (var theFeature in process.ProcessFeatures)
-            {
-                if (theFeature.Value.BlockId == block.BlockId)
-                {
-                    var theColor = Color.Red;
-                    var theBox = theFeature.Value.PixelBox;
-                    var the_title = "#" + theFeature.Value.FeatureId.ToString();
-
-                    // Draw hollow bounding box
-                    BoundingRectangle(drawConfig, ref outputImg, theBox, theColor, theThickness);
-
-                    // Draw the title text 
-                    var theTitlePt = new Point(theBox.X, theBox.Y - 10);
-                    Text(ref outputImg, the_title, theTitlePt, 0.5, DroneColors.ColorToBgr(theColor));
-                }
-            }
-        }
-
-
-        // Process a single input and (maybe) display video frame for the specified block, returning the modified input&display frames to show 
-        public static (Image<Bgr, byte>?, Image<Bgr, byte>?) Draw(
+        // Process a single input video frame for the specified block, returning the modified input frames to show 
+        public static Image<Bgr, byte>? Draw(
             RunProcessEnum runProcess,
             ProcessConfigModel processConfig, DrawImageConfig drawConfig, Drone drone,
             ProcessBlockModel? block, ProcessAll processAll, int focusObjectId,
-            in Image<Bgr, byte> inputFrame, // Read-only
-            in Image<Bgr, byte> displayFrame) // Read-only
+            in Image<Bgr, byte> inputFrame) // Read-only
         {
             try
             {
                 Image<Bgr, byte>? modifiedInputFrame = null;
-                Image<Bgr, byte>? modifiedDisplayFrame = null;
 
                 if (inputFrame != null)
                 {
                     modifiedInputFrame = inputFrame.Clone();
                     if (block != null)
                     {
-                        if (runProcess == RunProcessEnum.Comb)
+                        if((runProcess == RunProcessEnum.Comb) || (runProcess == RunProcessEnum.Yolo))
                             // Draw hot objects
-                            CombImage(drawConfig, processConfig, focusObjectId,
-                                ref modifiedInputFrame, processAll, block, new());
-                        else if (runProcess == RunProcessEnum.Yolo)
-                            // Draw hot objects
-                            YoloImage(drawConfig, processConfig, focusObjectId,
+                            DrawRunProcess(drawConfig, processConfig, focusObjectId,
                                 ref modifiedInputFrame, processAll, block, new());
                         else
                             // Draw Threshold or None
                             DrawImage.Draw(runProcess, processConfig, drawConfig, ref modifiedInputFrame);
                     }
-                    if (displayFrame != null)
-                    {
-                        modifiedDisplayFrame = displayFrame.Clone();
-
-                        // For the display video, we don't show the pixels or real/unreal features. We just show objects.
-                        var newDrawConfig = drawConfig.Clone();
-                        newDrawConfig.DrawPixelColor = Color.White;
-                        newDrawConfig.DrawRealFeatureColor = Color.White;
-                        newDrawConfig.DrawUnrealFeatureColor = Color.White;
-
-                        // The display frame may be a different size (aka resolution) from the input frame. Calc the transform.
-                        // Optical video can cover a wider field of vision than thermal.
-                        // ExcludeMarginRatio is the (unitless) margin on the optical video, not visible in the thermal video, on all optical video edges
-                        var inputToDisplayTransform = Transform.ImageToImageTransform(
-                            inputFrame.Size, displayFrame.Size, drone.ExcludeDisplayMarginRatio);
-
-                        if (block != null)
-                            CombImage(newDrawConfig, processConfig, focusObjectId,
-                                ref modifiedDisplayFrame, processAll, block, inputToDisplayTransform);
-                    }
                 }
-                return (modifiedInputFrame, modifiedDisplayFrame);
+                return modifiedInputFrame;
             }
             catch (Exception ex)
             {

@@ -25,8 +25,6 @@ namespace SkyCombImage.ProcessLogic
         public int LastRunStepId { get { return MaxStepId; } }
 
         public Image<Bgr, byte>? CurrInputImage { get; set; } = null;
-        public Image<Bgr, byte>? CurrDisplayImage { get; set; } = null;
-
 
 
         public ProcessScope(Drone? drone = null)
@@ -78,8 +76,6 @@ namespace SkyCombImage.ProcessLogic
         {
             CurrInputImage?.Dispose();
             CurrInputImage = null;
-            CurrDisplayImage?.Dispose();
-            CurrDisplayImage = null;
         }
 
 
@@ -178,10 +174,6 @@ namespace SkyCombImage.ProcessLogic
                 CalculateSettings();
 
                 CurrInputImage = inputMat.ToImage<Bgr, byte>();
-                if (displayMat != null)
-                    CurrDisplayImage = displayMat.ToImage<Bgr, byte>();
-                else
-                    CurrDisplayImage = inputMat.ToImage<Bgr, byte>();
             }
         }
     }
