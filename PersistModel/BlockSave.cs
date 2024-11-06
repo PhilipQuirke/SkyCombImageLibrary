@@ -64,17 +64,6 @@ namespace SkyCombImage.PersistModel
         // Add a graph of the drone & ground elevations 
         public void AddElevationsGraph()
         {
-            /* PQR
-            AddElevationsGraph(
-                0,
-                "BlocksElevations",
-                "Drone Altitude and Ground/Surface Elevations (in M) vs Block",
-                Summary,
-                ProcessBlockModel.DsmMSetting,
-                ProcessBlockModel.DemMSetting);
-            */
-
-
             (var _, var lastRow) = Data.PrepareChartArea(GraphTabName, "BlocksElevations", TardisTabName);
             if ((lastRow > 0) && (MaxDatumId > 0) && (Summary != null) && (Summary.TardisMaxKey > 1))
             {
@@ -99,7 +88,7 @@ namespace SkyCombImage.PersistModel
             AddTravelDistGraph(
                 1,
                 "BlocksTravel",
-                "Travel distance (in lineal meters) vs Block",
+                "Travel distance (in lineal cms) vs Block",
                 Summary.GetSettings_Lineal());
         }
 

@@ -64,10 +64,12 @@ namespace SkyCombImage.CategorySpace
 
         static public List<MasterHeightModel> Get() => _heightClasses;
 
+
         static public int GetHeightClassIndex(string heightClass)
         {
             return _heightClassIndices.TryGetValue(heightClass, out int index) ? index : -1;
         }
+
 
         // Return the MasterHeightModel Name that best matches the height
         static public (string, int) HeightMToClass(double height)
@@ -84,16 +86,18 @@ namespace SkyCombImage.CategorySpace
                 return ("6+", NumHeights - 1);
         }
 
+
         // Return the count of objects in each height category
         static public List<int> GetObjectCountByHeightClass(ProcessObjList objects)
         {
             var answer = new int[NumHeights];
-            foreach (var obj in objects)
-            {
-                var (_, index) = HeightMToClass(obj.Value.HeightM);
-                if (index >= 0 && index < NumHeights)
-                    answer[index]++;
-            }
+            if(objects != null)
+                foreach (var obj in objects)
+                {
+                    var (_, index) = HeightMToClass(obj.Value.HeightM);
+                    if (index >= 0 && index < NumHeights)
+                        answer[index]++;
+                }
             return new List<int>(answer);
         }
     }

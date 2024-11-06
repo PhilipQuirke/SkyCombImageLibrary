@@ -8,7 +8,6 @@ using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombImage.RunSpace;
 using System.Drawing;
-using System.Drawing.Imaging;
 
 
 namespace SkyCombImage.PersistModel
@@ -18,29 +17,6 @@ namespace SkyCombImage.PersistModel
     {
         public StandardSave(Drone drone, DroneDataStore data) : base(drone, data)
         {
-        }
-
-
-        // Save image to disk
-        public static void ImageAsJpg(RunConfig Config, Image<Bgr, byte> imgOutput)
-        {
-            string outputImageFilename = "";
-
-            try
-            {
-                if (!Config.ProcessConfig.SaveAnnotatedVideo)
-                    return;
-
-                outputImageFilename =
-                        Config.InputFileName.Substring(0, Config.InputFileName.Length - 4) +
-                        "_Image.JPG";
-
-                imgOutput.ToBitmap().Save(outputImageFilename, ImageFormat.Jpeg);
-            }
-            catch (Exception ex)
-            {
-                throw BaseConstants.ThrowException("RunSave.ImageAsJpg: filename=" + outputImageFilename, ex);
-            }
         }
 
 
@@ -161,13 +137,15 @@ namespace SkyCombImage.PersistModel
                         SaveProcess.SaveObjectList(process, saveAllObjects);
 
                     // Add the Object/Feature charts
-                    SaveProcess.SaveObjectGraphs(MaxDatumId);
+                    SaveProcess.SaveObjectGraphs(MaxDatumId, process);
 
                     // Save the ProcessSpan data 
                     SaveProcess.SaveSpanList(process);
 
-                    if (saveObjects)
-                        SaveProcess.SavePopulation(process.ProcessObjects);
+                    Data.SelectWorksheet(Blocks2TabName);
+
+                    Data.HideWorksheet(FeaturesTabName);
+                    Data.HideWorksheet(SpanTabName);
                 }
 
                 Save();

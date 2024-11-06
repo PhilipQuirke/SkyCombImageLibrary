@@ -65,7 +65,6 @@ namespace SkyCombImage.RunSpace
         // How to draw various graphs and charts
         public ProcessDrawScope ProcessDrawScope;
         public ProcessDrawPath ProcessDrawPath;
-        //public DrawCombAltitudeByTime DrawCombAltitudeByTime;
         public ProcessDrawAltitudeByLinealM DrawCombAltitudeByLinealM;
         public DrawSpeed DrawSpeed;
         public DrawPitch DrawPitch;
