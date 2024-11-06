@@ -7,6 +7,7 @@ using SkyCombImage.CategorySpace;
 using SkyCombImage.DrawSpace;
 using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
+using SkyCombImage.RunSpace;
 using System.Drawing;
 
 
@@ -154,20 +155,21 @@ namespace SkyCombImage.PersistModel
 
 
         // Add up to 4  object / feature charts / graphs
-        public void SaveObjectGraphs(int maxBlockId, ProcessAll processAll)
+        public void SaveObjectGraphs(int maxBlockId, RunVideoPersist runVideo)
         {
+            var processAll = runVideo.ProcessAll;
+            var processScope = runVideo;
+            var processDrawScope = runVideo.ProcessDrawScope;
+            var processObjects = processAll.ProcessObjects;
+
             Data.SelectOrAddWorksheet(Objects2TabName);
             Data.Worksheet.Drawings.Clear();
-            if (maxBlockId > 0)
-            {
-                AddProcessFeatureObjectHeightGraph(maxBlockId);
-            }
+            //if (maxBlockId > 0)
+            //{
+            //    AddProcessFeatureObjectHeightGraph(maxBlockId);
+            // }
             AddProcessObjectFeatureScatterGraph();
-            AddProcessFlightObjectFeatureGraph();
 
-            ProcessObjList processObjects = processAll.ProcessObjects;
-            var processScope = new ProcessScope(processAll.Drone);
-            var drawScope = new ProcessDrawScope(processAll, processScope, processAll.Drone);
             if (processObjects.Count > 0)
             {
                 var objectDrawScope = new ObjectDrawScope(processAll, processScope, processAll.Drone);
@@ -175,19 +177,35 @@ namespace SkyCombImage.PersistModel
 
                 // Draw the histogram of object heights
                 int row = 1;
-                Data.SetTitle(ref row, 1, "Object Height Histogram");
-                var drawHeightHistogram = new ProcessDrawHeightHistogram(drawScope, objectDrawScope, MasterHeightModelList.GetObjectCountByHeightClass(processObjects));
-                drawHeightHistogram.Initialise(new Size(550, 200));
+                Data.SetTitle(ref row, 2, "Object Height Histogram");
+                var drawHeightHistogram = new ProcessDrawHeightHistogram(processDrawScope, objectDrawScope, MasterHeightModelList.GetObjectCountByHeightClass(processObjects));
+                drawHeightHistogram.Initialise(new Size(350, 150));
                 var localBitmap = drawHeightHistogram.CurrBitmap();
                 Data.SaveBitmap(localBitmap, "Object Height Histogram", 2, 0);
 
                 // Draw the histogram of object sizes
                 row = 1;
-                Data.SetTitle(ref row, 7, "Object Size Histogram");
-                var drawSizeHistogram = new ProcessDrawSizeHistogram(drawScope, objectDrawScope, MasterSizeModelList.GetObjectCountBySizeClass(processObjects));
-                drawSizeHistogram.Initialise(new Size(550, 200));
+                Data.SetTitle(ref row, 8, "Object Size Histogram");
+                var drawSizeHistogram = new ProcessDrawSizeHistogram(processDrawScope, objectDrawScope, MasterSizeModelList.GetObjectCountBySizeClass(processObjects));
+                drawSizeHistogram.Initialise(new Size(350, 150));
                 localBitmap = drawSizeHistogram.CurrBitmap();
                 Data.SaveBitmap(localBitmap, "Object Size Histogram", 2, 6);
+
+                // Draw the flight path with objects and features
+                row = 16;
+                Data.SetTitle(ref row, 17, "Flight Path with Objects & Features");
+                var drawFlightPath = new ProcessDrawPath(processDrawScope, processObjects, objectDrawScope);
+                drawFlightPath.Initialise(new Size(750, 750));
+                localBitmap = drawFlightPath.CurrBitmap();
+                Data.SaveBitmap(localBitmap, "Flight Path with Objects & Features", 16, 14);
+
+                // Draw the elevations with objects and features
+                row = 1;
+                Data.SetTitle(ref row, 17, "Flight and Objects Elevations");
+                var drawElevations = new ProcessDrawElevations(processAll, processDrawScope);
+                drawElevations.Initialise(new Size(750, 250));
+                localBitmap = drawElevations.CurrBitmap();
+                Data.SaveBitmap(localBitmap, "Flight and Objects Elevations", 2, 14);
 
                 Data.SetLastUpdateDateTime(Objects2TabName);
             }

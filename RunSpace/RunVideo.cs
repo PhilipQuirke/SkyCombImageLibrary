@@ -65,7 +65,7 @@ namespace SkyCombImage.RunSpace
         // How to draw various graphs and charts
         public ProcessDrawScope ProcessDrawScope;
         public ProcessDrawPath ProcessDrawPath;
-        public ProcessDrawAltitudeByLinealM DrawCombAltitudeByLinealM;
+        public ProcessDrawElevations ProcessDrawElevation;
         public DrawSpeed DrawSpeed;
         public DrawPitch DrawPitch;
         public DrawDeltaYaw DrawDeltaYaw;
@@ -105,7 +105,7 @@ namespace SkyCombImage.RunSpace
             ProcessDrawPath = new(ProcessDrawScope, objList, drawObjectScope);
 
             //DrawCombAltitudeByTime = new(processAll, DrawScope);
-            DrawCombAltitudeByLinealM = new(processAll, ProcessDrawScope);
+            ProcessDrawElevation = new(processAll, ProcessDrawScope);
             DrawSpeed = new(ProcessDrawScope);
             DrawPitch = new(ProcessDrawScope);
             DrawDeltaYaw = new(ProcessDrawScope);

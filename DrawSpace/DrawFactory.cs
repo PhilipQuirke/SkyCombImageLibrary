@@ -15,7 +15,7 @@ namespace SkyCombImage.DrawSpace
 
             switch (useCase)
             {
-                case "altitude": answer = new ProcessDrawAltitudeByLinealM(process, drawScope); break;
+                case "altitude": answer = new ProcessDrawElevations(process, drawScope); break;
                 case "speed": answer = new DrawSpeed(drawScope); break;
                 case "pitch": answer = new DrawPitch(drawScope); break;
                 case "deltayaw": answer = new DrawDeltaYaw(drawScope); break;
