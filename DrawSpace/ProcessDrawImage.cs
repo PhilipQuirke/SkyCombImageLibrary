@@ -195,7 +195,7 @@ namespace SkyCombImage.DrawSpace
 
 
     // Code to draw ground tree-top & drone alitudes against lineal meters, with objects overlaid
-    public class ProcessDrawElevations : DrawAltitudeByLinealM
+    public class ProcessDrawElevations : DrawElevations
     {
         private ProcessAll Process { get; }
         private ProcessDrawScope DrawScope { get; }
