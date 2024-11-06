@@ -144,6 +144,7 @@ namespace SkyCombImage.PersistModel
 
                     Data.SelectWorksheet(Blocks2TabName);
 
+                    Data.HideWorksheet(Blocks1TabName);
                     Data.HideWorksheet(FeaturesTabName);
                     Data.HideWorksheet(SpanTabName);
                 }
