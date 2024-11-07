@@ -136,6 +136,7 @@ namespace SkyCombImage.RunSpace
                 GroundDirectory = settings.GroundDirectory.TrimEnd('\\');
                 YoloDirectory = settings.YoloDirectory.TrimEnd('\\');
                 OutputDirectory = settings.OutputDirectory.TrimEnd('\\');
+                RecentFiles = settings.RecentFiles;
             }
             catch (Exception ex)
             {
