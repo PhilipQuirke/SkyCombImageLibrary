@@ -38,11 +38,9 @@ namespace SkyCombImage.ProcessModel
 
         // --------------------- Process Techniques --------------------- 
 
-
         // Theshold:
         // Pixel gray-scale value that ThresholdProcess uses. Takes values from 50 to 255
         public int HeatThresholdValue { get; set; } = 180;
-
 
         // Comb:
         // SkyComb-specific detection method "Comb".
@@ -55,13 +53,15 @@ namespace SkyCombImage.ProcessModel
         // Minimum overlap percentage between two features that is considered significant
         public int FeatureMinOverlapPerc { get; set; } = 5;
 
-
+        // Object characteristics:
         // Duration (in milliseconds) that object must be tracked for before it is highlighted
         public int ObjectMinDurationMs { get; set; } = 500;
         // Minimum percentage difference between ground speed and object speed for object to be considered above ground.
         public int ObjectMaxUnrealBlocks { get; set; } = 5;
         // To be highlighted, an object must have this many hot pixels in at least one real step
         public int ObjectMinPixels { get; set; } = 5;
+        // An object detected at long-range must be large and so is not of interest to us.
+        public int ObjectMaxRangeM { get; set; } = 350;
 
 
         // YOLO
@@ -142,6 +142,7 @@ namespace SkyCombImage.ProcessModel
                 { "Object Min Duration Ms", ObjectMinDurationMs },
                 { "Object Max Unreal Blocks", ObjectMaxUnrealBlocks },
                 { "Object Min Pixels", ObjectMinPixels },
+                { "Object Max Range M", ObjectMaxRangeM },
                 { "Yolo Confidence", YoloDetectConfidence, 2 },
                 { "Yolo IoU", YoloIoU, 2 },
             };
@@ -160,6 +161,7 @@ namespace SkyCombImage.ProcessModel
             ObjectMinDurationMs = StringToNonNegInt(settings[i++]);
             ObjectMaxUnrealBlocks = StringToNonNegInt(settings[i++]);
             ObjectMinPixels = StringToNonNegInt(settings[i++]);
+            ObjectMaxRangeM = StringToNonNegInt(settings[i++]);
             YoloDetectConfidence = StringToFloat(settings[i++]);
             YoloIoU = StringToFloat(settings[i++]);
         }
