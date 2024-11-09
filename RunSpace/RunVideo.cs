@@ -60,15 +60,12 @@ namespace SkyCombImage.RunSpace
 
 
         public Image<Bgr, byte>? ModifiedInputImage = null;
-        public Image<Bgr, byte>? ModifiedDisplayImage = null;
-
 
 
         // How to draw various graphs and charts
         public ProcessDrawScope ProcessDrawScope;
         public ProcessDrawPath ProcessDrawPath;
-        //public DrawCombAltitudeByTime DrawCombAltitudeByTime;
-        public ProcessDrawAltitudeByLinealM DrawCombAltitudeByLinealM;
+        public ProcessDrawElevations ProcessDrawElevation;
         public DrawSpeed DrawSpeed;
         public DrawPitch DrawPitch;
         public DrawDeltaYaw DrawDeltaYaw;
@@ -108,7 +105,7 @@ namespace SkyCombImage.RunSpace
             ProcessDrawPath = new(ProcessDrawScope, objList, drawObjectScope);
 
             //DrawCombAltitudeByTime = new(processAll, DrawScope);
-            DrawCombAltitudeByLinealM = new(processAll, ProcessDrawScope);
+            ProcessDrawElevation = new(processAll, ProcessDrawScope);
             DrawSpeed = new(ProcessDrawScope);
             DrawPitch = new(ProcessDrawScope);
             DrawDeltaYaw = new(ProcessDrawScope);
@@ -165,8 +162,7 @@ namespace SkyCombImage.RunSpace
         {
             ModifiedInputImage?.Dispose();
             ModifiedInputImage = null;
-            ModifiedDisplayImage?.Dispose();
-            ModifiedDisplayImage = null;
+
         }
 
 
@@ -228,7 +224,7 @@ namespace SkyCombImage.RunSpace
         public abstract ProcessBlock AddBlockAndProcessInputVideoFrame();
 
 
-        // Process a single input and (maybe) display video frame for the specified block, returning the modified input&display frames to show 
+        // Process a single input video frame for the specified block, returning the modified input frame to show 
         public void DrawVideoFrames(ProcessBlockModel? block = null)
         {
             ResetModifiedImages();
@@ -236,11 +232,11 @@ namespace SkyCombImage.RunSpace
             if (CurrInputImage == null)
                 return;
 
-            (ModifiedInputImage, ModifiedDisplayImage) =
+            ModifiedInputImage =
                 DrawSpace.DrawVideoFrames.Draw(
                     RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, Drone,
                     block, ProcessAll, UnknownValue,
-                    CurrInputImage, CurrDisplayImage);
+                    CurrInputImage);
 
             if (ModifiedInputImage != null)
                 DrawYawPitchZoom.Draw(ref ModifiedInputImage, Drone, CurrRunFlightStep);
@@ -478,7 +474,7 @@ namespace SkyCombImage.RunSpace
                         PSM.CurrBlockId++;
                         stepCount++;
 
-                        // If process at max speed then (mostly) suppress processing of DisplayFrame and updating of UI
+                        // If process at max speed then (mostly) suppress updating of UI
                         bool suppressUiUpdate =
                             RunConfig.MaxRunSpeed &&
                             (PSM.CurrBlockId != 1) &&                   // Always show the first block
@@ -542,7 +538,7 @@ namespace SkyCombImage.RunSpace
                         ShowStepProgress(intervalCount, stepCount);
                         if (!suppressUiUpdate)
                         {
-                            // Show input/display images & update the graphs
+                            // Show input images & update the graphs
                             DrawUI();
                             RefreshAll();
                         }
@@ -630,7 +626,6 @@ namespace SkyCombImage.RunSpace
                 {
                     // Dispose managed resources
                     ModifiedInputImage?.Dispose();
-                    ModifiedDisplayImage?.Dispose();
                     DataStore?.Dispose();
                 }
 

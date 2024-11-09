@@ -101,7 +101,7 @@ namespace SkyCombImage.RunSpace
         public override void RunEnd()
         {
             StandardSave dataWriter = new(Drone, DataStore);
-            dataWriter.ProcessAll(DataStore, RunConfig, GetEffort(), GetSettings(), this, YoloProcess, true);
+            dataWriter.ProcessAll(this, true);
 
             base.RunEnd();
         }
@@ -112,7 +112,7 @@ namespace SkyCombImage.RunSpace
         {
             DataStore.Open();
             StandardSave datawriter = new(Drone, DataStore);
-            datawriter.ProcessAll(DataStore, RunConfig, GetEffort(), GetSettings(), this, YoloProcess, false);
+            datawriter.ProcessAll(this, false);
             DataStore.FreeResources();
         }
     }

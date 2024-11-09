@@ -73,6 +73,7 @@ namespace SkyCombImage.CategorySpace
             return _sizeClassIndices.TryGetValue(sizeClass, out int index) ? index : -1;
         }
 
+
         // Return the MasterAreaModel Name that best matches the size
         static public (string, int) CM2ToClass(int areaCM2)
         {
@@ -88,16 +89,18 @@ namespace SkyCombImage.CategorySpace
                 return ("XXL", NumAreas - 1);
         }
 
+
         // Return the count of objects in each size category
         static public List<int> GetObjectCountBySizeClass(ProcessObjList objects)
         {
             var answer = new int[NumAreas];
-            foreach (var obj in objects)
-            {
-                var (_, index) = CM2ToClass((int)obj.Value.SizeCM2);
-                if (index >= 0 && index < NumAreas)
-                    answer[index]++;
-            }
+            if (objects != null)
+                foreach (var obj in objects)
+                {
+                    var (_, index) = CM2ToClass((int)obj.Value.SizeCM2);
+                    if (index >= 0 && index < NumAreas)
+                        answer[index]++;
+                }
             return new List<int>(answer);
         }
     }

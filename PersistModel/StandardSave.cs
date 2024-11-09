@@ -8,7 +8,6 @@ using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombImage.RunSpace;
 using System.Drawing;
-using System.Drawing.Imaging;
 
 
 namespace SkyCombImage.PersistModel
@@ -18,29 +17,6 @@ namespace SkyCombImage.PersistModel
     {
         public StandardSave(Drone drone, DroneDataStore data) : base(drone, data)
         {
-        }
-
-
-        // Save image to disk
-        public static void ImageAsJpg(RunConfig Config, Image<Bgr, byte> imgOutput)
-        {
-            string outputImageFilename = "";
-
-            try
-            {
-                if (!Config.ProcessConfig.SaveAnnotatedVideo)
-                    return;
-
-                outputImageFilename =
-                        Config.InputFileName.Substring(0, Config.InputFileName.Length - 4) +
-                        "_Image.JPG";
-
-                imgOutput.ToBitmap().Save(outputImageFilename, ImageFormat.Jpeg);
-            }
-            catch (Exception ex)
-            {
-                throw BaseConstants.ThrowException("RunSave.ImageAsJpg: filename=" + outputImageFilename, ex);
-            }
         }
 
 
@@ -126,10 +102,16 @@ namespace SkyCombImage.PersistModel
 
 
         // Save the Run & Model data to the dataStore
-        public void ProcessAll(DroneDataStore data, RunConfig runConfig, DataPairList effort, DataPairList settings, FlightStepSummaryModel summary, ProcessAll process, bool fullSave)
+        public void ProcessAll(RunVideoPersist runVideo, bool fullSave)
         {
             try
             {
+                var process = runVideo.ProcessAll;
+                var runConfig = runVideo.RunConfig;
+                var effort = runVideo.GetEffort();
+                var settings = runVideo.GetSettings();
+                var data = runVideo.DataStore;
+
                 SaveCommonSummaryAndClearDetail(runConfig, effort, settings);
 
                 Data.SelectOrAddWorksheet(ProcessTabName);
@@ -144,7 +126,7 @@ namespace SkyCombImage.PersistModel
                     AddBlockList(process.Blocks);
 
                     // Add the Block charts
-                    AddBlocks2Tab(summary);
+                    AddBlocks2Tab(runVideo);
 
                     var saveAllObjects = (runConfig.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All);
 
@@ -153,7 +135,7 @@ namespace SkyCombImage.PersistModel
                     // Save the Feature data 
                     var saveFeatures = ((runConfig.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None) && (process.ProcessFeatures.Count > 0));
                     if (saveFeatures)
-                        SaveProcess.SaveFeatureList(process, saveAllObjects);
+                        SaveProcess.SaveFeatureList(runVideo.ProcessAll, saveAllObjects);
 
                     // Save the Object data 
                     var saveObjects = ((runConfig.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None) && (process.ProcessObjects.Count > 0));
@@ -161,13 +143,16 @@ namespace SkyCombImage.PersistModel
                         SaveProcess.SaveObjectList(process, saveAllObjects);
 
                     // Add the Object/Feature charts
-                    SaveProcess.SaveObjectGraphs(MaxDatumId);
+                    SaveProcess.SaveObjectGraphs(MaxDatumId, runVideo);
 
                     // Save the ProcessSpan data 
                     SaveProcess.SaveSpanList(process);
 
-                    if (saveObjects)
-                        SaveProcess.SavePopulation(process.ProcessObjects);
+                    Data.SelectWorksheet(Blocks2TabName);
+
+                    Data.HideWorksheet(Blocks1TabName);
+                    Data.HideWorksheet(FeaturesTabName);
+                    Data.HideWorksheet(SpanTabName);
                 }
 
                 Save();

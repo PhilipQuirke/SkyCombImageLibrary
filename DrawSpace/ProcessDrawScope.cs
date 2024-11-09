@@ -4,7 +4,6 @@ using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.CategorySpace;
 using SkyCombImage.ProcessLogic;
-using SkyCombImage.ProcessModel;
 
 
 namespace SkyCombImage.DrawSpace

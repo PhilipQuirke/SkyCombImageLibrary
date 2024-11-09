@@ -1,12 +1,13 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using OfficeOpenXml;
 using OfficeOpenXml.Drawing.Chart;
-using OfficeOpenXml.Table.PivotTable;
 using SkyCombDrone.CommonSpace;
 using SkyCombDrone.DroneModel;
 using SkyCombDrone.PersistModel;
+using SkyCombImage.CategorySpace;
+using SkyCombImage.DrawSpace;
 using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
+using SkyCombImage.RunSpace;
 using System.Drawing;
 
 
@@ -93,29 +94,6 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // Add a speed graph for objects and features and ground speed
-        public void AddProcessGroundFeatureObjectSpeedGraph(int maxBlockId)
-        {
-            /* PQR
-                        const string ChartName = "GroundFeatureObjectSpeed";
-                        const string ChartTitle = "Ground, Feature & Object speed (in pixels / block)";
-
-                        (var chartWs, var lastRow) = Data.PrepareChartArea(Objects2TabName, ChartName, Objects1TabName);
-                        if (lastRow > 0)
-                        {
-                            var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
-                            Data.SetChart(chart, ChartTitle, 0, 0, StandardChartRows);
-                            Data.SetAxises(chart, "Block", "Speed", "0");
-                            chart.XAxis.MinValue = 0;
-                            chart.XAxis.MaxValue = maxBlockId;
-
-                            Data.AddScatterSerie(chart, FeaturesTabName, "Feature", ProcessFeatureModel.ObjSpeedPxlsSetting, ProcessFeatureModel.BlockIdSetting, DroneColors.RealFeatureColor);
-                            Data.AddScatterSerie(chart, Objects1TabName, "Objects", ProcessObjectModel.SpeedInPxPerBlockSetting, ProcessObjectModel.CenterBlockSetting, DroneColors.InScopeObjectColor, 6);
-                        }
-            */
-        }
-
-
         // Add a height graph for objects and features
         public void AddProcessFeatureObjectHeightGraph(int maxBlockId)
         {
@@ -148,7 +126,7 @@ namespace SkyCombImage.PersistModel
             {
                 var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
                 Data.SetChart(chart, ChartTitle, 1, 0, LargeChartRows);
-                Data.SetAxises(chart, "Easting", "Northing", "0.00", "0.00");
+                Data.SetAxises(chart, "Easting", "Northing", "0", "0");
 
                 Data.AddScatterSerie(chart, FeaturesTabName, "Feature", ProcessFeatureModel.NorthingMSetting, ProcessFeatureModel.EastingMSetting, DroneColors.RealFeatureColor);
                 Data.AddScatterSerie(chart, Objects1TabName, "Object", ProcessObjectModel.NorthingMSetting, ProcessObjectModel.EastingMSetting, DroneColors.InScopeObjectColor, 6);
@@ -167,7 +145,7 @@ namespace SkyCombImage.PersistModel
             {
                 var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
                 Data.SetChart(chart, ChartTitle, 1, 1, LargeChartRows);
-                Data.SetAxises(chart, "Easting", "Northing", "0.00", "0.00");
+                Data.SetAxises(chart, "Easting", "Northing", "0", "0");
 
                 Data.AddScatterSerie(chart, Steps1TabName, "Step", TardisModel.NorthingMSetting, TardisModel.EastingMSetting, DroneColors.InScopeDroneColor);
                 Data.AddScatterSerie(chart, FeaturesTabName, "Feature", ProcessFeatureModel.NorthingMSetting, ProcessFeatureModel.EastingMSetting, DroneColors.RealFeatureColor);
@@ -177,210 +155,59 @@ namespace SkyCombImage.PersistModel
 
 
         // Add up to 4  object / feature charts / graphs
-        public void SaveObjectGraphs(int maxBlockId)
+        public void SaveObjectGraphs(int maxBlockId, RunVideoPersist runVideo)
         {
+            var processAll = runVideo.ProcessAll;
+            var processScope = runVideo;
+            var processDrawScope = runVideo.ProcessDrawScope;
+            var processObjects = processAll.ProcessObjects;
+
             Data.SelectOrAddWorksheet(Objects2TabName);
             Data.Worksheet.Drawings.Clear();
-            if (maxBlockId > 0)
-            {
-                AddProcessGroundFeatureObjectSpeedGraph(maxBlockId);
-                AddProcessFeatureObjectHeightGraph(maxBlockId);
-            }
+            //if (maxBlockId > 0)
+            //{
+            //    AddProcessFeatureObjectHeightGraph(maxBlockId);
+            // }
             AddProcessObjectFeatureScatterGraph();
-            AddProcessFlightObjectFeatureGraph();
 
-            Data.SetLastUpdateDateTime(Objects2TabName);
-        }
-
-
-        // Create pivot of the object height (rounded to nearest 0.5m) vs #objects to support charting
-        public void AddObjectHeightPivot(ExcelWorksheet objectWs, int maxObjRow)
-        {
-            var pivotTable = Data.Worksheet.PivotTables[ObjectHeightPivotName];
-            if (pivotTable != null)
+            if (processObjects.Count > 0)
             {
-                // If user changed legs selected, the number of objects may have changed
-                pivotTable.CacheDefinition.SourceRange = objectWs.Cells["A1:Q" + maxObjRow];
-                return;
-            }
+                var objectDrawScope = new ObjectDrawScope(processAll, processScope, processAll.Drone);
+                objectDrawScope.SetObjectRange(processObjects);
 
-
-            Data.Worksheet.Cells[23, 4].Value = "# Objects by Height (M) pivot";
-
-            pivotTable = Data.Worksheet.PivotTables.Add(
-                Data.Worksheet.Cells["D24"], objectWs.Cells["A1:Q" + maxObjRow], ObjectHeightPivotName);
-            pivotTable.DataOnRows = true;
-            pivotTable.ColumnGrandTotals = false;
-            pivotTable.RowGrandTotals = false;
-            pivotTable.ShowDrill = false;
-
-            var rowField = pivotTable.RowFields.Add(pivotTable.Fields["Hght Rnd M"]);
-            rowField.Name = "HeightM";
-            rowField.Sort = eSortType.Ascending;
-
-            var dataField = pivotTable.DataFields.Add(pivotTable.Fields["Name"]);
-            dataField.Function = DataFieldFunctions.Count;
-            dataField.Format = "#,##0";
-            dataField.Name = "NumObjects";
-        }
-
-
-        // Create pivot of the object size (rounded to nearest 100cm2) vs #objects to support charting
-        public void AddObjectSizePivot(ExcelWorksheet objectWs, int maxObjRow)
-        {
-            var pivotTable = Data.Worksheet.PivotTables[ObjectSizePivotName];
-            if (pivotTable != null)
-            {
-                // If user changed legs selected, the number of objects may have changed
-                pivotTable.CacheDefinition.SourceRange = objectWs.Cells["A1:Q" + maxObjRow];
-                return;
-            }
-
-
-            Data.Worksheet.Cells[23, 12].Value = "# Objects by Size (CM2) pivot";
-
-            pivotTable = Data.Worksheet.PivotTables.Add(
-                Data.Worksheet.Cells["L24"], objectWs.Cells["A1:Q" + maxObjRow], ObjectSizePivotName);
-            pivotTable.DataOnRows = true;
-            pivotTable.ColumnGrandTotals = false;
-            pivotTable.RowGrandTotals = false;
-            pivotTable.ShowDrill = false;
-
-            var rowField = pivotTable.RowFields.Add(pivotTable.Fields["Size Rnd CM2"]);
-            rowField.Name = "SizeCM2";
-            rowField.Sort = eSortType.Ascending;
-
-            var dataField = pivotTable.DataFields.Add(pivotTable.Fields["Name"]);
-            dataField.Function = DataFieldFunctions.Count;
-            dataField.Format = "#,##0";
-            dataField.Name = "NumObjects";
-        }
-
-
-        // Create pivot of the object heat vs #objects to support charting
-        public void AddObjectHeatPivot(ExcelWorksheet objectWs, int maxObjRow)
-        {
-            var pivotTable = Data.Worksheet.PivotTables[ObjectHeatPivotName];
-            if (pivotTable != null)
-            {
-                // If user changed legs selected, the number of objects may have changed
-                pivotTable.CacheDefinition.SourceRange = objectWs.Cells["A1:Q" + maxObjRow];
-                return;
-            }
-
-
-            Data.Worksheet.Cells[23, 20].Value = "# Objects by Heat (0-255) pivot";
-
-            pivotTable = Data.Worksheet.PivotTables.Add(
-                Data.Worksheet.Cells["T24"], objectWs.Cells["A1:Q" + maxObjRow], ObjectHeatPivotName);
-            pivotTable.DataOnRows = true;
-            pivotTable.ColumnGrandTotals = false;
-            pivotTable.RowGrandTotals = false;
-            pivotTable.ShowDrill = false;
-
-            var rowField = pivotTable.RowFields.Add(pivotTable.Fields["Max Heat"]);
-            rowField.Name = "Max Heat";
-            rowField.Sort = eSortType.Ascending;
-
-            var dataField = pivotTable.DataFields.Add(pivotTable.Fields["Name"]);
-            dataField.Function = DataFieldFunctions.Count;
-            dataField.Format = "#,##0";
-            dataField.Name = "NumObjects";
-        }
-
-
-        public void AddObjectHeightGraph()
-        {
-            const string ChartName = "ObjectHeightPopulation";
-            const string ChartTitle = "# Objects by Height (M)";
-
-            if (Data.Worksheet.Drawings[ChartName] != null)
-                return;
-
-            var chart = Data.Worksheet.Drawings.AddChart(ChartName, eChartType.ColumnStacked,
-                Data.Worksheet.PivotTables[ObjectHeightPivotName]);
-            Data.SetChartTitle(chart, ChartTitle);
-            chart.SetPosition(2, 0, 3, 0);
-            chart.SetSize(500, 300);
-            chart.Legend.Remove();
-        }
-
-
-        public void AddObjectSizeGraph()
-        {
-            const string ChartName = "ObjectSizePopulation";
-            const string ChartTitle = "# Objects by Size (CM2)";
-
-            if (Data.Worksheet.Drawings[ChartName] != null)
-                return;
-
-            var chart = Data.Worksheet.Drawings.AddChart(ChartName, eChartType.ColumnStacked,
-                Data.Worksheet.PivotTables[ObjectSizePivotName]);
-            Data.SetChartTitle(chart, ChartTitle);
-            chart.SetPosition(2, 0, 11, 0);
-            chart.SetSize(500, 300);
-            chart.Legend.Remove();
-        }
-
-
-        public void AddObjectHeatGraph()
-        {
-            const string ChartName = "ObjectHeatPopulation";
-            const string ChartTitle = "# Objects by Max Heat (0 - 255)";
-
-            if (Data.Worksheet.Drawings[ChartName] != null)
-                return;
-
-            var chart = Data.Worksheet.Drawings.AddChart(ChartName, eChartType.ColumnStacked,
-                Data.Worksheet.PivotTables[ObjectHeatPivotName]);
-            Data.SetChartTitle(chart, ChartTitle);
-            chart.SetPosition(2, 0, 19, 0);
-            chart.SetSize(500, 300);
-            chart.Legend.Remove();
-        }
-
-
-        // Save population summary data, pivots and graphs
-        public void SavePopulation(ProcessObjList objects)
-        {
-            int phase = 0;
-            try
-            {
-                Data.SelectOrAddWorksheet(PopulationTabName);
-
+                // Draw the histogram of object heights
                 int row = 1;
-                Data.SetTitle(ref row, 1, PopulationSummaryTitle, LargeTitleFontSize);
-                Data.SetTitleAndDataListColumn(ObjectSummaryTitle, ModelTitleRow, LhsColOffset, objects.GetSettings());
-                Data.SetColumnWidth(1, 20);
+                Data.SetTitle(ref row, 2, "Object Height Histogram");
+                var drawHeightHistogram = new ProcessDrawHeightHistogram(processDrawScope, objectDrawScope, MasterHeightModelList.GetObjectCountByHeightClass(processObjects));
+                drawHeightHistogram.Initialise(new Size(350, 150));
+                var localBitmap = drawHeightHistogram.CurrBitmap();
+                Data.SaveBitmap(localBitmap, "Object Height Histogram", 2, 0);
 
-                (var objectWs, int maxObjRow) = Data.EndRow(Objects1TabName);
-                if (maxObjRow > 2)
-                {
-                    phase = 1;
-                    AddObjectHeightPivot(objectWs, maxObjRow);
-                    
-                    phase = 2;
-                    AddObjectSizePivot(objectWs, maxObjRow);
+                // Draw the histogram of object sizes
+                row = 1;
+                Data.SetTitle(ref row, 8, "Object Size Histogram");
+                var drawSizeHistogram = new ProcessDrawSizeHistogram(processDrawScope, objectDrawScope, MasterSizeModelList.GetObjectCountBySizeClass(processObjects));
+                drawSizeHistogram.Initialise(new Size(350, 150));
+                localBitmap = drawSizeHistogram.CurrBitmap();
+                Data.SaveBitmap(localBitmap, "Object Size Histogram", 2, 6);
 
-                    phase = 3;
-                    AddObjectHeatPivot(objectWs, maxObjRow);
+                // Draw the flight path with objects and features
+                row = 16;
+                Data.SetTitle(ref row, 17, "Flight Path with Objects & Features");
+                var drawFlightPath = new ProcessDrawPath(processDrawScope, processObjects, objectDrawScope);
+                drawFlightPath.Initialise(new Size(750, 750));
+                localBitmap = drawFlightPath.CurrBitmap();
+                Data.SaveBitmap(localBitmap, "Flight Path with Objects & Features", 16, 14);
 
-                    phase = 4;
-                    AddObjectHeightGraph();
+                // Draw the elevations with objects and features
+                row = 1;
+                Data.SetTitle(ref row, 17, "Flight and Objects Elevations");
+                var drawElevations = new ProcessDrawElevations(processAll, processDrawScope);
+                drawElevations.Initialise(new Size(750, 250));
+                localBitmap = drawElevations.CurrBitmap();
+                Data.SaveBitmap(localBitmap, "Flight and Objects Elevations", 2, 14);
 
-                    phase = 5;
-                    AddObjectSizeGraph();
-
-                    phase = 6;
-                    AddObjectHeatGraph();
-                }
-
-                phase = 7;
-                Data.SetLastUpdateDateTime(PopulationTabName);
-            }
-            catch (Exception ex)
-            {
-                throw ThrowException("ProcessSaveObject.SavePopulation: Phase " + phase.ToString(), ex);
+                Data.SetLastUpdateDateTime(Objects2TabName);
             }
         }
     }
