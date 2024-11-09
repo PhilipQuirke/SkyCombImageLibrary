@@ -121,7 +121,6 @@ namespace SkyCombImage.ProcessModel
                     break;
 
                 case VideoModel.DjiH20T:
-                    // PQR TBC. 
                     break;
 
                 case VideoModel.DjiM3T:

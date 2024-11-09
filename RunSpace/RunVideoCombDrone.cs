@@ -57,15 +57,15 @@ namespace SkyCombImage.RunSpace
                     // Don't create features. Don't update objects.
                     return currBlock;
 
-                Image<Bgr, byte> imgInput = CurrInputImage.Clone();
+                Image<Bgr, byte> currInput = CurrInputImage.Clone();
 
-                Image<Gray, byte> imgThreshold = DrawImage.ToGrayScale(imgInput);
-                DrawImage.Threshold(RunConfig.ProcessConfig, ref imgThreshold);
+                Image<Gray, byte> currThreshold = DrawImage.ToGrayScale(currInput);
+                DrawImage.Threshold(RunConfig.ProcessConfig, ref currThreshold);
 
                 ProcessFeatureList featuresInBlock = ProcessFactory.NewProcessFeatureList(CombProcess.ProcessConfig);
                 CombFeatureLogic.CreateFeaturesFromImage(
                     CombProcess, featuresInBlock, currBlock,
-                    CurrInputImage, imgThreshold); // read-only  images
+                    CurrInputImage, currThreshold); // read-only images
 
                 foreach (var feature in featuresInBlock)
                 {
@@ -73,7 +73,7 @@ namespace SkyCombImage.RunSpace
                     feature.Value.CalculateSettings_LocationM_HeightM_LineofSight(ProcessAll.GroundData);
                 }
 
-                // Unless legs are not used, we only do comb processing during "legs". 
+                // If legs are used, we only do comb processing during "legs". 
                 if ((!Drone.UseFlightLegs) || (PSM.CurrRunLegId > 0))
                     // Process the features, by preference associated them with existing CombObjects, else creating new objects.
                     CombProcess.ProcessBlockForObjects(this, featuresInBlock);
@@ -81,8 +81,8 @@ namespace SkyCombImage.RunSpace
                     // Outside legs, we store the features so we can draw them on the video frame later.
                     CombProcess.ProcessBlockForFeatures(featuresInBlock);
 
-                imgInput.Dispose();
-                imgThreshold.Dispose();
+                currInput.Dispose();
+                currThreshold.Dispose();
 
                 return currBlock;
             }
