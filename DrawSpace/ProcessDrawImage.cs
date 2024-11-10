@@ -62,10 +62,10 @@ namespace SkyCombImage.DrawSpace
 
 
         // Draw the bounding rectangles of the owned features
-        public static void ObjectFeatures(DrawImageConfig config, int focusObjectId,
-            ref Image<Bgr, byte> image,
-            ProcessFeature feature, ProcessObject? processObject,
-            Transform transform)
+        public static void DrawObjectFeatures(
+            DrawImageConfig config, ref Image<Bgr, byte> image, Transform transform,
+            int focusObjectId, // Chosen object in ObjectCategoryForm (if any)
+            ProcessFeature feature, ProcessObject? processObject) // Current object being drawn
         {
             if (config.DrawRealFeatureColor == Color.White &&
                 config.DrawUnrealFeatureColor == Color.White &&
@@ -89,7 +89,7 @@ namespace SkyCombImage.DrawSpace
                     int thickness = (int)transform.Scale;
                     var scaledRect = transform.CalcRect(feature.PixelBox);
 
-                    BoundingRectangle(config, ref image, scaledRect, theColor, thickness);
+                    BoundingRectangle(config, ref image, scaledRect, theColor, thickness, config.AreaPadding * config.BoxExtraScale);
 
                     // Helps identify points visually on image to facilitate mapping to xls data.
                     // Combined with a very small Video time span to process, can be very useful.
@@ -105,7 +105,7 @@ namespace SkyCombImage.DrawSpace
                         // Draw the object name to right of the rectangle.
                         image.Draw(name,
                             new Point(scaledRect.X + scaledRect.Width + 3, scaledRect.Y + 8),
-                            FontFace.HersheyPlain, transform.Scale, DroneColors.ColorToBgr(theColor), thickness);
+                            FontFace.HersheyPlain, transform.Scale * config.TextExtraScale, DroneColors.ColorToBgr(theColor), thickness);
                     }
                 }
             }
@@ -114,47 +114,47 @@ namespace SkyCombImage.DrawSpace
 
         // Draw all hot pixels for current block, bounding rectangles of the owned features
         public static void DrawRunProcess(
-            DrawImageConfig drawConfig, ProcessConfigModel processConfig,
-            int focusObjectId, ref Image<Bgr, byte> outputImg,
-            ProcessAll process, ProcessBlockModel? block, Transform transform)
+            DrawImageConfig drawConfig, ProcessConfigModel processConfig, ref Image<Bgr, byte> outputImg, Transform transform,
+            int focusObjectId, // Chosen object in ObjectCategoryForm (if any)
+            ProcessAll process, ProcessBlockModel? block) // Objects to draw
         {
             try
             {
-                if ((process != null) && (block != null))
+                if (block == null)
+                    return;
+
+                // Draw the leg name on the image (if any) at bottom right
+                if (block.FlightLegId > 0)
                 {
-                    // Draw the leg name on the image (if any) at bottom right
-                    if (block.FlightLegId > 0)
+                    var video = process.Drone.InputVideo;
+                    int theY = video.ImageHeight * 98 / 100; // pixels
+                    int theX = video.ImageWidth * 92 / 100; // pixels
+                    var fontScale = video.FontScale;
+                    Text(ref outputImg, "Leg " + block.FlightLegName,
+                            new Point(theX, theY), fontScale / 2.0f, DroneColors.LegNameBgr, fontScale);
+                }
+
+                for (int featureId = block.MinFeatureId; featureId <= block.MaxFeatureId; featureId++)
+                {
+                    if (process.ProcessFeatures.ContainsKey(featureId))
                     {
-                        var video = process.Drone.InputVideo;
-                        int theY = video.ImageHeight * 98 / 100; // pixels
-                        int theX = video.ImageWidth * 92 / 100; // pixels
-                        var fontScale = video.FontScale;
-                        Text(ref outputImg, "Leg " + block.FlightLegName,
-                                new Point(theX, theY), fontScale / 2.0f, DroneColors.LegNameBgr, fontScale);
-                    }
+                        var feature = process.ProcessFeatures[featureId];
+                        Assert(feature.BlockId == block.BlockId, "ProcessedImage: Bad logic");
 
-                    for (int featureId = block.MinFeatureId; featureId <= block.MaxFeatureId; featureId++)
-                    {
-                        if (process.ProcessFeatures.ContainsKey(featureId))
-                        {
-                            var feature = process.ProcessFeatures[featureId];
-                            Assert(feature.BlockId == block.BlockId, "ProcessedImage: Bad logic");
+                        // Draw all hot pixels for the current block 
+                        HotPixels(drawConfig, processConfig, ref outputImg, feature, transform);
 
-                            // Draw all hot pixels for the current block 
-                            HotPixels(drawConfig, processConfig, ref outputImg, feature, transform);
-
-                            // Draw the bounding rectangle of the owned feature
-                            ProcessObject? theObject = null;
-                            if (feature.ObjectId > 0)
-                                theObject = process.ProcessObjects[feature.ObjectId];
-                            ObjectFeatures(drawConfig, focusObjectId, ref outputImg, feature, theObject, transform);
-                        }
+                        // Draw the bounding rectangle of the owned feature
+                        ProcessObject? theObject = null;
+                        if (feature.ObjectId > 0)
+                            theObject = process.ProcessObjects[feature.ObjectId];
+                        DrawObjectFeatures(drawConfig, ref outputImg, transform, focusObjectId, feature, theObject);
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw ThrowException("DrawVideoFrames.ProcessedImage", ex);
+                throw ThrowException("DrawVideoFrames.DrawRunProcess", ex);
             }
         }
 
@@ -163,8 +163,9 @@ namespace SkyCombImage.DrawSpace
         public static Image<Bgr, byte>? Draw(
             RunProcessEnum runProcess,
             ProcessConfigModel processConfig, DrawImageConfig drawConfig, Drone drone,
-            ProcessBlockModel? block, ProcessAll processAll, int focusObjectId,
-            in Image<Bgr, byte> inputFrame) // Read-only
+            in Image<Bgr, byte> inputFrame, // Read-only
+            int focusObjectId, // Chosen object in ObjectCategoryForm (if any)
+            ProcessBlockModel? block, ProcessAll processAll) // Objects to draw
         {
             try
             {
@@ -173,16 +174,15 @@ namespace SkyCombImage.DrawSpace
                 if (inputFrame != null)
                 {
                     modifiedInputFrame = inputFrame.Clone();
-                    if (block != null)
-                    {
-                        if((runProcess == RunProcessEnum.Comb) || (runProcess == RunProcessEnum.Yolo))
-                            // Draw hot objects
-                            DrawRunProcess(drawConfig, processConfig, focusObjectId,
-                                ref modifiedInputFrame, processAll, block, new());
-                        else
-                            // Draw Threshold or None
-                            DrawImage.Draw(runProcess, processConfig, drawConfig, ref modifiedInputFrame);
-                    }
+
+                    if((runProcess == RunProcessEnum.Comb) || (runProcess == RunProcessEnum.Yolo))
+                        // Draw hot objects
+                        DrawRunProcess(
+                            drawConfig, processConfig, ref modifiedInputFrame, new(), 
+                            focusObjectId, processAll, block);
+                    else
+                        // Draw Threshold or None
+                        DrawImage.Draw(runProcess, processConfig, drawConfig, ref modifiedInputFrame);
                 }
                 return modifiedInputFrame;
             }

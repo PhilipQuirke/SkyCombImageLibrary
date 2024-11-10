@@ -234,9 +234,8 @@ namespace SkyCombImage.RunSpace
 
             ModifiedInputImage =
                 DrawSpace.DrawVideoFrames.Draw(
-                    RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, Drone,
-                    block, ProcessAll, UnknownValue,
-                    CurrInputImage);
+                    RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, Drone, CurrInputImage,
+                    UnknownValue, block, ProcessAll);
 
             if (ModifiedInputImage != null)
                 DrawYawPitchZoom.Draw(ref ModifiedInputImage, Drone, CurrRunFlightStep);
