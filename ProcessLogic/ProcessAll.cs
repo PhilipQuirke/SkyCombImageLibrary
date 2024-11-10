@@ -388,6 +388,7 @@ namespace SkyCombImage.ProcessLogic
                 ProcessFlightLegEnd(scope, legId);
 
                 if (Drone.UseFlightLegs)
+                        if (theObject.Value.Significant && (theObject.Value.AvgRangeM > ProcessConfig.ObjectMaxRangeM))
                     OnObservation(ProcessEventEnum.LegEnd_After, new ProcessEventArgs(scope, legId));
 
                 BaseConstants.GcFreeMemory();
