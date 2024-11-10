@@ -427,10 +427,6 @@ namespace SkyCombImage.ProcessLogic
                 var elevationGood = (HeightM > 2);
                 var elevationGreat = (HeightM > 4);
 
-                // DISTANCE
-                // Object is not too far away
-                var rangeOK = (AvgRangeM == UnknownValue) || (AvgRangeM <= ProcessConfig.ObjectMaxRangeM);
-
                 // Key calculation of Comb algorithm for identifying significant objects
                 Significant =
                     pixelsOk &&
@@ -438,19 +434,17 @@ namespace SkyCombImage.ProcessLogic
                     (
                         elevationGood ||
                         pixelsGood
-                    ) &&
-                    rangeOK;
+                    );
 
                 if (Significant)
                     NumSigBlocks++;
 
                 // Summarise why object is significant or not. Gets displayed in UI and saved to xls.
-                Attributes = String.Format("{0} {1} {2} {3} {4}",
+                Attributes = String.Format("{0} {1} {2} {3}",
                     Significant ? "Sig" : "",
                     pixelsGreat ? "P3" : (pixelsGood ? "P2" : (pixelsOk ? "P1" : "p")),
                     timeGreat ? "T3" : (timeGood ? "T2" : (timeOk ? "T1" : "t")),
-                    elevationGreat ? "E3" : (elevationGood ? "E2" : (elevationOK ? "E1" : "e")),
-                    rangeOK ? "R" : "r").Trim();
+                    elevationGreat ? "E3" : (elevationGood ? "E2" : (elevationOK ? "E1" : "e"))).Trim();
             }
             catch (Exception ex)
             {

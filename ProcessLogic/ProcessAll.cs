@@ -388,8 +388,15 @@ namespace SkyCombImage.ProcessLogic
                 ProcessFlightLegEnd(scope, legId);
 
                 if (Drone.UseFlightLegs)
+                {
+                    // After the leg "FixAltM" calculations have been done and object locations updated,
+                    // we check that the objects are not more than ProcessConfig.ObjectMaxRangeM metres from the drone.
+                    foreach (var theObject in ProcessObjects)
                         if (theObject.Value.Significant && (theObject.Value.AvgRangeM > ProcessConfig.ObjectMaxRangeM))
+                            theObject.Value.Significant = false;
+
                     OnObservation(ProcessEventEnum.LegEnd_After, new ProcessEventArgs(scope, legId));
+                }
 
                 BaseConstants.GcFreeMemory();
             }
