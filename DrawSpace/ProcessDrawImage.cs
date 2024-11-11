@@ -10,6 +10,7 @@ using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombImage.RunSpace;
 using System.Drawing;
+using System.Windows.Forms;
 
 
 namespace SkyCombImage.DrawSpace
@@ -189,6 +190,47 @@ namespace SkyCombImage.DrawSpace
             catch (Exception ex)
             {
                 throw ThrowException("DrawVideoFrames.Draw", ex);
+            }
+        }
+
+
+        // Move visibleBox so it lies fully inside imageSize.
+        // Doing this for an object seen over frames from top to bottom of thermal images,
+        // object will visually drift in from the top for a few frames, then stay centred vertically 
+        // for the bulk of the time, then drift out the bottom for a few frames. Nice!
+        public static Rectangle MoveVisibleBoxInsideImageSize(Rectangle visibleBox, Size imageSize)
+        {
+            int pixelWidth = visibleBox.Width;
+            int pixelHeight = visibleBox.Height;
+
+            return new Rectangle(
+                Math.Max(0, Math.Min(visibleBox.Left, imageSize.Width - pixelWidth)),
+                Math.Max(0, Math.Min(visibleBox.Top, imageSize.Height - pixelHeight)),
+                pixelWidth,
+                pixelHeight);
+        }
+
+
+        // Store an image in a PictureBox
+        public static void StoreImageInPicture(Image<Bgr, byte> theImage, PictureBox thePicture)
+        {
+            if (thePicture != null)
+            {
+                if (theImage != null)
+                {
+                    double oldWidth = theImage.Width;
+                    double oldHeight = theImage.Height;
+
+                    // We resize the picture horizontally and vertically with the same factor.
+                    var widthRatio = thePicture.Width / oldWidth;
+                    var heightRatio = thePicture.Height / oldHeight;
+                    var factor = Math.Min(widthRatio, heightRatio);
+
+                    // We need to resize the theImage to match thePicture dimensions.
+                    thePicture.Image = DrawImage.ResizeImage(theImage, factor).ToBitmap();
+                }
+                else
+                    thePicture.Image = null;
             }
         }
     }
