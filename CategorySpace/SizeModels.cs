@@ -16,6 +16,7 @@ namespace SkyCombImage.CategorySpace
         // Animals in this category
         public string Animals { get; }
 
+
         public MasterSizeModel(string name, int minAreaCM2, int maxAreaCM2, string animals)
         {
             Name = name;
@@ -91,16 +92,17 @@ namespace SkyCombImage.CategorySpace
 
 
         // Return the count of objects in each size category
-        static public List<int> GetObjectCountBySizeClass(ProcessObjList objects)
+        static public List<int> GetObjectCountBySizeClass(ProcessObjList objects, bool significantObjectsOnly = true)
         {
             var answer = new int[NumAreas];
             if (objects != null)
                 foreach (var obj in objects)
-                {
-                    var (_, index) = CM2ToClass((int)obj.Value.SizeCM2);
-                    if (index >= 0 && index < NumAreas)
-                        answer[index]++;
-                }
+                    if( obj.Value.Significant || !significantObjectsOnly )
+                    {
+                        var (_, index) = CM2ToClass((int)obj.Value.SizeCM2);
+                        if (index >= 0 && index < NumAreas)
+                            answer[index]++;
+                    }
             return new List<int>(answer);
         }
     }

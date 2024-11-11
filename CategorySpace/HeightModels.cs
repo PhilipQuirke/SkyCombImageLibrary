@@ -88,17 +88,18 @@ namespace SkyCombImage.CategorySpace
 
 
         // Return the count of objects in each height category
-        static public List<int> GetObjectCountByHeightClass(ProcessObjList objects)
+        static public List<int> GetObjectCountByHeightClass(ProcessObjList objects, bool significantObjectsOnly = true)
         {
             var answer = new int[NumHeights];
             if(objects != null)
                 foreach (var obj in objects)
-                {
-                    var (_, index) = HeightMToClass(obj.Value.HeightM);
-                    if (index >= 0 && index < NumHeights)
-                        answer[index]++;
-                }
-            return new List<int>(answer);
+                    if (obj.Value.Significant || !significantObjectsOnly)
+                    {
+                        var (_, index) = HeightMToClass(obj.Value.HeightM);
+                        if (index >= 0 && index < NumHeights)
+                            answer[index]++;
+                    }
+                return new List<int>(answer);
         }
     }
 
