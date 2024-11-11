@@ -87,7 +87,7 @@ namespace SkyCombImage.DrawSpace
                 if (theColor != Color.White)
                 {
                     var isFocusObject = (focusObjectId == feature.ObjectId);
-                    int thickness = (int)transform.Scale;
+                    int thickness = (int)transform.Scale * config.TextExtraScale / 2;
                     var scaledRect = transform.CalcRect(feature.PixelBox);
 
                     BoundingRectangle(config, ref image, scaledRect, theColor, thickness, config.AreaPadding * config.BoxExtraScale);
@@ -104,8 +104,9 @@ namespace SkyCombImage.DrawSpace
                             name = feature.ObjectId.ToString();
 
                         // Draw the object name to right of the rectangle.
+                        int separation_pixels = 8;
                         image.Draw(name,
-                            new Point(scaledRect.X + scaledRect.Width + 3, scaledRect.Y + 8),
+                            new Point(scaledRect.X + scaledRect.Width + separation_pixels, scaledRect.Y + separation_pixels),
                             FontFace.HersheyPlain, transform.Scale * config.TextExtraScale, DroneColors.ColorToBgr(theColor), thickness);
                     }
                 }
