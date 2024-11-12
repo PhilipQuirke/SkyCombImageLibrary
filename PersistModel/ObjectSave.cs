@@ -164,18 +164,19 @@ namespace SkyCombImage.PersistModel
 
             int numObjs = processAll.ProcessObjects.NumSignificantObjects;
             int swathe = processAll.GroundData.SwatheModel.M2Seen;
+            var density = 1.0 * numObjs / (swathe / 1000 * 1000);
 
             Data.Worksheet.Cells[3, 1].Value = "Significant objects";
             Data.Worksheet.Cells[3, 4].Value = numObjs;
-            Data.Worksheet.Cells[4, 4].Value = "objs";
+            Data.Worksheet.Cells[3, 5].Value = "objs";
 
             Data.Worksheet.Cells[4, 1].Value = "Flight 'swathe' coverage";
             Data.Worksheet.Cells[4, 4].Value = swathe;
-            Data.Worksheet.Cells[4, 4].Value = "m2";
+            Data.Worksheet.Cells[4, 5].Value = "m2";
 
             Data.Worksheet.Cells[5, 1].Value = "Objects density";
-            Data.Worksheet.Cells[5, 4].Value = 1.0 * numObjs / (swathe / 1000 * 1000);
-            Data.Worksheet.Cells[4, 4].Value = "objs/km2";
+            Data.Worksheet.Cells[5, 4].Value = density.ToString("F6");
+            Data.Worksheet.Cells[5, 5].Value = "objs/km2";
 
             AddProcessObjectFeatureScatterGraph();
 
