@@ -18,7 +18,7 @@ namespace SkyCombImage.PersistModel
         // Load run config data from the datastore 
         public List<string> RunConfigSettings()
         {
-            return Data.GetColumnSettingsIfAvailable(ProcessTabName, RunConfigTitle, RunTitleRow, MidColOffset);
+            return Data.GetColumnSettingsIfAvailable(ProcessSettingsTabName, RunConfigTitle, RunTitleRow, MidColOffset);
         }
 
 
@@ -31,15 +31,15 @@ namespace SkyCombImage.PersistModel
 
         public void LoadConfigSettings(RunConfig runConfig)
         {
-            var modelSettings = Data.GetColumnSettingsIfAvailable(ProcessTabName, ProcessConfigTitle, ModelTitleRow, LhsColOffset);
+            var modelSettings = Data.GetColumnSettingsIfAvailable(ProcessSettingsTabName, ProcessConfigTitle, ModelTitleRow, LhsColOffset);
             if (modelSettings != null)
                 runConfig.ProcessConfig.LoadModelSettings(modelSettings);
 
-            var drawSettings = Data.GetColumnSettingsIfAvailable(ProcessTabName, DrawTitle, DrawTitleRow, MidColOffset);
+            var drawSettings = Data.GetColumnSettingsIfAvailable(ProcessSettingsTabName, DrawTitle, DrawTitleRow, MidColOffset);
             if (drawSettings != null)
                 runConfig.ImageConfig.LoadSettings(drawSettings);
 
-            var outputSettings = Data.GetColumnSettingsIfAvailable(ProcessTabName, OutputConfigTitle, OutputTitleRow, MidColOffset);
+            var outputSettings = Data.GetColumnSettingsIfAvailable(ProcessSettingsTabName, OutputConfigTitle, OutputTitleRow, MidColOffset);
             if (outputSettings != null)
                 runConfig.ProcessConfig.LoadOutputSettings(outputSettings);
         }
@@ -48,7 +48,7 @@ namespace SkyCombImage.PersistModel
         // Load the number of significant objects (only non-zero if the video has been processed)
         public int GetNumSigObjects()
         {
-            var settings = Data.GetColumnSettingsIfAvailable(ProcessTabName, ResultsTitle, ResultsTitleRow, MidColOffset);
+            var settings = Data.GetColumnSettingsIfAvailable(ProcessSettingsTabName, ResultsTitle, ResultsTitleRow, MidColOffset);
             if ((settings != null) && (settings.Count >= 3))
                 return ConfigBase.StringToNonNegInt(settings[2]);
 
@@ -63,7 +63,7 @@ namespace SkyCombImage.PersistModel
 
             try
             {
-                if (Data.SelectWorksheet(FeaturesTabName))
+                if (Data.SelectWorksheet(FeaturesDataTabName))
                 {
                     var cell = Data.Worksheet.Cells[row, 1];
                     while (cell != null && cell.Value != null && cell.Value.ToString() != "")
@@ -102,7 +102,7 @@ namespace SkyCombImage.PersistModel
 
             try
             {
-                if (Data.SelectWorksheet(Objects1TabName))
+                if (Data.SelectWorksheet(ObjectsDataTabName))
                 {
                     var cell = Data.Worksheet.Cells[row, 1];
                     while (cell != null && cell.Value != null && cell.Value.ToString() != "")
@@ -137,7 +137,7 @@ namespace SkyCombImage.PersistModel
 
         public List<string> ObjectListSettings()
         {
-            return Data.GetColumnSettingsIfAvailable(ProcessTabName, ObjectSummaryTitle, ModelTitleRow, FarRhsColOffset);
+            return Data.GetColumnSettingsIfAvailable(ProcessSettingsTabName, ObjectSummaryTitle, ModelTitleRow, FarRhsColOffset);
         }
 
 
@@ -148,7 +148,7 @@ namespace SkyCombImage.PersistModel
 
             try
             {
-                if (Data.SelectWorksheet(SpanTabName))
+                if (Data.SelectWorksheet(SpanDataTabName))
                 {
                     var cell = Data.Worksheet.Cells[row, ProcessSpan.SpanIdSetting];
                     while (cell != null && cell.Value != null && cell.Value.ToString() != "")

@@ -24,8 +24,6 @@ namespace SkyCombImage.PersistModel
                     int theRow = 0;
                     foreach (var annotation in list)
                         Data.SetDataListRowKeysAndValues(ref theRow, annotation.Value.GetSettings());
-
-                    Data.SetLastUpdateDateTime(ObjectCategoryTabName);
                 }
             }
             catch (Exception ex)
@@ -47,8 +45,6 @@ namespace SkyCombImage.PersistModel
                     int theRow = 0;
                     foreach (var annotation in list)
                         Data.SetDataListRowKeysAndValues(ref theRow, annotation.Value.GetSettings());
-
-                    Data.SetLastUpdateDateTime(ObjectCategoryTabName);
                 }
             }
             catch (Exception ex)

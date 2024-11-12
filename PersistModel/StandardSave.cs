@@ -34,7 +34,7 @@ namespace SkyCombImage.PersistModel
         // Save common model data
         public void SaveCommonSummaryAndClearDetail(RunConfig runConfig, DataPairList effort, DataPairList settings)
         {
-            Data.SelectOrAddWorksheet(ProcessTabName);
+            Data.SelectOrAddWorksheet(ProcessSettingsTabName);
 
             Data.ClearWorksheet();
 
@@ -54,17 +54,15 @@ namespace SkyCombImage.PersistModel
 
 
             // We may be swapping from Yolo to Comb process or vica versa, so clear all existing "detail" model tabs
-            if (Data.SelectWorksheet(Blocks1TabName))
+            if (Data.SelectWorksheet(BlockDataTabName))
                 Data.ClearWorksheet();
-            if (Data.SelectWorksheet(Blocks2TabName))
+            if (Data.SelectWorksheet(ProcessReportTabName))
                 Data.ClearWorksheet();
-            if (Data.SelectWorksheet(Objects1TabName))
+            if (Data.SelectWorksheet(ObjectsDataTabName))
                 Data.ClearWorksheet();
-            if (Data.SelectWorksheet(Objects2TabName))
+            if (Data.SelectWorksheet(ObjectsReportTabName))
                 Data.ClearWorksheet();
-            if (Data.SelectWorksheet(FeaturesTabName))
-                Data.ClearWorksheet();
-            if (Data.SelectWorksheet(PixelsTabName))
+            if (Data.SelectWorksheet(FeaturesDataTabName))
                 Data.ClearWorksheet();
 
             Data.SelectWorksheet(IndexTabName);
@@ -76,21 +74,13 @@ namespace SkyCombImage.PersistModel
         {
             try
             {
-                Data.SelectOrAddWorksheet(ProcessTabName);
+                Data.SelectOrAddWorksheet(ProcessSettingsTabName);
                 SaveCommonSummaryAndClearDetail(runConfig, effort, settings);
                 Data.SetTitleAndDataListColumn(ResultsTitle, ResultsTitleRow, MidColOffset, model.GetSettings());
                 Data.FormatSummaryPage();
-                Data.SetLastUpdateDateTime(ProcessTabName);
-
 
                 // Save the Block data
                 AddBlockList(model.Blocks);
-
-
-                // No Pixel data 
-                if (Data.SelectWorksheet(PixelsTabName))
-                    Data.ClearWorksheet();
-
 
                 Save();
             }
@@ -114,10 +104,9 @@ namespace SkyCombImage.PersistModel
 
                 SaveCommonSummaryAndClearDetail(runConfig, effort, settings);
 
-                Data.SelectOrAddWorksheet(ProcessTabName);
+                Data.SelectOrAddWorksheet(ProcessSettingsTabName);
                 Data.SetTitleAndDataListColumn(ResultsTitle, ResultsTitleRow, MidColOffset, process.GetSettings());
                 Data.FormatSummaryPage();
-                Data.SetLastUpdateDateTime(ProcessTabName);
 
                 if (fullSave)
                 {
@@ -148,11 +137,11 @@ namespace SkyCombImage.PersistModel
                     // Save the ProcessSpan data 
                     SaveProcess.SaveSpanList(process);
 
-                    Data.SelectWorksheet(Blocks2TabName);
+                    Data.SelectWorksheet(ProcessReportTabName);
 
-                    Data.HideWorksheet(Blocks1TabName);
-                    Data.HideWorksheet(FeaturesTabName);
-                    Data.HideWorksheet(SpanTabName);
+                    Data.HideWorksheet(BlockDataTabName);
+                    Data.HideWorksheet(FeaturesDataTabName);
+                    Data.HideWorksheet(SpanDataTabName);
                 }
 
                 Save();

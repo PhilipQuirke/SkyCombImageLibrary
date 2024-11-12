@@ -18,7 +18,7 @@ namespace SkyCombImage.PersistModel
 
 
         public BlockSave(Drone drone, DroneDataStore data)
-            : base(data, Blocks1TabName, Blocks2TabName)
+            : base(data, BlockDataTabName, ProcessReportTabName)
         {
             Drone = drone;
         }
@@ -32,7 +32,7 @@ namespace SkyCombImage.PersistModel
                 MinDatumId = 1000000;
                 MaxDatumId = 1;
 
-                Data.SelectOrAddWorksheet(Blocks1TabName);
+                Data.SelectOrAddWorksheet(BlockDataTabName);
                 int blockRow = 0;
                 foreach (var block in blocks)
                 {
@@ -55,8 +55,6 @@ namespace SkyCombImage.PersistModel
                 Data.AddConditionalRuleBad(TardisModel.DeltaYawDegSetting, blockRow, Drone.DroneConfig.MaxLegStepDeltaYawDeg);
                 // Highlight in red any blocks where the PitchDeg exceeds FlightConfig.MaxLegStepPitchDeg. This implies not part of a leg.
                 Data.AddConditionalRuleBad(TardisModel.PitchDegSetting, blockRow, Drone.DroneConfig.MaxLegStepPitchDeg);
-
-                Data.SetLastUpdateDateTime(Blocks1TabName);
             }
         }
 
@@ -158,7 +156,7 @@ namespace SkyCombImage.PersistModel
             MaxDatumId = (int)(Math.Ceiling(MaxDatumId / 50.0) * 50.0);
 
             // Add the charts
-            Data.SelectOrAddWorksheet(Blocks2TabName);
+            Data.SelectOrAddWorksheet(ProcessReportTabName);
             Data.Worksheet.Drawings.Clear();
             if (MaxDatumId > 0)
             {
@@ -169,8 +167,6 @@ namespace SkyCombImage.PersistModel
                 AddPitchGraph();
                 AddRollGraph();
                 AddLegGraph();
-
-                Data.SetLastUpdateDateTime(Blocks2TabName);
             }
         }
     }

@@ -22,7 +22,7 @@ namespace SkyCombImage.PersistModel
             int row = 2;
             try
             {
-                if (Data.SelectWorksheet(Blocks1TabName))
+                if (Data.SelectWorksheet(BlockDataTabName))
                 {
                     var cell = Data.Worksheet.Cells[row, TardisModel.TardisIdSetting];
                     while (cell != null && cell.Value != null && cell.Value.ToString() != "")

@@ -28,7 +28,7 @@ namespace SkyCombImage.PersistModel
 
         public void SaveFeatureList(ProcessAll process, bool saveAll)
         {
-            Data.SelectOrAddWorksheet(FeaturesTabName);
+            Data.SelectOrAddWorksheet(FeaturesDataTabName);
             int featureRow = 0;
             foreach (var feature in process.ProcessFeatures)
                 if (saveAll || feature.Value.Significant)
@@ -43,14 +43,12 @@ namespace SkyCombImage.PersistModel
             Data.SetColumnColor(ProcessFeatureModel.BlockIdSetting, featureRow, Color.Blue);
             Data.SetColumnColor(ProcessFeatureModel.HeightMSetting, featureRow, Color.Blue);
             Data.SetColumnColor(ProcessFeatureModel.LegIdSetting, featureRow, Color.Blue);
-
-            Data.SetLastUpdateDateTime(FeaturesTabName);
         }
 
 
         public void SaveObjectList(ProcessAll process, bool saveAll)
         {
-            Data.SelectOrAddWorksheet(Objects1TabName);
+            Data.SelectOrAddWorksheet(ObjectsDataTabName);
             int objectRow = 0;
             foreach (var theObject in process.ProcessObjects)
                 if (saveAll || theObject.Value.NumSigBlocks > 0)
@@ -70,8 +68,6 @@ namespace SkyCombImage.PersistModel
             Data.AddConditionalRuleBad(ProcessObjectModel.LocationErrMSetting, objectRow, process.ProcessConfig.GoodLocationErrM);
             Data.AddConditionalRuleGood(ProcessObjectModel.HeightErrMSetting, objectRow, process.ProcessConfig.GoodHeightErrM);
             Data.AddConditionalRuleBad(ProcessObjectModel.HeightErrMSetting, objectRow, process.ProcessConfig.GoodHeightErrM);
-
-            Data.SetLastUpdateDateTime(Objects1TabName);
         }
 
 
@@ -80,7 +76,7 @@ namespace SkyCombImage.PersistModel
             // Save the ProcessSpan data 
             if ((process.ProcessSpans != null) && (process.ProcessSpans.Count > 0))
             {
-                Data.SelectOrAddWorksheet(SpanTabName);
+                Data.SelectOrAddWorksheet(SpanDataTabName);
                 int legRow = 0;
                 foreach (var leg in process.ProcessSpans)
                     Data.SetDataListRowKeysAndValues(ref legRow, leg.Value.GetSettings());
@@ -88,8 +84,6 @@ namespace SkyCombImage.PersistModel
                 Data.SetColumnColor(ProcessSpanModel.SpanIdSetting, legRow, Color.Blue);
                 Data.SetColumnColor(ProcessSpanModel.SpanNameSetting, legRow, Color.Blue);
                 Data.SetColumnColor(ProcessSpanModel.BestFixAltMSetting, legRow, Color.Blue);
-
-                Data.SetLastUpdateDateTime(SpanTabName);
             }
         }
 
@@ -100,7 +94,7 @@ namespace SkyCombImage.PersistModel
             const string ChartName = "FeatureObjectHeight";
             const string ChartTitle = "Feature & Object Height (in meters)";
 
-            (var chartWs, var lastRow) = Data.PrepareChartArea(Objects2TabName, ChartName, Objects1TabName);
+            (var chartWs, var lastRow) = Data.PrepareChartArea(ObjectsReportTabName, ChartName, ObjectsDataTabName);
             if (lastRow > 0)
             {
                 var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
@@ -109,8 +103,8 @@ namespace SkyCombImage.PersistModel
                 chart.XAxis.MinValue = 0;
                 chart.XAxis.MaxValue = maxBlockId;
 
-                Data.AddScatterSerie(chart, FeaturesTabName, "Feature", ProcessFeatureModel.HeightMSetting, ProcessFeatureModel.BlockIdSetting, DroneColors.RealFeatureColor);
-                Data.AddScatterSerie(chart, Objects1TabName, "Objects", ProcessObjectModel.HeightMSetting, ProcessObjectModel.CenterBlockSetting, DroneColors.InScopeObjectColor, 6);
+                Data.AddScatterSerie(chart, FeaturesDataTabName, "Feature", ProcessFeatureModel.HeightMSetting, ProcessFeatureModel.BlockIdSetting, DroneColors.RealFeatureColor);
+                Data.AddScatterSerie(chart, ObjectsDataTabName, "Objects", ProcessObjectModel.HeightMSetting, ProcessObjectModel.CenterBlockSetting, DroneColors.InScopeObjectColor, 6);
             }
         }
 
@@ -121,15 +115,15 @@ namespace SkyCombImage.PersistModel
             const string ChartName = "ObjectScatterPlot";
             const string ChartTitle = "Object & Feature Locations (Northing / Easting) in meters";
 
-            (var chartWs, var lastRow) = Data.PrepareChartArea(Objects2TabName, ChartName, Objects1TabName);
+            (var chartWs, var lastRow) = Data.PrepareChartArea(ObjectsReportTabName, ChartName, ObjectsDataTabName);
             if (lastRow > 0)
             {
                 var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
                 Data.SetChart(chart, ChartTitle, 1, 0, LargeChartRows);
                 Data.SetAxises(chart, "Easting", "Northing", "0", "0");
 
-                Data.AddScatterSerie(chart, FeaturesTabName, "Feature", ProcessFeatureModel.NorthingMSetting, ProcessFeatureModel.EastingMSetting, DroneColors.RealFeatureColor);
-                Data.AddScatterSerie(chart, Objects1TabName, "Object", ProcessObjectModel.NorthingMSetting, ProcessObjectModel.EastingMSetting, DroneColors.InScopeObjectColor, 6);
+                Data.AddScatterSerie(chart, FeaturesDataTabName, "Feature", ProcessFeatureModel.NorthingMSetting, ProcessFeatureModel.EastingMSetting, DroneColors.RealFeatureColor);
+                Data.AddScatterSerie(chart, ObjectsDataTabName, "Object", ProcessObjectModel.NorthingMSetting, ProcessObjectModel.EastingMSetting, DroneColors.InScopeObjectColor, 6);
             }
         }
 
@@ -140,16 +134,16 @@ namespace SkyCombImage.PersistModel
             const string ChartName = "FlightObjectFeaturePlot";
             const string ChartTitle = "Drone Steps, Object & Feature Locations (Northing / Easting) in meters";
 
-            (var chartWs, var lastRow) = Data.PrepareChartArea(Objects2TabName, ChartName, Objects1TabName);
+            (var chartWs, var lastRow) = Data.PrepareChartArea(ObjectsReportTabName, ChartName, ObjectsDataTabName);
             if (lastRow > 0)
             {
                 var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
                 Data.SetChart(chart, ChartTitle, 1, 1, LargeChartRows);
                 Data.SetAxises(chart, "Easting", "Northing", "0", "0");
 
-                Data.AddScatterSerie(chart, Steps1TabName, "Step", TardisModel.NorthingMSetting, TardisModel.EastingMSetting, DroneColors.InScopeDroneColor);
-                Data.AddScatterSerie(chart, FeaturesTabName, "Feature", ProcessFeatureModel.NorthingMSetting, ProcessFeatureModel.EastingMSetting, DroneColors.RealFeatureColor);
-                Data.AddScatterSerie(chart, Objects1TabName, "Object", ProcessObjectModel.NorthingMSetting, ProcessObjectModel.EastingMSetting, DroneColors.InScopeObjectColor, 6);
+                Data.AddScatterSerie(chart, StepDataTabName, "Step", TardisModel.NorthingMSetting, TardisModel.EastingMSetting, DroneColors.InScopeDroneColor);
+                Data.AddScatterSerie(chart, FeaturesDataTabName, "Feature", ProcessFeatureModel.NorthingMSetting, ProcessFeatureModel.EastingMSetting, DroneColors.RealFeatureColor);
+                Data.AddScatterSerie(chart, ObjectsDataTabName, "Object", ProcessObjectModel.NorthingMSetting, ProcessObjectModel.EastingMSetting, DroneColors.InScopeObjectColor, 6);
             }
         }
 
@@ -162,7 +156,7 @@ namespace SkyCombImage.PersistModel
             var processDrawScope = runVideo.ProcessDrawScope;
             var processObjects = processAll.ProcessObjects;
 
-            Data.SelectOrAddWorksheet(Objects2TabName);
+            Data.SelectOrAddWorksheet(ObjectsReportTabName);
             Data.Worksheet.Drawings.Clear();
             //if (maxBlockId > 0)
             //{
@@ -206,8 +200,6 @@ namespace SkyCombImage.PersistModel
                 drawElevations.Initialise(new Size(750, 250));
                 localBitmap = drawElevations.CurrBitmap();
                 Data.SaveBitmap(localBitmap, "Flight and Objects Elevations", 2, 14);
-
-                Data.SetLastUpdateDateTime(Objects2TabName);
             }
         }
     }
