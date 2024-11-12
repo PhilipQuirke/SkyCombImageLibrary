@@ -65,12 +65,12 @@ namespace SkyCombImage.PersistModel
             (var _, var lastRow) = Data.PrepareChartArea(GraphTabName, "BlocksElevations", TardisTabName);
             if ((lastRow > 0) && (MaxDatumId > 0) && (Summary != null) && (Summary.TardisMaxKey > 1))
             {
-                var FirstGraphRow = 0;
+                var FirstGraphRow = 2;
 
                 // Generate a bitmap of the DSM land overlaid with the drone path 
                 var drawScope = new DroneDrawScope(Drone);
                 var drawAltitudes = new DrawElevations(drawScope);
-                drawAltitudes.Initialise(new Size(1600, 300));
+                drawAltitudes.Initialise(new Size(ChartFullWidthPixels, 300));
                 var graphBitmap = drawAltitudes.CurrBitmap();
 
                 Data.SaveBitmap(graphBitmap, "BlocksElevations", FirstGraphRow, 0);
@@ -146,8 +146,8 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // Save the list of Block charts
-        public void AddBlocks2Tab(FlightStepSummaryModel summary)
+        // Save Process summary and graphs
+        public void AddProcessReport(FlightStepSummaryModel summary)
         {
             Summary = summary;
 
@@ -158,6 +158,9 @@ namespace SkyCombImage.PersistModel
             // Add the charts
             Data.SelectOrAddWorksheet(ProcessReportTabName);
             Data.Worksheet.Drawings.Clear();
+
+            Data.SetLargeTitle(ProcessReportTitle);
+
             if (MaxDatumId > 0)
             {
                 AddElevationsGraph();

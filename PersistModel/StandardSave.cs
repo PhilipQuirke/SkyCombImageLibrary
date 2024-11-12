@@ -31,14 +31,14 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // Save common model data
-        public void SaveCommonSummaryAndClearDetail(RunConfig runConfig, DataPairList effort, DataPairList settings)
+        // Save process settings and clear the related data table tabs
+        public void SaveProcessSettingsAndClearDetail(RunConfig runConfig, DataPairList effort, DataPairList settings)
         {
             Data.SelectOrAddWorksheet(ProcessSettingsTabName);
 
             Data.ClearWorksheet();
 
-            Data.SetTitles(ProcessSummaryTitle);
+            Data.SetLargeTitle(ProcessSummaryTitle);
 
             Data.SetTitleAndDataListColumn(ProcessConfigTitle, ModelTitleRow, LhsColOffset, runConfig.ProcessConfig.GetModelSettings());
 
@@ -54,15 +54,15 @@ namespace SkyCombImage.PersistModel
 
 
             // We may be swapping from Yolo to Comb process or vica versa, so clear all existing "detail" model tabs
-            if (Data.SelectWorksheet(BlockDataTabName))
+            if (Data.SelectWorksheet(ObjectsReportTabName))
                 Data.ClearWorksheet();
             if (Data.SelectWorksheet(ProcessReportTabName))
                 Data.ClearWorksheet();
             if (Data.SelectWorksheet(ObjectsDataTabName))
                 Data.ClearWorksheet();
-            if (Data.SelectWorksheet(ObjectsReportTabName))
-                Data.ClearWorksheet();
             if (Data.SelectWorksheet(FeaturesDataTabName))
+                Data.ClearWorksheet();
+            if (Data.SelectWorksheet(BlockDataTabName))
                 Data.ClearWorksheet();
 
             Data.SelectWorksheet(IndexTabName);
@@ -75,7 +75,7 @@ namespace SkyCombImage.PersistModel
             try
             {
                 Data.SelectOrAddWorksheet(ProcessSettingsTabName);
-                SaveCommonSummaryAndClearDetail(runConfig, effort, settings);
+                SaveProcessSettingsAndClearDetail(runConfig, effort, settings);
                 Data.SetTitleAndDataListColumn(ResultsTitle, ResultsTitleRow, MidColOffset, model.GetSettings());
                 Data.FormatSummaryPage();
 
@@ -102,7 +102,7 @@ namespace SkyCombImage.PersistModel
                 var settings = runVideo.GetSettings();
                 var data = runVideo.DataStore;
 
-                SaveCommonSummaryAndClearDetail(runConfig, effort, settings);
+                SaveProcessSettingsAndClearDetail(runConfig, effort, settings);
 
                 Data.SelectOrAddWorksheet(ProcessSettingsTabName);
                 Data.SetTitleAndDataListColumn(ResultsTitle, ResultsTitleRow, MidColOffset, process.GetSettings());
@@ -115,7 +115,7 @@ namespace SkyCombImage.PersistModel
                     AddBlockList(process.Blocks);
 
                     // Add the Block charts
-                    AddBlocks2Tab(runVideo);
+                    AddProcessReport(runVideo);
 
                     var saveAllObjects = (runConfig.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All);
 
@@ -132,7 +132,7 @@ namespace SkyCombImage.PersistModel
                         SaveProcess.SaveObjectList(process, saveAllObjects);
 
                     // Add the Object/Feature charts
-                    SaveProcess.SaveObjectGraphs(MaxDatumId, runVideo);
+                    SaveProcess.SaveObjectReport(MaxDatumId, runVideo);
 
                     // Save the ProcessSpan data 
                     SaveProcess.SaveSpanList(process);

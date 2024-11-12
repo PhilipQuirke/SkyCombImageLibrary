@@ -1,4 +1,5 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+using OfficeOpenXml;
 using OfficeOpenXml.Drawing.Chart;
 using SkyCombDrone.CommonSpace;
 using SkyCombDrone.DroneModel;
@@ -148,8 +149,8 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // Add up to 4  object / feature charts / graphs
-        public void SaveObjectGraphs(int maxBlockId, RunVideoPersist runVideo)
+        // Add object summary with charts and graphs
+        public void SaveObjectReport(int maxBlockId, RunVideoPersist runVideo)
         {
             var processAll = runVideo.ProcessAll;
             var processScope = runVideo;
@@ -158,10 +159,24 @@ namespace SkyCombImage.PersistModel
 
             Data.SelectOrAddWorksheet(ObjectsReportTabName);
             Data.Worksheet.Drawings.Clear();
-            //if (maxBlockId > 0)
-            //{
-            //    AddProcessFeatureObjectHeightGraph(maxBlockId);
-            // }
+
+            Data.SetLargeTitle(ObjectReportTitle);
+
+            int numObjs = processAll.ProcessObjects.NumSignificantObjects;
+            int swathe = processAll.GroundData.SwatheModel.M2Seen;
+
+            Data.Worksheet.Cells[3, 1].Value = "Significant objects";
+            Data.Worksheet.Cells[3, 4].Value = numObjs;
+            Data.Worksheet.Cells[4, 4].Value = "objs";
+
+            Data.Worksheet.Cells[4, 1].Value = "Flight 'swathe' coverage";
+            Data.Worksheet.Cells[4, 4].Value = swathe;
+            Data.Worksheet.Cells[4, 4].Value = "m2";
+
+            Data.Worksheet.Cells[5, 1].Value = "Objects density";
+            Data.Worksheet.Cells[5, 4].Value = 1.0 * numObjs / (swathe / 1000 * 1000);
+            Data.Worksheet.Cells[4, 4].Value = "objs/km2";
+
             AddProcessObjectFeatureScatterGraph();
 
             if (processObjects.Count > 0)
@@ -170,36 +185,40 @@ namespace SkyCombImage.PersistModel
                 objectDrawScope.SetObjectRange(processObjects);
 
                 // Draw the histogram of object heights
-                int row = 1;
-                Data.SetTitle(ref row, 2, "Object Height Histogram");
+                int row = 3;
+                int col = 9;
+                Data.SetTitle(ref row, col, "Object Height Histogram");
                 var drawHeightHistogram = new ProcessDrawHeightHistogram(processDrawScope, objectDrawScope, MasterHeightModelList.GetObjectCountByHeightClass(processObjects));
                 drawHeightHistogram.Initialise(new Size(350, 150));
                 var localBitmap = drawHeightHistogram.CurrBitmap();
-                Data.SaveBitmap(localBitmap, "Object Height Histogram", 2, 0);
+                Data.SaveBitmap(localBitmap, "Object Height Histogram", row, col-1);
 
                 // Draw the histogram of object sizes
-                row = 1;
-                Data.SetTitle(ref row, 8, "Object Size Histogram");
+                row = 3;
+                col = 15;
+                Data.SetTitle(ref row, col, "Object Size Histogram");
                 var drawSizeHistogram = new ProcessDrawSizeHistogram(processDrawScope, objectDrawScope, MasterSizeModelList.GetObjectCountBySizeClass(processObjects));
                 drawSizeHistogram.Initialise(new Size(350, 150));
                 localBitmap = drawSizeHistogram.CurrBitmap();
-                Data.SaveBitmap(localBitmap, "Object Size Histogram", 2, 6);
+                Data.SaveBitmap(localBitmap, "Object Size Histogram", row, col-1);
 
                 // Draw the flight path with objects and features
                 row = 16;
-                Data.SetTitle(ref row, 17, "Flight Path with Objects & Features");
+                col = 15;
+                Data.SetTitle(ref row, col, "Flight Path with Objects & Features");
                 var drawFlightPath = new ProcessDrawPath(processDrawScope, processObjects, objectDrawScope);
-                drawFlightPath.Initialise(new Size(750, 750));
+                drawFlightPath.Initialise(new Size(825, 825));
                 localBitmap = drawFlightPath.CurrBitmap();
-                Data.SaveBitmap(localBitmap, "Flight Path with Objects & Features", 16, 14);
+                Data.SaveBitmap(localBitmap, "Flight Path with Objects & Features", row, col-1);
 
                 // Draw the elevations with objects and features
-                row = 1;
-                Data.SetTitle(ref row, 17, "Flight and Objects Elevations");
+                row = 47;
+                col = 1;
+                Data.SetTitle(ref row, col, "Flight and Objects Elevations");
                 var drawElevations = new ProcessDrawElevations(processAll, processDrawScope);
-                drawElevations.Initialise(new Size(750, 250));
+                drawElevations.Initialise(new Size(ChartFullWidthPixels, 250));
                 localBitmap = drawElevations.CurrBitmap();
-                Data.SaveBitmap(localBitmap, "Flight and Objects Elevations", 2, 14);
+                Data.SaveBitmap(localBitmap, "Flight and Objects Elevations", row, col-1);
             }
         }
     }
