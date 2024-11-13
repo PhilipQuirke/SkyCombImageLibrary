@@ -56,8 +56,6 @@ namespace SkyCombImage.PersistModel
             // We may be swapping from Yolo to Comb process or vica versa, so clear all existing "detail" model tabs
             if (Data.SelectWorksheet(ObjectsReportTabName))
                 Data.ClearWorksheet();
-            if (Data.SelectWorksheet(ProcessReportTabName))
-                Data.ClearWorksheet();
             if (Data.SelectWorksheet(ObjectsDataTabName))
                 Data.ClearWorksheet();
             if (Data.SelectWorksheet(FeaturesDataTabName))
@@ -114,9 +112,6 @@ namespace SkyCombImage.PersistModel
                     // Changing OnGroundAt or CameraDownDeg changes the Step data values like AltitudeM that are copied to block settings
                     AddBlockList(process.Blocks);
 
-                    // Add the Block charts
-                    AddProcessReport(runVideo);
-
                     var saveAllObjects = (runConfig.ProcessConfig.SaveObjectData == SaveObjectDataEnum.All);
 
                     ObjectSave SaveProcess = new(data);
@@ -137,7 +132,7 @@ namespace SkyCombImage.PersistModel
                     // Save the ProcessSpan data 
                     SaveProcess.SaveSpanList(process);
 
-                    Data.SelectWorksheet(ProcessReportTabName);
+                    Data.SelectWorksheet(ObjectsReportTabName);
 
                     Data.HideWorksheet(BlockDataTabName);
                     Data.HideWorksheet(FeaturesDataTabName);
