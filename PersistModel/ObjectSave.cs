@@ -166,17 +166,20 @@ namespace SkyCombImage.PersistModel
             int swathe = processAll.GroundData.SwatheModel.M2Seen;
             var density = 1.0 * numObjs / (swathe / 1000 * 1000);
 
-            Data.Worksheet.Cells[3, 1].Value = "Significant objects";
-            Data.Worksheet.Cells[3, 4].Value = numObjs;
-            Data.Worksheet.Cells[3, 5].Value = "objs";
+            int row = 3;
+            Data.SetTitle(ref row, 1, "Metrics");
 
-            Data.Worksheet.Cells[4, 1].Value = "Flight 'swathe' coverage";
-            Data.Worksheet.Cells[4, 4].Value = swathe;
-            Data.Worksheet.Cells[4, 5].Value = "m2";
+            Data.Worksheet.Cells[4, 1].Value = "Significant objects";
+            Data.Worksheet.Cells[4, 4].Value = numObjs;
+            Data.Worksheet.Cells[4, 5].Value = "objs";
 
-            Data.Worksheet.Cells[5, 1].Value = "Objects density";
-            Data.Worksheet.Cells[5, 4].Value = density.ToString("F6");
-            Data.Worksheet.Cells[5, 5].Value = "objs/km2";
+            Data.Worksheet.Cells[5, 1].Value = "Flight 'swathe' coverage";
+            Data.Worksheet.Cells[5, 4].Value = swathe;
+            Data.Worksheet.Cells[5, 5].Value = "m2";
+
+            Data.Worksheet.Cells[6, 1].Value = "Objects density";
+            Data.Worksheet.Cells[6, 4].Value = density.ToString("F6");
+            Data.Worksheet.Cells[6, 5].Value = "objs/km2";
 
             AddProcessObjectFeatureScatterGraph();
 
@@ -186,13 +189,13 @@ namespace SkyCombImage.PersistModel
                 objectDrawScope.SetObjectRange(processObjects);
 
                 // Draw the histogram of object heights
-                int row = 3;
+                row = 3;
                 int col = 9;
                 Data.SetTitle(ref row, col, "Object Height Histogram");
                 var drawHeightHistogram = new ProcessDrawHeightHistogram(processDrawScope, objectDrawScope, MasterHeightModelList.GetObjectCountByHeightClass(processObjects));
                 drawHeightHistogram.Initialise(new Size(350, 150));
                 var localBitmap = drawHeightHistogram.CurrBitmap();
-                Data.SaveBitmap(localBitmap, "Object Height Histogram", row, col-1);
+                Data.SaveBitmap(localBitmap, "Object Height Histogram", row-1, col-1);
 
                 // Draw the histogram of object sizes
                 row = 3;
@@ -201,7 +204,7 @@ namespace SkyCombImage.PersistModel
                 var drawSizeHistogram = new ProcessDrawSizeHistogram(processDrawScope, objectDrawScope, MasterSizeModelList.GetObjectCountBySizeClass(processObjects));
                 drawSizeHistogram.Initialise(new Size(350, 150));
                 localBitmap = drawSizeHistogram.CurrBitmap();
-                Data.SaveBitmap(localBitmap, "Object Size Histogram", row, col-1);
+                Data.SaveBitmap(localBitmap, "Object Size Histogram", row-1, col-1);
 
                 // Draw the flight path with objects and features
                 row = 16;
@@ -210,7 +213,7 @@ namespace SkyCombImage.PersistModel
                 var drawFlightPath = new ProcessDrawPath(processDrawScope, processObjects, objectDrawScope);
                 drawFlightPath.Initialise(new Size(825, 825));
                 localBitmap = drawFlightPath.CurrBitmap();
-                Data.SaveBitmap(localBitmap, "Flight Path with Objects & Features", row, col-1);
+                Data.SaveBitmap(localBitmap, "Flight Path with Objects & Features", row-1, col-1);
 
                 // Draw the elevations with objects and features
                 row = 47;
@@ -219,7 +222,7 @@ namespace SkyCombImage.PersistModel
                 var drawElevations = new ProcessDrawElevations(processAll, processDrawScope);
                 drawElevations.Initialise(new Size(ChartFullWidthPixels, 250));
                 localBitmap = drawElevations.CurrBitmap();
-                Data.SaveBitmap(localBitmap, "Flight and Objects Elevations", row, col-1);
+                Data.SaveBitmap(localBitmap, "Flight and Objects Elevations", row-1, col-1);
             }
         }
     }
