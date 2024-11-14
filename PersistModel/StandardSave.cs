@@ -1,5 +1,4 @@
 ﻿using Emgu.CV;
-using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombDrone.PersistModel;
@@ -54,16 +53,16 @@ namespace SkyCombImage.PersistModel
 
 
             // We may be swapping from Yolo to Comb process or vica versa, so clear all existing "detail" model tabs
-            if (Data.SelectWorksheet(ObjectsReportTabName))
+            if (Data.SelectWorksheet(AnimalReportTabName))
                 Data.ClearWorksheet();
-            if (Data.SelectWorksheet(ObjectsDataTabName))
+            if (Data.SelectWorksheet(AnimalsDataTabName))
                 Data.ClearWorksheet();
-            if (Data.SelectWorksheet(FeaturesDataTabName))
+            if (Data.SelectWorksheet(AnimalImageDataTabName))
                 Data.ClearWorksheet();
             if (Data.SelectWorksheet(BlockDataTabName))
                 Data.ClearWorksheet();
 
-            Data.SelectWorksheet(IndexTabName);
+            Data.SelectWorksheet(HomeTabName);
         }
 
 
@@ -116,15 +115,15 @@ namespace SkyCombImage.PersistModel
 
                     ObjectSave SaveProcess = new(data);
 
-                    // Save the Feature data 
-                    var saveFeatures = ((runConfig.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None) && (process.ProcessFeatures.Count > 0));
-                    if (saveFeatures)
-                        SaveProcess.SaveFeatureList(runVideo.ProcessAll, saveAllObjects);
-
                     // Save the Object data 
                     var saveObjects = ((runConfig.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None) && (process.ProcessObjects.Count > 0));
                     if (saveObjects)
                         SaveProcess.SaveObjectList(process, saveAllObjects);
+
+                    // Save the Feature data 
+                    var saveFeatures = ((runConfig.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None) && (process.ProcessFeatures.Count > 0));
+                    if (saveFeatures)
+                        SaveProcess.SaveFeatureList(runVideo.ProcessAll, saveAllObjects);
 
                     // Add the Object/Feature charts
                     SaveProcess.SaveObjectReport(MaxDatumId, runVideo);
@@ -132,10 +131,9 @@ namespace SkyCombImage.PersistModel
                     // Save the ProcessSpan data 
                     SaveProcess.SaveSpanList(process);
 
-                    Data.SelectWorksheet(ObjectsReportTabName);
+                    Data.SelectWorksheet(AnimalReportTabName);
 
                     Data.HideWorksheet(BlockDataTabName);
-                    Data.HideWorksheet(FeaturesDataTabName);
                     Data.HideWorksheet(SpanDataTabName);
                 }
 

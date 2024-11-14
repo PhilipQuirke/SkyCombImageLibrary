@@ -58,7 +58,7 @@ namespace SkyCombImage.PersistModel
 
             try
             {
-                if (Data.SelectWorksheet(ObjectCategoryTabName))
+                if (Data.SelectWorksheet(AnimalCategoryTabName))
                 {
                     list.Clear();
 

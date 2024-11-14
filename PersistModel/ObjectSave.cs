@@ -1,5 +1,5 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using OfficeOpenXml;
+
 using OfficeOpenXml.Drawing.Chart;
 using SkyCombDrone.CommonSpace;
 using SkyCombDrone.DroneModel;
@@ -29,7 +29,7 @@ namespace SkyCombImage.PersistModel
 
         public void SaveFeatureList(ProcessAll process, bool saveAll)
         {
-            Data.SelectOrAddWorksheet(FeaturesDataTabName);
+            Data.SelectOrAddWorksheet(AnimalImageDataTabName);
             int featureRow = 0;
             foreach (var feature in process.ProcessFeatures)
                 if (saveAll || feature.Value.Significant)
@@ -49,7 +49,7 @@ namespace SkyCombImage.PersistModel
 
         public void SaveObjectList(ProcessAll process, bool saveAll)
         {
-            Data.SelectOrAddWorksheet(ObjectsDataTabName);
+            Data.SelectOrAddWorksheet(AnimalsDataTabName);
             int objectRow = 0;
             foreach (var theObject in process.ProcessObjects)
                 if (saveAll || theObject.Value.NumSigBlocks > 0)
@@ -95,7 +95,7 @@ namespace SkyCombImage.PersistModel
             const string ChartName = "FeatureObjectHeight";
             const string ChartTitle = "Feature & Object Height (in meters)";
 
-            (var chartWs, var lastRow) = Data.PrepareChartArea(ObjectsReportTabName, ChartName, ObjectsDataTabName);
+            (var chartWs, var lastRow) = Data.PrepareChartArea(AnimalReportTabName, ChartName, AnimalsDataTabName);
             if (lastRow > 0)
             {
                 var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
@@ -104,8 +104,8 @@ namespace SkyCombImage.PersistModel
                 chart.XAxis.MinValue = 0;
                 chart.XAxis.MaxValue = maxBlockId;
 
-                Data.AddScatterSerie(chart, FeaturesDataTabName, "Feature", ProcessFeatureModel.HeightMSetting, ProcessFeatureModel.BlockIdSetting, DroneColors.RealFeatureColor);
-                Data.AddScatterSerie(chart, ObjectsDataTabName, "Objects", ProcessObjectModel.HeightMSetting, ProcessObjectModel.CenterBlockSetting, DroneColors.InScopeObjectColor, 6);
+                Data.AddScatterSerie(chart, AnimalImageDataTabName, "Feature", ProcessFeatureModel.HeightMSetting, ProcessFeatureModel.BlockIdSetting, DroneColors.RealFeatureColor);
+                Data.AddScatterSerie(chart, AnimalsDataTabName, "Objects", ProcessObjectModel.HeightMSetting, ProcessObjectModel.CenterBlockSetting, DroneColors.InScopeObjectColor, 6);
             }
         }
 
@@ -114,17 +114,17 @@ namespace SkyCombImage.PersistModel
         public void AddProcessObjectFeatureScatterGraph()
         {
             const string ChartName = "ObjectScatterPlot";
-            const string ChartTitle = "Object & Feature Locations (Northing / Easting) in meters";
+            const string ChartTitle = "Animal Locations (Northing / Easting) in meters";
 
-            (var chartWs, var lastRow) = Data.PrepareChartArea(ObjectsReportTabName, ChartName, ObjectsDataTabName);
+            (var chartWs, var lastRow) = Data.PrepareChartArea(AnimalReportTabName, ChartName, AnimalsDataTabName);
             if (lastRow > 0)
             {
                 var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
                 Data.SetChart(chart, ChartTitle, 1, 0, LargeChartRows);
                 Data.SetAxises(chart, "Easting", "Northing", "0", "0");
 
-                Data.AddScatterSerie(chart, FeaturesDataTabName, "Feature", ProcessFeatureModel.NorthingMSetting, ProcessFeatureModel.EastingMSetting, DroneColors.RealFeatureColor);
-                Data.AddScatterSerie(chart, ObjectsDataTabName, "Object", ProcessObjectModel.NorthingMSetting, ProcessObjectModel.EastingMSetting, DroneColors.InScopeObjectColor, 6);
+                Data.AddScatterSerie(chart, AnimalImageDataTabName, "Feature", ProcessFeatureModel.NorthingMSetting, ProcessFeatureModel.EastingMSetting, DroneColors.RealFeatureColor);
+                Data.AddScatterSerie(chart, AnimalsDataTabName, "Object", ProcessObjectModel.NorthingMSetting, ProcessObjectModel.EastingMSetting, DroneColors.InScopeObjectColor, 6);
             }
         }
 
@@ -133,9 +133,9 @@ namespace SkyCombImage.PersistModel
         public void AddProcessFlightObjectFeatureGraph()
         {
             const string ChartName = "FlightObjectFeaturePlot";
-            const string ChartTitle = "Drone Steps, Object & Feature Locations (Northing / Easting) in meters";
+            const string ChartTitle = "Drone & Animal Locations (Northing / Easting) in meters";
 
-            (var chartWs, var lastRow) = Data.PrepareChartArea(ObjectsReportTabName, ChartName, ObjectsDataTabName);
+            (var chartWs, var lastRow) = Data.PrepareChartArea(AnimalReportTabName, ChartName, AnimalsDataTabName);
             if (lastRow > 0)
             {
                 var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
@@ -143,8 +143,8 @@ namespace SkyCombImage.PersistModel
                 Data.SetAxises(chart, "Easting", "Northing", "0", "0");
 
                 Data.AddScatterSerie(chart, StepDataTabName, "Step", TardisModel.NorthingMSetting, TardisModel.EastingMSetting, DroneColors.InScopeDroneColor);
-                Data.AddScatterSerie(chart, FeaturesDataTabName, "Feature", ProcessFeatureModel.NorthingMSetting, ProcessFeatureModel.EastingMSetting, DroneColors.RealFeatureColor);
-                Data.AddScatterSerie(chart, ObjectsDataTabName, "Object", ProcessObjectModel.NorthingMSetting, ProcessObjectModel.EastingMSetting, DroneColors.InScopeObjectColor, 6);
+                Data.AddScatterSerie(chart, AnimalImageDataTabName, "Feature", ProcessFeatureModel.NorthingMSetting, ProcessFeatureModel.EastingMSetting, DroneColors.RealFeatureColor);
+                Data.AddScatterSerie(chart, AnimalsDataTabName, "Object", ProcessObjectModel.NorthingMSetting, ProcessObjectModel.EastingMSetting, DroneColors.InScopeObjectColor, 6);
             }
         }
 
@@ -157,21 +157,20 @@ namespace SkyCombImage.PersistModel
             var processDrawScope = runVideo.ProcessDrawScope;
             var processObjects = processAll.ProcessObjects;
 
-            Data.SelectOrAddWorksheet(ObjectsReportTabName);
+            Data.SelectOrAddWorksheet(AnimalReportTabName);
             Data.Worksheet.Drawings.Clear();
 
-            Data.SetLargeTitle(ObjectReportTitle);
+            Data.SetLargeTitle(AnimalReportTitle);
 
             int numObjs = processAll.ProcessObjects.NumSignificantObjects;
             int swathe = processAll.GroundData.SwatheModel.M2Seen;
-            var density = 1.0 * numObjs / (swathe / 1000 * 1000);
+            var density = numObjs * 1000000.0 / swathe;
 
             int row = 3;
             Data.SetTitle(ref row, 1, "Metrics");
 
-            Data.Worksheet.Cells[4, 1].Value = "Significant objects";
+            Data.Worksheet.Cells[4, 1].Value = "Animals";
             Data.Worksheet.Cells[4, 4].Value = numObjs;
-            Data.Worksheet.Cells[4, 5].Value = "objs";
 
             Data.Worksheet.Cells[5, 1].Value = "Flight 'swathe' coverage";
             Data.Worksheet.Cells[5, 4].Value = swathe;
@@ -179,7 +178,7 @@ namespace SkyCombImage.PersistModel
 
             Data.Worksheet.Cells[6, 1].Value = "Objects density";
             Data.Worksheet.Cells[6, 4].Value = density.ToString("F6");
-            Data.Worksheet.Cells[6, 5].Value = "objs/km2";
+            Data.Worksheet.Cells[6, 5].Value = "animals/km2";
 
             AddProcessObjectFeatureScatterGraph();
 
@@ -191,38 +190,38 @@ namespace SkyCombImage.PersistModel
                 // Draw the histogram of object heights
                 row = 3;
                 int col = 9;
-                Data.SetTitle(ref row, col, "Object Height Histogram");
+                Data.SetTitle(ref row, col, "Animal Height Histogram");
                 var drawHeightHistogram = new ProcessDrawHeightHistogram(processDrawScope, objectDrawScope, MasterHeightModelList.GetObjectCountByHeightClass(processObjects));
                 drawHeightHistogram.Initialise(new Size(350, 150));
                 var localBitmap = drawHeightHistogram.CurrBitmap();
-                Data.SaveBitmap(localBitmap, "Object Height Histogram", row-1, col-1);
+                Data.SaveBitmap(localBitmap, "Animal Height Histogram", row-1, col-1);
 
                 // Draw the histogram of object sizes
                 row = 3;
                 col = 15;
-                Data.SetTitle(ref row, col, "Object Size Histogram");
+                Data.SetTitle(ref row, col, "Animal Size Histogram");
                 var drawSizeHistogram = new ProcessDrawSizeHistogram(processDrawScope, objectDrawScope, MasterSizeModelList.GetObjectCountBySizeClass(processObjects));
                 drawSizeHistogram.Initialise(new Size(350, 150));
                 localBitmap = drawSizeHistogram.CurrBitmap();
-                Data.SaveBitmap(localBitmap, "Object Size Histogram", row-1, col-1);
+                Data.SaveBitmap(localBitmap, "Animal Size Histogram", row-1, col-1);
 
                 // Draw the flight path with objects and features
                 row = 16;
                 col = 15;
-                Data.SetTitle(ref row, col, "Flight Path with Objects & Features");
+                Data.SetTitle(ref row, col, "Flight Path with Animals");
                 var drawFlightPath = new ProcessDrawPath(processDrawScope, processObjects, objectDrawScope);
                 drawFlightPath.Initialise(new Size(825, 825));
                 localBitmap = drawFlightPath.CurrBitmap();
-                Data.SaveBitmap(localBitmap, "Flight Path with Objects & Features", row-1, col-1);
+                Data.SaveBitmap(localBitmap, "Flight Path with Animals", row-1, col-1);
 
                 // Draw the elevations with objects and features
                 row = 47;
                 col = 1;
-                Data.SetTitle(ref row, col, "Flight and Objects Elevations");
+                Data.SetTitle(ref row, col, "Flight and Animals Elevations");
                 var drawElevations = new ProcessDrawElevations(processAll, processDrawScope);
                 drawElevations.Initialise(new Size(ChartFullWidthPixels, 250));
                 localBitmap = drawElevations.CurrBitmap();
-                Data.SaveBitmap(localBitmap, "Flight and Objects Elevations", row-1, col-1);
+                Data.SaveBitmap(localBitmap, "Flight and Animals Elevations", row-1, col-1);
             }
         }
     }

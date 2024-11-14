@@ -63,7 +63,7 @@ namespace SkyCombImage.PersistModel
 
             try
             {
-                if (Data.SelectWorksheet(FeaturesDataTabName))
+                if (Data.SelectWorksheet(AnimalImageDataTabName))
                 {
                     var cell = Data.Worksheet.Cells[row, 1];
                     while (cell != null && cell.Value != null && cell.Value.ToString() != "")
@@ -102,7 +102,7 @@ namespace SkyCombImage.PersistModel
 
             try
             {
-                if (Data.SelectWorksheet(ObjectsDataTabName))
+                if (Data.SelectWorksheet(AnimalsDataTabName))
                 {
                     var cell = Data.Worksheet.Cells[row, 1];
                     while (cell != null && cell.Value != null && cell.Value.ToString() != "")

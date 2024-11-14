@@ -41,7 +41,7 @@ namespace SkyCombImage.PersistModel
                 // Save the user Annotations (if any)
                 if ((list != null) && (list.Count > 0))
                 {
-                    Data.SelectOrAddWorksheet(ObjectCategoryTabName);
+                    Data.SelectOrAddWorksheet(AnimalCategoryTabName);
                     int theRow = 0;
                     foreach (var annotation in list)
                         Data.SetDataListRowKeysAndValues(ref theRow, annotation.Value.GetSettings());
