@@ -181,7 +181,7 @@ namespace SkyCombImage.DrawSpace
 
 
         // Generate a bitmap of the graph as per scope settings.
-        public override Bitmap CurrBitmap()
+        public override Bitmap CurrBitmap( bool dpiIndependent = false)
         {
             var answer = base.CurrBitmap();
 

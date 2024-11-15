@@ -17,11 +17,6 @@ namespace SkyCombImage.PersistModel
     // Save processing model data to a datastore
     public class ObjectSave : DataStoreAccessor
     {
-        const string ObjectHeightPivotName = "ObjectHeightPivot";
-        const string ObjectSizePivotName = "ObjectSizePivot";
-        const string ObjectHeatPivotName = "ObjectHeatPivot";
-
-
         public ObjectSave(DroneDataStore data) : base(data)
         {
         }
@@ -89,27 +84,6 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // Add a height graph for objects and features
-        public void AddProcessFeatureObjectHeightGraph(int maxBlockId)
-        {
-            const string ChartName = "FeatureObjectHeight";
-            const string ChartTitle = "Feature & Object Height (in meters)";
-
-            (var chartWs, var lastRow) = Data.PrepareChartArea(AnimalReportTabName, ChartName, AnimalsDataTabName);
-            if (lastRow > 0)
-            {
-                var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
-                Data.SetChart(chart, ChartTitle, 0, 1, StandardChartRows);
-                Data.SetAxises(chart, "Block", "Height", "0.0");
-                chart.XAxis.MinValue = 0;
-                chart.XAxis.MaxValue = maxBlockId;
-
-                Data.AddScatterSerie(chart, AnimalImageDataTabName, "Feature", ProcessFeatureModel.HeightMSetting, ProcessFeatureModel.BlockIdSetting, DroneColors.RealFeatureColor);
-                Data.AddScatterSerie(chart, AnimalsDataTabName, "Objects", ProcessObjectModel.HeightMSetting, ProcessObjectModel.CenterBlockSetting, DroneColors.InScopeObjectColor, 6);
-            }
-        }
-
-
         // Add a scatter plot of the objects and features.
         public void AddProcessObjectFeatureScatterGraph()
         {
@@ -123,26 +97,6 @@ namespace SkyCombImage.PersistModel
                 Data.SetChart(chart, ChartTitle, 1, 0, LargeChartRows);
                 Data.SetAxises(chart, "Easting", "Northing", "0", "0");
 
-                Data.AddScatterSerie(chart, AnimalImageDataTabName, "Feature", ProcessFeatureModel.NorthingMSetting, ProcessFeatureModel.EastingMSetting, DroneColors.RealFeatureColor);
-                Data.AddScatterSerie(chart, AnimalsDataTabName, "Object", ProcessObjectModel.NorthingMSetting, ProcessObjectModel.EastingMSetting, DroneColors.InScopeObjectColor, 6);
-            }
-        }
-
-
-        // Add a scatter plot of the process object and feature locations.
-        public void AddProcessFlightObjectFeatureGraph()
-        {
-            const string ChartName = "FlightObjectFeaturePlot";
-            const string ChartTitle = "Drone & Animal Locations (Northing / Easting) in meters";
-
-            (var chartWs, var lastRow) = Data.PrepareChartArea(AnimalReportTabName, ChartName, AnimalsDataTabName);
-            if (lastRow > 0)
-            {
-                var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
-                Data.SetChart(chart, ChartTitle, 1, 1, LargeChartRows);
-                Data.SetAxises(chart, "Easting", "Northing", "0", "0");
-
-                Data.AddScatterSerie(chart, StepDataTabName, "Step", TardisModel.NorthingMSetting, TardisModel.EastingMSetting, DroneColors.InScopeDroneColor);
                 Data.AddScatterSerie(chart, AnimalImageDataTabName, "Feature", ProcessFeatureModel.NorthingMSetting, ProcessFeatureModel.EastingMSetting, DroneColors.RealFeatureColor);
                 Data.AddScatterSerie(chart, AnimalsDataTabName, "Object", ProcessObjectModel.NorthingMSetting, ProcessObjectModel.EastingMSetting, DroneColors.InScopeObjectColor, 6);
             }
@@ -210,8 +164,8 @@ namespace SkyCombImage.PersistModel
                 col = 15;
                 Data.SetTitle(ref row, col, "Flight Path with Animals");
                 var drawFlightPath = new ProcessDrawPath(processDrawScope, processObjects, objectDrawScope);
-                drawFlightPath.Initialise(new Size(825, 825));
-                localBitmap = drawFlightPath.CurrBitmap();
+                drawFlightPath.Initialise(new Size(575, 575));
+                localBitmap = drawFlightPath.CurrBitmap(true);
                 Data.SaveBitmap(localBitmap, "Flight Path with Animals", row-1, col-1);
 
                 // Draw the elevations with objects and features
