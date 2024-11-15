@@ -130,8 +130,8 @@ namespace SkyCombImage.PersistModel
             Data.Worksheet.Cells[5, 4].Value = swathe;
             Data.Worksheet.Cells[5, 5].Value = "m2";
 
-            Data.Worksheet.Cells[6, 1].Value = "Objects density";
-            Data.Worksheet.Cells[6, 4].Value = density.ToString("F6");
+            Data.Worksheet.Cells[6, 1].Value = "Animal density";
+            Data.Worksheet.Cells[6, 4].Value = density.ToString("F1");
             Data.Worksheet.Cells[6, 5].Value = "animals/km2";
 
             AddProcessObjectFeatureScatterGraph();
