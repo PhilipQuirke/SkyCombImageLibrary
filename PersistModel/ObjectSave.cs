@@ -222,6 +222,10 @@ namespace SkyCombImage.PersistModel
                 drawElevations.Initialise(new Size(ChartFullWidthPixels, 250));
                 localBitmap = drawElevations.CurrBitmap();
                 Data.SaveBitmap(localBitmap, "Flight and Animals Elevations", row-1, col-1);
+                DroneSave.SaveElevationLegend(Data, row, 23, 1, 1);
+                Data.Worksheet.Cells[row, 24].Value = "Drone";
+                Data.Worksheet.Cells[row+1, 24].Value = "Surface";
+                Data.Worksheet.Cells[row+2, 24].Value = "Ground";
             }
         }
     }
