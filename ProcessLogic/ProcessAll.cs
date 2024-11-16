@@ -429,7 +429,6 @@ namespace SkyCombImage.ProcessLogic
             ProcessSpan_Create();
 
             Drone.InputVideo?.ResetCurrFrame();
-            Drone.DisplayVideo?.ResetCurrFrame();
 
             OnObservation(ProcessEventEnum.IntervalEnd);
         }

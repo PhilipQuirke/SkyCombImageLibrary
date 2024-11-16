@@ -89,16 +89,10 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Set the current input video member data
-        public void SetCurrVideoFrameData(VideoData inputVideo, VideoData displayVideo)
+        public void SetCurrVideoFrameData(VideoData inputVideo)
         {
             PSM.CurrInputFrameId = inputVideo.CurrFrameId;
             PSM.CurrInputFrameMs = inputVideo.CurrFrameMs;
-
-            if (displayVideo != null)
-            {
-                PSM.CurrDisplayFrameId = displayVideo.CurrFrameId;
-                PSM.CurrDisplayFrameMs = displayVideo.CurrFrameMs;
-            }
         }
 
 
@@ -154,7 +148,7 @@ namespace SkyCombImage.ProcessLogic
 
         public void CalculateSettings()
         {
-            SetCurrVideoFrameData(Drone.InputVideo, Drone.DisplayVideo);
+            SetCurrVideoFrameData(Drone.InputVideo);
             if (Drone.HasFlightSteps)
                 SetCurrRunStepAndLeg(Drone.MsToNearestFlightStep(PSM.CurrInputFrameMs));
             else
@@ -169,7 +163,7 @@ namespace SkyCombImage.ProcessLogic
 
             if (Drone.HaveFrames())
             {
-                (Mat inputMat, Mat displayMat) = Drone.CurrFrames();
+                Mat inputMat = Drone.CurrFrames();
 
                 CalculateSettings();
 
