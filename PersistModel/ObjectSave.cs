@@ -2,7 +2,6 @@
 
 using OfficeOpenXml.Drawing.Chart;
 using SkyCombDrone.CommonSpace;
-using SkyCombDrone.DroneModel;
 using SkyCombDrone.PersistModel;
 using SkyCombImage.CategorySpace;
 using SkyCombImage.DrawSpace;
