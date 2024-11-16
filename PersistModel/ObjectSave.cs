@@ -116,15 +116,15 @@ namespace SkyCombImage.PersistModel
 
             Data.SetLargeTitle(AnimalReportTitle);
 
-            int numObjs = processAll.ProcessObjects.NumSignificantObjects;
+            int numAnimals = processAll.ProcessObjects.NumSignificantObjects;
             int swathe = processAll.GroundData.SwatheModel.M2Seen;
-            var density = numObjs * 1000000.0 / swathe;
+            var density = numAnimals * 1000000.0 / swathe;
 
             int row = 3;
             Data.SetTitle(ref row, 1, "Metrics");
 
             Data.Worksheet.Cells[4, 1].Value = "Animals";
-            Data.Worksheet.Cells[4, 4].Value = numObjs;
+            Data.Worksheet.Cells[4, 4].Value = numAnimals;
 
             Data.Worksheet.Cells[5, 1].Value = "Flight 'swathe' coverage";
             Data.Worksheet.Cells[5, 4].Value = swathe;
@@ -148,7 +148,7 @@ namespace SkyCombImage.PersistModel
                 var drawHeightHistogram = new ProcessDrawHeightHistogram(processDrawScope, objectDrawScope, MasterHeightModelList.GetObjectCountByHeightClass(processObjects));
                 drawHeightHistogram.Initialise(new Size(350, 150));
                 var localBitmap = drawHeightHistogram.CurrBitmap();
-                Data.SaveBitmap(localBitmap, "Animal Height Histogram", row-1, col-1);
+                Data.SaveBitmap(localBitmap, "AnimalHeightHistogram", row-1, col-1);
 
                 // Draw the histogram of object sizes
                 row = 3;
@@ -157,7 +157,7 @@ namespace SkyCombImage.PersistModel
                 var drawSizeHistogram = new ProcessDrawSizeHistogram(processDrawScope, objectDrawScope, MasterSizeModelList.GetObjectCountBySizeClass(processObjects));
                 drawSizeHistogram.Initialise(new Size(350, 150));
                 localBitmap = drawSizeHistogram.CurrBitmap();
-                Data.SaveBitmap(localBitmap, "Animal Size Histogram", row-1, col-1);
+                Data.SaveBitmap(localBitmap, "AnimalSizeHistogram", row-1, col-1);
 
                 // Draw the flight path with objects and features
                 row = 16;
@@ -166,7 +166,7 @@ namespace SkyCombImage.PersistModel
                 var drawFlightPath = new ProcessDrawPath(processDrawScope, processObjects, objectDrawScope);
                 drawFlightPath.Initialise(new Size(575, 575));
                 localBitmap = drawFlightPath.CurrBitmap(true);
-                Data.SaveBitmap(localBitmap, "Flight Path with Animals", row-1, col-1);
+                Data.SaveBitmap(localBitmap, "FlightPathWithAnimals", row-1, col-1);
 
                 // Draw the elevations with objects and features
                 row = 47;
