@@ -121,11 +121,11 @@ namespace SkyCombImage.ProcessLogic
 
         public void ConfigureScope_SetFramePos(float inputVideoFromS, float inputVideoToS)
         {
-            Drone.ResetCurrFrames();
+            Drone.ResetCurrFrame();
 
             CalculateInputScope(inputVideoFromS, inputVideoToS);
 
-            Drone.SetAndGetCurrFrames(PSM.FirstInputFrameId);
+            Drone.SetAndGetCurrFrame(PSM.FirstInputFrameId);
 
             if (Drone.HasFlightSteps)
             {
@@ -161,9 +161,9 @@ namespace SkyCombImage.ProcessLogic
         {
             ResetCurrImages();
 
-            if (Drone.HaveFrames())
+            if (Drone.HaveFrame())
             {
-                Mat inputMat = Drone.CurrFrames();
+                Mat inputMat = Drone.CurrFrame();
 
                 CalculateSettings();
 

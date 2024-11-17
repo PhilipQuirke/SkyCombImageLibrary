@@ -104,18 +104,18 @@ namespace SkyCombImage.PersistModel
 
         public static void SetKeyResults(ExcelWorksheet ws, int numAnimals, long swatheM2, int col1, int col2)
         {
-            var swatheKM2 = swatheM2 / 1000000;
+            var swatheKM2 = swatheM2 / 1000000.0;
             var animalDensity = swatheKM2 > 0 ? numAnimals / swatheKM2 : 0;
 
             ws.Cells[4, col1].Value = "Animals";
             ws.Cells[4, col2].Value = numAnimals;
 
             ws.Cells[5, col1].Value = "Flight 'swathe' coverage";
-            ws.Cells[5, col2].Value = swatheKM2;
+            ws.Cells[5, col2].Value = swatheKM2.ToString("0.00");
             ws.Cells[5, col2 + 1].Value = "km2";
 
             ws.Cells[6, col1].Value = "Animal density";
-            ws.Cells[6, col2].Value = animalDensity.ToString("0");
+            ws.Cells[6, col2].Value = animalDensity.ToString("0.0");
             ws.Cells[6, col2 + 1].Value = "animals/km2";
         }
 

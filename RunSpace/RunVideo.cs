@@ -482,7 +482,7 @@ namespace SkyCombImage.RunSpace
 
                         var calcWatch = Stopwatch.StartNew();
 
-                        if (!Drone.HaveFrames())
+                        if (!Drone.HaveFrame())
                             break;
 
                         // Convert the already loaded Mat(s) into Image(s)
@@ -495,9 +495,9 @@ namespace SkyCombImage.RunSpace
                                 // calls can give a CurrVideoFrameMs value that is, after 100 seconds, 400ms different
                                 // from the CurrVideoFrameMs value if we seek direct to CurrVideoFrameID!
                                 // So at the start of each new Leg we do a direct (slow) seek.
-                                Drone.SetAndGetCurrFrames(PSM.CurrInputFrameId);
+                                Drone.SetAndGetCurrFrame(PSM.CurrInputFrameId);
 
-                            if (!Drone.HaveFrames())
+                            if (!Drone.HaveFrame())
                                 break;
 
                             ConvertCurrImages();
@@ -550,7 +550,7 @@ namespace SkyCombImage.RunSpace
                             break;
 
                         // Move to the next frame(s)
-                        if (!Drone.GetNextFrames())
+                        if (!Drone.GetNextFrame())
                             break;
                     }
 

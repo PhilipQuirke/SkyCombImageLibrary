@@ -68,17 +68,10 @@ namespace SkyCombImage.RunSpace
 
                 // Are we processing a video/flight log for the first time?
                 bool firstTime = (runSettings == null);
-                if (firstTime)
-                {
-                    // If input is an optical video then default image processing model to none.
-                    if (drone.HasInputVideo && !drone.InputVideo.Thermal)
-                        runConfig.RunProcess = RunProcessEnum.None;
-                }
-                else
+                if (! firstTime)
                     runConfig.LoadSettings(runSettings);
 
                 var theRunModel = runConfig.RunProcess;
-
 
                 if (firstTime)
                     // If we are not processing the video then (by default) dont create a video output .
