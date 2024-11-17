@@ -21,13 +21,13 @@ namespace SkyCombImage.DrawSpace
     }
 
 
-    // Code to draw histogram of object heights as ??, G to 6+.
+    // Code to draw histogram of object heights as ?, G, 1f to 6f+.
     public class ProcessDrawHeightHistogram : DrawHistogram
     {
         public ProcessDrawHeightHistogram(ProcessDrawScope drawScope, ObjectDrawScope? objectDrawScope, List<int> values) : base(drawScope, values, 0, MasterHeightModelList.NumHeights-1)
         {
-            HorizLeftLabel = "??      G       1";
-            HorizRightLabel = "6+";
+            HorizLeftLabel = "?      G       1";
+            HorizRightLabel = "6f+";
 
             if (objectDrawScope != null)
             {

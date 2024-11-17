@@ -37,14 +37,14 @@ namespace SkyCombImage.CategorySpace
         {
             _heightClasses = new List<MasterHeightModel>
             {
-                new("??", -9999, -2, "Unknown height"),
+                new("?", -9999, -2, "Unknown height"),
                 new("G", -1.9, 2, "Ground level"),
-                new("1", 2.01, 5, "First floor"),
-                new("2", 5.01, 8, "Second floor"),
-                new("3", 8.01, 11, "Third floor"),
-                new("4", 11.01, 14, "Fourth floor"),
-                new("5", 14.01, 17, "Fifth floor"),
-                new("6+", 17.01, 99999, "Sixth floor and above")
+                new("1f", 2.01, 5, "First floor"),
+                new("2f", 5.01, 8, "Second floor"),
+                new("3f", 8.01, 11, "Third floor"),
+                new("4f", 11.01, 14, "Fourth floor"),
+                new("5f", 14.01, 17, "Fifth floor"),
+                new("6f+", 17.01, 99999, "Sixth floor and above")
             };
 
             _heightClassIndices = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -81,9 +81,9 @@ namespace SkyCombImage.CategorySpace
             }
 
             if (height < 0)
-                return ("??", 0);
+                return ("?", 0);
             else
-                return ("6+", NumHeights - 1);
+                return ("6f+", NumHeights - 1);
         }
 
 
