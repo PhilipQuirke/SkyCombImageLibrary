@@ -32,14 +32,6 @@ namespace SkyCombImage.ProcessModel
         public int InputFrameMs { get; set; }
 
 
-        // ------ Display Video Position Data (if any) -----
-        // Position in the display video in Frames, corresponding to this block. One-based. No offsets applied - straight from display video.
-        public int DisplayFrameId { get; set; }
-        // Position in the display  video in milliseconds, corresponding to this block. No offsets applied - straight from display video.
-        public int DisplayFrameMs { get; set; }
-
-
-
         // ------ Min / Max Features associated with this block -----
         public int MinFeatureId { get; set; }
         public int MaxFeatureId { get; set; }
@@ -55,8 +47,6 @@ namespace SkyCombImage.ProcessModel
             FlightLegId = scope.CurrRunLegId;
             InputFrameId = scope.CurrInputFrameId;
             InputFrameMs = scope.CurrInputFrameMs;
-            DisplayFrameId = scope.CurrDisplayFrameId;
-            DisplayFrameMs = scope.CurrDisplayFrameMs;
             MinFeatureId = UnknownValue;
             MaxFeatureId = UnknownValue;
             NumSig = 0;
@@ -110,13 +100,11 @@ namespace SkyCombImage.ProcessModel
         public const int LegIdSetting = FirstFreeSetting + 1;
         public const int InputFrameIdSetting = FirstFreeSetting + 2;
         public const int InputFrameMsSetting = FirstFreeSetting + 3;
-        public const int DisplayFrameIdSetting = FirstFreeSetting + 4;
-        public const int DisplayFrameMsSetting = FirstFreeSetting + 5;
-        public const int MinFeatureIdSetting = FirstFreeSetting + 6;
-        public const int MaxFeatureIdSetting = FirstFreeSetting + 7;
-        public const int DsmMSetting = FirstFreeSetting + 8;
-        public const int DemMSetting = FirstFreeSetting + 9;
-        public const int HasLegSetting = FirstFreeSetting + 10;
+        public const int MinFeatureIdSetting = FirstFreeSetting + 4;
+        public const int MaxFeatureIdSetting = FirstFreeSetting + 5;
+        public const int DsmMSetting = FirstFreeSetting + 6;
+        public const int DemMSetting = FirstFreeSetting + 7;
+        public const int HasLegSetting = FirstFreeSetting + 8;
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
@@ -129,8 +117,6 @@ namespace SkyCombImage.ProcessModel
             answer.AddInt_UnknownIsBlank("Leg Id", FlightLegId);
             answer.Add("Input Frame Id", InputFrameId);
             answer.Add("Input Frame Ms", InputFrameMs);
-            answer.AddInt_UnknownIsBlank("Display Frame Id", DisplayFrameId);
-            answer.AddInt_UnknownIsBlank("Display Frame Ms", DisplayFrameMs);
             answer.AddInt_UnknownIsBlank("Min Feat Id", MinFeatureId);
             answer.AddInt_UnknownIsBlank("Max Feat Id", MaxFeatureId);
 
@@ -149,8 +135,6 @@ namespace SkyCombImage.ProcessModel
             FlightLegId = StringToInt_BlankIsUnknown(settings[i++]);
             InputFrameId = StringToNonNegInt(settings[i++]);
             InputFrameMs = StringToNonNegInt(settings[i++]);
-            DisplayFrameId = StringToInt_BlankIsUnknown(settings[i++]);
-            DisplayFrameMs = StringToInt_BlankIsUnknown(settings[i++]);
             MinFeatureId = StringToInt_BlankIsUnknown(settings[i++]);
             MaxFeatureId = StringToInt_BlankIsUnknown(settings[i++]);
 

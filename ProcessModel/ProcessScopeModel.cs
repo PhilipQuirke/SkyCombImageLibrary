@@ -24,13 +24,6 @@ namespace SkyCombImage.ProcessModel
         public int InputVideoDurationMs { get { return LastVideoFrameMs - FirstVideoFrameMs; } }
 
 
-        // DISPLAY VIDEO (if any)
-        // Current display video frame Id. No offsets applied - straight from display video.
-        public int CurrDisplayFrameId { get; set; } = UnknownValue;
-        // Current display video position in milliseconds. No offsets applied - straight from display video.
-        public int CurrDisplayFrameMs { get; set; } = UnknownValue;
-
-
         // DRONE
         // StepId of current flight step
         public int CurrRunStepId { get; set; } = UnknownValue;
@@ -65,8 +58,6 @@ namespace SkyCombImage.ProcessModel
             LastVideoFrameMs = other.LastVideoFrameMs;
             CurrInputFrameId = other.CurrInputFrameId;
             CurrInputFrameMs = other.CurrInputFrameMs;
-            CurrDisplayFrameId = other.CurrDisplayFrameId;
-            CurrDisplayFrameMs = other.CurrDisplayFrameMs;
 
             CurrRunStepId = other.CurrRunStepId;
             CurrRunLegId = other.CurrRunLegId;
