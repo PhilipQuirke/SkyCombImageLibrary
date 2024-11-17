@@ -1,5 +1,6 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 
+using OfficeOpenXml;
 using OfficeOpenXml.Drawing.Chart;
 using SkyCombDrone.CommonSpace;
 using SkyCombDrone.PersistModel;
@@ -101,6 +102,23 @@ namespace SkyCombImage.PersistModel
             }
         }
 
+        public static void SetKeyResults(ExcelWorksheet ws, int numAnimals, long swatheM2, int col1, int col2)
+        {
+            var swatheKM2 = swatheM2 / 1000000;
+            var animalDensity = swatheKM2 > 0 ? numAnimals / swatheKM2 : 0;
+
+            ws.Cells[4, col1].Value = "Animals";
+            ws.Cells[4, col2].Value = numAnimals;
+
+            ws.Cells[5, col1].Value = "Flight 'swathe' coverage";
+            ws.Cells[5, col2].Value = swatheKM2;
+            ws.Cells[5, col2 + 1].Value = "km2";
+
+            ws.Cells[6, col1].Value = "Animal density";
+            ws.Cells[6, col2].Value = animalDensity.ToString("0");
+            ws.Cells[6, col2 + 1].Value = "animals/km2";
+        }
+
 
         // Add object summary with charts and graphs
         public void SaveObjectReport(int maxBlockId, RunVideoPersist runVideo)
@@ -111,27 +129,18 @@ namespace SkyCombImage.PersistModel
             var processObjects = processAll.ProcessObjects;
 
             Data.SelectOrAddWorksheet(AnimalReportTabName);
-            Data.Worksheet.Drawings.Clear();
+            var ws = Data.Worksheet;
+
+            ws.Drawings.Clear();
 
             Data.SetLargeTitle(AnimalReportTitle);
 
             int numAnimals = processAll.ProcessObjects.NumSignificantObjects;
-            int swathe = processAll.GroundData.SwatheModel.M2Seen;
-            var density = numAnimals * 1000000.0 / swathe;
+            int swatheM2 = processAll.GroundData.SwatheModel.M2Seen;
 
             int row = 3;
             Data.SetTitle(ref row, 1, "Metrics");
-
-            Data.Worksheet.Cells[4, 1].Value = "Animals";
-            Data.Worksheet.Cells[4, 4].Value = numAnimals;
-
-            Data.Worksheet.Cells[5, 1].Value = "Flight 'swathe' coverage";
-            Data.Worksheet.Cells[5, 4].Value = swathe;
-            Data.Worksheet.Cells[5, 5].Value = "m2";
-
-            Data.Worksheet.Cells[6, 1].Value = "Animal density";
-            Data.Worksheet.Cells[6, 4].Value = density.ToString("F1");
-            Data.Worksheet.Cells[6, 5].Value = "animals/km2";
+            ObjectSave.SetKeyResults(ws, numAnimals, swatheM2, 1, 4);
 
             AddProcessObjectFeatureScatterGraph();
 
@@ -176,9 +185,9 @@ namespace SkyCombImage.PersistModel
                 localBitmap = drawElevations.CurrBitmap();
                 Data.SaveBitmap(localBitmap, "Flight and Animals Elevations", row-1, col-1);
                 DroneSave.SaveElevationLegend(Data, row, 23, 1, 1);
-                Data.Worksheet.Cells[row, 24].Value = "Drone";
-                Data.Worksheet.Cells[row+1, 24].Value = "Surface";
-                Data.Worksheet.Cells[row+2, 24].Value = "Ground";
+                ws.Cells[row, 24].Value = "Drone";
+                ws.Cells[row+1, 24].Value = "Surface";
+                ws.Cells[row+2, 24].Value = "Ground";
             }
         }
     }
