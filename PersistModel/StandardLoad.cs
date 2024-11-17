@@ -35,10 +35,6 @@ namespace SkyCombImage.PersistModel
             if (modelSettings != null)
                 runConfig.ProcessConfig.LoadModelSettings(modelSettings);
 
-            var drawSettings = Data.GetColumnSettingsIfAvailable(ProcessSettingsTabName, DrawTitle, DrawTitleRow, MidColOffset);
-            if (drawSettings != null)
-                runConfig.ImageConfig.LoadSettings(drawSettings);
-
             var outputSettings = Data.GetColumnSettingsIfAvailable(ProcessSettingsTabName, OutputConfigTitle, OutputTitleRow, MidColOffset);
             if (outputSettings != null)
                 runConfig.ProcessConfig.LoadOutputSettings(outputSettings);
