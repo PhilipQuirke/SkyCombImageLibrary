@@ -89,7 +89,7 @@ namespace SkyCombImage.DrawSpace
                     // Reduce list of objects by the user filter values.
                     if ((objList != null) && (ObjectDrawScope != null))
                     {
-                        objList = ProcessObjList.FilterByObjectScope(ObjectDrawScope);
+                        objList = ProcessObjList.FilterByObjectScope(null, objList); //nq
                         ObjectDrawScope.NumFilteredObjects = objList.Count;
                     }
 

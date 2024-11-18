@@ -2,7 +2,9 @@
 using SkyCombDrone.DrawSpace;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
+using SkyCombImage.CategorySpace;
 using SkyCombImage.ProcessModel;
+using System.Drawing;
 
 
 namespace SkyCombImage.RunSpace
@@ -39,12 +41,17 @@ namespace SkyCombImage.RunSpace
         // Close the application after processing load file?
         public bool RunAutoClose { get; set; } = false;
 
+        public bool[] HeightButtons { get; set; } = null;
+        public bool[] SizeButtons { get; set; } = null;
+
 
         public RunConfig()
         {
             DroneConfig = new DroneConfigModel();
             ProcessConfig = new ProcessConfigModel();
             ImageConfig = new DrawImageConfig();
+            HeightButtons = [true, true, true, true, true, true, true, true];
+            SizeButtons = [true, true, true, true, true, true, true, true];
         }
 
 
@@ -143,5 +150,17 @@ namespace SkyCombImage.RunSpace
                 throw ThrowException("RunConfig.LoadJsonSettings", ex);
             }
         }
+
+
+        public bool InRange(float size, float height)
+        {
+            int sizeI = (int)size;
+            (var _, var heightIndex) = MasterHeightModelList.HeightMToClass(height);
+            (var _, var sizeIndex) = MasterSizeModelList.CM2ToClass(sizeI);
+            if ((HeightButtons[heightIndex] == true) && (SizeButtons[sizeIndex] == true))
+                return true;
+            return false;
+        }
+        
     }
 }

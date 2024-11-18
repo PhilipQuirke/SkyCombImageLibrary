@@ -85,7 +85,7 @@ namespace SkyCombImage.CategorySpace
             }
 
             if (areaCM2 < 0)
-                return ("XS", 0);
+                return ("XXS", 0);
             else
                 return ("XXL", NumAreas - 1);
         }
