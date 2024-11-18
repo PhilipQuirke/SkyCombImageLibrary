@@ -96,7 +96,7 @@ namespace SkyCombImage.RunSpace
         // Return the data to show in the ObjectGrid
         public override List<object[]> GetObjectGridData()
         {
-            return ProcessAll.ProcessObjects.GetObjectGridData(this, RunConfig.ProcessConfig, CategoryAll.ObjectCategories);
+            return ProcessAll.ProcessObjects.GetObjectGridData(this, RunConfig, CategoryAll.ObjectCategories);
         }
 
 

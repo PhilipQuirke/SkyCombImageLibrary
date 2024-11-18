@@ -5,6 +5,7 @@ using SkyCombGround.CommonSpace;
 using SkyCombImage.CategorySpace;
 using SkyCombImage.DrawSpace;
 using SkyCombImage.ProcessModel;
+using SkyCombImage.RunSpace;
 using System.Drawing;
 
 
@@ -792,7 +793,6 @@ namespace SkyCombImage.ProcessLogic
             ResetSettings();
         }
 
-
         public void ResetSettings()
         {
             MinLocationErrM = BaseConstants.UnknownValue;
@@ -904,9 +904,10 @@ namespace SkyCombImage.ProcessLogic
 
             foreach (var theObject in this)
                 if (theObject.Value.Significant &&
-                    // Only return objects in the RunFrom/To scope.
+                     // Only return objects in the RunFrom/To scope.
                     theObject.Value.InRunScope(scope))
-                    answer.AddObject(theObject.Value);
+                    
+                        answer.AddObject(theObject.Value);
 
             if (answer.Count > 0)
                 answer.CalculateSettings();
@@ -914,39 +915,26 @@ namespace SkyCombImage.ProcessLogic
             return answer;
         }
 
-
-        public ProcessObjList FilterByObjectScope(ObjectDrawScope objectScope)
+//nq keylist
+        public ProcessObjList FilterByObjectScope(RunConfig runConfig, ProcessObjList sigObjects)
         {
+            if (runConfig == null)
+                return sigObjects;
+
             ProcessObjList answer = new();
 
-            foreach (var theObject in this)
+            foreach (var theObject in sigObjects)
             {
-                var theObj = theObject.Value;
-
-                if ((objectScope.MinHeightIndex != BaseConstants.UnknownValue))
-                {
-                    (var _, var heightIndex) = MasterHeightModelList.HeightMToClass(theObj.HeightM);
-                    if (heightIndex < objectScope.MinHeightIndex)
-                        continue;
-                    if (heightIndex > objectScope.MaxHeightIndex)
-                        continue;
-                }
-                if ((theObj.SizeCM2 != BaseConstants.UnknownValue) && (objectScope.MinSizeIndex != BaseConstants.UnknownValue))
-                {
-                    (var _, var sizeIndex) = MasterSizeModelList.CM2ToClass((int)theObj.SizeCM2);
-                    if (sizeIndex < objectScope.MinSizeIndex)
-                        continue;
-                    if (sizeIndex > objectScope.MaxSizeIndex)
-                        continue;
-                }
-
-                answer.AddObject(theObject.Value);
+                // Only return objects in the object size selection
+                if (runConfig.InRange(theObject.Value.SizeCM2, theObject.Value.HeightM))
+                    answer.AddObject(theObject.Value);
             }
 
             return answer;
+
         }
 
-
+        //nq when does this following get run?
         public ProcessObjList FilterByLeg(int legId)
         {
             ProcessObjList answer = new();
@@ -958,20 +946,24 @@ namespace SkyCombImage.ProcessLogic
             return answer;
         }
 
-
         // Returns key attributes of objects and associated user annotations (if any) to show in the ObjectGrid
-        public List<object[]> GetObjectGridData(ProcessScope scope, ProcessConfigModel processConfig, ObjectCategoryList annotations)
+        public List<object[]> GetObjectGridData(ProcessScope scope, RunConfig runConfig, ObjectCategoryList annotations)
         {
+            ProcessConfigModel processConfig = runConfig.ProcessConfig;
+
             var answer = new List<object[]>();
 
             var sigObjects = FilterByProcessScope(scope);
-            foreach (var theObject in sigObjects)
-            {
-                ObjectCategoryModel? annotation = null;
-                if (annotations != null)
-                    annotation = annotations.GetData(theObject.Value.Name);
+            var selectedOjects = FilterByObjectScope(runConfig, sigObjects);
 
-                answer.Add(theObject.Value.GetObjectGridData(processConfig, annotation));
+
+            foreach (var theObject in selectedOjects)
+            {
+                    ObjectCategoryModel? annotation = null;
+                    if (annotations != null)
+                        annotation = annotations.GetData(theObject.Value.Name);
+
+                    answer.Add(theObject.Value.GetObjectGridData(processConfig, annotation));
             }
 
             return answer;
