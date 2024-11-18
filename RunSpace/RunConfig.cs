@@ -50,8 +50,8 @@ namespace SkyCombImage.RunSpace
             DroneConfig = new DroneConfigModel();
             ProcessConfig = new ProcessConfigModel();
             ImageConfig = new DrawImageConfig();
-            HeightButtons = [true, true, true, true, true, true, true, true];
-            SizeButtons = [true, true, true, true, true, true, true, true];
+            HeightButtons = [true, true, true, true, true, true, true, true]; // 8 categories
+            SizeButtons = [true, true, true, true, true, true, true]; // 7 categories
         }
 
 
@@ -157,10 +157,7 @@ namespace SkyCombImage.RunSpace
             int sizeI = (int)size;
             (var _, var heightIndex) = MasterHeightModelList.HeightMToClass(height);
             (var _, var sizeIndex) = MasterSizeModelList.CM2ToClass(sizeI);
-            if ((HeightButtons[heightIndex] == true) && (SizeButtons[sizeIndex] == true))
-                return true;
-            return false;
+            return ((HeightButtons[heightIndex] == true) && (SizeButtons[sizeIndex] == true));
         }
-        
     }
 }
