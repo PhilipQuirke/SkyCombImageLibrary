@@ -243,11 +243,14 @@ namespace SkyCombImage.DrawSpace
         private ProcessAll Process { get; }
         private ProcessDrawScope DrawScope { get; }
 
+        private RunConfig? RunConfig { get; }
 
-        public ProcessDrawElevations(ProcessAll process, ProcessDrawScope drawScope) : base(drawScope)
+
+        public ProcessDrawElevations(ProcessAll process, ProcessDrawScope drawScope, RunConfig? runConfig) : base(drawScope)
         {
             Process = process;
             DrawScope = drawScope;
+            RunConfig = runConfig;
         }
 
 
@@ -257,7 +260,7 @@ namespace SkyCombImage.DrawSpace
             base.Initialise(size);
 
             // Draw significant object as horizontally-stretched H with centroid - showing object duration and height
-            GraphObjects(ref BaseImage);
+            // GraphObjects(ref BaseImage); //nq removing this as GraphObjects is called later
         }
 
 
@@ -268,8 +271,11 @@ namespace SkyCombImage.DrawSpace
             {
                 if ((DroneDrawScope.Drone != null) && (Process != null) && (Process.ProcessObjects.Count > 0))
                 {
+                    
                     foreach (var thisObject in Process.ProcessObjects)
-                        if (thisObject.Value.Significant && (thisObject.Value.HeightM > ProcessObjectModel.UnknownHeight))
+                        if (thisObject.Value.Significant &&
+                            (((RunConfig == null) && (thisObject.Value.HeightM > UnknownHeight)) 
+                                || RunConfig.InRange(thisObject.Value.SizeCM2, thisObject.Value.HeightM)))
                         {
                             var avgHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.HeightM - MinVertRaw, VertRangeRaw));
                             var minHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.MinHeightM - MinVertRaw, VertRangeRaw));
@@ -301,6 +307,7 @@ namespace SkyCombImage.DrawSpace
         // Draw altitude data based on Drone/GroundSpace & RunSpace data
         public override void CurrImage(ref Image<Bgr, byte> image)
         {
+            // Draw significant object as horizontally-stretched H with centroid - showing object duration and height
             GraphObjects(ref image);
         }
     }

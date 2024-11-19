@@ -180,7 +180,7 @@ namespace SkyCombImage.PersistModel
                 row = 47;
                 col = 1;
                 Data.SetTitle(ref row, col, "Flight and Animals Elevations");
-                var drawElevations = new ProcessDrawElevations(processAll, processDrawScope);
+                var drawElevations = new ProcessDrawElevations(processAll, processDrawScope, null);
                 drawElevations.Initialise(new Size(ChartFullWidthPixels, 250));
                 localBitmap = drawElevations.CurrBitmap();
                 Data.SaveBitmap(localBitmap, "Flight and Animals Elevations", row-1, col-1);
