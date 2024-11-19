@@ -105,7 +105,7 @@ namespace SkyCombImage.RunSpace
             ProcessDrawPath = new(ProcessDrawScope, objList, drawObjectScope);
 
             //DrawCombAltitudeByTime = new(processAll, DrawScope);
-            ProcessDrawElevation = new(processAll, ProcessDrawScope);
+            ProcessDrawElevation = new(processAll, ProcessDrawScope, RunConfig);
             DrawSpeed = new(ProcessDrawScope);
             DrawPitch = new(ProcessDrawScope);
             DrawDeltaYaw = new(ProcessDrawScope);

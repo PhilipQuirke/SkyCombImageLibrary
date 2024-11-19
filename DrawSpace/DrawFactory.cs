@@ -1,6 +1,7 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved.
 using SkyCombDrone.DrawSpace;
 using SkyCombImage.ProcessLogic;
+using SkyCombImage.RunSpace;
 using System.Drawing;
 
 
@@ -9,13 +10,13 @@ namespace SkyCombImage.DrawSpace
     // Code to draw stuff on images
     public class DrawFactory
     {
-        public static DroneDrawGraph? Create(string useCase, ProcessAll process, ProcessDrawScope drawScope, Size size)
+        public static DroneDrawGraph? Create(string useCase, RunConfig runConfig, ProcessAll process, ProcessDrawScope drawScope, Size size)
         {
             DroneDrawGraph? answer = null;
 
             switch (useCase)
             {
-                case "altitude": answer = new ProcessDrawElevations(process, drawScope); break;
+                case "altitude": answer = new ProcessDrawElevations(process, drawScope, runConfig); break;
                 case "speed": answer = new DrawSpeed(drawScope); break;
                 case "pitch": answer = new DrawPitch(drawScope); break;
                 case "deltayaw": answer = new DrawDeltaYaw(drawScope); break;
