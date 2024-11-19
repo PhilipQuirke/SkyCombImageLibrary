@@ -270,12 +270,10 @@ namespace SkyCombImage.DrawSpace
             try
             {
                 if ((DroneDrawScope.Drone != null) && (Process != null) && (Process.ProcessObjects.Count > 0))
-                {
-                    
                     foreach (var thisObject in Process.ProcessObjects)
                         if (thisObject.Value.Significant &&
-                            (((RunConfig == null) && (thisObject.Value.HeightM > UnknownHeight)) 
-                                || RunConfig.InRange(thisObject.Value.SizeCM2, thisObject.Value.HeightM)))
+                            (thisObject.Value.HeightM > UnknownHeight) &&
+                            ((RunConfig == null) || RunConfig.InRange(thisObject.Value.SizeCM2, thisObject.Value.HeightM)))
                         {
                             var avgHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.HeightM - MinVertRaw, VertRangeRaw));
                             var minHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.MinHeightM - MinVertRaw, VertRangeRaw));
@@ -295,7 +293,6 @@ namespace SkyCombImage.DrawSpace
                                 minHeight, avgHeight, maxHeight,
                                 firstWidth, middleWidth, lastWidth);
                         }
-                }
             }
             catch (Exception ex)
             {
