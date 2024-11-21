@@ -347,7 +347,7 @@ namespace SkyCombImage.DrawSpace
             }
         }
 
-
+        // Update the height range graph
         public void CurrImage(ref Image<Bgr, byte> image, ProcessObject thisObject)
         {
             try
@@ -355,6 +355,7 @@ namespace SkyCombImage.DrawSpace
                 var inObjectBgr = DroneColors.InScopeObjectBgr;   // Red
                 var realBgr = DroneColors.RealFeatureBgr;         // Orange
                 var unrealBgr = DroneColors.UnrealFeatureBgr;     // Yellow
+                Bgr highlight = new Bgr(170, 205, 102);
 
                 var objHeightPxs = TrimHeight(RawDataToHeightPixels(thisObject.HeightM - MinVertRaw, VertRangeRaw));
 
@@ -374,12 +375,14 @@ namespace SkyCombImage.DrawSpace
                         (thisFeature.Value.BlockId <= DroneDrawScope.MaxFeatureBlockIdToDraw))
                     {
                         var theBgr = (thisFeature.Value.Type == FeatureTypeEnum.Real ? realBgr : unrealBgr);
+                        theBgr = thisFeature.Value.BlockId < DroneDrawScope.MaxFeatureBlockIdToDraw ? theBgr : highlight;
                         var thisHeightPxs = TrimHeight(RawDataToHeightPixels(thisFeature.Value.HeightM - MinVertRaw, VertRangeRaw));
                         var thisWidthPxs = StepToWidth(thisFeature.Value.Block.SumTimeMs, firstMs);
+                        var thisThickness = thisFeature.Value.BlockId < DroneDrawScope.MaxFeatureBlockIdToDraw ? NormalThickness : NormalThickness * 2;
 
                         Draw.Cross(ref image,
                             new Point(thisWidthPxs, thisHeightPxs),
-                            theBgr, NormalThickness, NormalThickness * 4);
+                            theBgr, thisThickness, NormalThickness * 4);
                     }
             }
             catch (Exception ex)

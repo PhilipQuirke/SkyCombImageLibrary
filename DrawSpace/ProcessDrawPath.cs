@@ -39,16 +39,25 @@ namespace SkyCombImage.DrawSpace
         }
 
 
-        // Draw object features as crosses (often orange)
+        // Draw object features as crosses (often orange) on the Location range graph
         private void DrawObjectFeatures(ProcessObject thisObject, ref Image<Bgr, byte> image, FeatureTypeEnum type, Bgr color)
         {
+            Bgr highlight = new Bgr(170, 205, 102);
             foreach (var thisFeature in thisObject.ProcessFeatures)
+            {
                 if ((thisFeature.Value.LocationM != null) &&
                     (thisFeature.Value.Type == type) &&
-                    (thisFeature.Value.BlockId <= DroneDrawScope.MaxFeatureBlockIdToDraw))
+                    (thisFeature.Value.BlockId < DroneDrawScope.MaxFeatureBlockIdToDraw))
                     Draw.Cross(ref image,
                         DroneLocnMToPixelPoint(thisFeature.Value.LocationM),
                         color, NormalThickness, NormalThickness * FeaturePixels);
+                if ((thisFeature.Value.LocationM != null) &&
+                    (thisFeature.Value.Type == type) &&
+                    (thisFeature.Value.BlockId == DroneDrawScope.MaxFeatureBlockIdToDraw))
+                    Draw.Cross(ref image,
+                        DroneLocnMToPixelPoint(thisFeature.Value.LocationM),
+                        highlight, NormalThickness*2, NormalThickness * FeaturePixels);
+            }
         }
 
 
