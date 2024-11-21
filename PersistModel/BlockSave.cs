@@ -1,5 +1,4 @@
-﻿using SkyCombDrone.DrawSpace;
-using SkyCombDrone.DroneLogic;
+﻿using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombDrone.PersistModel;
 using SkyCombImage.ProcessLogic;
@@ -13,8 +12,6 @@ namespace SkyCombImage.PersistModel
     public class BlockSave : TardisSaveGraph
     {
         Drone Drone { get; }
-
-        FlightStepSummaryModel? Summary = null;
 
 
         public BlockSave(Drone drone, DroneDataStore data)
