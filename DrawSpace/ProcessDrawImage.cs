@@ -273,7 +273,7 @@ namespace SkyCombImage.DrawSpace
                     foreach (var thisObject in Process.ProcessObjects)
                         if (thisObject.Value.Significant &&
                             (thisObject.Value.HeightM > UnknownHeight) &&
-                            ((RunConfig == null) || RunConfig.InRange(thisObject.Value.SizeCM2, thisObject.Value.HeightM)))
+                            ((RunConfig == null) || RunConfig.InRange(thisObject.Value)))
                         {
                             var avgHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.HeightM - MinVertRaw, VertRangeRaw));
                             var minHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.MinHeightM - MinVertRaw, VertRangeRaw));

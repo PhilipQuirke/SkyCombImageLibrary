@@ -314,8 +314,8 @@ namespace SkyCombImage.ProcessModel
         {
             var category = (annotation == null ? "" : annotation.Category);
             var include = (annotation == null ? "Yes" : (annotation.Include ? "Yes" : "No"));
-            (var areaClass, var _) = MasterSizeModelList.CM2ToClass((int)SizeCM2);
-            (var heightClass, var _) = MasterHeightModelList.HeightMToClass(HeightM);
+            (var areaClass, var _) = MasterSizeModelList.CM2ToClass(this);
+            (var heightClass, var _) = MasterHeightModelList.HeightMToClass(this);
 
             return new DataPairList
             {
@@ -335,7 +335,7 @@ namespace SkyCombImage.ProcessModel
 
 
         // Return the details of a significant object to display in the ObjectGrid
-        public object[] GetObjectGridData(ProcessConfigModel config, ObjectCategoryModel annotation)
+        public object[] GetObjectGridData(ObjectCategoryModel annotation)
         {
             // Use GetSettings to get the same formatting as used in the DataStore.
             var settings_grid = GetSettings_Grid(annotation);
@@ -344,7 +344,7 @@ namespace SkyCombImage.ProcessModel
             var HeightErrColor = "none";
             if (HeightM != UnknownValue)
                 // We color the Height cell is "good", "bad" or leave white for neutral.
-                HeightErrColor = (HeightErrM < config.GoodHeightErrM ? "good" : "bad" );
+                HeightErrColor = (HeightErrM < ProcessConfigModel.GoodHeightErrM ? "good" : "bad" );
 
             return new object[] {
                 settings_grid[GridObjectNameSetting].Value,
@@ -360,7 +360,7 @@ namespace SkyCombImage.ProcessModel
                 settings_grid[GridHeightErrMSetting].Value,
 
                 // We color the Location cell is "good", "bad" or leave white for neutral.
-                ( LocationErrM < config.GoodLocationErrM ? "good" : "bad" ),
+                ( LocationErrM < ProcessConfigModel.GoodLocationErrM ? "good" : "bad" ),
                 // We color the Height cell is "good", "bad" or leave white for neutral.
                 HeightErrColor,
                 (annotation == null ? "" : annotation.Notes),

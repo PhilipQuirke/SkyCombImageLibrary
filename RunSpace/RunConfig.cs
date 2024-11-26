@@ -152,11 +152,10 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        public bool InRange(float size, float height)
+        public bool InRange(ProcessObjectModel processObject)
         {
-            int sizeI = (int)size;
-            (var _, var heightIndex) = MasterHeightModelList.HeightMToClass(height);
-            (var _, var sizeIndex) = MasterSizeModelList.CM2ToClass(sizeI);
+            (var _, var heightIndex) = MasterHeightModelList.HeightMToClass(processObject);
+            (var _, var sizeIndex) = MasterSizeModelList.CM2ToClass(processObject);
             return ((HeightButtons[heightIndex] == true) && (SizeButtons[sizeIndex] == true));
         }
     }

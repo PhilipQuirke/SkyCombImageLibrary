@@ -45,23 +45,23 @@ namespace SkyCombImage.ProcessModel
         // Comb:
         // SkyComb-specific detection method "Comb".
         // Minimum number of hot pixels required inside a bounding rectangle, to draw a red rect in output
-        public int FeatureMinPixels { get; set; } = 8;
+        public const int FeatureMinPixels = 8;
         // Maximum feature size (aka length or width) in pixels
         // Sometimes the algorithm generates absurdly large features e.g. 100. This reduces this issue.
         // ToDo: Value should be based on physically realities e.g. the maximum mammal size given standard drone altitude 
-        public int FeatureMaxSize { get; set; } = 100;
+        public const int FeatureMaxSize = 100;
         // Minimum overlap percentage between two features that is considered significant
-        public int FeatureMinOverlapPerc { get; set; } = 5;
+        public const int FeatureMinOverlapPerc = 5;
 
         // Object characteristics:
         // Duration (in milliseconds) that object must be tracked for before it is highlighted
-        public int ObjectMinDurationMs { get; set; } = 500;
+        public const int ObjectMinDurationMs = 500;
         // Minimum percentage difference between ground speed and object speed for object to be considered above ground.
-        public int ObjectMaxUnrealBlocks { get; set; } = 5;
+        public const int ObjectMaxUnrealBlocks = 5;
         // To be highlighted, an object must have this many hot pixels in at least one real step
-        public int ObjectMinPixels { get; set; } = 5;
+        public const int ObjectMinPixels = 5;
         // An object detected at long-range must be large and so is not of interest to us.
-        public int ObjectMaxRangeM { get; set; } = 350;
+        public const int ObjectMaxRangeM = 350;
 
 
         // YOLO
@@ -80,11 +80,12 @@ namespace SkyCombImage.ProcessModel
 
 
         // --------------------- Error Thresholds --------------------- 
-        // The maximum +/- inaccuracy (in meters) in an object's estimated location to be considered "good" 
-        public float GoodLocationErrM { get; set; } = 1;
-        // The maximum +/- inaccuracy (in meters) in an object's estimated height to be considered "good" 
-        public float GoodHeightErrM { get; set; } = 1;
-
+        // The maximum +/- inaccuracy (in meters) in an object's estimated location to be considered "good" & colored green
+        public const float GoodLocationErrM = 2;
+        // The maximum +/- inaccuracy (in meters) in an object's estimated height to be considered "good" & colored green 
+        public const float GoodHeightErrM = 2;
+        // If height inaccuracy is too great then height calculation is abandoned.
+        public const float AbandonHeightErrM = 4;
 
 
         // --------------------- Processing Limits --------------------- 
@@ -155,13 +156,13 @@ namespace SkyCombImage.ProcessModel
         {
             int i = 0;
             HeatThresholdValue = StringToNonNegInt(settings[i++]);
-            FeatureMinPixels = StringToNonNegInt(settings[i++]);
-            FeatureMaxSize = StringToNonNegInt(settings[i++]);
-            FeatureMinOverlapPerc = StringToNonNegInt(settings[i++]);
-            ObjectMinDurationMs = StringToNonNegInt(settings[i++]);
-            ObjectMaxUnrealBlocks = StringToNonNegInt(settings[i++]);
-            ObjectMinPixels = StringToNonNegInt(settings[i++]);
-            ObjectMaxRangeM = StringToNonNegInt(settings[i++]);
+            i++; // FeatureMinPixels  
+            i++; // FeatureMaxSize  
+            i++; // FeatureMinOverlapPerc  
+            i++; // ObjectMinDurationMs  
+            i++; // ObjectMaxUnrealBlocks  
+            i++; // ObjectMinPixels  
+            i++; // ObjectMaxRangeM  
             YoloDetectConfidence = StringToFloat(settings[i++]);
             YoloIoU = StringToFloat(settings[i++]);
         }
@@ -174,8 +175,6 @@ namespace SkyCombImage.ProcessModel
             {
                 { "Save Annotated Video", SaveAnnotatedVideo },
                 { "Save Object Data", SaveObjectData.ToString() },
-                { "Good Location Err M", GoodLocationErrM, LocationNdp },
-                { "Good Height Err M", GoodHeightErrM, HeightNdp },
 
             };
         }
@@ -188,9 +187,6 @@ namespace SkyCombImage.ProcessModel
             int i = 0;
             SaveAnnotatedVideo = Convert.ToBoolean(settings[i++]);
             SaveObjectData = (SaveObjectDataEnum)Enum.Parse(typeof(SaveObjectDataEnum), settings[i++]);
-            GoodLocationErrM = StringToNonNegFloat(settings[i++]);
-            GoodHeightErrM = StringToNonNegFloat(settings[i++]);
-
         }
 
 

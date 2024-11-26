@@ -126,7 +126,7 @@ namespace SkyCombImage.ProcessLogic
                 }
 
                 // Is this feature significant?
-                Significant = (NumHotPixels >= ProcessAll.ProcessConfig.FeatureMinPixels);
+                Significant = (NumHotPixels >= ProcessConfigModel.FeatureMinPixels);
                 IsTracked = Significant;
             }
             catch (Exception ex)

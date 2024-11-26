@@ -3,7 +3,6 @@ using Emgu.CV;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.CategorySpace;
-using SkyCombImage.DrawSpace;
 using SkyCombImage.ProcessModel;
 using SkyCombImage.RunSpace;
 using System.Drawing;
@@ -17,7 +16,6 @@ namespace SkyCombImage.ProcessLogic
         private Point _topRight;
         private Point _bottomLeft;
         private Point _bottomRight;
-        private Point[] _diagonalPoints;
 
         public BoundingBoxAnalyzer(int minX, int minY, int maxX, int maxY)
         {
@@ -25,13 +23,6 @@ namespace SkyCombImage.ProcessLogic
             _bottomRight = new Point(maxX, minY);
             _topLeft = new Point(minX, maxY);
             _topRight = new Point(maxX, maxY);
-
-            // Store both diagonals
-            _diagonalPoints = new Point[]
-            {
-            _bottomLeft, _topRight,    // First diagonal
-            _topLeft, _bottomRight     // Second diagonal
-            };
         }
 
         // The diagonal of a pixel box bounding an animal is a good proxy for the animal's spine length (in pixels)
@@ -239,10 +230,10 @@ namespace SkyCombImage.ProcessLogic
                 {
                     // Yes, this is worth tracking.
                 }
-                else if (ProcessConfig.ObjectMaxUnrealBlocks > 0)
+                else if (ProcessConfigModel.ObjectMaxUnrealBlocks > 0)
                 {
                     // Are we still on the persistance window?
-                    BeingTracked = (LastFeature.Block.BlockId - LastRealFeature.Block.BlockId < ProcessConfig.ObjectMaxUnrealBlocks);
+                    BeingTracked = (LastFeature.Block.BlockId - LastRealFeature.Block.BlockId < ProcessConfigModel.ObjectMaxUnrealBlocks);
                 }
                 else
                     BeingTracked = false;
@@ -255,7 +246,7 @@ namespace SkyCombImage.ProcessLogic
         // How long has this object been seen for in Config.ObjectMinDurationMs units?
         public double SeenForMinDurations()
         {
-            var minDuration = ProcessConfig.ObjectMinDurationMs; // Say 500ms
+            var minDuration = ProcessConfigModel.ObjectMinDurationMs; // Say 500ms
             var timeSeenMs = (1000.0F * NumRealFeatures()) / ProcessAll.VideoData.Fps;
             return (timeSeenMs / minDuration);
         }
@@ -411,9 +402,9 @@ namespace SkyCombImage.ProcessLogic
                 // PIXELS
                 // Maximum pixel count per real feature
                 var maxPixels = MaxRealHotPixels;
-                var pixelsOk = (maxPixels > ProcessConfig.ObjectMinPixels); // Say 5 pixels
-                var pixelsGood = (maxPixels > 2 * ProcessConfig.ObjectMinPixels); // Say 10 pixels 
-                var pixelsGreat = (maxPixels > 4 * ProcessConfig.ObjectMinPixels); // Say 20 pixels
+                var pixelsOk = (maxPixels > ProcessConfigModel.ObjectMinPixels); // Say 5 pixels
+                var pixelsGood = (maxPixels > 2 * ProcessConfigModel.ObjectMinPixels); // Say 10 pixels 
+                var pixelsGreat = (maxPixels > 4 * ProcessConfigModel.ObjectMinPixels); // Say 20 pixels
 
                 // TIME
                 // Aka duration. Proxy for numRealFeatures.
@@ -460,7 +451,7 @@ namespace SkyCombImage.ProcessLogic
         public bool VaguelySignificant()
         {
             var maxCount = MaxRealHotPixels;
-            return (MaxRealHotPixels > ProcessConfig.ObjectMinPixels); // Say 5 pixels / Block
+            return (MaxRealHotPixels > ProcessConfigModel.ObjectMinPixels); // Say 5 pixels / Block
         }
 
 
@@ -512,7 +503,7 @@ namespace SkyCombImage.ProcessLogic
         // Calculate object height and object height error by averaging the feature data.
         protected void Calculate_HeightM_and_HeightErrM()
         {
-            (HeightM, HeightErrM, MinHeightM, MaxHeightM) = ProcessFeatures.Calculate_Avg_HeightM_and_HeightErrM();
+                (HeightM, HeightErrM, MinHeightM, MaxHeightM) = ProcessFeatures.Calculate_Avg_HeightM_and_HeightErrM();
         }
 
 
@@ -926,7 +917,7 @@ namespace SkyCombImage.ProcessLogic
             foreach (var theObject in sigObjects)
             {
                 // Only return objects in the object size selection
-                if (runConfig.InRange(theObject.Value.SizeCM2, theObject.Value.HeightM))
+                if (runConfig.InRange(theObject.Value))
                     answer.AddObject(theObject.Value);
             }
 
@@ -949,8 +940,6 @@ namespace SkyCombImage.ProcessLogic
         // Returns key attributes of objects and associated user annotations (if any) to show in the ObjectGrid
         public List<object[]> GetObjectGridData(ProcessScope scope, RunConfig runConfig, ObjectCategoryList annotations)
         {
-            ProcessConfigModel processConfig = runConfig.ProcessConfig;
-
             var answer = new List<object[]>();
 
             var sigObjects = FilterByProcessScope(scope);
@@ -963,7 +952,7 @@ namespace SkyCombImage.ProcessLogic
                     if (annotations != null)
                         annotation = annotations.GetData(theObject.Value.Name);
 
-                    answer.Add(theObject.Value.GetObjectGridData(processConfig, annotation));
+                    answer.Add(theObject.Value.GetObjectGridData(annotation));
             }
 
             return answer;

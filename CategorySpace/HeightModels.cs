@@ -1,5 +1,6 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using SkyCombImage.ProcessLogic;
+using SkyCombImage.ProcessModel;
 
 
 // Models are used in-memory and to persist/load data to/from the datastore
@@ -72,8 +73,13 @@ namespace SkyCombImage.CategorySpace
 
 
         // Return the MasterHeightModel Name that best matches the height
-        static public (string, int) HeightMToClass(double height)
+        static public (string, int) HeightMToClass(ProcessObjectModel processObject)
         {
+            // If height is too inaccurate then we ignore it.
+            if(processObject.HeightErrM > ProcessConfigModel.AbandonHeightErrM )
+                return ("?", 0);
+
+            var height = processObject.HeightM;
             foreach (var (minHeight, maxHeight, name, index) in _heightRanges)
             {
                 if (height >= minHeight && height <= maxHeight)
@@ -95,7 +101,7 @@ namespace SkyCombImage.CategorySpace
                 foreach (var obj in objects)
                     if (obj.Value.Significant || !significantObjectsOnly)
                     {
-                        var (_, index) = HeightMToClass(obj.Value.HeightM);
+                        var (_, index) = HeightMToClass(obj.Value);
                         if (index >= 0 && index < NumHeights)
                             answer[index]++;
                     }

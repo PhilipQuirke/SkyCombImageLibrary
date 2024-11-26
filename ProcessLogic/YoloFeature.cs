@@ -85,7 +85,7 @@ namespace SkyCombImage.ProcessLogic
                 // Set (shrink) PixelBox to the tight bounding box around hot pixels
                 PixelBox = new Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
 
-            Significant = (NumHotPixels >= ProcessAll.ProcessConfig.FeatureMinPixels);
+            Significant = (NumHotPixels >= ProcessConfigModel.FeatureMinPixels);
             IsTracked = Significant;
         }
     };

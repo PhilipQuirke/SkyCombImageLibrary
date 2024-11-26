@@ -1,5 +1,6 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using SkyCombImage.ProcessLogic;
+using SkyCombImage.ProcessModel;
 
 
 // Models are used in-memory and to persist/load data to/from the datastore
@@ -76,8 +77,10 @@ namespace SkyCombImage.CategorySpace
 
 
         // Return the MasterAreaModel Name that best matches the size
-        static public (string, int) CM2ToClass(int areaCM2)
+        static public (string, int) CM2ToClass(ProcessObjectModel processObject)
         {
+            int areaCM2 = (int)processObject.SizeCM2;
+
             foreach (var (minArea, maxArea, name, index) in _areaRanges)
             {
                 if (areaCM2 >= minArea && areaCM2 <= maxArea)
@@ -99,7 +102,7 @@ namespace SkyCombImage.CategorySpace
                 foreach (var obj in objects)
                     if( obj.Value.Significant || !significantObjectsOnly )
                     {
-                        var (_, index) = CM2ToClass((int)obj.Value.SizeCM2);
+                        var (_, index) = CM2ToClass(obj.Value);
                         if (index >= 0 && index < NumAreas)
                             answer[index]++;
                     }

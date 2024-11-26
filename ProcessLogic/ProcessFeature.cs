@@ -48,8 +48,8 @@ namespace SkyCombImage.ProcessLogic
             get
             {
                 return
-                    (PixelBox.Width > ProcessConfig.FeatureMaxSize) ||
-                    (PixelBox.Height > ProcessConfig.FeatureMaxSize);
+                    (PixelBox.Width > ProcessConfigModel.FeatureMaxSize) ||
+                    (PixelBox.Height > ProcessConfigModel.FeatureMaxSize);
             }
         }
 
@@ -82,7 +82,7 @@ namespace SkyCombImage.ProcessLogic
         // Does this Feature's PixelBox and the specified object's rectangle overlap significantly?
         public bool SignificantPixelBoxIntersection(Rectangle objectExpectedLocation)
         {
-            int featureMinOverlapPerc = ProcessConfig.FeatureMinOverlapPerc;
+            int featureMinOverlapPerc = ProcessConfigModel.FeatureMinOverlapPerc;
             var intersection = Rectangle.Intersect(PixelBox, objectExpectedLocation);
 
             // Refer https://stackoverflow.com/questions/9324339/how-much-do-two-rectangles-overlap
