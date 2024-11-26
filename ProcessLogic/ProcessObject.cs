@@ -906,7 +906,6 @@ namespace SkyCombImage.ProcessLogic
             return answer;
         }
 
-//nq keylist
         public ProcessObjList FilterByObjectScope(RunConfig runConfig, ProcessObjList sigObjects)
         {
             if (runConfig == null)
@@ -925,7 +924,6 @@ namespace SkyCombImage.ProcessLogic
 
         }
 
-        //nq when does this following get run?
         public ProcessObjList FilterByLeg(int legId)
         {
             ProcessObjList answer = new();

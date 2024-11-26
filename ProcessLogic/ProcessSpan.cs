@@ -3,6 +3,7 @@ using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
+using System.Diagnostics;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -85,6 +86,7 @@ namespace SkyCombImage.ProcessLogic
         {
             try
             {
+                Debug.Print("CalculateSettings_FixAltM_Start");
                 NumSignificantObjects = theObjs.Count;
 
                 if ((theSteps.Count == 0) || (NumSignificantObjects == 0))
@@ -129,6 +131,8 @@ namespace SkyCombImage.ProcessLogic
                 CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs);
                 SetBest(fixAltM, theObjs);
                 Process.ProcessObjects.CalculateSettings();
+
+                Debug.Print("CalculateSettings_FixAltM_End: BestFixAltM=" + BestFixAltM.ToString());
             }
             catch (Exception ex)
             {
