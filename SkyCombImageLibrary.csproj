@@ -22,7 +22,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SkyCombDroneLibrary\SkyCombDroneLibrary.csproj" />
-    <ProjectReference Include="..\SkyCombGroundLibrary\SkyCombGroundLibrary.csproj" />
   </ItemGroup>
 
   <ItemGroup>
