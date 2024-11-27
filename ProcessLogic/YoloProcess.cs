@@ -114,31 +114,6 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        private void AddYoloObjectAndFeature(YoloObjectSeenList objectsSeen, ProcessScope scope, int legId, ProcessObjList legObjs)
-        {
-            // For each ObjectSeen, create a YoloObject
-            foreach (var objSeen in objectsSeen)
-            {
-                Assert(objSeen.Features.Any(), "YoloObject has no features");
-
-                var firstFeature = ProcessFeatures[objSeen.Features[0].FeatureId];
-                firstFeature.CalculateSettings_LocationM_FlatGround(null);
-                firstFeature.CalculateSettings_LocationM_HeightM_LineofSight(GroundData);
-                YoloObject newObject = AddYoloObject(scope, legId, firstFeature as YoloFeature);
-                legObjs.AddObject(newObject);
-
-                // Add remaining features to the object
-                for (int i = 1; i < objSeen.Features.Count; i++)
-                {
-                    var theFeature = ProcessFeatures[objSeen.Features[i].FeatureId];
-                    theFeature.CalculateSettings_LocationM_FlatGround(null);
-                    theFeature.CalculateSettings_LocationM_HeightM_LineofSight(GroundData);
-                    newObject.ClaimFeature(theFeature);
-                }
-            }
-        }
-
-
         public List<ObjectDetection>? YoloDetectImage(Bitmap currBmp, ProcessBlock thisBlock)
         {
             if (YoloDetect.ProcessMode == YoloProcessMode.ByFrame)

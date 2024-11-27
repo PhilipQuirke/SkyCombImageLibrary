@@ -191,9 +191,9 @@ namespace SkyCombImage.ProcessLogic
 
         // Calculate the location (centroid) of this feature inside the drone imaging box
         // This is the key translation from IMAGE to PHYSICAL coordinate system.
-        // If DSM or DEM data is available then considers ground level undulations between the drone and the feature.
-        // Assumes ground is flat and object is on the ground.
-        public void CalculateSettings_LocationM_FlatGround(ProcessFeature? lastRealFeature)
+        // The drone imaging box handles gound level undulations between the drone and the feature.
+        // This procedure assumes the imaging box is flat and object is on the ground.
+        public void CalculateSettings_LocationM_GroundImageFlat(ProcessFeature? lastRealFeature)
         {
             try
             {
@@ -226,18 +226,18 @@ namespace SkyCombImage.ProcessLogic
                 // 2) the CENTER of the drone physical field of vision (given by FlightStep.InputImageCenter, say 240m Northing, 78m Easting )
                 // 3) the SIZE of the drone physical field of vision (given by InputImageSizeM, say 18m by 9m)
                 // 4) the DIRECTION of flight of the drone (given by YawDeg, say -73 degrees)
+                // 5) Handles undulating ground between drone and image center.
                 // This is the key translation from IMAGE to PHYSICAL coordinate system. 
-                // Does NOT consider land contour undulations. Assumes land is flat.
                 var flatLandLocationM =
                     flightStep.CalcImageFeatureLocationM(deltaBlockLocnM, xFraction, yFraction)
                         ?.Clone();
 
-                // First approximation of location is based on flat land assumption.
+                // First approximation of location assumes the imaging box land is flat.
                 LocationM = flatLandLocationM;
             }
             catch (Exception ex)
             {
-                throw ThrowException("ProcessFeature.CalculateSettings_LocationM_FlatGround", ex);
+                throw ThrowException("ProcessFeature.CalculateSettings_LocationM_GroundImageFlat", ex);
             }
         }
 

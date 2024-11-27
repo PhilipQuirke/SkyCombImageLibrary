@@ -56,7 +56,7 @@ namespace SkyCombImage.ProcessLogic
                 {
                     var theFeat = theFeature.Value;
                     theFeat.ResetCalcedMemberData();
-                    theFeat.CalculateSettings_LocationM_FlatGround(theObj.LastRealFeature);
+                    theFeat.CalculateSettings_LocationM_GroundImageFlat(theObj.LastRealFeature);
                     theFeat.CalculateSettings_LocationM_HeightM_LineofSight(Process.GroundData);
 
                     theObj.ClaimFeature(theFeat);
@@ -95,7 +95,7 @@ namespace SkyCombImage.ProcessLogic
                 int maxTestAbsM = 8;
                 // If the OnGroundAt setting was not available then test a wider range.
                 if (!Process.Drone.FlightSteps.HasOnGroundAtFix)
-                    maxTestAbsM = 15;
+                    maxTestAbsM = 20;
 
                 // Calculate the initial object error location and height errors with no fix.
                 var fixAltM = 0.0f;
@@ -106,14 +106,12 @@ namespace SkyCombImage.ProcessLogic
                 float bigInc = 0.5f; // 50 centimeters
                 float smallInc = 0.1f;// 10 centimeters
 
-                // Search upwards at big increments. If maxTestAbsM == 16, do 32 calculations 
+                // Search upwards at big increments. If maxTestAbsM == 15, do 30 calculations 
                 for (fixAltM = bigInc; fixAltM <= maxTestAbsM; fixAltM += bigInc)
-                    if (!CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs))
-                        break;
-                // Search downwards at big intervals. If maxTestAbsM == 16, do 32 calculations 
+                    CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs);
+                // Search downwards at big intervals. If maxTestAbsM == 15, do 30 calculations 
                 for (fixAltM = -bigInc; fixAltM >= -maxTestAbsM; fixAltM -= bigInc)
-                    if (!CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs))
-                        break;
+                    CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs);
                 var roughBestFixAltM = BestFixAltM;
 
                 // Fine tune search upwards at small increments. Do 4 calculations 
