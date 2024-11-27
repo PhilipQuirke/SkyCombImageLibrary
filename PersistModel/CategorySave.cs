@@ -1,4 +1,5 @@
 ﻿using SkyCombDrone.PersistModel;
+using SkyCombGround.CommonSpace;
 using SkyCombImage.CategorySpace;
 
 
@@ -13,7 +14,7 @@ namespace SkyCombImage.PersistModel
 
 
         // Save the annotation data to the dataStore
-        public void SaveMasterCategories(MasterCategoryList list)
+        public void SaveMasterCategories(MasterCategoryListJ list)
         {
             try
             {
@@ -61,7 +62,7 @@ namespace SkyCombImage.PersistModel
             {
                 Data.Open();
 
-                SaveMasterCategories(categoryAll.MasterCategories);
+ //               SaveMasterCategories(categoryAll.MasterCategories);
                 SaveObjectCategories(categoryAll.ObjectCategories);
 
                 Save();

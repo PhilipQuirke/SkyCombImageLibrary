@@ -1,4 +1,5 @@
 ﻿using SkyCombDrone.PersistModel;
+using SkyCombGround.CommonSpace;
 using SkyCombImage.CategorySpace;
 
 
@@ -13,7 +14,7 @@ namespace SkyCombImage.PersistModel
 
 
         // Load all categories from the datastore
-        public void LoadMasterCategories(MasterCategoryList list)
+        public void LoadMasterCategories(MasterCategoryListJ list)
         {
             if (list == null)
                 return;
@@ -26,14 +27,14 @@ namespace SkyCombImage.PersistModel
                 {
                     list.Clear();
 
-                    var cell = Data.Worksheet.Cells[row, CategoryModel.NameSetting];
+                    var cell = Data.Worksheet.Cells[row, CategoryModelJ.NameSetting];
                     while (cell != null && cell.Value != null && cell.Value.ToString() != "")
                     {
                         // Load the non-blank cells in this row into a model
-                        list.Add(CategoryFactory.NewMasterCategoryModel(Data.GetRowSettings(row, 1)));
+                        list.Add(GroundCategoryFactory.NewMasterCategoryModel(Data.GetRowSettings(row, 1)));
 
                         row++;
-                        cell = Data.Worksheet.Cells[row, CategoryModel.NameSetting];
+                        cell = Data.Worksheet.Cells[row, CategoryModelJ.NameSetting];
                     }
                 }
             }
@@ -66,7 +67,7 @@ namespace SkyCombImage.PersistModel
                     while (cell != null && cell.Value != null && cell.Value.ToString() != "")
                     {
                         // Load the non-blank cells in this row into a model
-                        list.Add(CategoryFactory.NewObjectCategoryModel(Data.GetRowSettings(row, 1)));
+                        list.Add(ObjectCategoryFactory.NewObjectCategoryModel(Data.GetRowSettings(row, 1)));
 
                         row++;
                         cell = Data.Worksheet.Cells[row, ObjectCategoryModel.ObjectNameSetting];
@@ -88,7 +89,7 @@ namespace SkyCombImage.PersistModel
             if (!initialIsOpen)
                 Data.Open();
 
-            LoadMasterCategories(categoryAll.MasterCategories);
+ //           LoadMasterCategories(categoryAll.MasterCategories);
             LoadObjectCategories(categoryAll.ObjectCategories);
 
             if (!initialIsOpen)
