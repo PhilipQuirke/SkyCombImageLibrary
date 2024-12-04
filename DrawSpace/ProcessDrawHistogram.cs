@@ -26,7 +26,7 @@ namespace SkyCombImage.DrawSpace
     {
         public ProcessDrawHeightHistogram(ProcessDrawScope drawScope, ObjectDrawScope? objectDrawScope, List<int> values) : base(drawScope, values, 0, MasterHeightModelList.NumHeights-1)
         {
-            HorizLeftLabel = "?      G       1";
+            HorizLeftLabel = "?      G       1f";
             HorizRightLabel = "6f+";
 
             if (objectDrawScope != null)
