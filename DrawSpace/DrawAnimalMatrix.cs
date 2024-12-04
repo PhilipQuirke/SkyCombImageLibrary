@@ -7,7 +7,17 @@ namespace SkyCombImageLibrary.DrawSpace
 
     public class AnimalMatrixDrawer
     {
-        public static void Main(AnimalModelList animals)
+        private static Dictionary<string, int> CreateIndexMap(string[] classes)
+        {
+            var indexMap = new Dictionary<string, int>();
+            for (int i = 0; i < classes.Length; i++)
+            {
+                indexMap[classes[i]] = i;
+            }
+            return indexMap;
+        }
+
+        public static Bitmap DrawAnimalMatrix(AnimalModelList animals)
         {
             // Define SizeClasses and HeightClasses
             string[] sizeClasses = { "?", "XXS", "XS", "S", "M", "L", "XL", "XXL" };
@@ -34,28 +44,6 @@ namespace SkyCombImageLibrary.DrawSpace
                 }
             }
 
-            // Draw the matrix
-            DrawAnimalMatrix(sizeClasses, heightClasses, counts, sizeClassTotals, heightClassTotals);
-        }
-
-
-        private static Dictionary<string, int> CreateIndexMap(string[] classes)
-        {
-            var indexMap = new Dictionary<string, int>();
-            for (int i = 0; i < classes.Length; i++)
-            {
-                indexMap[classes[i]] = i;
-            }
-            return indexMap;
-        }
-
-        private static Bitmap DrawAnimalMatrix(
-            string[] sizeClasses,
-            string[] heightClasses,
-            int[,] counts,
-            int[] sizeClassTotals,
-            int[] heightClassTotals)
-        {
             int cellWidth = 60;
             int cellHeight = 40;
             int labelWidth = 100;
