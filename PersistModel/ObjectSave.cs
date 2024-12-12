@@ -57,7 +57,7 @@ namespace SkyCombImage.PersistModel
             Data.SetColumnColor(ProcessObjectModel.HeightMSetting, objectRow, Color.Blue);
             Data.SetColumnColor(ProcessObjectModel.SizeCM2Setting, objectRow, Color.Blue);
             Data.SetColumnColor(ProcessObjectModel.LegIdSetting, objectRow, Color.Blue);
-            Data.SetColumnColor(ProcessObjectModel.CenterBlockSetting, objectRow, Color.Blue);
+            Data.SetColumnColor(ProcessObjectModel.NumSigBlocksSetting, objectRow, Color.Blue);
 
             // Highlight cells in green/red to show their accuracy
             Data.AddConditionalRuleGood(ProcessObjectModel.LocationErrMSetting, objectRow, ProcessConfigModel.GoodLocationErrM);
