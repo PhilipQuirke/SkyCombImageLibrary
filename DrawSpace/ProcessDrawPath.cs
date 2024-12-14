@@ -74,7 +74,7 @@ namespace SkyCombImage.DrawSpace
         // Draw drone flight path based on Drone/GroundSpace & RunSpace data.
         // By default we DONT show insignificant or out of scope objects.
         // For long flights, most objects will quickly become inactive, and we just have a few to draw.
-        public override void CurrImage(ref Image<Bgr, byte> image)
+        public override void CurrImage(ref Image<Bgr, byte> image, List<Image>? sizeImages = null)
         {
             try
             {
@@ -190,7 +190,7 @@ namespace SkyCombImage.DrawSpace
 
 
         // Generate a bitmap of the graph as per scope settings.
-        public override Bitmap CurrBitmap( bool dpiIndependent = false)
+        public override Bitmap CurrBitmap( bool dpiIndependent = false, List<Image>? sizeImages = null)
         {
             var answer = base.CurrBitmap();
 
