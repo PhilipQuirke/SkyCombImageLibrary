@@ -1,10 +1,11 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved.
 using Emgu.CV;
 using Emgu.CV.Structure;
+using Emgu.CV.CvEnum;
 using SkyCombDrone.CommonSpace;
 using SkyCombDrone.DrawSpace;
 using System.Drawing;
-
+using System.Drawing.Imaging;
 
 namespace SkyCombImage.DrawSpace
 {
@@ -57,7 +58,7 @@ namespace SkyCombImage.DrawSpace
         }
 
 
-        public override void CurrImage(ref Image<Bgr, byte> image)
+        public override void CurrImage(ref Image<Bgr, byte> image, List<Image>? sizeImages = null)
         {
             try
             {
@@ -91,6 +92,42 @@ namespace SkyCombImage.DrawSpace
                             var width = Math.Max(1, (int)StepWidthPxs - 2);
                             var rect = new Rectangle(x, pxsDown, width, OriginPixel.Y - pxsDown);
                             image.Draw(rect, theColor, thickness);
+
+                            if (sizeImages != null)
+                            {
+                                // Convert System.Drawing.Image to Emgu.CV Image
+                                Bitmap bitmap = new Bitmap(sizeImages[rectNum]);
+                                Emgu.CV.Image<Bgra, byte> emguImage = bitmap.Clone(new Rectangle(0, 0, bitmap.Width, bitmap.Height), System.Drawing.Imaging.PixelFormat.Format32bppArgb).ToImage<Bgra, byte>();
+                                int imgX = x;
+                                int imgY = OriginPixel.Y - emguImage.Height;
+                                // When copying, you'll want to use a method that respects alpha
+                                for (int y = 0; y < emguImage.Height; y++)
+                                {
+                                    for (int w = 0; w < emguImage.Width; w++)
+                                    {
+                                        // Check if pixel is not fully transparent
+                                        if (emguImage.Data[y, w, 3] > 0)  // Alpha channel
+                                        {
+                                            if (imgX + w < image.Width && imgY + y < image.Height)
+                                            {
+                                                // Blend transparent pixels
+                                                byte blue = emguImage.Data[y, w, 0];
+                                                byte green = emguImage.Data[y, w, 1];
+                                                byte red = emguImage.Data[y, w, 2];
+                                                byte alpha = emguImage.Data[y, w, 3];
+
+                                                // Alpha blending
+                                                image[imgY + y, imgX + w] = new Bgr(
+                                                    (byte)((image[imgY + y, imgX + w].Blue * (255 - alpha) + blue * alpha) / 255),
+                                                    (byte)((image[imgY + y, imgX + w].Green * (255 - alpha) + green * alpha) / 255),
+                                                    (byte)((image[imgY + y, imgX + w].Red * (255 - alpha) + red * alpha) / 255)
+                                                );
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                         }
                     }
             }

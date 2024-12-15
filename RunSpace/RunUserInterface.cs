@@ -1,6 +1,7 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved.
 using Emgu.CV;
 using Emgu.CV.Structure;
+using System.Drawing;
 using System.Windows.Forms;
 
 
@@ -28,6 +29,9 @@ namespace SkyCombImage.RunSpace
 
         public abstract RunConfig? RunConfig();
         public abstract void LegsForm_CopyMainFormButtonState(object legsForm);
+        public abstract (string legs, string sizes, string heights) GetMainFilters();
+        public abstract List<Image> GetSizeImages();
+
         public virtual Button? MainForm_ButtonRun() { return null; }
         public virtual void MainForm_ButtonRun_Click(object sender, EventArgs args) { }
         public virtual void MainForm_LegNButton_Click(object sender, EventArgs args) { }

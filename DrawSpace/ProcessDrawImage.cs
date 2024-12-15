@@ -278,7 +278,7 @@ namespace SkyCombImage.DrawSpace
 
 
         // Draw altitude data based on Drone/GroundSpace & RunSpace data
-        public override void CurrImage(ref Image<Bgr, byte> image)
+        public override void CurrImage(ref Image<Bgr, byte> image, List<Image>? sizeImages = null)
         {
             // Draw significant object as horizontally-stretched H with centroid - showing object duration and height
             GraphObjects(ref image);

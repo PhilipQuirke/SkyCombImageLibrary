@@ -1,5 +1,9 @@
-﻿using SkyCombImageLibrary.ProcessModel;
+﻿using SkyCombImage.RunSpace;
+using SkyCombImageLibrary.ProcessModel;
 using System.Drawing;
+using System.Linq.Expressions;
+using System.Windows.Forms;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 namespace SkyCombImageLibrary.DrawSpace
@@ -17,11 +21,11 @@ namespace SkyCombImageLibrary.DrawSpace
             return indexMap;
         }
 
-        public static Bitmap DrawAnimalMatrix(AnimalModelList animals)
+        public static (string message, Bitmap matrix) DrawAnimalMatrix(AnimalModelList animals, List<Image> sizeImages)
         {
             // Define SizeClasses and HeightClasses
-            string[] sizeClasses = { "?", "XXS", "XS", "S", "M", "L", "XL", "XXL" };
-            string[] heightClasses = { "?", "G", "1f", "2f", "3f", "4f", "5f", "6f+" };
+            string[] sizeClasses = { "XXS", "XS", "S", "M", "L", "XL", "XXL" };
+            string[] heightClasses = {"6f+", "5f", "4f", "3f", "2f", "1f", "G"  };
 
             // Create mappings for quick index lookup
             Dictionary<string, int> sizeClassIndices = CreateIndexMap(sizeClasses);
@@ -31,6 +35,7 @@ namespace SkyCombImageLibrary.DrawSpace
             int[,] counts = new int[heightClasses.Length, sizeClasses.Length];
             int[] sizeClassTotals = new int[sizeClasses.Length];
             int[] heightClassTotals = new int[heightClasses.Length];
+            int categorised = 0;
 
             // Populate counts and totals
             foreach (var animal in animals)
@@ -41,16 +46,18 @@ namespace SkyCombImageLibrary.DrawSpace
                     counts[hIndex, sIndex]++;
                     sizeClassTotals[sIndex]++;
                     heightClassTotals[hIndex]++;
+                    categorised++;
                 }
             }
 
-            int cellWidth = 60;
-            int cellHeight = 40;
+            int cellWidth = 65;
+            int cellHeight = 45;
             int labelWidth = 100;
             int labelHeight = 60;
             int imageHeight = 40;
-            int totalWidth = labelWidth + cellWidth * sizeClasses.Length + 100;
-            int totalHeight = labelHeight + cellHeight * heightClasses.Length + imageHeight + 100;
+            int totalWidth = labelWidth + cellWidth * sizeClasses.Length + 200;
+            int totalHeight = labelHeight + cellHeight * heightClasses.Length + imageHeight + 70;
+            string total;
 
             Bitmap bmp = new Bitmap(totalWidth, totalHeight);
             using (Graphics g = Graphics.FromImage(bmp))
@@ -59,51 +66,44 @@ namespace SkyCombImageLibrary.DrawSpace
                 g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
                 g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
-                // Fill background
-                g.Clear(Color.White);
-
                 // Fonts and brushes
-                Font font = new Font("Arial", 12);
+                Font font = new Font("Arial", 15);
+                Font smallfont = new Font("Arial", 11);
                 Brush brush = Brushes.Black;
                 Pen pen = new Pen(Color.Black);
-
+                int x, y, h;
                 // Draw SizeClass labels and images
                 for (int s = 0; s < sizeClasses.Length; s++)
                 {
-                    int x = labelWidth + s * cellWidth;
+                    x = labelWidth + s * cellWidth;
                     // Draw SizeClass label
-                    g.DrawString(sizeClasses[s], font, brush, x + cellWidth / 2 - 15, 10);
+                    g.DrawString(sizeClasses[s], smallfont, brush, x + cellWidth / 2 - 15, 10);
 
-                    // Draw image under SizeClass label (except "?")
-                    if (sizeClasses[s] != "?")
+                    // Draw image under SizeClass label. Note: removed "?".
+                    Image img = sizeImages[s];
+                    if (img != null)
                     {
-                        Image img = GetSizeClassImage(sizeClasses[s]);
-                        if (img != null)
-                        {
-                            int imgX = x + cellWidth / 2 - img.Width / 2;
-                            int imgY = labelHeight - imageHeight + 10;
-                            g.DrawImage(img, imgX, imgY, img.Width, img.Height);
-                        }
+                        int imgX = x + cellWidth / 2 - img.Width / 2;
+                        int imgY = labelHeight - imageHeight + 10;
+                        g.DrawImage(img, imgX, imgY, img.Width, img.Height);
                     }
                 }
 
-                // Draw HeightClass labels
-                for (int h = 0; h < heightClasses.Length; h++)
+                for (h = 0; h < heightClasses.Length ; h++)
                 {
-                    int y = labelHeight + h * cellHeight;
-                    g.DrawString(heightClasses[h], font, brush, 10, y + cellHeight / 2 - 10);
-                }
+                    // Draw HeightClass labels
+                    y = labelHeight + h * cellHeight;
+                    g.DrawString(heightClasses[h], font, brush, cellWidth / 2, y + cellHeight / 2 - 10);
 
-                // Draw counts in cells
-                for (int h = 0; h < heightClasses.Length; h++)
-                {
+                    // Draw counts in cells
                     for (int s = 0; s < sizeClasses.Length; s++)
                     {
                         int count = counts[h, s];
                         if (count > 0)
                         {
-                            int x = labelWidth + s * cellWidth;
-                            int y = labelHeight + h * cellHeight;
+                            x = labelWidth + s * cellWidth;
+                            y = labelHeight + h * cellHeight;
+                            g.FillRectangle(percentIndicator(100*count/categorised), x, y, cellWidth, cellHeight);
                             g.DrawString(count.ToString(), font, brush, x + cellWidth / 2 - 10, y + cellHeight / 2 - 10);
                         }
                     }
@@ -112,26 +112,47 @@ namespace SkyCombImageLibrary.DrawSpace
                 // Draw grid lines
                 DrawGridLines(g, sizeClasses.Length, heightClasses.Length, labelWidth, labelHeight, cellWidth, cellHeight, pen);
 
+
                 // Draw totals for SizeClasses
                 for (int s = 0; s < sizeClasses.Length; s++)
                 {
-                    int total = sizeClassTotals[s];
-                    int x = labelWidth + s * cellWidth;
-                    int y = labelHeight + cellHeight * heightClasses.Length + 20;
-                    g.DrawString("Total: " + total, font, brush, x + cellWidth / 2 - 25, y);
+                    total = sizeClassTotals[s].ToString();
+                    x = labelWidth + s * cellWidth;
+                    y = labelHeight + cellHeight * heightClasses.Length + cellHeight / 2 - 10; 
+                    g.DrawString(total, font, brush, x + cellWidth / 2 - 10, y);
                 }
 
                 // Draw totals for HeightClasses
-                for (int h = 0; h < heightClasses.Length; h++)
+                for (h = 0; h < heightClasses.Length; h++)
                 {
-                    int total = heightClassTotals[h];
-                    int x = labelWidth + cellWidth * sizeClasses.Length + 20;
-                    int y = labelHeight + h * cellHeight;
-                    g.DrawString("Total: " + total, font, brush, x, y + cellHeight / 2 - 10);
+                    total = heightClassTotals[h].ToString();
+                    x = labelWidth + cellWidth * sizeClasses.Length + 20;
+                    y = labelHeight + h * cellHeight;
+                    g.DrawString(total, font, brush, x, y + cellHeight / 2 - 10);
                 }
+
+                // Get overall total categorised
+                total = categorised + " categorised, ";
+                // Get uncategorised total
+                total = total + (animals.Count - categorised) + " uncategorised";
             }
 
-            return bmp;
+            return ( total, bmp );
+        }
+
+        // Returns the background colour of the rectangle by percent of animals found in it
+        private static Brush percentIndicator(double percent)
+        {
+            Brush result = percent switch
+            {
+                >= 0 and < 3 => new SolidBrush(Color.Ivory),
+                >= 3 and < 6 => new SolidBrush(Color.Cornsilk),
+                >= 6 and < 9 => new SolidBrush(Color.Wheat),
+                >= 9 and < 12 => new SolidBrush(Color.Tan),
+                >= 12 and < 15 => new SolidBrush(Color.Peru),
+                _ => new SolidBrush(Color.Brown)
+            };
+            return result;
         }
 
         private static void DrawGridLines(
@@ -161,18 +182,6 @@ namespace SkyCombImageLibrary.DrawSpace
                 int xEnd = labelWidth + cellWidth * sizeClassCount;
                 g.DrawLine(pen, xStart, y, xEnd, y);
             }
-        }
-
-
-        private static Image GetSizeClassImage(string sizeClass)
-        {
-            // Replace with the actual path to your images
-            //string imagePath = $"images/{sizeClass}.png";
-            //if (System.IO.File.Exists(imagePath))
-            //{
-            //    return Image.FromFile(imagePath);
-            //}
-            return null;
         }
     }
 }

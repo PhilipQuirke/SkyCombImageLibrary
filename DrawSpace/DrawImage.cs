@@ -139,6 +139,13 @@ namespace SkyCombImage.DrawSpace
                 double oldWidth = theImage.Width;
                 double oldHeight = theImage.Height;
 
+                // if it fits, don't muck around with it - to stop fuzziness
+                if ((oldHeight > thePicture.Height) && (oldWidth > thePicture.Width))
+                {
+                    thePicture.Image?.Dispose();
+                    thePicture.Image = theImage;
+                    return;
+                }
                 // Calculate resize factors
                 var widthRatio = (double)thePicture.Width / oldWidth;
                 var heightRatio = (double)thePicture.Height / oldHeight;
@@ -164,10 +171,7 @@ namespace SkyCombImage.DrawSpace
                 }
 
                 // Dispose of old image if PictureBox already had one
-                if (thePicture.Image != null)
-                {
-                    thePicture.Image.Dispose();
-                }
+                thePicture.Image?.Dispose();
 
                 // Set the new image
                 thePicture.Image = resized;
@@ -175,11 +179,8 @@ namespace SkyCombImage.DrawSpace
             else
             {
                 // Clear and dispose of any existing image
-                if (thePicture.Image != null)
-                {
-                    thePicture.Image.Dispose();
-                    thePicture.Image = null;
-                }
+                thePicture.Image?.Dispose();
+                thePicture.Image = null;
             }
         }
     }

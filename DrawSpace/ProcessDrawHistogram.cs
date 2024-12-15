@@ -1,5 +1,8 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved.
+using MathNet.Numerics;
 using SkyCombImage.CategorySpace;
+using System.Drawing;
+using System.Windows.Forms;
 
 
 namespace SkyCombImage.DrawSpace
@@ -9,6 +12,7 @@ namespace SkyCombImage.DrawSpace
     {
         public ProcessDrawSizeHistogram(ProcessDrawScope drawScope, ObjectDrawScope? objectDrawScope, List<int> values) : base(drawScope, values, 0, MasterSizeModelList.NumAreas - 1)
         {
+
             HorizLeftLabel = "XXS";
             HorizRightLabel = "XXL";
 
