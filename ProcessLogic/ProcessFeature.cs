@@ -190,14 +190,13 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        /*
         // Calculate the location (centroid) of this feature inside the drone imaging box
         // This is the key translation from IMAGE to PHYSICAL coordinate system.
         // The drone imaging box handles gound level undulations between the drone and the feature.
         // This procedure assumes the imaging box is flat and object is on the ground.
         public void CalculateSettings_LocationM_GroundImageFlat(ProcessFeature? lastRealFeature)
         {
-            return;
-
             try
             {
                 if ((LocationM != null) || (Block.FlightStep == null) || (Block.FlightStep.InputImageCenter == null))
@@ -243,7 +242,7 @@ namespace SkyCombImage.ProcessLogic
                 throw ThrowException("ProcessFeature.CalculateSettings_LocationM_GroundImageFlat", ex);
             }
         }
-
+        */
 
         // Calculate land contour undulations impact on object location and height.
         // The DSM level at flatLandLocationM may be higher or lower than the ground level below the drone.
@@ -305,91 +304,6 @@ namespace SkyCombImage.ProcessLogic
                 }
                 else
                     SetHeightAlgorithmError("LOS NoResult");
-                return;
-
-
-                // We use the drone camera's forward-down-angle (to vertical) to calculate the step-down distance (per 1 m horizontal).
-                // (Not the object as the object may be at the edge of the image with a FwdDeg of ~0.
-                phase = 4;
-                var tan = Math.Tan(fwdToVertDeg * DegreesToRadians);
-                if (tan == 0)
-                    return;
-                float vertStepDownPerHorizM = (float)(1.0 / tan);
-                if (vertStepDownPerHorizM <= 0.1)
-                    // This is a 10cm drop in altitude for each 1m step towards the 
-                    // Camera is almost horizontal and this method wont work well.
-                    return;
-
-                // Calculate the distance from the drone to the flatLandLocationM
-                phase = 5;
-                var flatLandLocationM = LocationM;
-                var droneBlockLocnM = Block.DroneLocnM;
-                DroneLocation deltaLocnM = flatLandLocationM.Subtract(droneBlockLocnM);
-                var deltaM = deltaLocnM.DiagonalM;
-                var horizUnitVector = deltaLocnM.UnitVector();
-
-                // Calculate horizontal step distance
-                var vertEpsilonM = 0.20f; // 20cm
-                var horizStepM = vertEpsilonM / vertStepDownPerHorizM;
-
-                // Step from the drone towards the flatLandLocationM and beyond
-                DroneLocation? prevLocnM = null;
-                float prevHeightM = 0;
-                for (float testM = deltaM * 0.2f; testM < deltaM * 1.4f; testM += horizStepM)
-                {
-                    phase = 6;
-                    var testLocnM = droneBlockLocnM.Add(horizUnitVector.Multiply(testM));
-                    float testDsmM = groundModel.GetElevationByDroneLocn(testLocnM);
-                    if (testDsmM == UnknownValue)
-                    {
-                        SetHeightAlgorithmError("LOS NoDsm");
-                        continue;
-                    }
-
-                    phase = 7;
-                    float testAltM = Block.AltitudeM - testM * vertStepDownPerHorizM;
-                    float testHeightM = UnknownValue;
-                    if (testAltM < testDsmM + vertEpsilonM)
-                    {
-                        // Drone line of sight has intersected the surface layer
-                        phase = 8;
-                        LocationM = testLocnM;
-                        if (groundData.HasDemModel)
-                        {
-                            phase = 9;
-                            var testDemM = groundData.DemModel.GetElevationByDroneLocn(testLocnM);
-                            if (testDemM != UnknownValue)
-                            {
-                                phase = 10;
-                                testHeightM = testAltM - testDemM;
-
-                                // Taking small steps, we should not go very negative between steps.
-                                // But have seen real world cases with testHeightM == -7,
-                                // perhaps because of a step change in testDemM
-                                if ((testHeightM < 0) &&
-                                    (prevLocnM != null) &&
-                                    (prevHeightM > 0) &&
-                                    (Math.Abs(prevHeightM) < Math.Abs(testHeightM)))
-                                {
-                                    LocationM = prevLocnM;
-                                    HeightM = prevHeightM;
-                                }
-                                else
-                                    HeightM = Math.Max(0, testHeightM);
-                                HeightAlgorithm = LineOfSightHeightAlgorithm;
-                            }
-                            else
-                                SetHeightAlgorithmError("LOS NoDem");
-                        }
-                        else
-                            SetHeightAlgorithmError("LOS NoDem");
-
-                        break;
-                    }
-
-                    prevLocnM = testLocnM;
-                    prevHeightM = testHeightM;
-                }
             }
             catch (Exception ex)
             {
@@ -398,6 +312,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+/* Old code
         // Estimate last FEATURE height above ground (which is the best estimate of OBJECT height above ground).
         // Requires drone to have moved horizontally a distance.
         // Requires hot spot to have moved in the image.
@@ -412,8 +327,6 @@ namespace SkyCombImage.ProcessLogic
                     float objectDemM,
                     float avgDroneFlightStepFixedAltitudeM) // Measured under the drone
         {
-            return;
-
             try
             {
                 if ((firstRealFeature == null) ||
@@ -494,6 +407,7 @@ namespace SkyCombImage.ProcessLogic
                 throw ThrowException("ProcessFeature.Calculate_HeightM_BaseLineMovement", ex);
             }
         }
+*/
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore)

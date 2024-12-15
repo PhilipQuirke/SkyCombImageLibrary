@@ -56,7 +56,7 @@ namespace SkyCombImage.ProcessLogic
                 {
                     var theFeat = theFeature.Value;
                     theFeat.ResetCalcedMemberData();
-                    theFeat.CalculateSettings_LocationM_GroundImageFlat(theObj.LastRealFeature);
+                    // Old code theFeat.CalculateSettings_LocationM_GroundImageFlat(theObj.LastRealFeature);
                     theFeat.CalculateSettings_LocationM_HeightM_LineofSight(Process.GroundData);
 
                     theObj.ClaimFeature(theFeat);
@@ -109,36 +109,6 @@ namespace SkyCombImage.ProcessLogic
                     for (int fixYawDeg = -10; fixYawDeg <= +10; fixYawDeg += 2) // 10 steps
                         for (int fixPitchDeg = -10; fixPitchDeg <= +10; fixPitchDeg += 2)  // 10 steps
                             CalculateSettings_ApplyFixValues(fixAltM, fixYawDeg, fixPitchDeg, theSteps, theObjs);
-
-
-/*
-                // Calculate the initial object error location and height errors with no fix.
-                var fixAltM = 0.0f;
-                CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs);
-                OrgSumLocnErrM = BestSumLocnErrM;
-                OrgSumHeightErrM = BestSumHeightErrM;
-
-                float bigInc = 0.5f; // 50 centimeters
-                float smallInc = 0.1f;// 10 centimeters
-
-                // Search upwards at big increments. If maxTestAbsM == 15, do 30 calculations 
-                for (fixAltM = bigInc; fixAltM <= maxTestAbsM; fixAltM += bigInc)
-                    CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs);
-                // Search downwards at big intervals. If maxTestAbsM == 15, do 30 calculations 
-                for (fixAltM = -bigInc; fixAltM >= -maxTestAbsM; fixAltM -= bigInc)
-                    CalculateSettings_ApplyFixAltM(fixAltM, theSteps, theObjs);
-                var roughBestFixAltM = BestFixAltM;
-
-                // Fine tune search upwards at small increments. Do 4 calculations 
-                for (fixAltM = smallInc; fixAltM < bigInc; fixAltM += smallInc)
-                    if (!CalculateSettings_ApplyFixAltM(roughBestFixAltM + fixAltM, theSteps, theObjs))
-                        break;
-
-                // Fine tune search downwards at small intervals. Do 4 calculations 
-                for (fixAltM = -smallInc; fixAltM > -bigInc; fixAltM -= smallInc)
-                    if (!CalculateSettings_ApplyFixAltM(roughBestFixAltM + fixAltM, theSteps, theObjs))
-                        break;
-*/
 
                 // Lock in the best single value across the leg steps
                 CalculateSettings_ApplyFixValues_Core(BestFixAltM, BestFixYawDeg, BestFixPitchDeg, theSteps, theObjs);

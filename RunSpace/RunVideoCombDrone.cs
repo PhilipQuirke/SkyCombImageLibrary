@@ -69,7 +69,7 @@ namespace SkyCombImage.RunSpace
 
                 foreach (var feature in featuresInBlock)
                 {
-                    feature.Value.CalculateSettings_LocationM_GroundImageFlat(null);
+                    // Old code feature.Value.CalculateSettings_LocationM_GroundImageFlat(null);
                     feature.Value.CalculateSettings_LocationM_HeightM_LineofSight(ProcessAll.GroundData);
                 }
 

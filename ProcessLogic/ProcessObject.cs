@@ -662,6 +662,7 @@ namespace SkyCombImage.ProcessLogic
                 // (which could be say 20m left of the drone's flight path).
                 Calculate_DemM();
 
+                /* Old code
                 // In RunVideoCombDrone.AddBlockAndProcessInputVideoFrame, a new Feature is created
                 // and these "one-feature" function calls are made (before the feature is assigned to an object):
                 //    FEATURE.CalculateSettings_LocationM_FlatGround();           // Assumes flat ground & feature is on ground
@@ -683,8 +684,9 @@ namespace SkyCombImage.ProcessLogic
                                 this.DemM,
                                 ProcessFeatures.AverageFlightStepFixedAltitudeM());
                 }
-                //else
-                //    lastFeature.SetHeightAlgorithmError("BL Short"); // Either in time or distance.
+                else
+                    lastFeature.SetHeightAlgorithmError("BL Short"); // Either in time or distance.
+                */
 
                 // Calculate OBJECT height and object height error (as average over real features).
                 Calculate_HeightM_and_HeightErrM();
