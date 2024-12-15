@@ -12,6 +12,7 @@ using SkyCombImage.PersistModel;
 using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
 using System.Diagnostics;
+using System.Drawing;
 
 
 // Namespace for processing of a video made up of multiple images (frames).
@@ -58,6 +59,8 @@ namespace SkyCombImage.RunSpace
         // The process calculation effort (duration) in milliseconds
         int ProcessDurationMs = 0;
 
+        // List of "size" images from XXS to XXL
+        public List<Image>? SizeImages = null;
 
         public Image<Bgr, byte>? ModifiedInputImage = null;
 

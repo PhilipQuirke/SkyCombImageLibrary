@@ -169,6 +169,16 @@ namespace SkyCombImage.PersistModel
                 localBitmap = drawSizeHistogram.CurrBitmap();
                 Data.SaveBitmap(localBitmap, "AnimalSizeHistogram", row-1, col-1);
 
+
+                // Draw the matrix of animal sizes and heights
+                row = 3;
+                col = 22;
+                AnimalModelList animals = new();
+                animals.AddProcessObjects(0, processAll.Drone, processObjects);
+                (var message, var matrixBitmap) = AnimalMatrixDrawer.DrawAnimalMatrix(animals, runVideo.SizeImages);
+                Data.SetTitle(ref row, col, "Animal Size Height Matrix: " + message);
+                Data.SaveBitmap(matrixBitmap, "AnimalMatrix", row - 1, col - 1);
+
                 // Draw the flight path with objects and features
                 row = 16;
                 col = 15;

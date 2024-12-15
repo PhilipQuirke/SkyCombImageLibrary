@@ -39,6 +39,7 @@ namespace SkyCombImage.RunSpace
                     answer = new RunVideoStandard(parent, runConfig, dataStore, drone);
                     break;
             }
+            answer.SizeImages = parent.GetSizeImages();
             answer.RunIntervals = intervals;
 
             answer.LoadDataStoreConfigSettings();

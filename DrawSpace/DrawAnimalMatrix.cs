@@ -1,12 +1,8 @@
-﻿using SkyCombImage.RunSpace;
-using SkyCombImageLibrary.ProcessModel;
+﻿using SkyCombImage.ProcessModel;
 using System.Drawing;
-using System.Linq.Expressions;
-using System.Windows.Forms;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
-namespace SkyCombImageLibrary.DrawSpace
+namespace SkyCombImage.DrawSpace
 {
 
     public class AnimalMatrixDrawer

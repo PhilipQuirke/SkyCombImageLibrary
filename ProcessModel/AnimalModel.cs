@@ -4,7 +4,7 @@ using SkyCombImage.CategorySpace;
 using SkyCombImage.ProcessLogic;
 
 
-namespace SkyCombImageLibrary.ProcessModel
+namespace SkyCombImage.ProcessModel
 {
     public class AnimalModel
     {
