@@ -104,6 +104,7 @@ namespace SkyCombImage.ProcessLogic
                 OrgSumLocnErrM = BestSumLocnErrM;
                 OrgSumHeightErrM = BestSumHeightErrM;
 
+                //NQ Optimise
                 for (float fixAltM = -20; fixAltM <= +20; fixAltM += 2f)  // 21 steps
                     for (int fixYawDeg = -10; fixYawDeg <= +10; fixYawDeg += 2) // 10 steps
                         for (int fixPitchDeg = -10; fixPitchDeg <= +10; fixPitchDeg += 2)  // 10 steps

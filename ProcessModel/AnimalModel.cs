@@ -19,6 +19,7 @@ namespace SkyCombImage.ProcessModel
         public string HeightClass { get; set; }
         public float SpineM { get; set; }
         public float GirthM { get; set; }
+        public float AvgRangeM { get; set; }
 
 
         public AnimalModel(int flightNum, Drone drone, ProcessObject theObj)
@@ -39,6 +40,8 @@ namespace SkyCombImage.ProcessModel
 
             SpineM = theObj.MaxSpinePixels / 10; // PQR TODO Convert to M
             GirthM = theObj.MaxGirthPixels / 10; // PQR TODO Convert to M
+
+            AvgRangeM = theObj.AvgRangeM; // Small if CameraDownAngle is 80. Larger if CameraDownAngle is 30 degrees
         }
 
 
@@ -57,6 +60,7 @@ namespace SkyCombImage.ProcessModel
                 { "Height Err M", HeightErrM, 1 },
                 { "SpineM", SpineM, 1 },
                 { "GirthM", GirthM, 1 },
+                { "AvgRangeM", AvgRangeM, 0 },
             };
         }
     }
