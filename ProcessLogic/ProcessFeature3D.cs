@@ -196,7 +196,13 @@ namespace SkyCombImage.ProcessLogic
                 horizontalStepSize = CalculateAdaptiveStepSize(heightAboveTerrain);
             }
 
-            return null; // No intersection found within max distance
+            // No intersection found within max distance
+            return new LocationResult
+            {
+                LocationNE = currentPosition,
+                Elevation = currTerrainHeight,
+                Confidence = 0
+            };
         }
 
 
