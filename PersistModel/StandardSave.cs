@@ -132,7 +132,7 @@ namespace SkyCombImage.PersistModel
                     Data.SelectWorksheet(AnimalReportTabName);
 
                     Data.HideWorksheet(BlockDataTabName);
-                    Data.HideWorksheet(SpanDataTabName);
+                    // PQR Data.HideWorksheet(SpanDataTabName);
                 }
 
                 Save();

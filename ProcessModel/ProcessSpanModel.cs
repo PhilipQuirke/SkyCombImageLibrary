@@ -9,7 +9,7 @@ using System.Diagnostics;
 namespace SkyCombImage.ProcessModel
 {
     // ProcessSpan relates to either the steps in a FlightLeg OR a sequence of FlightSteps (not related to a FlightLeg).
-    // Either way, ProcessSpan analyses ProcessObjects to refine/correct the flight altitude data using FlightStep.FixAltM.
+    // Either way, ProcessSpan analyses ProcessObjects to refine/correct the flight altitude data using FlightStep.FixAltM/FixYawDeg/FixPitchDeg.
     public class ProcessSpanModel : TardisSummaryModel
     {
         // Unique identifier of this ProcessSpan. If UseLeg there is a 1-1 correspondence to FlightLeg. Otherwise they are unrelated.
@@ -22,12 +22,14 @@ namespace SkyCombImage.ProcessModel
         public int MaxStepId { get; set; } = UnknownValue;
 
 
-        // DATA USED TO CALCULATE BestFixAltM
+        // DATA USED TO CALCULATE best fix values
         // The original (after) error value with best altitude fix 
         public float BestFixAltM { get; set; } = 0;
+        public float BestFixYawDeg { get; set; } = 0;
+        public float BestFixPitchDeg { get; set; } = 0;
         protected float BestSumLocnErrM { get; set; } = UnknownValue;
         protected float BestSumHeightErrM { get; set; } = UnknownValue;
-        // The original (before) error values (with FlightLeg.FixAltM set to 0)
+        // The original (before) error values (with FlightLeg.FixAltM/FixYawDeg/FixPitchDeg set to 0)
         protected float OrgSumLocnErrM { get; set; } = UnknownValue;
         protected float OrgSumHeightErrM { get; set; } = UnknownValue;
 
@@ -53,6 +55,8 @@ namespace SkyCombImage.ProcessModel
         protected void ResetBest()
         {
             BestFixAltM = 0;
+            BestFixYawDeg = 0;
+            BestFixPitchDeg = 0;
             BestSumLocnErrM = 9999;
             BestSumHeightErrM = 9999;
             OrgSumLocnErrM = 9999;
@@ -61,12 +65,16 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        protected void SetBest(float fixAltM, ProcessObjList objs)
+        protected void SetBest(float fixAltM, float fixYawDeg, float fixPitchDeg, ProcessObjList objs)
         {
             BestFixAltM = fixAltM;
+            BestFixYawDeg = fixYawDeg;
+            BestFixPitchDeg = fixPitchDeg;
             BestSumLocnErrM = objs.SumLocationErrM;
             BestSumHeightErrM = objs.SumHeightErrM;
-            Debug.Print("  SetBest: BestFixAltM=" + BestFixAltM.ToString() + ", BestSumLocnErrM=" + BestSumLocnErrM.ToString() + ", BestSumHeightErrM=" + BestSumHeightErrM.ToString());
+            Debug.Print("  Set BestFix( " +
+                "AltM=" + BestFixAltM.ToString() + ", YawDeg=" + BestFixYawDeg.ToString() + ", PitchDeg=" + BestFixPitchDeg.ToString() + 
+                ", SumLocnErrM=" + BestSumLocnErrM.ToString() + ", SumHeightErrM=" + BestSumHeightErrM.ToString() +")");
         }
 
 
@@ -75,17 +83,19 @@ namespace SkyCombImage.ProcessModel
         public const int SpanNameSetting = 2;
         public const int NumSigObjsSetting = 3;
         public const int BestFixAltMSetting = 4;
-        public const int BestSumLocnErrMSetting = 5;
-        public const int BestObjLocnErrMSetting = 6;
-        public const int BestSumHeightErrMSetting = 7;
-        public const int BestObjHeightErrMSetting = 8;
-        public const int OrgSumLocnErrMSetting = 9;
-        public const int OrgObjLocnErrMSetting = 10;
-        public const int OrgSumHeightErrMSetting = 11;
-        public const int OrgObjHeightErrMSetting = 12;
-        public const int MinStepIdSetting = 13;
-        public const int MaxStepIdSetting = 14;
-        public const int NumBlocksSetting = 15;
+        public const int BestFixYawDegSetting = 5;
+        public const int BestFixPitchDegSetting = 6;
+        public const int BestSumLocnErrMSetting = 7;
+        public const int BestObjLocnErrMSetting = 8;
+        public const int BestSumHeightErrMSetting = 9;
+        public const int BestObjHeightErrMSetting = 10;
+        public const int OrgSumLocnErrMSetting = 11;
+        public const int OrgObjLocnErrMSetting = 12;
+        public const int OrgSumHeightErrMSetting = 13;
+        public const int OrgObjHeightErrMSetting = 14;
+        public const int MinStepIdSetting = 15;
+        public const int MaxStepIdSetting = 16;
+        public const int NumBlocksSetting = 17;
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore)
@@ -97,6 +107,8 @@ namespace SkyCombImage.ProcessModel
                 { "Name", Name },
                 { "Num Sig Objs", NumSignificantObjects },
                 { "Bst Fix Alt M", BestFixAltM, HeightNdp},
+                { "Bst Fix Yaw Deg", BestFixYawDeg, DegreesNdp},
+                { "Bst Fix Pitch Deg", BestFixPitchDeg, DegreesNdp},
                 { "Bst Sum Locn Err M", BestSumLocnErrM, LocationNdp },
                 { "Bst Avg Locn Err M", (NumSignificantObjects > 0 ? BestSumLocnErrM / NumSignificantObjects : UnknownValue), LocationNdp },
                 { "Bst Sum Ht Err M", BestSumHeightErrM, LocationNdp },
@@ -125,6 +137,8 @@ namespace SkyCombImage.ProcessModel
             i++; // Skip LegName  
             NumSignificantObjects = StringToInt(settings[i++]);
             BestFixAltM = StringToFloat(settings[i++]);
+            BestFixYawDeg = StringToFloat(settings[i++]);
+            BestFixPitchDeg = StringToFloat(settings[i++]);
             BestSumLocnErrM = StringToFloat(settings[i++]);
             i++; // BestObjLocnErrM  
             BestSumHeightErrM = StringToFloat(settings[i++]);

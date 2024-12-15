@@ -65,7 +65,7 @@ namespace SkyCombImage.ProcessLogic
         public ProcessFeatureList ProcessFeatures { get; private set; }
         // List of logical objects found - derived from overlapping features over successive frames. 
         public ProcessObjList ProcessObjects { get; private set; }
-        // List of ProcessSpans that analsyse ProcessObjects to generate FixAltM data
+        // List of ProcessSpans that analsyse ProcessObjects to generate FixAltM/FixYawDeg/FixPitchDeg data
         public ProcessSpanList ProcessSpans { get; set; }
 
 
@@ -366,7 +366,7 @@ namespace SkyCombImage.ProcessLogic
                 // If we are lacking the current ProcessSpan then create it.
                 if ((legId > 0) && !ProcessSpans.TryGetValue(legId, out _))
                 {
-                    // Post process the objects found in the leg & maybe set FlightLegs.FixAltM 
+                    // Post process the objects found in the leg & maybe set FlightLegs.FixAltM/FixYawDeg/FixPitchDeg 
                     var theSpan = ProcessFactory.NewProcessSpan(this, legId);
                     ProcessSpans.AddSpan(theSpan);
                     theSpan.CalculateSettings_from_FlightLeg();
@@ -389,7 +389,7 @@ namespace SkyCombImage.ProcessLogic
 
                 if (Drone.UseFlightLegs)
                 {
-                    // After the leg "FixAltM" calculations have been done and object locations updated,
+                    // After the leg "FixAltM/FixYawDeg/FixPitchDeg" calculations have been done and object locations updated,
                     // we check that the objects are not more than ProcessConfig.ObjectMaxRangeM metres from the drone.
                     foreach (var theObject in ProcessObjects)
                         if (theObject.Value.Significant && (theObject.Value.AvgRangeM > ProcessConfigModel.ObjectMaxRangeM))

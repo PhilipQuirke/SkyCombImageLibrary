@@ -80,6 +80,8 @@ namespace SkyCombImage.PersistModel
                 Data.SetColumnColor(ProcessSpanModel.SpanIdSetting, legRow, Color.Blue);
                 Data.SetColumnColor(ProcessSpanModel.SpanNameSetting, legRow, Color.Blue);
                 Data.SetColumnColor(ProcessSpanModel.BestFixAltMSetting, legRow, Color.Blue);
+                Data.SetColumnColor(ProcessSpanModel.BestFixYawDegSetting, legRow, Color.Blue);
+                Data.SetColumnColor(ProcessSpanModel.BestFixPitchDegSetting, legRow, Color.Blue);
             }
         }
 

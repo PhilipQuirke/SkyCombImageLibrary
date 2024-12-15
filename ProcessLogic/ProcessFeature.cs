@@ -3,6 +3,7 @@ using Emgu.CV.Structure;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
+using System.Diagnostics;
 using System.Drawing;
 
 
@@ -176,7 +177,7 @@ namespace SkyCombImage.ProcessLogic
 
             // Have seen real world case where CameraToVerticalForwardDeg was (for a short period) 90.6 degrees.
             // What is slightly above the horizontal.
-            var cameraToVertDeg = flightStep.CameraToVerticalForwardDeg;
+            var cameraToVertDeg = flightStep.FixedCameraToVerticalForwardDeg;
 
             fwdDeg += cameraToVertDeg;
 
@@ -195,6 +196,8 @@ namespace SkyCombImage.ProcessLogic
         // This procedure assumes the imaging box is flat and object is on the ground.
         public void CalculateSettings_LocationM_GroundImageFlat(ProcessFeature? lastRealFeature)
         {
+            return;
+
             try
             {
                 if ((LocationM != null) || (Block.FlightStep == null) || (Block.FlightStep.InputImageCenter == null))
@@ -253,25 +256,57 @@ namespace SkyCombImage.ProcessLogic
             int phase = 0;
             try
             {
-                phase = 1;
-                if ((ProcessAll == null) || (Block.FlightStep == null) || (Block.FlightStep.InputImageCenter == null))
+                if ((ProcessAll == null) || (Block == null) || (Block.FlightStep == null) || (Block.DroneLocnM == null) || (groundData == null))
                     return;
+
+                phase = 1;
                 var flightStep = Block.FlightStep;
 
-                // Algorithm does not work if camera is pointing straight down.
-                // Algorithm works inaccurately if the camera is pointing at the horizon.
                 phase = 2;
-                var fwdToVertDeg = flightStep.CameraToVerticalForwardDeg;
-                if ((fwdToVertDeg < 10) || (fwdToVertDeg > 80))
-                    return;
-
-                phase = 3;
-                if ((LocationM == null) || (groundData == null))
-                    return;
-                var flatLandLocationM = LocationM;
                 var groundModel = groundData.HasDsmModel ? groundData.DsmModel : groundData.DemModel;
                 if (groundModel == null)
                     return;
+
+                DroneState droneState = new();
+                droneState.LocationNE = Block.DroneLocnM;
+                droneState.Altitude = flightStep.FixedAltitudeM; // Link into BlockSpan refinement algorithm
+                droneState.Yaw = flightStep.FixedYawDeg; // Link into BlockSpan refinement algorithm
+                var fwdToVertDeg = flightStep.FixedCameraToVerticalForwardDeg; // Link into BlockSpan refinement algorithm
+                droneState.CameraDownAngle = 90 - fwdToVertDeg;  
+                
+                // Algorithm works very inaccurately if the camera is pointing at the horizon.
+                phase = 3;
+                if (fwdToVertDeg > 75)
+                    return;
+
+                TerrainGrid terrainGrid = new(groundModel);
+
+                DroneTargetCalculator droneTargetCalculator = new(terrainGrid);
+
+                CameraParameters cameraParams = new();
+                cameraParams.HorizontalFOV = ProcessAll.VideoData.HFOVDeg;
+                cameraParams.VerticalFOV = (float)ProcessAll.VideoData.VFOVDeg;
+
+                (double xFraction, double yFraction) = CentroidImageFractions(); // Range 0 to 1
+                ImagePosition imagePosition = new();
+                imagePosition.HorizontalFraction = (float)(xFraction * 2 - 1); // Range -1 to +1
+                imagePosition.VerticalFraction = (float)(yFraction * 2 - 1); // Range -1 to +1
+
+                LocationResult? result = droneTargetCalculator.CalculateTargetLocation( droneState, cameraParams, imagePosition);
+                if (result != null)
+                {
+                    HeightAlgorithm = LineOfSightHeightAlgorithm;
+
+                    LocationM = result.LocationNE.Clone();
+
+                    HeightM = 0;
+                    if (groundData.HasDsmModel && groundData.HasDemModel)
+                        HeightM = result.Elevation - groundData.DemModel.GetElevationByDroneLocn(LocationM);
+                }
+                else
+                    SetHeightAlgorithmError("LOS NoResult");
+                return;
+
 
                 // We use the drone camera's forward-down-angle (to vertical) to calculate the step-down distance (per 1 m horizontal).
                 // (Not the object as the object may be at the edge of the image with a FwdDeg of ~0.
@@ -287,6 +322,7 @@ namespace SkyCombImage.ProcessLogic
 
                 // Calculate the distance from the drone to the flatLandLocationM
                 phase = 5;
+                var flatLandLocationM = LocationM;
                 var droneBlockLocnM = Block.DroneLocnM;
                 DroneLocation deltaLocnM = flatLandLocationM.Subtract(droneBlockLocnM);
                 var deltaM = deltaLocnM.DiagonalM;
@@ -376,6 +412,8 @@ namespace SkyCombImage.ProcessLogic
                     float objectDemM,
                     float avgDroneFlightStepFixedAltitudeM) // Measured under the drone
         {
+            return;
+
             try
             {
                 if ((firstRealFeature == null) ||

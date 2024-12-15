@@ -193,8 +193,8 @@ namespace SkyCombImage.RunSpace
 
                     datareader2.ProcessSpans(ProcessAll, Drone);
 
-                    // Reset the FlightStep.FixAltM values from the ProcessSpan data
-                    ProcessAll.ProcessSpans.SetFixAltMAfterLoad(Drone.InputVideo, Drone);
+                    // Reset the FlightStep.FixAltM/FixYawDeg/FixPitchDeg values from the ProcessSpan data
+                    ProcessAll.ProcessSpans.SetFixValuesAfterLoad(Drone.InputVideo, Drone);
 
                     // Link each object to its features
                     foreach (var feature in ProcessAll.ProcessFeatures)
@@ -507,7 +507,7 @@ namespace SkyCombImage.RunSpace
                             // Process start &/or end of drone flight legs.
                             ProcessFlightLegChange(this, prevLegId, PSM.CurrRunLegId);
 
-                            // If we have just ended a leg change, then may have just calculated FixAltM
+                            // If we have just ended a leg change, then may have just calculated FixAltM/FixYawDeg/FixPitchDeg
                             // so display the UI so the object-feature-lines are redrawn using the refined locations.
                             if (PSM.CurrRunLegId <= 0)
                                 suppressUiUpdate = false;

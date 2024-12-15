@@ -683,8 +683,8 @@ namespace SkyCombImage.ProcessLogic
                                 this.DemM,
                                 ProcessFeatures.AverageFlightStepFixedAltitudeM());
                 }
-                else
-                    lastFeature.SetHeightAlgorithmError("BL Short"); // Either in time or distance.
+                //else
+                //    lastFeature.SetHeightAlgorithmError("BL Short"); // Either in time or distance.
 
                 // Calculate OBJECT height and object height error (as average over real features).
                 Calculate_HeightM_and_HeightErrM();
