@@ -97,7 +97,7 @@ namespace SkyCombImage.PersistModel
             if (lastRow > 0)
             {
                 var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
-                Data.SetChart(chart, ChartTitle, 3, 0, LargeChartRows);
+                Data.SetChart(chart, ChartTitle, 1, 0, LargeChartRows);
                 Data.SetAxises(chart, "Easting", "Northing", "0", "0");
 
                 Data.AddScatterSerie(chart, AnimalImageDataTabName, "Feature", ProcessFeatureModel.NorthingMSetting, ProcessFeatureModel.EastingMSetting, DroneColors.RealFeatureColor);
@@ -163,7 +163,7 @@ namespace SkyCombImage.PersistModel
 
                 // Draw the matrix of animal sizes and heights
                 row = 3;
-                col = 14;
+                col = 15;
                 AnimalModelList animals = new();
                 animals.AddProcessObjects(0, processAll.Drone, processObjects);
                 (var message, var matrixBitmap) = AnimalMatrixDrawer.DrawAnimalMatrix(animals, runVideo.SizeImages, true);
