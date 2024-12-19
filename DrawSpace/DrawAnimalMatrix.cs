@@ -17,7 +17,7 @@ namespace SkyCombImage.DrawSpace
             return indexMap;
         }
 
-        public static (string message, Bitmap matrix) DrawAnimalMatrix(AnimalModelList animals, List<Image> sizeImages)
+        public static (string message, Bitmap matrix) DrawAnimalMatrix(AnimalModelList animals, List<Image> sizeImages, bool drawBackground = false)
         {
             // Define SizeClasses and HeightClasses
             string[] sizeClasses = { "XXS", "XS", "S", "M", "L", "XL", "XXL" };
@@ -51,8 +51,8 @@ namespace SkyCombImage.DrawSpace
             int labelWidth = 100;
             int labelHeight = 60;
             int imageHeight = 40;
-            int totalWidth = labelWidth + cellWidth * sizeClasses.Length + 200;
-            int totalHeight = labelHeight + cellHeight * heightClasses.Length + imageHeight + 70;
+            int totalWidth = labelWidth + cellWidth * sizeClasses.Length + 80;
+            int totalHeight = labelHeight + cellHeight * heightClasses.Length + imageHeight + 20;
             string total;
 
             Bitmap bmp = new Bitmap(totalWidth, totalHeight);
@@ -61,6 +61,9 @@ namespace SkyCombImage.DrawSpace
                 // Set high-quality rendering options
                 g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
                 g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+                if (drawBackground)
+                    g.Clear(Color.White); // This sets the entire background to white
 
                 // Fonts and brushes
                 Font font = new Font("Arial", 15);

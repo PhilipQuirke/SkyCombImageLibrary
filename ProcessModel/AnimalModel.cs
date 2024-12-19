@@ -58,9 +58,9 @@ namespace SkyCombImage.ProcessModel
                 { "Height Class", HeightClass },
                 { "Height M", HeightM, 1 },
                 { "Height Err M", HeightErrM, 1 },
-                { "SpineM", SpineM, 1 },
-                { "GirthM", GirthM, 1 },
-                { "AvgRangeM", AvgRangeM, 0 },
+                { "Spine M", SpineM, 1 },
+                { "Girth M", GirthM, 1 },
+                { "Avg Range M", AvgRangeM, 0 },
             };
         }
     }

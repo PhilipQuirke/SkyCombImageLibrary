@@ -1,5 +1,6 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 
+using Emgu.CV.Structure;
 using OfficeOpenXml;
 using OfficeOpenXml.Drawing.Chart;
 using SkyCombDrone.CommonSpace;
@@ -96,7 +97,7 @@ namespace SkyCombImage.PersistModel
             if (lastRow > 0)
             {
                 var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
-                Data.SetChart(chart, ChartTitle, 1, 0, LargeChartRows);
+                Data.SetChart(chart, ChartTitle, 3, 0, LargeChartRows);
                 Data.SetAxises(chart, "Easting", "Northing", "0", "0");
 
                 Data.AddScatterSerie(chart, AnimalImageDataTabName, "Feature", ProcessFeatureModel.NorthingMSetting, ProcessFeatureModel.EastingMSetting, DroneColors.RealFeatureColor);
@@ -151,45 +152,36 @@ namespace SkyCombImage.PersistModel
                 var objectDrawScope = new ObjectDrawScope(processAll, processScope, processAll.Drone);
                 objectDrawScope.SetObjectRange(processObjects);
 
-                // Draw the histogram of object heights
-                row = 3;
-                int col = 9;
-                Data.SetTitle(ref row, col, "Animal Height Histogram");
-                var drawHeightHistogram = new ProcessDrawHeightHistogram(processDrawScope, objectDrawScope, MasterHeightModelList.GetObjectCountByHeightClass(processObjects));
-                drawHeightHistogram.Initialise(new Size(350, 150));
-                var localBitmap = drawHeightHistogram.CurrBitmap();
-                Data.SaveBitmap(localBitmap, "AnimalHeightHistogram", row-1, col-1);
-
                 // Draw the histogram of object sizes
-                row = 3;
-                col = 15;
+                row = 8;
+                int col = 1;
                 Data.SetTitle(ref row, col, "Animal Size Histogram");
                 var drawSizeHistogram = new ProcessDrawSizeHistogram(processDrawScope, objectDrawScope, MasterSizeModelList.GetObjectCountBySizeClass(processObjects));
                 drawSizeHistogram.Initialise(new Size(350, 150));
-                localBitmap = drawSizeHistogram.CurrBitmap();
+                var localBitmap = drawSizeHistogram.CurrBitmap(true, runVideo.SizeImages);
                 Data.SaveBitmap(localBitmap, "AnimalSizeHistogram", row-1, col-1);
-
 
                 // Draw the matrix of animal sizes and heights
                 row = 3;
-                col = 22;
+                col = 14;
                 AnimalModelList animals = new();
                 animals.AddProcessObjects(0, processAll.Drone, processObjects);
-                (var message, var matrixBitmap) = AnimalMatrixDrawer.DrawAnimalMatrix(animals, runVideo.SizeImages);
+                (var message, var matrixBitmap) = AnimalMatrixDrawer.DrawAnimalMatrix(animals, runVideo.SizeImages, true);
                 Data.SetTitle(ref row, col, "Animal Size Height Matrix: " + message);
                 Data.SaveBitmap(matrixBitmap, "AnimalMatrix", row - 1, col - 1);
 
                 // Draw the flight path with objects and features
-                row = 16;
+                row = 18;
                 col = 15;
                 Data.SetTitle(ref row, col, "Flight Path with Animals");
                 var drawFlightPath = new ProcessDrawPath(processDrawScope, processObjects, objectDrawScope);
+                drawFlightPath.BackgroundColor = DroneColors.WhiteBgr;
                 drawFlightPath.Initialise(new Size(575, 575));
                 localBitmap = drawFlightPath.CurrBitmap(true);
                 Data.SaveBitmap(localBitmap, "FlightPathWithAnimals", row-1, col-1);
 
                 // Draw the elevations with objects and features
-                row = 47;
+                row = 49;
                 col = 1;
                 Data.SetTitle(ref row, col, "Flight and Animals Elevations");
                 var drawElevations = new ProcessDrawElevations(processAll, processDrawScope, null);
