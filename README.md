@@ -21,24 +21,33 @@ The code folders are:
 - **RunSpace:** Code to run the image processing on videos
 
 
-## FFMpeg
-Use "choco install ffmpeg" or download from [ffmpeg.org](https://ffmpeg.org/download.html) 
-Add "C:\ProgramData\chocolatey\lib\ffmpeg\tools\ffmpeg\bin" (or similar) to the Windows PATH variable.
+## Processing using GPU and YOLO frameworks
+SkyComb Analyst and Flights use the "You Only Look Once" (YOLO) v8 algorithm to detect objects in the video frames.
+This algorithm utilises a GPU to process the calculations quickly.
 
-## GPU and YOLO frameworks
-For speed, the code assumes the existance of a GPU it can to process the YOLO v8 model calculations.
-The setup of a PC with a GPU includes manually installing GPU-related frameworks:
-- [CUDA](https://developer.nvidia.com/cuda-downloads)
-- [cuDNN](https://developer.nvidia.com/cudnn)
-- 
-Adding to the Windows PATH variable entries like:
+SkyComb Analyst and Flights can only process input data after the YOLO / GPU set up is complete.
+SkyComb Analyst can be used to view pre-processed input data without doing the set up.
+
+Given a Windows PC or laptop that has a GPU, the SkyComb "processing" set up process is:
+
+Manually download and install 2 GPU-related toolkits from:
+- [CUDA](https://developer.nvidia.com/cuda-downloads) for "CUDA Toolkit 12.6" 
+- [cuDNN](https://developer.nvidia.com/cudnn) for "cuDNN (NVIDIA CUDA Deep Neural Network) Library for Windows 10"
+
+Add to the Windows PATH variable entries like:
 - C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6\bin
-- C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6\extras\CUPTI\lib64
 - C:\Program Files\NVIDIA\CUDNN\v9.4\bin\12.6
 
+Add to the Windows System variables entries like:
+- CUDA_HOME C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6
+- CUDA_PATH C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6
+- CUDA_PATH_V12_6 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6
+- CUDA_VISIBLE_DEVICES 0
+
 This project imports these libraries related to GPU and YOLO computing:
-- Accord.MachineLearning
-- Compunet.YoloV8
-- Microsoft.ML.OnnxRuntime.Gpu
-- Microsoft.ML.OnnxRuntime.Gpu.Windows
-- SixLabors.ImageSharp
+- Accord.MachineLearning (3.8.0)
+- MathNet.Numerics (5.0.0)
+- Microsoft.ML.OnnxRuntime.Gpu (1.19.2)
+- Microsoft.ML.OnnxRuntime.Gpu.Windows (1.19.2)
+- SkiaSharp (2.88.8)
+- YoloDotNet (2.2.0)

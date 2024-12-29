@@ -62,13 +62,6 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        public void AddFeature(ProcessFeatureModel featureToAdd)
-        {
-            if (MinFeatureId == UnknownValue || featureToAdd.FeatureId < MinFeatureId)
-                MinFeatureId = featureToAdd.FeatureId;
-            if (MaxFeatureId == UnknownValue || featureToAdd.FeatureId > MaxFeatureId)
-                MaxFeatureId = featureToAdd.FeatureId;
-        }
         public void AddFeatureList(ProcessFeatureList featuresToAdd)
         {
             if (featuresToAdd != null)

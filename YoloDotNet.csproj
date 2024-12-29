@@ -8,7 +8,7 @@
     <Title>YoloDotNet - C# .NET 8.0 implementation of YOLOv8 &amp; YOLOv10</Title>
     <PackageProjectUrl>https://github.com/NickSwardh/YoloDotNet</PackageProjectUrl>
     <RepositoryUrl>https://github.com/NickSwardh/YoloDotNet</RepositoryUrl>
-    <PackageTags>yolo;yolov8;yolov10;ONNX;ML;CUDA;GPU;classification;object;detection;segmentation;pose;estimation;oriented;image;vision;video;media;convert;encode;imagesharp;sixlabors;ffmpeg;process;core;ai</PackageTags>
+    <PackageTags>yolo;yolov8;yolov10;ONNX;ML;CUDA;GPU;classification;object;detection;segmentation;pose;estimation;oriented;image;vision;video;media;convert;encode;imagesharp;sixlabors;process;core;ai</PackageTags>
     <PackAsTool>False</PackAsTool>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReadmeFile></PackageReadmeFile>
