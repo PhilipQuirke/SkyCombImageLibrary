@@ -64,10 +64,7 @@ namespace SkyCombImage.DrawSpace
         // Draw object as rectangle (often red)
         private void DrawObject(ProcessObject thisObject, ref Image<Bgr, byte> image, Bgr objectBgr)
         {
-            Rectangle objectRect = DroneLocnMToPixelSquare(
-                thisObject.LocationM, ObjectPixels);
-
-            image.Draw(objectRect, objectBgr, NormalThickness);
+            DrawSquare(thisObject.LocationM, ObjectPixels, ref image, objectBgr);
         }
 
 
