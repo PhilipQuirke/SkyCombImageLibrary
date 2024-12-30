@@ -2,6 +2,42 @@
 using SkyCombGround.GroundModel;
 
 
+/*
+SkyComb calculates the location of a "pest animal" object in 3D space using data provided by a drone carrying a thermal camera. 
+
+The code is based on:
+- Drone Location(Northing, Easting)(Metres)
+- Drone Altitude(Metres)
+- Drone camera direction pointed (yaw, in degrees). When not cornering, the camera points in roughly same direction drone is travelling.
+- Drone camera down angle (pitch, in degrees)
+
+- Camera image H FOV (horizontal field of vision, degrees, static)
+- Camera image V FOV (vertical field of vision, degrees, static)
+
+- Object position in Camera image H fraction (unitless, left -1 to right +1) 
+- Object position in Camera image V fraction (unitless, bottom -1 to top +1) 
+
+- Terrain model (Northing, Easting) => Altitude (M)   
+
+The code process is:
+*Drone to Object down angle = 
+   * Drone camera down angle - 0.5 * Camera image V FOV * Object V fraction 
+* Drone to Object direction = 
+   * Drone camera direction pointed - 0.5 * Camera image H FOV * Object H fraction 
+* Calculate intercept from camera to terrain as:
+   *Set CurrLocation to Drone Location
+   * Set CurrAltitude to Drone Altitude
+   * If Drone to Object down angle < 70 degrees
+      * Move CurrLocation in 1m in “Drone to object” direction 
+      * Decrease CurrAltitude by 1m * tan(Drone to Object down angle)
+      * If Terrain(CurrLocation).CurrAltitude < CurrAltitude halt.
+   * Else
+      * Decrease CurrAltitude by 1m
+      * Move CurrLocation in 1m / tan(Drone to Object down angle) in “Drone to object” direction 
+      * If Terrain(CurrLocation).CurrAltitude < CurrAltitude halt.
+*/
+
+
 namespace SkyCombImage.ProcessLogic
 {
     public class TerrainGrid
@@ -116,15 +152,17 @@ namespace SkyCombImage.ProcessLogic
             return ((direction % 360) + 360) % 360;
         }
 
-
         private LocationResult? FindTerrainIntersection(DroneState drone, float downAngleRad, float directionRad)
         {
+            // Convert angle back to degrees to compare easily
+            float downAngleDeg = downAngleRad * 180.0f / (float)Math.PI;
+
             DroneLocation currentPosition = drone.LocationNE;
             float currentAltitude = drone.Altitude;
             float totalDistance = 0;
             float confidence = 0;
             float currTerrainHeight = 0;
-            int num_steps = 0;
+            int numSteps = 0;
 
             // Calculate initial height above terrain
             float terrainHeightAtStart = terrain.GetElevation(currentPosition);
@@ -140,69 +178,170 @@ namespace SkyCombImage.ProcessLogic
             // Initial step size based on height
             float horizontalStepSize = CalculateAdaptiveStepSize(heightAboveTerrain);
 
-            while (totalDistance < maxSearchDistance)
+            // Check if we should use near-vertical logic
+            bool isNearVertical = (downAngleDeg > 85); 
+
+            if (!isNearVertical)
             {
-                num_steps++;
-
-                // Calculate vertical drop for this step using tangent
-                float verticalStep = horizontalStepSize * tanDownAngle;
-
-                // Update position and height
-                currentPosition = currentPosition.Add( directionVector.Multiply(horizontalStepSize) );
-                currentAltitude -= verticalStep;
-                totalDistance += horizontalStepSize;
-
-                // Get terrain height at current position
-                float terrainHeight = terrain.GetElevation(currentPosition);
-                if (terrainHeight < 0)
+                //
+                // -----------------
+                // Normal Approach
+                // -----------------
+                //
+                while (totalDistance < maxSearchDistance)
                 {
-                    if (num_steps >= 10)
-                        // Return the rough position. This is the last step that was within the terrain grid
+                    numSteps++;
+
+                    // Move horizontally, drop altitude by tan(angle) * horizontalStep
+                    float verticalStep = horizontalStepSize * tanDownAngle;
+
+                    currentPosition = currentPosition.Add(directionVector.Multiply(horizontalStepSize));
+                    currentAltitude -= verticalStep;
+                    totalDistance += horizontalStepSize;
+
+                    float terrainHeight = terrain.GetElevation(currentPosition);
+                    if (terrainHeight < 0)
+                    {
+                        // If out of bounds, bail out
+                        if (numSteps >= 10)
+                        {
+                            return new LocationResult
+                            {
+                                LocationNE = currentPosition,
+                                Elevation = currTerrainHeight,
+                                Confidence = 0
+                            };
+                        }
+                        return null;
+                    }
+                    currTerrainHeight = terrainHeight;
+
+                    if (currentAltitude + terrain.VerticalUnitM <= terrainHeight)
+                    {
+                        // Interpolate back
+                        float overshoot = terrainHeight - currentAltitude;
+                        float stepBack = overshoot / verticalStep * horizontalStepSize;
+                        currentPosition = currentPosition.Add(directionVector.Multiply(-stepBack));
+
+                        terrainHeight = terrain.GetElevation(currentPosition);
+
+                        confidence = CalculateConfidence(totalDistance, drone.Altitude);
                         return new LocationResult
                         {
                             LocationNE = currentPosition,
-                            Elevation = currTerrainHeight,
-                            Confidence = 0
+                            Elevation = terrainHeight,
+                            Confidence = confidence
                         };
+                    }
 
-                    return null; // Position outside terrain grid
+                    // Recompute step size based on current height above terrain
+                    heightAboveTerrain = currentAltitude - terrainHeight;
+                    horizontalStepSize = CalculateAdaptiveStepSize(heightAboveTerrain);
                 }
-                currTerrainHeight = terrainHeight;
 
-                // Check for intersection
-                if (currentAltitude + terrain.VerticalUnitM <= terrainHeight)
+                // Max distance reached with no intersection
+                return new LocationResult
                 {
-                    // Interpolate to find more precise intersection point
-                    float overshoot = terrainHeight - currentAltitude;
-                    float stepBack = overshoot / verticalStep * horizontalStepSize;
-                    currentPosition = currentPosition.Add( directionVector.Multiply(-stepBack) );
+                    LocationNE = currentPosition,
+                    Elevation = currTerrainHeight,
+                    Confidence = 0
+                };
+            }
+            else
+            {
+                //
+                // ----------------------------------------------
+                // Near-Vertical Approach
+                // ----------------------------------------------
+                //
+                // Here, we rely mostly on decreasing altitude in small steps and only 
+                // moving horizontally enough to keep things stable.
 
-                    // Recalculate final elevation
-                    terrainHeight = terrain.GetElevation(currentPosition);
+                // Example: take small vertical steps, compute horizontal offset from tan
+                // The smaller the step, the less "blow-up" from tan(near 90°).
+                float verticalStepSize = 1.0f;  // or terrain.VerticalUnitM, etc.
 
-                    // Calculate confidence based on distance
-                    confidence = CalculateConfidence(totalDistance, drone.Altitude);
+                while (totalDistance < maxSearchDistance)
+                {
+                    numSteps++;
 
-                    return new LocationResult
+                    // Step down in altitude by a small amount
+                    currentAltitude -= verticalStepSize;
+
+                    // Horizontal movement: 
+                    // if downAngleDeg is exactly 90°, tanDownAngle would be infinite
+                    // so we clamp to a safe "maxTan" if angle is above 89° or so:
+                    float safeTan = (float)Math.Tan(Math.Min(downAngleRad, 1.55334f));
+                    // 1.55334 rad ~ 89 degrees, to prevent infinite blow-up
+
+                    float horizontalStep = verticalStepSize / safeTan;
+
+                    currentPosition = currentPosition.Add(directionVector.Multiply(horizontalStep));
+                    totalDistance += horizontalStep;
+
+                    float terrainHeight = terrain.GetElevation(currentPosition);
+                    if (terrainHeight < 0)
                     {
-                        LocationNE = currentPosition,
-                        Elevation = terrainHeight,
-                        Confidence = confidence
-                    };
+                        if (numSteps >= 10)
+                        {
+                            return new LocationResult
+                            {
+                                LocationNE = currentPosition,
+                                Elevation = currTerrainHeight,
+                                Confidence = 0
+                            };
+                        }
+                        return null;
+                    }
+                    currTerrainHeight = terrainHeight;
+
+                    // Check for intersection
+                    if (currentAltitude + terrain.VerticalUnitM <= terrainHeight)
+                    {
+                        // Interpolate back to find exact intersection
+                        float overshoot = terrainHeight - currentAltitude;
+                        float stepBackFrac = overshoot / verticalStepSize; // fraction of the vertical step
+                                                                           // horizontal step back
+                        float backDist = horizontalStep * stepBackFrac;
+
+                        currentPosition = currentPosition.Add(directionVector.Multiply(-backDist));
+                        terrainHeight = terrain.GetElevation(currentPosition);
+
+                        confidence = CalculateConfidence(totalDistance, drone.Altitude);
+
+                        return new LocationResult
+                        {
+                            LocationNE = currentPosition,
+                            Elevation = terrainHeight,
+                            Confidence = confidence
+                        };
+                    }
+
+                    // Update step size if we want finer stepping 
+                    heightAboveTerrain = currentAltitude - terrainHeight;
+                    if (heightAboveTerrain < 10f)
+                    {
+                        // Take smaller vertical steps if close to ground
+                        verticalStepSize = 0.2f;
+                    }
+                    else if (heightAboveTerrain < 50f)
+                    {
+                        verticalStepSize = 0.5f;
+                    }
+                    else
+                    {
+                        verticalStepSize = 1.0f;
+                    }
                 }
 
-                // Update step size based on current height above terrain
-                heightAboveTerrain = currentAltitude - terrainHeight;
-                horizontalStepSize = CalculateAdaptiveStepSize(heightAboveTerrain);
+                // If no intersection up to maxSearchDistance
+                return new LocationResult
+                {
+                    LocationNE = currentPosition,
+                    Elevation = currTerrainHeight,
+                    Confidence = 0
+                };
             }
-
-            // No intersection found within max distance
-            return new LocationResult
-            {
-                LocationNE = currentPosition,
-                Elevation = currTerrainHeight,
-                Confidence = 0
-            };
         }
 
 
