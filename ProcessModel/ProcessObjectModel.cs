@@ -89,11 +89,6 @@ namespace SkyCombImage.ProcessModel
         // Maximum Height of the object pixel box over real Features
         public int MaxRealPixelHeight { get; set; }
 
-        // First angle down from horizon to object in degrees
-        public float FirstFwdDownDeg { get; set; } = UnknownValue;
-        // Last angle down from horizon to object in degrees
-        public float LastFwdDownDeg { get; set; } = UnknownValue;
-
 
         public ProcessObjectModel()
         {
@@ -136,8 +131,6 @@ namespace SkyCombImage.ProcessModel
             MaxRealHotPixels = 0;
             MaxRealPixelWidth = 0;
             MaxRealPixelHeight = 0;
-            FirstFwdDownDeg = UnknownValue;
-            LastFwdDownDeg = UnknownValue;
         }
 
 
@@ -202,11 +195,8 @@ namespace SkyCombImage.ProcessModel
         public const int MaxRealHotPixelsSetting = 27;
         public const int MaxRealPixelWidthSetting = 28;
         public const int MaxRealPixelHeightSetting = 29;
-        public const int FirstFwdDownDegSetting = 30;
-        public const int LastFwdDownDegSetting = 31;
-        public const int RangeFwdDownDegSetting = 32;
-        public const int MaxSpinePixelsSetting = 33;
-        public const int MaxGirthPixelsSetting = 34;
+        public const int MaxSpinePixelsSetting = 30;
+        public const int MaxGirthPixelsSetting = 31;
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
@@ -239,9 +229,6 @@ namespace SkyCombImage.ProcessModel
                 { "Max Real Hot Pxs", MaxRealHotPixels },
                 { "Max Real Px Width", MaxRealPixelWidth },
                 { "Max Real Px Height", MaxRealPixelHeight },
-                { "First Fwd Down Deg", FirstFwdDownDeg, DegreesNdp },
-                { "Last Fwd Down Deg", LastFwdDownDeg, DegreesNdp },
-                { "Range Fwd Down Deg", FirstFwdDownDeg - LastFwdDownDeg, DegreesNdp },
                 { "Max Spine Pxs", MaxSpinePixels, 2 },
                 { "Max Girth Pxs", MaxGirthPixels, 2 },
             };
@@ -277,9 +264,6 @@ namespace SkyCombImage.ProcessModel
             MaxRealHotPixels = StringToInt(settings[ProcessObjectModel.MaxRealHotPixelsSetting - 1]);
             MaxRealPixelWidth = StringToInt(settings[ProcessObjectModel.MaxRealPixelWidthSetting - 1]);
             MaxRealPixelHeight = StringToInt(settings[ProcessObjectModel.MaxRealPixelHeightSetting - 1]);
-            FirstFwdDownDeg = StringToFloat(settings[ProcessObjectModel.FirstFwdDownDegSetting - 1]);
-            LastFwdDownDeg = StringToFloat(settings[ProcessObjectModel.LastFwdDownDegSetting - 1]);
-            // RangeFwdDownDeg 
             if(settings.Count > ProcessObjectModel.MaxSpinePixelsSetting - 1)
                 MaxSpinePixels = StringToInt(settings[ProcessObjectModel.MaxSpinePixelsSetting - 1]);
             if (settings.Count > ProcessObjectModel.MaxGirthPixelsSetting - 1)

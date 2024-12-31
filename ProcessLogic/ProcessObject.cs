@@ -252,16 +252,6 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // More features is correlated with more location error.
-        // A good measure of location scatter is location error per real feature.
-        public float LocationErrPerFeatureM()
-        {
-            int realFeats = NumRealFeatures();
-
-            return (realFeats == 0 ? UnknownValue : LocationErrM / realFeats);
-        }
-
-
         // Is this object in the RunFrom/To scope?
         public bool InRunScope(ProcessScope scope)
         {
@@ -650,9 +640,6 @@ namespace SkyCombImage.ProcessLogic
                 // Calculate the drone SumLinealM distance corresponding to the centroid of the object
                 Calculate_AvgSumLinealM();
 
-                FirstFwdDownDeg = (float)FirstFeature.Calculate_Image_FwdDeg();
-                LastFwdDownDeg = (float)LastRealFeature.Calculate_Image_FwdDeg();
-
                 // First estimate of OBJECT location (centroid) as average over all real features.
                 // The feature locations are based on where in the drone's field of image the object was detected,
                 // and takes into account ground undulations. The object's location is further refined later.
@@ -661,32 +648,6 @@ namespace SkyCombImage.ProcessLogic
                 // Estimate the OBJECT's DEM at the object's location
                 // (which could be say 20m left of the drone's flight path).
                 Calculate_DemM();
-
-                /* Old code
-                // In RunVideoCombDrone.AddBlockAndProcessInputVideoFrame, a new Feature is created
-                // and these "one-feature" function calls are made (before the feature is assigned to an object):
-                //    FEATURE.CalculateSettings_LocationM_FlatGround();           // Assumes flat ground & feature is on ground
-                //    FEATURE.CalculateSettings_LocationM_HeightM_LineofSight();  // Works if CameraFwdDeg between 10 and 80.
-                // Later a CombObject consumes/claims the new feature.
-                // The new feature may be the 10th feature of the object we call:
-                //    FEATURE.Calculate_HeightM_BaseLineMovement();           // Works if drone has moved horizontally
-                // Which estimates object height above ground based on distance down from drone
-                // calculated using trigonometry and first/last real feature camera-view-angles.
-                // Only works if the drone has moved horizontally some distance. Works at 1m. Better at 5m
-                // May override CalculateSettings_LocationM_HeightM_LineofSight
-                var lastFeature = LastFeature;
-                if ((SeenForMinDurations() >= 1) && HasMoved())
-                {
-                    // Estimate last FEATURE height above ground 
-                    if (lastFeature.Type == FeatureTypeEnum.Real) // PQR    && is moving now.
-                        lastFeature.Calculate_HeightM_BaseLineMovement(
-                                FirstFeature,
-                                this.DemM,
-                                ProcessFeatures.AverageFlightStepFixedAltitudeM());
-                }
-                else
-                    lastFeature.SetHeightAlgorithmError("BL Short"); // Either in time or distance.
-                */
 
                 // Calculate OBJECT height and object height error (as average over real features).
                 Calculate_HeightM_and_HeightErrM();
@@ -727,9 +688,7 @@ namespace SkyCombImage.ProcessLogic
 
             answer.Add("#RealFeats", NumRealFeatures());
             answer.Add("RealDensityPx", RealDensityPx(), AreaM2Ndp);
-            answer.Add("LocnErrPerFeatCM", LocationErrPerFeatureM() * 100, LocationNdp);
 
-            // Average horizontal distance from object to drone in M.
             answer.Add("RangeM", AvgRangeM);
 
             return answer;
@@ -1003,11 +962,15 @@ namespace SkyCombImage.ProcessLogic
                 (MinHeat, MaxHeat) = TardisSummaryModel.SummariseInt(MinHeat, MaxHeat, theObject.Value.MaxHeat);
             }
         }
+
+
         // Calculate settings based on owned ProcessObjects 
         public void CalculateSettings()
         {
             CalculateSettings(this);
         }
+
+
         // Calculate settings based on in-scope ProcessObjects 
         public void CalculateSettings(ProcessScope scope)
         {
