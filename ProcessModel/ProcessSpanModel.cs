@@ -67,6 +67,8 @@ namespace SkyCombImage.ProcessModel
 
         protected void SetBest(float fixAltM, float fixYawDeg, float fixPitchDeg, ProcessObjList objs)
         {
+            var improvementM = BestSumLocnErrM - objs.SumLocationErrM;
+
             BestFixAltM = fixAltM;
             BestFixYawDeg = fixYawDeg;
             BestFixPitchDeg = fixPitchDeg;
@@ -74,7 +76,7 @@ namespace SkyCombImage.ProcessModel
             BestSumHeightErrM = objs.SumHeightErrM;
             Debug.Print("  Set BestFix( " +
                 "AltM=" + BestFixAltM.ToString() + ", YawDeg=" + BestFixYawDeg.ToString() + ", PitchDeg=" + BestFixPitchDeg.ToString() + 
-                ", SumLocnErrM=" + BestSumLocnErrM.ToString() + ", SumHeightErrM=" + BestSumHeightErrM.ToString() +")");
+                ", SumLocnErrM=" + BestSumLocnErrM.ToString() + ", ImprovementM=" + improvementM.ToString() +")");
         }
 
 

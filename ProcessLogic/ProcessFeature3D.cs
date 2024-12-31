@@ -168,8 +168,6 @@ namespace SkyCombImage.ProcessLogic
             float terrainHeightAtStart = terrain.GetElevation(currentPosition);
             float heightAboveTerrain = currentAltitude - terrainHeightAtStart;
 
-            // Pre-calculate trig values for efficiency
-            float tanDownAngle = (float)Math.Tan(downAngleRad);
             DroneLocation directionVector = new(
                 (float)Math.Sin(directionRad),  // East component
                 (float)Math.Cos(directionRad)   // North component
@@ -188,6 +186,7 @@ namespace SkyCombImage.ProcessLogic
                 // Normal Approach
                 // -----------------
                 //
+                float tanDownAngle = (float)Math.Tan(downAngleRad);
                 while (totalDistance < maxSearchDistance)
                 {
                     numSteps++;
@@ -261,6 +260,11 @@ namespace SkyCombImage.ProcessLogic
                 // The smaller the step, the less "blow-up" from tan(near 90°).
                 float verticalStepSize = 1.0f;  // or terrain.VerticalUnitM, etc.
 
+                // if downAngleDeg is exactly 90°, tanDownAngle would be infinite
+                // so we clamp to a safe "maxTan" if angle is above 89° or so:
+                float safeTan = (float)Math.Tan(Math.Min(downAngleRad, 1.55334f));
+                // 1.55334 rad ~ 89 degrees, to prevent infinite blow-up
+
                 while (totalDistance < maxSearchDistance)
                 {
                     numSteps++;
@@ -269,11 +273,6 @@ namespace SkyCombImage.ProcessLogic
                     currentAltitude -= verticalStepSize;
 
                     // Horizontal movement: 
-                    // if downAngleDeg is exactly 90°, tanDownAngle would be infinite
-                    // so we clamp to a safe "maxTan" if angle is above 89° or so:
-                    float safeTan = (float)Math.Tan(Math.Min(downAngleRad, 1.55334f));
-                    // 1.55334 rad ~ 89 degrees, to prevent infinite blow-up
-
                     float horizontalStep = verticalStepSize / safeTan;
 
                     currentPosition = currentPosition.Add(directionVector.Multiply(horizontalStep));

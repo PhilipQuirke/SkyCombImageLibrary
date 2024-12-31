@@ -517,41 +517,6 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Returns the average sideways-down-angles (right angles to the direction of flight)
-        // of the object in the first image detected and the last image detected.
-        // Only uses camera physics and hot-object position in image data.
-        protected double Calculate_Image_AvgSidewaysRads()
-        {
-            (var xFracFirst, var _) = FirstFeature.CentroidImageFractions();
-            (var xFracLast, var _) = LastFeature.CentroidImageFractions();
-
-            // Calculation is based on physical parameters of the thermal camera.
-            double fullHorizFoVRadians = ProcessAll.VideoData.HFOVRad;
-            double halfHorizFoVRadians = fullHorizFoVRadians / 2;
-
-            // Calculate the average angle to object, at right angles to the direction of flight (sideways), to the vertical, in radians
-            //      If PixelBox.X = 0 then object is at the very left of the image => SideRads is -horizFoVRadians/2
-            //      If PixelBox.X = ImageWidth/2 then object is in the middle of the image => SideRads is 0
-            //      If PixelBox.X = ImageWidth then object is at the very right of the image => SideRads is +horizFoVRadians/2
-            // Assumes drone is moving forward (not sidewards or backwards) or is stationary.
-            double firstSideFraction = xFracFirst * 2 - 1;
-            Assert(firstSideFraction >= -1 && firstSideFraction <= 1, "Calculate_Image_AvgSidewaysRads: firstSideFraction out of range");
-
-            double firstSideRads = halfHorizFoVRadians * firstSideFraction;
-            Assert(Math.Abs(firstSideRads) <= halfHorizFoVRadians, "Calculate_Image_AvgSidewaysRads: firstSideRads out of range");
-
-            double lastSideFraction = xFracLast * 2 - 1;
-            Assert(lastSideFraction >= -1 && firstSideFraction <= 1, "Calculate_Image_AvgSidewaysRads: lastSideFraction out of range");
-
-            double lastSideRads = halfHorizFoVRadians * lastSideFraction;
-            Assert(Math.Abs(lastSideRads) <= halfHorizFoVRadians + 0.005, "Calculate_Image_AvgSidewaysRads: lastSideRads out of range");
-
-            Assert(Math.Abs(lastSideRads - firstSideRads) < fullHorizFoVRadians, "Calculate_Image_AvgSidewaysRads: Bad From/to side range");
-
-            return (firstSideRads + lastSideRads) / 2;
-        }
-
-
         // Calculate the size of the object in square centimeters.
         //
         // Objects may be partially obscured by branches in some frames.
