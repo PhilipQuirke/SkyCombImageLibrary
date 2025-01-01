@@ -39,7 +39,7 @@ namespace SkyCombImage.DrawSpace
         }
 
 
-        // Draw object features as crosses (often orange) on the Location range graph
+        // Draw object features as crosses (often orange) on the Location range graph //NQ
         private void DrawObjectFeatures(ProcessObject thisObject, ref Image<Bgr, byte> image, FeatureTypeEnum type, Bgr color)
         {
             Bgr highlight = new Bgr(170, 205, 102);
