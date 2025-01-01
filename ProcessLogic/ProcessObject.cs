@@ -267,7 +267,7 @@ namespace SkyCombImage.ProcessLogic
             return overlapMs / durationMs >= 0.5;
         }
 
-
+/*
         // Get the object's DEM at the OBJECT'S location.
         protected void Calculate_DemM()
         {
@@ -295,7 +295,7 @@ namespace SkyCombImage.ProcessLogic
             else
                 DemM = firstStep.DemM;
         }
-
+*/
 
         // Given this object's last known pixel position, and the object's
         // movement across the image, where do we expect the object to be this block?
@@ -612,7 +612,7 @@ namespace SkyCombImage.ProcessLogic
 
                 // Estimate the OBJECT's DEM at the object's location
                 // (which could be say 20m left of the drone's flight path).
-                Calculate_DemM();
+                //Calculate_DemM();
 
                 // Calculate OBJECT height and object height error (as average over real features).
                 Calculate_HeightM_and_HeightErrM();

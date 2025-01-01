@@ -35,8 +35,10 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Apply FixValues to theSteps and on to the ProcessObjects and their ProcessFeatures
-        public void CalculateSettings_ApplyFixValues_Core(float fixAltM, float fixYawDeg, float fixPitchDeg, FlightStepList theSteps, ProcessObjList objs)
+        public void CalculateSettings_ApplyFixValues_Core(int hFOVDeg, float fixAltM, float fixYawDeg, float fixPitchDeg, FlightStepList theSteps, ProcessObjList objs)
         {
+            Process.Drone.InputVideo.HFOVDeg = hFOVDeg;
+
             // The image associated with each leg step now covers a slightly different area
             // Recalculate InputImageCenter Dem and Dsm based on FixAltM/FixYawDeg/FixPitchDeg
             theSteps.CalculateSettings_FixValues(fixAltM, fixYawDeg, fixPitchDeg, Process.VideoData, Process.Drone.GroundData);
@@ -69,15 +71,16 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Apply FixValues to theSteps and on to the ProcessObjects and their ProcessFeatures
-        public bool CalculateSettings_ApplyFixValues(float fixAltM, float fixYawDeg, float fixPitchDeg, FlightStepList theSteps, ProcessObjList objs)
+        public bool CalculateSettings_ApplyFixValues(int hFOVDeg, float fixAltM, float fixYawDeg, float fixPitchDeg, FlightStepList theSteps, ProcessObjList objs)
         {
-            CalculateSettings_ApplyFixValues_Core(fixAltM, fixYawDeg, fixPitchDeg, theSteps, objs);
+            CalculateSettings_ApplyFixValues_Core(hFOVDeg, fixAltM, fixYawDeg, fixPitchDeg, theSteps, objs);
 
             // Do we see a drop in location error sum?
             // The location error assumes the objects are mostly stationary over the time they are observed.
-            if (objs.SumLocationErrM + 0.02f < BestSumLocnErrM) // at least a 2cm improvement
+            var improvementM = BestSumLocnErrM - objs.SumLocationErrM;
+            if (improvementM >= 0.1f ) // at least a 10cm improvement
             {
-                SetBest(fixAltM, fixYawDeg, fixPitchDeg, objs);
+                SetBest(hFOVDeg, fixAltM, fixYawDeg, fixPitchDeg, objs);
                 return true;
             }
 
@@ -99,19 +102,61 @@ namespace SkyCombImage.ProcessLogic
                 if ((theSteps.Count == 0) || (NumSignificantObjects == 0))
                     return;
 
-                // Calculate the initial object error location and height errors with no fix.
-                CalculateSettings_ApplyFixValues(0, 0, 0, theSteps, theObjs);
+
+
+                //NQ Optimise
+                float altRangeM = 25;
+                float yawRangeDeg = 10;
+                float pitchRangeDeg = 20;
+
+                ResetBest();
+                CalculateSettings_ApplyFixValues(Process.Drone.InputVideo.HFOVDeg, 0, 0, 0, theSteps, theObjs);
                 OrgSumLocnErrM = BestSumLocnErrM;
                 OrgSumHeightErrM = BestSumHeightErrM;
 
-                //NQ Optimise
-                for (float fixAltM = -20; fixAltM <= +20; fixAltM += 2f)  // 21 steps
-                    for (int fixYawDeg = -10; fixYawDeg <= +10; fixYawDeg += 2) // 10 steps
-                        for (int fixPitchDeg = -10; fixPitchDeg <= +10; fixPitchDeg += 2)  // 10 steps
-                            CalculateSettings_ApplyFixValues(fixAltM, fixYawDeg, fixPitchDeg, theSteps, theObjs);
+                // DIMENSION 1: Video HFOVDeg
+                // The drone.InputVideo.HFOVDeg value is guessed from attributes of the SRT file. This is weak.
+                // Known hardware values for HFOVDeg are 38, 42 & 57. Test reasonable values around these.
+                CalculateSettings_ApplyFixValues(36, 0, 0, 0, theSteps, theObjs);
+                CalculateSettings_ApplyFixValues(38, 0, 0, 0, theSteps, theObjs);
+                CalculateSettings_ApplyFixValues(40, 0, 0, 0, theSteps, theObjs);
+                CalculateSettings_ApplyFixValues(42, 0, 0, 0, theSteps, theObjs);
+                CalculateSettings_ApplyFixValues(44, 0, 0, 0, theSteps, theObjs);
+                CalculateSettings_ApplyFixValues(57, 0, 0, 0, theSteps, theObjs);
+                int theHFOVDeg = BestHFOVDeg;
+
+                // DIMENSION 2: Drone altitude 
+                ResetBest();
+                for (float fixAltM = -altRangeM; fixAltM <= altRangeM; fixAltM += 1)
+                    CalculateSettings_ApplyFixValues(theHFOVDeg, fixAltM, 0, 0, theSteps, theObjs);
+                var bestAltM = BestFixAltM;
+                var bestAltErr = BestSumLocnErrM;
+
+                // DIMENSION 3: Drone yaw 
+                ResetBest();
+                for (float fixYawDeg = -yawRangeDeg; fixYawDeg <= yawRangeDeg; fixYawDeg += 1)
+                    CalculateSettings_ApplyFixValues(theHFOVDeg, 0, fixYawDeg, 0, theSteps, theObjs);
+                var bestYawDeg = BestFixYawDeg;
+                var bestYawErr = BestSumLocnErrM;
+
+                // DIMENSION 4: Drone pitch 
+                ResetBest();
+                for (float fixPitchDeg = -pitchRangeDeg; fixPitchDeg <= pitchRangeDeg; fixPitchDeg += 1)
+                    CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, fixPitchDeg, theSteps, theObjs);
+                var bestPitchDeg = BestFixPitchDeg;
+                var bestPitchErr = BestSumLocnErrM;
+
+                // DIMENSION 2..4: Fine tune
+                // Vary dimensions 2 to 4 around the above rough values
+                ResetBest();
+                CalculateSettings_ApplyFixValues(theHFOVDeg, bestAltM, bestYawDeg, bestPitchDeg, theSteps, theObjs);
+                for (float fixAltM = bestAltM - 1.25f; fixAltM <= bestAltM + 1.25f; fixAltM += 0.25f ) 
+                    for (float fixYawDeg = bestYawDeg - 1.25f; fixYawDeg <= bestYawDeg + 1.25f; fixYawDeg += 0.25f) 
+                        for (float fixPitchDeg = bestPitchDeg - 1.25f; fixPitchDeg <= bestPitchDeg + 1.25f; fixPitchDeg += 0.25f) 
+                            CalculateSettings_ApplyFixValues(theHFOVDeg, fixAltM, fixYawDeg, fixPitchDeg, theSteps, theObjs);
 
                 // Lock in the best single value across the leg steps
-                CalculateSettings_ApplyFixValues_Core(BestFixAltM, BestFixYawDeg, BestFixPitchDeg, theSteps, theObjs);
+                CalculateSettings_ApplyFixValues_Core(theHFOVDeg, BestFixAltM, BestFixYawDeg, BestFixPitchDeg, theSteps, theObjs);
                 BestSumLocnErrM = theObjs.SumLocationErrM;
                 BestSumHeightErrM = theObjs.SumHeightErrM;
                 Process.ProcessObjects.CalculateSettings();

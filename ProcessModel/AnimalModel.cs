@@ -2,6 +2,7 @@
 using SkyCombGround.CommonSpace;
 using SkyCombImage.CategorySpace;
 using SkyCombImage.ProcessLogic;
+using System.Diagnostics;
 
 
 namespace SkyCombImage.ProcessModel
@@ -21,64 +22,74 @@ namespace SkyCombImage.ProcessModel
         public float GirthM { get; }
 
         // Debugging information
-        public float AvgRangeM { get; }
         public int CameraDownDegs { get; }
-        public int BestFixAltM { get; }
-        public int BestFixYawDeg { get; }
-        public int BestFixPitchDeg { get; }
+        public float AvgRangeM { get; }
+        public float BestHFOVDegs { get; }
+        public float BestFixAltM { get; }
+        public float BestFixYawDeg { get; }
+        public float BestFixPitchDeg { get; }
 
 
 
         public AnimalModel(int flightNum, Drone drone, ProcessSpanList? processSpans, ProcessObject theObj)
         {
-            FlightNum = flightNum;
-            Name = theObj.Name;
-
-            // Convert the relative location theObj.LocationM to a global location in longitude and latitude
-            GlobalLocation = drone.FlightSections.DroneToGlobalLocation(theObj.LocationM);
-            LocationErrM = theObj.LocationErrM;
-
-            SizeCM2 = (int)theObj.SizeCM2;
-            (SizeClass, _) = MasterSizeModelList.CM2ToClass(theObj);
-
-            (HeightClass, _) = MasterHeightModelList.HeightMToClass(theObj);
-            HeightM = theObj.HeightM;
-            HeightErrM = theObj.HeightErrM;
-
-            SpineM = theObj.MaxSpinePixels / 10; // PQR TODO Convert to M
-            GirthM = theObj.MaxGirthPixels / 10; // PQR TODO Convert to M
-
-            AvgRangeM = theObj.AvgRangeM; // Small if CameraDownAngle is 80. Larger if CameraDownAngle is 30 degrees
-
-            CameraDownDegs = 0;
-            var flightStep = theObj?.LastRealFeature?.Block?.FlightStep;
-            if (flightStep != null)
-                CameraDownDegs = (int) Math.Round(90 - flightStep.CameraToVerticalForwardDeg);
-
-            BestFixAltM = 0;
-            BestFixYawDeg = 0;
-            BestFixPitchDeg = 0;
-            if (processSpans != null)
+            try
             {
-                var block = theObj?.LastRealFeature?.Block;
-                if (block != null && block.FlightLegId != BaseConstants.UnknownValue)
+                FlightNum = flightNum;
+                Name = theObj.Name;
+
+                // Convert the relative location theObj.LocationM to a global location in longitude and latitude
+                GlobalLocation = drone.FlightSections.DroneToGlobalLocation(theObj.LocationM);
+                LocationErrM = theObj.LocationErrM;
+
+                SizeCM2 = (int)theObj.SizeCM2;
+                (SizeClass, _) = MasterSizeModelList.CM2ToClass(theObj);
+
+                (HeightClass, _) = MasterHeightModelList.HeightMToClass(theObj);
+                HeightM = theObj.HeightM;
+                HeightErrM = theObj.HeightErrM;
+
+                SpineM = theObj.MaxSpinePixels / 10; // PQR TODO Convert to M
+                GirthM = theObj.MaxGirthPixels / 10; // PQR TODO Convert to M
+
+                CameraDownDegs = 0;
+                var flightStep = theObj?.LastRealFeature?.Block?.FlightStep;
+                if (flightStep != null)
+                    CameraDownDegs = (int)Math.Round(90 - flightStep.CameraToVerticalForwardDeg);
+
+                AvgRangeM = theObj.AvgRangeM; // Small if CameraDownAngle is 80. Larger if CameraDownAngle is 30 degrees
+
+                BestHFOVDegs = 0;
+                BestFixAltM = 0;
+                BestFixYawDeg = 0;
+                BestFixPitchDeg = 0;
+                if (processSpans != null)
                 {
-                    var span = processSpans[block.FlightLegId];
-                    if (span != null)
+                    var block = theObj?.LastRealFeature?.Block;
+                    if (block != null && block.FlightLegId > 0)
                     {
-                        BestFixAltM = (int) span.BestFixAltM;
-                        BestFixYawDeg = (int) span.BestFixYawDeg;
-                        BestFixPitchDeg = (int) span.BestFixPitchDeg;
+                        var span = processSpans[block.FlightLegId];
+                        if (span != null)
+                        {
+                            BestHFOVDegs = span.BestHFOVDeg;
+                            BestFixAltM = span.BestFixAltM;
+                            BestFixYawDeg = span.BestFixYawDeg;
+                            BestFixPitchDeg = span.BestFixPitchDeg;
+                        }
                     }
                 }
+
+                // Convert -999 to -2
+                if (LocationErrM == BaseConstants.UnknownValue) LocationErrM = -2;
+                if (HeightM == BaseConstants.UnknownValue) HeightM = -2;
+                if (HeightErrM == BaseConstants.UnknownValue) HeightErrM = -2;
             }
-
-            // Convert -999 to -2
-            if (LocationErrM == BaseConstants.UnknownValue) LocationErrM = -2;
-            if (HeightM == BaseConstants.UnknownValue) HeightM = -2;
-            if (HeightErrM == BaseConstants.UnknownValue) HeightErrM = -2;
+            catch (Exception ex)
+            {
+                Debug.Print("AnimalModel: " + ex.Message);
+                throw new Exception("AnimalModel: " + ex.Message);
+            }
         }
-
 
         public DataPairList GetSettings()
         {
@@ -95,11 +106,12 @@ namespace SkyCombImage.ProcessModel
                 { "Height Err M", HeightErrM, 1 },
                 { "Spine M", SpineM, 1 },
                 { "Girth M", GirthM, 1 },
-                { "Avg Range M", AvgRangeM, 0 },
                 { "Camera Down Degs", CameraDownDegs },
-                { "Fix Alt M", BestFixAltM },
-                { "Fix Yaw Deg", BestFixYawDeg },
-                { "Fix Pitch Deg", BestFixPitchDeg },
+                { "Avg Range M", AvgRangeM, 0 },
+                { "Fix HFOV Degs", BestHFOVDegs, 1 },
+                { "Fix Alt M", BestFixAltM, 1 },
+                { "Fix Yaw Deg", BestFixYawDeg, 1 },
+                { "Fix Pitch Deg", BestFixPitchDeg, 1 },
             };
         }
     }
