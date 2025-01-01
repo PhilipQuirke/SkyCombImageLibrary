@@ -125,8 +125,12 @@ namespace SkyCombImage.ProcessLogic
                 throw new ArgumentException("Image position fractions must be between -1 and 1");
         }
 
-        private float CalculateDownAngle(float cameraAngle, float vFov, float verticalFraction)
+        private float CalculateDownAngle(float cameraAngleDeg, float vFov, float verticalFraction)
         {
+            // Claude first implementation
+            //return cameraAngleDeg - 0.5f * vFov * verticalFraction;
+
+            // Claude second implementation
             // Convert FOV to radians
             float halfVFovRad = vFov * 0.5f * (float)Math.PI / 180.0f;
 
@@ -134,11 +138,15 @@ namespace SkyCombImage.ProcessLogic
             float angleFromCenterRad = (float)Math.Atan(verticalFraction * Math.Tan(halfVFovRad));
 
             // Convert back to degrees and add to camera angle
-            return cameraAngle - angleFromCenterRad * 180.0f / (float)Math.PI;
+            return cameraAngleDeg - angleFromCenterRad * 180.0f / (float)Math.PI;
         }
 
-        private float CalculateDirection(float yaw, float hFov, float horizontalFraction)
+        private float CalculateDirection(float yawDeg, float hFov, float horizontalFraction)
         {
+            // Claude first implementation
+            //float direction = yawDeg - 0.5f * hFov * horizontalFraction;
+
+            // Claude second implementation
             // Convert FOV to radians
             float halfHFovRad = hFov * 0.5f * (float)Math.PI / 180.0f;
 
@@ -146,7 +154,7 @@ namespace SkyCombImage.ProcessLogic
             float angleFromCenterRad = (float)Math.Atan(horizontalFraction * Math.Tan(halfHFovRad));
 
             // Convert back to degrees and add to yaw
-            float direction = yaw - angleFromCenterRad * 180.0f / (float)Math.PI;
+            float direction = yawDeg - angleFromCenterRad * 180.0f / (float)Math.PI;
 
             // Normalize to 0-360 degrees
             return ((direction % 360) + 360) % 360;
