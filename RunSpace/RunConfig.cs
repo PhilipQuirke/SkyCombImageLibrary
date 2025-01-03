@@ -90,19 +90,19 @@ namespace SkyCombImage.RunSpace
 
                 if (ProcessConfig != null)
                 {
-                    answer += "Heat Threshold: " + ProcessConfig.HeatThresholdValue + "\r\n";
+                    answer += "Heat threshold: " + ProcessConfig.HeatThresholdValue + "\r\n";
                     if (RunProcess == RunProcessEnum.Yolo)
                         answer += "Confidence: " +
                             ProcessConfig.YoloDetectConfidence.ToString() + ", IoU: " +
                             ProcessConfig.YoloIoU.ToString() + "\r\n";
 
                     if (ProcessConfig.SaveAnnotatedVideo)
-                        answer += "Save Annotated Video\r\n";
+                        answer += "Save annotated video.\r\n";
 
                     if (ProcessConfig.SaveObjectData == SaveObjectDataEnum.Significant)
-                        answer += "Save Significant Objects\r\n";
+                        answer += "Save significant objects.\r\n";
                     else if (ProcessConfig.SaveObjectData == SaveObjectDataEnum.All)
-                        answer += "Save All Objects\r\n";
+                        answer += "Save all objects.\r\n";
                 }
             }
 

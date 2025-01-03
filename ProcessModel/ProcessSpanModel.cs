@@ -61,8 +61,6 @@ namespace SkyCombImage.ProcessModel
             BestFixPitchDeg = 0;
             BestSumLocnErrM = 9999;
             BestSumHeightErrM = 9999;
-            OrgSumLocnErrM = 9999;
-            OrgSumHeightErrM = 9999;
             Debug.Print("  ResetBest");
         }
 
