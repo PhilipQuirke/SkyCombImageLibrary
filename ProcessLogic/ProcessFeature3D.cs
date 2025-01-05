@@ -82,7 +82,7 @@ namespace SkyCombImage.ProcessLogic
     public class LocationResult
     {
         public DroneLocation LocationNE { get; set; }
-        public float Elevation { get; set; }
+        public float Elevation { get; set; } // Meters above sea level
         public float Confidence { get; set; } // 0-1 scale
         public string Method { get; set; } = "";
     }
