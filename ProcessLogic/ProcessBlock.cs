@@ -132,6 +132,15 @@ namespace SkyCombImage.ProcessLogic
                         RollDeg = afterStep.RollDeg;
                     else
                         RollDeg = beforeStep.RollDeg;
+
+                    // In video ???2614 at 4m20s the drone altitude is decreasing 0.5m every 1/4s!! Or 2m/s!!
+                    // If video is 30fps, that 1/4s represents 7.5 frames. We need to interpolate the altitude.
+                    if ((beforeStep.AltitudeM != UnknownValue) && (afterStep.RollDeg != UnknownValue))
+                        AltitudeM = (float)(beforeStep.AltitudeM * prevWeighting + afterStep.AltitudeM * nextWeighting);
+                    else if (afterStep.AltitudeM != UnknownValue)
+                        AltitudeM = afterStep.AltitudeM;
+                    else
+                        AltitudeM = beforeStep.AltitudeM;
                 }
             }
 
