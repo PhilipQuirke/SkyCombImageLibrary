@@ -332,7 +332,7 @@ namespace SkyCombImage.ProcessLogic
 
                 // For each active object, where the above code did not find an 
                 // overlapping feature in this Block, if it is worth continuing tracking...
-                Phase = 10;
+                Phase = 6;
                 foreach (var theObject in inScopeObjects)
                 {
                     var thisObject = theObject.Value;
