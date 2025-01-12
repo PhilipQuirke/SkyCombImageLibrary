@@ -100,8 +100,8 @@ namespace SkyCombImage.ProcessLogic
             var minOverlap = featureMinOverlapPerc / 100.0F;
 
             return
-                resultA >= minOverlap ||   // 25% overlap of rectA
-                resultB >= minOverlap;     // 25% overlap of rectB
+                resultA >= minOverlap ||   // 5% overlap of rectA
+                resultB >= minOverlap;     // 5% overlap of rectB
         }
 
 

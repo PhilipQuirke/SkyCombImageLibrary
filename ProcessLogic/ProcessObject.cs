@@ -98,6 +98,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // This code implements a feature claim. It does not decide whether feature should be claimed.
         public virtual bool ClaimFeature(ProcessFeature theFeature) 
         {
             try
@@ -130,13 +131,19 @@ namespace SkyCombImage.ProcessLogic
                         // This object is claiming a second or third feature for this block.
                         // Use case is a large rectangle in previous block, getting replaced by 2 or 3 smaller rectangles in this block.
                         // For better visualisation we want to combine all features in this block into one.
+                        if( ProcessAll is CombProcess )
+                        {
+                            // The first real feature for the last block consumes theFeature, leaving theFeature empty.
+                            LastRealFeature.Consume(theFeature);
+                            theFeature.ObjectId = UnknownValue;
 
-                        // The first real feature for the last block consumes theFeature, leaving theFeature empty.
-                        LastRealFeature.Consume(theFeature);
-                        theFeature.ObjectId = UnknownValue;
+                            MaxRealPixelWidth = Math.Max(MaxRealPixelWidth, LastRealFeature.PixelBox.Width);
+                            MaxRealPixelHeight = Math.Max(MaxRealPixelHeight, LastRealFeature.PixelBox.Height);
+                        }
+                        else
+                            // For YoloProcess, each object can have at most 1 feature per block.
+                            return false;
 
-                        MaxRealPixelWidth = Math.Max(MaxRealPixelWidth, LastRealFeature.PixelBox.Width);
-                        MaxRealPixelHeight = Math.Max(MaxRealPixelHeight, LastRealFeature.PixelBox.Height);
                     }
 
                     // Calculate the simple member data (int, float, VelocityF, etc) of this real object.
@@ -175,7 +182,6 @@ namespace SkyCombImage.ProcessLogic
 
         // Object will claim ownership of this feature extending the objects lifetime and improving its "Significant" score.
         // In rare cases, object can claim multiple features from a single block (e.g. a tree branch bisects a heat spot into two features) 
-        // But only if the object remains viable after claiming feature (e.g. doesn't get too big or density too low).
         public bool MaybeClaimFeature(ProcessFeature feature, Rectangle objectExpectedPixelBox)
         {
             if (feature.ObjectId == 0) // Not claimed yet

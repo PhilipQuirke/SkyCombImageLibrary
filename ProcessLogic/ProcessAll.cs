@@ -259,11 +259,11 @@ namespace SkyCombImage.ProcessLogic
                 ProcessFeatureList availFeatures = featuresInBlock.Clone();
 
 
-                // For each active object, consider each feature (significant or not)
-                // found in this frame to see if it overlaps.
-                // This priviledges objects with multiple real features,
+                // For each existing active object, consider each feature (significant or not)
+                // found in this frame to see if the pixel box overlaps.
+                // This privileges objects with multiple real features,
                 // as they can more accurately estimate their expected location.
-                // We priviledge objects with a "real" last feature over objects with a "unreal" last feature.
+                // We privilege objects with a "real" last feature over objects with a "unreal" last feature.
                 Phase = 3;
                 for (int pass = 0; pass < 2; pass++)
                     foreach (var theObject in inScopeObjects)
