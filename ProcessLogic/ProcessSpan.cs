@@ -8,7 +8,6 @@ using System.Diagnostics;
 using System.Drawing;
 
 
-
 namespace SkyCombImage.ProcessLogic
 {
     // ProcessSpan relates to either the steps in a FlightLeg OR a sequence of FlightSteps (not related to a FlightLeg).
@@ -200,9 +199,18 @@ namespace SkyCombImage.ProcessLogic
 
             var legSteps = Process.Drone.FlightSteps.Steps.GetLegSteps(ProcessSpanId);
             var theObjs = Process.ProcessObjects.FilterByLeg(ProcessSpanId);
-            // nq
-            TriangulateSpanObjects();
-            CalculateSettings_FixValues(legSteps, theObjs);
+
+            if (true)
+            {
+                // nq new method
+                TriangulateSpanObjectsFeaturesLocationAndHeight();
+                foreach (var theObj in theObjs)
+                    theObj.Value.Calculate_RealObject_SimpleMemberData();
+                theObjs.CalculateSettings();
+            }
+            else
+                // Old method
+                CalculateSettings_FixValues(legSteps, theObjs);
 
             SummariseSteps(legSteps);
         }
@@ -378,7 +386,8 @@ namespace SkyCombImage.ProcessLogic
 
         }
 
-        public void TriangulateSpanObjects()
+        // Recalculate the Span.Objects.Features.LocationM and HeightM using triangulation.
+        public void TriangulateSpanObjectsFeaturesLocationAndHeight()
         {
             if (ProcessSpanId == UnknownValue)
                 return;
@@ -420,7 +429,9 @@ namespace SkyCombImage.ProcessLogic
 
             for (int block = firstBlock + interval; block <= lastBlock; block++)
             {
-                if (!(theBlocks.ContainsKey(block - interval) && theBlocks.ContainsKey(block))) continue; // one of the blocks has no features to triangulate
+                if (!(theBlocks.ContainsKey(block - interval) && theBlocks.ContainsKey(block))) 
+                    continue; // one of the blocks has no features to triangulate
+
                 var fromPoints = new List<Point2d>();
                 var toPoints = new List<Point2d>();
                 var thisBlock = theBlocksInfo[block];
@@ -428,8 +439,11 @@ namespace SkyCombImage.ProcessLogic
 
                 BaseConstants.Assert(prevBlock != thisBlock, "Must have diff objs");
                 BaseConstants.Assert(prevBlock.BlockId != thisBlock.BlockId, "BlockIds must differ");
-                BaseConstants.Assert(prevBlock.DroneLocnM.NorthingM != thisBlock.DroneLocnM.NorthingM ||
-                    prevBlock.DroneLocnM.EastingM != thisBlock.DroneLocnM.EastingM, "Locations must differ");
+
+                if (prevBlock.DroneLocnM.NorthingM == thisBlock.DroneLocnM.NorthingM &&
+                    prevBlock.DroneLocnM.EastingM == thisBlock.DroneLocnM.EastingM)
+                    // This is a rare case.
+                    continue;
 
                 // Add the points to be triangulated, in the order they appear in theFromBlocks
                 foreach (var (obj, feature) in theBlocks[block - interval]) 
@@ -465,23 +479,22 @@ namespace SkyCombImage.ProcessLogic
                 }
             }
 
-            // temporary output
+            // Overwriting existing feature LocationM and HeightM
             foreach (var obj in theObjs)
                 foreach (var (key,feature) in obj.Value.ProcessFeatures)
                 {
+                    if (feature.LocationM is not null)
+                        Debug.Print(obj.Value.Name + "," + feature.FeatureId + "," + feature.BlockId
+                            + "," + "Existing" + "," + feature.LocationM.ToString() + "," + feature.HeightM.ToString());
                     Debug.Print(obj.Value.Name + "," + feature.FeatureId + "," + feature.BlockId
-                        + "," + "Existing" + "," + feature.LocationM.ToString() + "," + feature.HeightM.ToString());
-                    if (feature.LocationM is not null) Debug.Print(obj.Value.Name + "," + feature.FeatureId + "," + feature.BlockId
                         + "," + "Proposed" + "," + feature.realLocation[1].ToString() + "," + feature.realLocation[0].ToString()
                         + "," + feature.realLocation[2].ToString());
                     Debug.Print(obj.Value.Name + "," + feature.FeatureId + "," + feature.BlockId
-                        + "," + "Drone" + "," + feature.Block.DroneLocnM + "," + feature.Block.AltitudeM);
+                    + "," + "Drone" + "," + feature.Block.DroneLocnM + "," + feature.Block.AltitudeM);
 
-                    // Overwriting existing locations (temporary)
-                    feature.LocationM.NorthingM = (float)feature.realLocation[1];
-                    feature.LocationM.EastingM = (float)feature.realLocation[0];
+                    feature.LocationM = new DroneLocation((float)feature.realLocation[1], (float)feature.realLocation[0]);
+                    feature.HeightM = (float)feature.realLocation[2];
                 }
-            return;
         }
 
         private void AddToBlockList(SortedList<int, SortedList<int, ProcessFeature>> blockList, int block, int key, ProcessFeature feature)
