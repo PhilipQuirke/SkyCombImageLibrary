@@ -8,10 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="DrawSpace\DrawYolo.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Accord.MachineLearning" Version="3.8.0" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.19.2" />
@@ -29,7 +25,6 @@
 
   <ItemGroup>
     <None Include=".github\dependabot.yml" />
-    <None Include="YoloDotNet.csproj" />
   </ItemGroup>
 
 </Project>
