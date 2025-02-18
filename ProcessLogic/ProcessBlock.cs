@@ -132,6 +132,15 @@ namespace SkyCombImage.ProcessLogic
                         RollDeg = afterStep.RollDeg;
                     else
                         RollDeg = beforeStep.RollDeg;
+
+                    // Over the leg the drone will move up and down to stay ~60M above the terrain.
+                    // Drone altitude can change by say 0.3m between FlightSteps. Smooth the block Altitude.
+                    if ((beforeStep.AltitudeM != UnknownValue) && (afterStep.AltitudeM != UnknownValue))
+                        AltitudeM = (float)(beforeStep.AltitudeM * prevWeighting + afterStep.AltitudeM * nextWeighting);
+                    else if (afterStep.AltitudeM != UnknownValue)
+                        AltitudeM = afterStep.AltitudeM;
+                    else
+                        AltitudeM = beforeStep.AltitudeM;
                 }
             }
 
