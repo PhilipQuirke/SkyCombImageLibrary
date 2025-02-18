@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+// Copyright SkyComb Limited 2024. All rights reserved. 
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
@@ -134,6 +134,7 @@ namespace SkyCombImage.ProcessLogic
                         RollDeg = beforeStep.RollDeg;
 
                     // Over the leg the drone will move up and down to stay ~60M above the terrain.
+                    // In video ???2614 at 4m20s the drone altitude is decreasing 0.5m every 1/4s!! Or 2m/s!!
                     // Drone altitude can change by say 0.3m between FlightSteps. Smooth the block Altitude.
                     if ((beforeStep.AltitudeM != UnknownValue) && (afterStep.AltitudeM != UnknownValue))
                         AltitudeM = (float)(beforeStep.AltitudeM * prevWeighting + afterStep.AltitudeM * nextWeighting);

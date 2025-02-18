@@ -1,9 +1,8 @@
-﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 using Emgu.CV.Structure;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
-using System.Diagnostics;
 using System.Drawing;
 
 
@@ -104,8 +103,8 @@ namespace SkyCombImage.ProcessLogic
             var minOverlap = featureMinOverlapPerc / 100.0F;
 
             return
-                resultA >= minOverlap ||   // 25% overlap of rectA
-                resultB >= minOverlap;     // 25% overlap of rectB
+                resultA >= minOverlap ||   // 5% overlap of rectA
+                resultB >= minOverlap;     // 5% overlap of rectB
         }
 
 
@@ -137,29 +136,28 @@ namespace SkyCombImage.ProcessLogic
         // If yImageFrac = 1/2 then object is in the middle of the image 
         // If yImageFrac = 1 then object is at the top of the image (closest to drone)
         // Y = 1 is the top of the image, closest to the drone. 
-        public (double xFraction, double yFraction) CentroidImageFractions()
+        public (double xFraction01, double yFraction01) CentroidImageFractions()
         {
             double xCenterPixels = Math.Min(PixelBox.X + PixelBox.Width / 2.0, ProcessAll.VideoData.ImageWidth);
             double yCenterPixels = Math.Min(PixelBox.Y + PixelBox.Height / 2.0, ProcessAll.VideoData.ImageHeight);
 
             // Calculate position of center of feature as fraction of drone image area.
-            double xFraction = xCenterPixels / ProcessAll.VideoData.ImageWidth;
+            double xFraction01 = xCenterPixels / ProcessAll.VideoData.ImageWidth;
             // With image pixels, y = 0 is the top of the image. 
             // Here we change the "sign" of Y, so that y = 0 is the bottom of the image.
-            double yFraction = (ProcessAll.VideoData.ImageHeight - yCenterPixels) / ProcessAll.VideoData.ImageHeight;
+            double yFraction01 = (ProcessAll.VideoData.ImageHeight - yCenterPixels) / ProcessAll.VideoData.ImageHeight;
 
-            return (xFraction, yFraction);
+            return (xFraction01, yFraction01);
         }
 
 
 
-        // Calculate land contour undulations impact on object location and height.
-        // The DSM level at flatLandLocationM may be higher or lower than the ground level below the drone.
-        // Start half-way between the drone location and move stepwise to the flatLandLocationM and some distance beyond.
-        // Compare the sight-line height at each step to the DSM level at that location.
-        // Stop when the drone sight-line intersects the DSM level.
-        // Algorithm works even if drone is stationary. CameraToVerticalForwardDeg must be between 10 and 80 degrees
-        public void CalculateSettings_LocationM_HeightM_LineofSight(GroundData groundData)
+        // Calculate object location and height considering land contour undulations.
+        // "Walk" sight-line from drone to object in 3D space. Stop when line intersects DSM.
+        // This code depends on ProcessAll.VideoData.HFOVDeg, FlightStep.FixAltM, FixYawDeg and FixPitchDeg (via FixedCameraToVerticalForwardDeg).
+        // These "fixed" values are used to link into ProcessSpan optimisation algorithm.
+        // This code does NOT depend on FlightStep.InputImageCenter/InputImageSize/InputImageUnitVector/InputImageDemM/InputImageDsmM
+        public void CalculateSettings_LocationM_HeightM_LOS(GroundData groundData)
         {
             int phase = 0;
             try
@@ -175,48 +173,48 @@ namespace SkyCombImage.ProcessLogic
                 if (groundModel == null)
                     return;
 
-                DroneState droneState = new();
-                droneState.LocationNE = Block.DroneLocnM;
-                droneState.Altitude = flightStep.FixedAltitudeM; // Link into BlockSpan refinement algorithm
-                droneState.Yaw = flightStep.FixedYawDeg; // Link into BlockSpan refinement algorithm
-                var fwdToVertDeg = flightStep.FixedCameraToVerticalForwardDeg; // Link into BlockSpan refinement algorithm
-                droneState.CameraDownAngle = 90 - fwdToVertDeg;  
-                
-                // Algorithm works very inaccurately if the camera is pointing at the horizon.
                 phase = 3;
-                if (fwdToVertDeg > 75)
-                    return;
-
                 TerrainGrid terrainGrid = new(groundModel);
 
-                DroneTargetCalculator droneTargetCalculator = new(terrainGrid);
+                DroneState droneState = new();
+                droneState.LocationNE = Block.DroneLocnM;
+                droneState.Altitude = flightStep.FixedAltitudeM; // Relies on FixAltM
+                droneState.Yaw = flightStep.FixedYawDeg;  // Relies on FixYawDeg
+                droneState.CameraDownAngle = 90 - flightStep.FixedCameraToVerticalForwardDeg; // Relies on FixPitchDeg
 
                 CameraParameters cameraParams = new();
                 cameraParams.HorizontalFOV = ProcessAll.VideoData.HFOVDeg;
                 cameraParams.VerticalFOV = (float)ProcessAll.VideoData.VFOVDeg;
 
-                (double xFraction, double yFraction) = CentroidImageFractions(); // Range 0 to 1
+                (double xFraction01, double yFraction01) = CentroidImageFractions(); // Range 0 to 1
                 ImagePosition imagePosition = new();
-                imagePosition.HorizontalFraction = (float)(xFraction * 2 - 1); // Range -1 to +1
-                imagePosition.VerticalFraction = (float)(yFraction * 2 - 1); // Range -1 to +1
+                imagePosition.HorizontalFraction = (float)(xFraction01 * 2 - 1); // Range -1 to +1
+                imagePosition.VerticalFraction = (float)(yFraction01 * 2 - 1); // Range -1 to +1
 
-                LocationResult? result = droneTargetCalculator.CalculateTargetLocation( droneState, cameraParams, imagePosition);
+                // LOS algorithm works very inaccurately if the camera is pointing near the horizon.
+                phase = 4;
+                if (droneState.CameraDownAngle < 15)
+                    return;
+
+                phase = 5;
+                // Assumes that Zoom is constant at 1
+                DroneTargetCalculator droneTargetCalculator = new();
+                LocationResult? result = droneTargetCalculator.CalculateTargetLocation(terrainGrid, droneState, cameraParams, imagePosition);
                 if (result != null)
                 {
-                    HeightAlgorithm = LineOfSightHeightAlgorithm;
-
+                    phase = 6;
+                    HeightAlgorithm = LineOfSightHeightAlgorithm + result.Method;
                     LocationM = result.LocationNE.Clone();
-
                     HeightM = 0;
-                    if (groundData.HasDsmModel && groundData.HasDemModel)
+                    if (groundData.HasDemModel)
                         HeightM = result.Elevation - groundData.DemModel.GetElevationByDroneLocn(LocationM);
                 }
                 else
-                    SetHeightAlgorithmError("LOS NoResult");
+                    HeightAlgorithm = "LOS NoResult";
             }
             catch (Exception ex)
             {
-                throw ThrowException("ProcessFeature.CalculateSettings_LocationM_HeightM_LineofSight " + phase.ToString(), ex);
+                throw ThrowException("ProcessFeature.CalculateSettings_LocationM_HeightM_LOS. Phase=" + phase.ToString(), ex);
             }
         }
 
@@ -356,15 +354,12 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Calculate object height and object height error, using real features.
-        // With the BaseLine calculation algorithm the last value is most accurate.
-        // With the LineOfSight calculation algorithm every value is equally accurate.
         public (float heightM, float heightErrM, float minHeight, float maxHeight) Calculate_Avg_HeightM_and_HeightErrM()
         {
             int countLOS = 0;
             float sumLOSHeight = 0;
             float minHeight = 9999;
             float maxHeight = BaseConstants.UnknownValue;
-            float lastBLHeight = BaseConstants.UnknownValue;
             foreach (var feature in this)
                 if ((feature.Value.LocationM != null) &&
                     (feature.Value.Type == FeatureTypeEnum.Real))
@@ -374,9 +369,7 @@ namespace SkyCombImage.ProcessLogic
                     {
                         minHeight = Math.Min(featureHeight, minHeight);
                         maxHeight = Math.Max(featureHeight, maxHeight);
-                        if (feature.Value.HeightAlgorithm == ProcessFeature.BaseLineHeightAlgorithm)
-                            lastBLHeight = featureHeight;
-                        else if (feature.Value.HeightAlgorithm == ProcessFeature.LineOfSightHeightAlgorithm)
+                        if (feature.Value.HeightAlgorithm.StartsWith(ProcessFeature.LineOfSightHeightAlgorithm))
                         {
                             countLOS++;
                             sumLOSHeight += featureHeight;
@@ -384,8 +377,7 @@ namespace SkyCombImage.ProcessLogic
                     }
                 }
 
-            // Use BaseLine value if available, else the LOS value if available.
-            var heightM = (lastBLHeight > BaseConstants.UnknownHeight ? lastBLHeight : (countLOS > BaseConstants.UnknownHeight ? (float)(sumLOSHeight / countLOS) : BaseConstants.UnknownValue));
+            var heightM = (countLOS > BaseConstants.UnknownHeight ? (float)(sumLOSHeight / countLOS) : BaseConstants.UnknownValue);
             if (heightM > BaseConstants.UnknownHeight)
                 return (
                     heightM,

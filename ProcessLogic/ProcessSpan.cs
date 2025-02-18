@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+// Copyright SkyComb Limited 2025. All rights reserved. 
 using OpenCvSharp;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
@@ -6,6 +6,12 @@ using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
 using System.Diagnostics;
 using System.Drawing;
+
+
+// Q1: Is zoom not zero?
+// Q2: Is there some factor in image I am mising related to elevation? Why does image appear 70 CDDown when it is 90 CDDown?
+// Q3: Save the object DEM in the Imagedata datastore tab.
+// Q4: Draw DEM values on output image.
 
 
 namespace SkyCombImage.ProcessLogic
@@ -38,7 +44,9 @@ namespace SkyCombImage.ProcessLogic
         // Apply FixValues to theSteps and on to the ProcessObjects and their ProcessFeatures
         public void CalculateSettings_ApplyFixValues_Core(int hFOVDeg, float fixAltM, float fixYawDeg, float fixPitchDeg, FlightStepList theSteps, ProcessObjList objs)
         {
+            // The image area of the camera now covers a slightly different area (m2) of the ground
             Process.Drone.InputVideo.HFOVDeg = hFOVDeg;
+            Assert(Process.VideoData.HFOVDeg == hFOVDeg, "CalculateSettings_ApplyFixValues_Core");
 
             // The image associated with each leg step now covers a slightly different area
             // Recalculate InputImageCenter Dem and Dsm based on FixAltM/FixYawDeg/FixPitchDeg
@@ -59,8 +67,10 @@ namespace SkyCombImage.ProcessLogic
                 {
                     var theFeat = theFeature.Value;
                     theFeat.ResetCalcedMemberData();
-                    // Old code theFeat.CalculateSettings_LocationM_GroundImageFlat(theObj.LastRealFeature);
-                    theFeat.CalculateSettings_LocationM_HeightM_LineofSight(Process.GroundData);
+
+                    // This code depends on ProcessAll.VideoData.HFOVDeg, FlightStep.FixAltM, FixYawDeg and FixPitchDeg  
+                    // This code does NOT depend on FlightStep.InputImageCenter/InputImageSize/InputImageUnitVector/InputImageDemM/InputImageDsmM
+                    theFeat.CalculateSettings_LocationM_HeightM_LOS(Process.GroundData);
 
                     theObj.ClaimFeature(theFeat);
                 }
@@ -103,59 +113,61 @@ namespace SkyCombImage.ProcessLogic
                 if ((theSteps.Count == 0) || (NumSignificantObjects == 0))
                     return;
 
-
-
                 //NQ Optimise
                 float altRangeM = 25;
                 float yawRangeDeg = 10;
                 float pitchRangeDeg = 20;
 
+                int theHFOVDeg = Process.Drone.InputVideo.HFOVDeg;
+
                 ResetBest();
-                CalculateSettings_ApplyFixValues(Process.Drone.InputVideo.HFOVDeg, 0, 0, 0, theSteps, theObjs);
+                CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, theSteps, theObjs);
                 OrgSumLocnErrM = BestSumLocnErrM;
                 OrgSumHeightErrM = BestSumHeightErrM;
 
-                // DIMENSION 1: Video HFOVDeg
-                // The drone.InputVideo.HFOVDeg value is guessed from attributes of the SRT file. This is weak.
-                // Known hardware values for HFOVDeg are 38, 42 & 57. Test reasonable values around these.
-                // NQ to PQ: This following can cause an exception error
-                CalculateSettings_ApplyFixValues(36, 0, 0, 0, theSteps, theObjs);
-                CalculateSettings_ApplyFixValues(38, 0, 0, 0, theSteps, theObjs);
-                CalculateSettings_ApplyFixValues(40, 0, 0, 0, theSteps, theObjs);
-                CalculateSettings_ApplyFixValues(42, 0, 0, 0, theSteps, theObjs);
-                CalculateSettings_ApplyFixValues(44, 0, 0, 0, theSteps, theObjs);
-                CalculateSettings_ApplyFixValues(57, 0, 0, 0, theSteps, theObjs);
-                int theHFOVDeg = BestHFOVDeg;
+                if (true)
+                {
+                    // DIMENSION 1: Video HFOVDeg
+                    // The drone.InputVideo.HFOVDeg value is guessed from attributes of the SRT file. This is weak.
+                    // Known hardware values for HFOVDeg are 38, 42 & 57. Test reasonable values around these.
+                    CalculateSettings_ApplyFixValues(36, 0, 0, 0, theSteps, theObjs);
+                    CalculateSettings_ApplyFixValues(38, 0, 0, 0, theSteps, theObjs);
+                    CalculateSettings_ApplyFixValues(40, 0, 0, 0, theSteps, theObjs);
+                    CalculateSettings_ApplyFixValues(42, 0, 0, 0, theSteps, theObjs);
+                    CalculateSettings_ApplyFixValues(44, 0, 0, 0, theSteps, theObjs);
+                    CalculateSettings_ApplyFixValues(57, 0, 0, 0, theSteps, theObjs);
+                    theHFOVDeg = BestHFOVDeg;
 
-                // DIMENSION 2: Drone altitude 
-                ResetBest();
-                for (float fixAltM = -altRangeM; fixAltM <= altRangeM; fixAltM += 1)
-                    CalculateSettings_ApplyFixValues(theHFOVDeg, fixAltM, 0, 0, theSteps, theObjs);
-                var bestAltM = BestFixAltM;
-                var bestAltErr = BestSumLocnErrM;
+                    // DIMENSION 2: Drone altitude 
+                    ResetBest();
+                    for (float fixAltM = -altRangeM; fixAltM <= altRangeM; fixAltM += 1)
+                        CalculateSettings_ApplyFixValues(theHFOVDeg, fixAltM, 0, 0, theSteps, theObjs);
+                    var bestAltM = BestFixAltM;
+                    var bestAltErr = BestSumLocnErrM;
 
-                // DIMENSION 3: Drone yaw 
-                ResetBest();
-                for (float fixYawDeg = -yawRangeDeg; fixYawDeg <= yawRangeDeg; fixYawDeg += 1)
-                    CalculateSettings_ApplyFixValues(theHFOVDeg, 0, fixYawDeg, 0, theSteps, theObjs);
-                var bestYawDeg = BestFixYawDeg;
-                var bestYawErr = BestSumLocnErrM;
+                    // DIMENSION 3: Drone yaw 
+                    ResetBest();
+                    for (float fixYawDeg = -yawRangeDeg; fixYawDeg <= yawRangeDeg; fixYawDeg += 1)
+                        CalculateSettings_ApplyFixValues(theHFOVDeg, 0, fixYawDeg, 0, theSteps, theObjs);
+                    var bestYawDeg = BestFixYawDeg;
+                    var bestYawErr = BestSumLocnErrM;
 
-                // DIMENSION 4: Drone pitch 
-                ResetBest();
-                for (float fixPitchDeg = -pitchRangeDeg; fixPitchDeg <= pitchRangeDeg; fixPitchDeg += 1)
-                    CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, fixPitchDeg, theSteps, theObjs);
-                var bestPitchDeg = BestFixPitchDeg;
-                var bestPitchErr = BestSumLocnErrM;
+                    // DIMENSION 4: Drone pitch 
+                    ResetBest();
+                    for (float fixPitchDeg = -pitchRangeDeg; fixPitchDeg <= pitchRangeDeg; fixPitchDeg += 1)
+                        CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, fixPitchDeg, theSteps, theObjs);
+                    var bestPitchDeg = BestFixPitchDeg;
+                    var bestPitchErr = BestSumLocnErrM;
 
-                // DIMENSION 2..4: Fine tune
-                // Vary dimensions 2 to 4 around the above rough values
-                ResetBest();
-                CalculateSettings_ApplyFixValues(theHFOVDeg, bestAltM, bestYawDeg, bestPitchDeg, theSteps, theObjs);
-                for (float fixAltM = bestAltM - 1.25f; fixAltM <= bestAltM + 1.25f; fixAltM += 0.25f)
-                    for (float fixYawDeg = bestYawDeg - 1.25f; fixYawDeg <= bestYawDeg + 1.25f; fixYawDeg += 0.25f)
-                        for (float fixPitchDeg = bestPitchDeg - 1.25f; fixPitchDeg <= bestPitchDeg + 1.25f; fixPitchDeg += 0.25f)
-                            CalculateSettings_ApplyFixValues(theHFOVDeg, fixAltM, fixYawDeg, fixPitchDeg, theSteps, theObjs);
+                    // DIMENSION 2..4: Fine tune
+                    // Vary dimensions 2 to 4 around the above rough values
+                    ResetBest();
+                    CalculateSettings_ApplyFixValues(theHFOVDeg, bestAltM, bestYawDeg, bestPitchDeg, theSteps, theObjs);
+                    for (float fixAltM = bestAltM - 1.25f; fixAltM <= bestAltM + 1.25f; fixAltM += 0.25f)
+                        for (float fixYawDeg = bestYawDeg - 1.25f; fixYawDeg <= bestYawDeg + 1.25f; fixYawDeg += 0.25f)
+                            for (float fixPitchDeg = bestPitchDeg - 1.25f; fixPitchDeg <= bestPitchDeg + 1.25f; fixPitchDeg += 0.25f)
+                                CalculateSettings_ApplyFixValues(theHFOVDeg, fixAltM, fixYawDeg, fixPitchDeg, theSteps, theObjs);
+                }
 
                 // Lock in the best single value across the leg steps
                 CalculateSettings_ApplyFixValues_Core(theHFOVDeg, BestFixAltM, BestFixYawDeg, BestFixPitchDeg, theSteps, theObjs);
@@ -163,7 +175,7 @@ namespace SkyCombImage.ProcessLogic
                 BestSumHeightErrM = theObjs.SumHeightErrM;
                 Process.ProcessObjects.CalculateSettings();
 
-                Debug.Print("CalculateSettings_FixAltM_End: BestFixAltM=" + BestFixAltM.ToString());
+                Debug.Print("CalculateSettings_FixValues: theHFOVDeg=" + theHFOVDeg.ToString() + "BestFixAltM=\" + BestFixAltM.ToString() + \"BestFixYawDeg=" + BestFixYawDeg.ToString() + " BestFixPitchDeg=" + BestFixPitchDeg.ToString());
             }
             catch (Exception ex)
             {
@@ -187,8 +199,8 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Analyse ProcessObjects in the FlightLeg - assuming the drone altitude is inaccurate.
-        // Lock in the FlightSteps.FixAltM/FixYawDeg/FixPitchDeg values that reduces the location most.
+        // Analyse ProcessObjects in the FlightLeg, assuming various inaccuracies.
+        // Lock in the FlightSteps.FixAltM/FixYawDeg/FixPitchDeg values that reduces the location wobble most.
         public void CalculateSettings_from_FlightLeg()
         {
             ResetBest();
@@ -616,6 +628,7 @@ namespace SkyCombImage.ProcessLogic
 
             foreach (var theSpan in this)
                 if (Math.Abs(theSpan.Value.BestFixAltM) + Math.Abs(theSpan.Value.BestFixYawDeg) + Math.Abs(theSpan.Value.BestFixPitchDeg) > 0)
+                    // PQR TODO Should we use BestFixHFOV to set videoData.HFOVDeg?
                     for (int stepId = theSpan.Value.MinStepId; stepId <= theSpan.Value.MaxStepId; stepId++)
                     {
                         if (steps.TryGetValue(stepId, out var step))

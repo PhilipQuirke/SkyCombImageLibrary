@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 using SkyCombGround.CommonSpace;
 using System.Drawing;
 
@@ -21,7 +21,6 @@ namespace SkyCombImage.ProcessModel
 
         // Height algorithm "success" statuses
         public const string UnrealCopyHeightAlgorithm = "UC"; // Height was copied from a previous feature for an unreal feature.
-        public const string BaseLineHeightAlgorithm = "BL"; // Height was calculated from change in camera down angle and the drone base line movement
         public const string LineOfSightHeightAlgorithm = "LOS"; // Height was calculated from camera down angle and land contours.
 
 
@@ -91,17 +90,6 @@ namespace SkyCombImage.ProcessModel
             HeightM = BaseConstants.UnknownHeight;
             HeightAlgorithm = "";
             // NumHotPixels = 0; Derived from image processing. Can't be recalced. So excldued 
-        }
-
-
-        // Set the HeightAlgorithm value to an error value - unless it is already set to a success value.
-        // There a few height algorithms. If one succeeds, we retain that success value
-        public void SetHeightAlgorithmError(string theCase)
-        {
-            if ((HeightAlgorithm != UnrealCopyHeightAlgorithm) &&
-                (HeightAlgorithm != BaseLineHeightAlgorithm) &&
-                (HeightAlgorithm != LineOfSightHeightAlgorithm))
-                HeightAlgorithm = theCase;
         }
 
 

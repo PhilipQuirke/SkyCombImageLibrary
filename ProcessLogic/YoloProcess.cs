@@ -1,6 +1,5 @@
-﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 using SkyCombDrone.DroneLogic;
-using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombImage.RunSpace;
@@ -33,49 +32,6 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Do pre-run processing 
-        public override void PreRunStart(ProcessScope scope)
-        {
-            YoloDetect.ProcessMode = YoloProcessMode.ByFrame;
-
-            /* This relies on the PQ modified version of YoloDotNet
-            if (Drone.UseFlightLegs)
-            {
-                // "Frame inaccuracies" builds up when processing long sequences of frames.
-                // To minimise this, we reset the video frame position at the start of each leg.
-                // As we only try to detect objects on legs this is not a problem.
-                YoloDetect.ProcessMode = YoloProcessMode.TimeRange;
-                YoloDetect.Results = new();
-
-                // For each flight leg that overlaps the scope, detect hotspots over the entire leg, using YOLO and GPU.
-                foreach (var leg in Drone.FlightLegs.Legs)
-                {
-                    if ((leg.MinSumTimeMs >= scope.PSM.LastVideoFrameMs) || (leg.MaxSumTimeMs <= scope.PSM.FirstVideoFrameMs))
-                        continue;
-
-                    RunUI.ShowRunSummary("Pre-run processing: Leg " + leg.Name);
-
-                    var legResults = YoloDetect.DetectTimeRange(Drone.InputVideo.FileName, leg.MinSumTimeMs / 1000, leg.MaxSumTimeMs / 1000 + 1);
-                    if (legResults != null)
-                        foreach (var kvp in legResults)
-                            if (kvp.Value.Count > 0)
-                            {
-                                int stepID = leg.MinStepId + kvp.Key;
-                                if (stepID <= leg.MaxStepId)
-                                    YoloDetect.Results.Add(stepID, kvp.Value);
-                            }
-
-                    // Temp. Try to avoid YoloDotNet exceptions
-                    System.Threading.Thread.Sleep(500);
-                }
-            }
-            else
-                // Process the entire scope, using YOLO and GPU. Do not create an output file yet.
-                YoloDetect.ProcessScope(scope, Drone.InputVideo);
-            */
-        }
-
-
         // Reset any internal state of the model 
         public override void RunStart(ProcessScope scope)
         {
@@ -101,32 +57,9 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public YoloObject AddYoloObject(ProcessScope scope, int legId, YoloFeature firstFeature)
-        {
-            BaseConstants.Assert(firstFeature != null, "YoloObjectList.AddObject: No firstFeature");
-
-            string className = firstFeature.Label != null ? firstFeature.Label.Name : "??";
-            double classConfidence = firstFeature.Confidence;
-
-            var answer = new YoloObject(this, scope, legId, firstFeature, className, Color.Red, classConfidence);
-            ProcessObjects.AddObject(answer);
-            return answer;
-        }
-
-
         public List<ObjectDetection>? YoloDetectImage(Bitmap currBmp, ProcessBlock thisBlock)
         {
-            if (YoloDetect.ProcessMode == YoloProcessMode.ByFrame)
-                return YoloDetect.DetectFrame(currBmp);
-
-            try
-            {
-                return YoloDetect.Results[thisBlock.BlockId];
-            }
-            catch
-            {
-                return null;
-            }
+            return YoloDetect.DetectFrame(currBmp);
         }
 
 

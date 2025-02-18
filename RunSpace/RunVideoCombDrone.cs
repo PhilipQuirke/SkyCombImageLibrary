@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
@@ -70,7 +70,7 @@ namespace SkyCombImage.RunSpace
                 foreach (var feature in featuresInBlock)
                 {
                     // Old code feature.Value.CalculateSettings_LocationM_GroundImageFlat(null);
-                    feature.Value.CalculateSettings_LocationM_HeightM_LineofSight(ProcessAll.GroundData);
+                    feature.Value.CalculateSettings_LocationM_HeightM_LOS(ProcessAll.GroundData);
                 }
 
                 // If legs are used, we only do comb processing during "legs". 

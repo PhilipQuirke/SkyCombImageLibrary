@@ -1,11 +1,12 @@
-﻿using SkyCombGround.CommonSpace;
+﻿// Copyright SkyComb Limited 2025. All rights reserved.
+using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundModel;
 
 
 /*
 SkyComb calculates the location of a "pest animal" object in 3D space using data provided by a drone carrying a thermal camera. 
 
-The code is based on:
+The code uses this input data:
 - Drone Location(Northing, Easting)(Metres)
 - Drone Altitude(Metres)
 - Drone camera direction pointed (yaw, in degrees). When not cornering, the camera points in roughly same direction drone is travelling.
@@ -19,13 +20,14 @@ The code is based on:
 
 - Terrain model (Northing, Easting) => Altitude (M)   
 
+
 The code process is:
-*Drone to Object down angle = 
+* Drone to Object down angle = 
    * Drone camera down angle - 0.5 * Camera image V FOV * Object V fraction 
 * Drone to Object direction = 
    * Drone camera direction pointed - 0.5 * Camera image H FOV * Object H fraction 
 * Calculate intercept from camera to terrain as:
-   *Set CurrLocation to Drone Location
+   * Set CurrLocation to Drone Location
    * Set CurrAltitude to Drone Altitude
    * If Drone to Object down angle < 70 degrees
       * Move CurrLocation in 1m in “Drone to object” direction 
@@ -80,23 +82,23 @@ namespace SkyCombImage.ProcessLogic
     public class LocationResult
     {
         public DroneLocation LocationNE { get; set; }
-        public float Elevation { get; set; }
+        public float Elevation { get; set; } // Meters above sea level
         public float Confidence { get; set; } // 0-1 scale
+        public string Method { get; set; } = "";
     }
 
     public class DroneTargetCalculator
     {
-        private readonly TerrainGrid terrain;
-        private readonly float minDroneHeight = 40; // Minimum height above terrain
-        private readonly float maxSearchDistance = 1000; // Maximum search distance in meters
-        private readonly float baseStepSize = 1; // Base step size for iteration
+        private readonly float MinDroneHeight = 40; // Minimum height above terrain
+        private readonly float MaxSearchDistanceM = 1000; // Maximum search distance in meters
+        private readonly float BaseStepSizeM = 1; // Base step size for iteration
 
-        public DroneTargetCalculator(TerrainGrid terrain)
+        public DroneTargetCalculator()
         {
-            this.terrain = terrain;
         }
 
         public LocationResult? CalculateTargetLocation(
+            TerrainGrid terrain,
             DroneState drone,
             CameraParameters camera,
             ImagePosition targetImage)
@@ -112,12 +114,12 @@ namespace SkyCombImage.ProcessLogic
             float downAngleRad = targetDownAngle * (float)Math.PI / 180.0f;
             float directionRad = targetDirection * (float)Math.PI / 180.0f;
 
-            return FindTerrainIntersection(drone, downAngleRad, directionRad);
+            return FindTerrainIntersection(terrain, drone, targetDirection, downAngleRad, directionRad);
         }
 
         private void ValidateInputs(DroneState drone, CameraParameters camera, ImagePosition targetImage)
         {
-            if (drone.Altitude < minDroneHeight)
+            if (drone.Altitude < MinDroneHeight)
                 throw new ArgumentException("Drone altitude is below minimum safe height");
 
             if (targetImage.HorizontalFraction < -1 || targetImage.HorizontalFraction > 1 ||
@@ -125,8 +127,12 @@ namespace SkyCombImage.ProcessLogic
                 throw new ArgumentException("Image position fractions must be between -1 and 1");
         }
 
-        private float CalculateDownAngle(float cameraAngle, float vFov, float verticalFraction)
+        private float CalculateDownAngle(float cameraAngleDeg, float vFov, float verticalFraction)
         {
+            // Claude first implementation
+            //return cameraAngleDeg - 0.5f * vFov * verticalFraction;
+
+            // Claude second implementation
             // Convert FOV to radians
             float halfVFovRad = vFov * 0.5f * (float)Math.PI / 180.0f;
 
@@ -134,11 +140,15 @@ namespace SkyCombImage.ProcessLogic
             float angleFromCenterRad = (float)Math.Atan(verticalFraction * Math.Tan(halfVFovRad));
 
             // Convert back to degrees and add to camera angle
-            return cameraAngle - angleFromCenterRad * 180.0f / (float)Math.PI;
+            return cameraAngleDeg - angleFromCenterRad * 180.0f / (float)Math.PI;
         }
 
-        private float CalculateDirection(float yaw, float hFov, float horizontalFraction)
+        private float CalculateDirection(float yawDeg, float hFov, float horizontalFraction)
         {
+            // Claude first implementation
+            //float direction = yawDeg - 0.5f * hFov * horizontalFraction;
+
+            // Claude second implementation
             // Convert FOV to radians
             float halfHFovRad = hFov * 0.5f * (float)Math.PI / 180.0f;
 
@@ -146,13 +156,14 @@ namespace SkyCombImage.ProcessLogic
             float angleFromCenterRad = (float)Math.Atan(horizontalFraction * Math.Tan(halfHFovRad));
 
             // Convert back to degrees and add to yaw
-            float direction = yaw - angleFromCenterRad * 180.0f / (float)Math.PI;
+            float direction = yawDeg + angleFromCenterRad * 180.0f / (float)Math.PI;
 
             // Normalize to 0-360 degrees
             return ((direction % 360) + 360) % 360;
         }
 
-        private LocationResult? FindTerrainIntersection(DroneState drone, float downAngleRad, float directionRad)
+        // The code does NOT depend on FlightStep.InputImageCenter/InputImageSize/InputImageUnitVector/InputImageDemM/InputImageDsmM
+        private LocationResult? FindTerrainIntersection(TerrainGrid terrain, DroneState drone, float targetDirection, float downAngleRad, float directionRad)
         {
             // Convert angle back to degrees to compare easily
             float downAngleDeg = downAngleRad * 180.0f / (float)Math.PI;
@@ -169,16 +180,17 @@ namespace SkyCombImage.ProcessLogic
             float heightAboveTerrain = currentAltitude - terrainHeightAtStart;
 
             DroneLocation directionVector = new(
-                (float)Math.Sin(directionRad),  // East component
-                (float)Math.Cos(directionRad)   // North component
+                (float)Math.Cos(directionRad),   // North component
+                (float)Math.Sin(directionRad)    // East component
             );
 
             // Initial step size based on height
-            float horizontalStepSize = CalculateAdaptiveStepSize(heightAboveTerrain);
+            float horizontalStepSize = CalculateAdaptiveStepSize(terrain, heightAboveTerrain);
 
             // Check if we should use near-vertical logic
-            bool isNearVertical = (downAngleDeg > 85); 
+            bool isNearVertical = (downAngleDeg > 85);
 
+            string theMethod = "Norm";
             if (!isNearVertical)
             {
                 //
@@ -187,7 +199,7 @@ namespace SkyCombImage.ProcessLogic
                 // -----------------
                 //
                 float tanDownAngle = (float)Math.Tan(downAngleRad);
-                while (totalDistance < maxSearchDistance)
+                while (totalDistance < MaxSearchDistanceM)
                 {
                     numSteps++;
 
@@ -208,7 +220,8 @@ namespace SkyCombImage.ProcessLogic
                             {
                                 LocationNE = currentPosition,
                                 Elevation = currTerrainHeight,
-                                Confidence = 0
+                                Confidence = 0,
+                                Method = theMethod,
                             };
                         }
                         return null;
@@ -229,13 +242,14 @@ namespace SkyCombImage.ProcessLogic
                         {
                             LocationNE = currentPosition,
                             Elevation = terrainHeight,
-                            Confidence = confidence
+                            Confidence = confidence,
+                            Method = theMethod,
                         };
                     }
 
                     // Recompute step size based on current height above terrain
                     heightAboveTerrain = currentAltitude - terrainHeight;
-                    horizontalStepSize = CalculateAdaptiveStepSize(heightAboveTerrain);
+                    horizontalStepSize = CalculateAdaptiveStepSize(terrain, heightAboveTerrain);
                 }
 
                 // Max distance reached with no intersection
@@ -243,7 +257,8 @@ namespace SkyCombImage.ProcessLogic
                 {
                     LocationNE = currentPosition,
                     Elevation = currTerrainHeight,
-                    Confidence = 0
+                    Confidence = 0,
+                    Method = theMethod,
                 };
             }
             else
@@ -255,6 +270,7 @@ namespace SkyCombImage.ProcessLogic
                 //
                 // Here, we rely mostly on decreasing altitude in small steps and only 
                 // moving horizontally enough to keep things stable.
+                theMethod = "Vert";
 
                 // Example: take small vertical steps, compute horizontal offset from tan
                 // The smaller the step, the less "blow-up" from tan(near 90°).
@@ -265,7 +281,21 @@ namespace SkyCombImage.ProcessLogic
                 float safeTan = (float)Math.Tan(Math.Min(downAngleRad, 1.55334f));
                 // 1.55334 rad ~ 89 degrees, to prevent infinite blow-up
 
-                while (totalDistance < maxSearchDistance)
+
+                float droneYaw = drone.Yaw;          // 0°=North, clockwise
+                float cameraYaw = targetDirection;   // 0°=North, clockwise
+
+                // Put both in range [0..360) — though your code does this normalizing step for targetDirection
+                // Then compute a difference in the range -180..+180:
+                float rawDiff = cameraYaw - droneYaw;
+                float relDiff = ((rawDiff + 180) % 360) - 180;
+                // relDiff is now between -180 and +180, with negative meaning camera is to the “left” 
+                // or behind, positive meaning “right” or ahead, depending on your perspective
+
+                bool isCameraBehindDrone = (Math.Abs(relDiff) > 90.0f);
+                theMethod += isCameraBehindDrone ? "Behind" : "Front";
+
+                while (totalDistance < MaxSearchDistanceM)
                 {
                     numSteps++;
 
@@ -275,7 +305,13 @@ namespace SkyCombImage.ProcessLogic
                     // Horizontal movement: 
                     float horizontalStep = verticalStepSize / safeTan;
 
-                    currentPosition = currentPosition.Add(directionVector.Multiply(horizontalStep));
+                    // Decide if we apply +horizontalStep or -horizontalStep:
+                    float signedStep = horizontalStep; // Run 1, 4 & 6
+                    //float signedStep = isCameraBehindDrone ? -horizontalStep : horizontalStep; // Run 2
+                    //float signedStep = ! isCameraBehindDrone ? -horizontalStep : horizontalStep; // Run 3
+                    //float signedStep = - horizontalStep; // Run 5
+
+                    currentPosition = currentPosition.Add(directionVector.Multiply(signedStep));
                     totalDistance += horizontalStep;
 
                     float terrainHeight = terrain.GetElevation(currentPosition);
@@ -287,7 +323,8 @@ namespace SkyCombImage.ProcessLogic
                             {
                                 LocationNE = currentPosition,
                                 Elevation = currTerrainHeight,
-                                Confidence = 0
+                                Confidence = 0,
+                                Method = theMethod,
                             };
                         }
                         return null;
@@ -312,7 +349,8 @@ namespace SkyCombImage.ProcessLogic
                         {
                             LocationNE = currentPosition,
                             Elevation = terrainHeight,
-                            Confidence = confidence
+                            Confidence = confidence,
+                            Method = theMethod,
                         };
                     }
 
@@ -338,22 +376,24 @@ namespace SkyCombImage.ProcessLogic
                 {
                     LocationNE = currentPosition,
                     Elevation = currTerrainHeight,
-                    Confidence = 0
+                    Confidence = 0,
+                    Method = theMethod,
                 };
             }
         }
 
 
-        private float CalculateAdaptiveStepSize(float heightAboveTerrain)
+        private float CalculateAdaptiveStepSize(TerrainGrid terrain, float heightAboveTerrain)
         {
             // Smaller steps when closer to ground, larger steps when higher
-            return Math.Max(terrain.VerticalUnitM, Math.Min(baseStepSize * (heightAboveTerrain / 50.0f), 5.0f));
+            return Math.Max(terrain.VerticalUnitM, Math.Min(BaseStepSizeM * (heightAboveTerrain / 50.0f), 5.0f));
         }
+
 
         private float CalculateConfidence(float distance, float initialHeight)
         {
             // Confidence decreases with distance and initial height
-            float distanceFactor = 1.0f - (distance / maxSearchDistance);
+            float distanceFactor = 1.0f - (distance / MaxSearchDistanceM);
             float heightFactor = 1.0f - (Math.Min(initialHeight, 300) / 300);
             return distanceFactor * 0.7f + heightFactor * 0.3f;
         }

@@ -72,7 +72,7 @@ namespace SkyCombImage.RunSpace
                         {
                             YoloFeature thisFeature = new(YoloProcess, blockID, result, ProcessModel.FeatureTypeEnum.Real);
 
-                            // The Yolo bounding box is not tight around the hotspot. For Comb it is.
+                            // The Yolo bounding box is not tight around the hotspot. For Comb process it is.
                             // Shrink PixelBox to a smaller bounding box tight around the hot pixels.
                             thisFeature.CalculateHeat_ShrinkBox(CurrInputImage, currGray);
 
