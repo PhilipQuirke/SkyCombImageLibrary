@@ -16,8 +16,11 @@ namespace SkyCombImage.ProcessLogic
         public ProcessConfigModel? ProcessConfig { get { return ProcessAll == null ? null : ProcessAll.ProcessConfig; } }
 
 
-        // A feature is associated 1-1 with a Block
+        // A feature is associated 1-1 with a Block  ??NQ to PQ: many-to-1
         public ProcessBlock Block { get; set; }
+
+        // Triangulated locations with Z in terms of altitude
+        public double[] realLocation { get; set; } = new double[3];
 
         // Location of hot pixels in this feature.
         public PixelHeatList? Pixels { get; set; } = null;
@@ -306,8 +309,6 @@ namespace SkyCombImage.ProcessLogic
                 return numSig;
             }
         }
-
-
 
         // Calculate object's location (centroid) as average of real feature's locations, using real features.
         // Also calculate the average error in location relative to the centroid.

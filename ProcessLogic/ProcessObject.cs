@@ -514,7 +514,7 @@ namespace SkyCombImage.ProcessLogic
         // Calculate object height and object height error by averaging the feature data.
         protected void Calculate_HeightM_and_HeightErrM()
         {
-                (HeightM, HeightErrM, MinHeightM, MaxHeightM) = ProcessFeatures.Calculate_Avg_HeightM_and_HeightErrM();
+            (HeightM, HeightErrM, MinHeightM, MaxHeightM) = ProcessFeatures.Calculate_Avg_HeightM_and_HeightErrM();
         }
 
 
