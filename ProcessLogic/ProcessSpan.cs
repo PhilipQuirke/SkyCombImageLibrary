@@ -322,6 +322,7 @@ namespace SkyCombImage.ProcessLogic
                 for (var id = block.MinFeatureId ; id <= block.MaxFeatureId; id++)
                 {
                     var feature = Process.ProcessFeatures[id];
+                    if (!feature.Significant) continue;
                     var objid = feature.ObjectId;
                     for (var idC = compareBlock.MinFeatureId; idC <= compareBlock.MaxFeatureId; idC++)
                     {
@@ -341,7 +342,7 @@ namespace SkyCombImage.ProcessLogic
                 using Mat homogeneousPoints = new Mat();
                 Debug.WriteLine("+++++++++++++++++++++++++");
                 Debug.WriteLine(blockId.ToString());
-                for (int i = 0; i < 4; i++)
+                for (int i = 0; i < 3; i++)
                 {
                     for (int j = 0; j < 4; j++)
                     {
@@ -385,84 +386,7 @@ namespace SkyCombImage.ProcessLogic
                 }
 
         }
-/*
-        // Reorganise feature data so that it is ordered by block rather than object, and establish the projection matrix for that block.
-        public SortedList<int, BlockInfo> EstablishBlockInfo(ProcessObjList objlist)
-        {
-            // Above figures from https://sdk-forum.dji.net/hc/en-us/articles/12325496609689-What-is-the-custom-camera-parameters-for-Mavic-3-Enterprise-series-and-Mavic-3M
-            SortedList<int, BlockInfo> featureInfo = [];
-            foreach (var obj in objlist)
-            {
-                foreach (var feature in obj.Value.ProcessFeatures.Values)
-                {
-                    if (feature.NumHotPixels == 0) continue; // There seems to be crappy end data.
-                    int thisBlock = feature.BlockId;
 
-                    if (!featureInfo.ContainsKey(thisBlock)) // Make sure that all the drone info is available for the block
-                        featureInfo.Add(thisBlock, new BlockInfo(
-                            thisBlock
-                            ,feature.Block.DroneLocnM.EastingM
-                            , feature.Block.DroneLocnM.NorthingM
-                            , feature.Block.AltitudeM
-                            , feature.Block.RollDeg
-                            , feature.Block.PitchDeg
-                            , feature.Block.YawDeg
-                            , K));
-                    featureInfo[thisBlock].objectFeatures.Add(obj.Key, feature);
-                }
-            }
-            return featureInfo;
-        }
-
-        // Find the objects that have features in both blocks to be compared
-        public void EstablishObjectPairs(SortedList<int, BlockInfo> blockFeatureInfo, int interval)
-        {
-            foreach (var thisblock in blockFeatureInfo.Values)
-            {
-                if (!blockFeatureInfo.ContainsKey(thisblock.BlockNumber + interval)) continue; // No block existing of that interval difference. This makes use that the block numbers are consecutive.
-                var compareblock = blockFeatureInfo[thisblock.BlockNumber + interval];
-                if ((thisblock.EastingM == compareblock.EastingM) && (thisblock.NorthingM == compareblock.NorthingM)) continue; // The drone has not moved in that interval. Rare case.
-                foreach (var (obj, feature) in thisblock.objectFeatures)
-                {
-                    if (!compareblock.objectFeatures.ContainsKey(obj)) continue; // no matching object in compare block
-                    thisblock.fromObs.Add(obj);
-                    compareblock.toObs.Add(obj);
-                }
-            }
-
-        }
-        // Run the triangulation for each block pair.            
-        public void RunTriangulationOnPairs(SortedList<int, BlockInfo> blockFeatureInfo, int interval)
-        {
-            foreach (var thisblock in blockFeatureInfo.Values)
-            {
-                if (thisblock.fromObs.Count > 0)
-                {
-                    Debug.WriteLine("");
-                    var compareblock = blockFeatureInfo[thisblock.BlockNumber + interval];
-                    Debug.WriteLine(thisblock.BlockNumber.ToString() + ","+ thisblock.EastingM.ToString() + "," + thisblock.NorthingM.ToString() + "," + thisblock.AltitudeM.ToString());
-                    using var Points1 = ToTriangulationFormat(thisblock.CreatePoints(true));
-                    Debug.WriteLine("");
-                    using var Points2 = ToTriangulationFormat(compareblock.CreatePoints(false));
-                    Debug.WriteLine("");
-
-                    using Mat homogeneousPoints = new Mat();
-                    
-                    Cv2.TriangulatePoints(thisblock.Projection, compareblock.Projection, Points1, Points2, homogeneousPoints);
-
-                    // Convert homogeneous coordinates to 3D and update the locations into YoloProcessFeature
-                    foreach (var obj in thisblock.fromObs)
-                    {
-                        var objorder = thisblock.fromObs.IndexOf(obj);
-                        var thisfeature = thisblock.objectFeatures[obj];
-                        thisfeature.realLocation = [(float)(homogeneousPoints.At<double>(0, (objorder)) / homogeneousPoints.At<double>(3, objorder)),
-                            (float)(homogeneousPoints.At<double>(1, objorder) / homogeneousPoints.At<double>(3, objorder)),
-                            (float)(homogeneousPoints.At<double>(2, objorder) / homogeneousPoints.At<double>(3, objorder))];
-                    }
-                }
-            }
-        }
-*/
         // This was ChatGPT's formulation for the intrinsic matrix.
         private static Mat Intrinsic(double focalLength, double imageWidth, double imageHeight, double sensorWidth, double sensorHeight)
         {
@@ -495,29 +419,13 @@ namespace SkyCombImage.ProcessLogic
 
             return points1Mat;
         }
-
-        public void PrintMat(string description, Mat mat, int rows, int cols)
-        {
-            Debug.WriteLine("+++++++++++++++++++++++++");
-            Debug.WriteLine(description);
-            for (int i = 0; i < rows; i++)
-            {
-                for (int j = 0; j < cols; j++)
-                {
-                    Debug.Write(mat.At<double>(i,j).ToString() + " ");
-                }
-                Debug.WriteLine("");
-            }
-        }
-
     }
 
     //-----------------------------------------------------------------------------------------------------------------------------------------------------
 
-    public class BlockInfo : IDisposable
+    public class BlockInfo
     {
         private bool disposed = false;
-        public Mat Projection;
         public int BlockNumber;
         public double EastingM, NorthingM, AltitudeM, RollDeg, PitchDeg, YawDeg;
         public SortedList<int, ProcessFeature> fromFeatures = new SortedList<int, ProcessFeature>();
@@ -612,31 +520,6 @@ namespace SkyCombImage.ProcessLogic
             return K * Rt;
 
         }
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        // Protected virtual method for disposing
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposed)
-            {
-                if (disposing)
-                {
-                    // Dispose managed resources
-                    if (Projection != null)
-                    {
-                        Projection = null;
-                    }
-                }
-
-                // Free unmanaged resources if any
-
-                disposed = true;
-            }
-        }
-
     }
 
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
