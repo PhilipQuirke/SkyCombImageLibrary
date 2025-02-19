@@ -335,12 +335,12 @@ namespace SkyCombImage.ProcessLogic
                     }
                 }
                 if (BlocksInfo.fromObs.Count == 0) continue;
+                Debug.WriteLine("+++++++++++++++++++++++++");
                 using var Points1 = ToTriangulationFormat(BlocksInfo.CreatePoints(true));
                 using var Points2 = ToTriangulationFormat(BlocksInfo.CreatePoints(false));
                 using var Projection1 = BlocksInfo.CreateProjectionMatrix(block.DroneLocnM.EastingM, block.DroneLocnM.NorthingM, block.AltitudeM, block.RollDeg, block.PitchDeg, block.YawDeg, K);
                 using var Projection2 = BlocksInfo.CreateProjectionMatrix(compareBlock.DroneLocnM.EastingM, compareBlock.DroneLocnM.NorthingM, compareBlock.AltitudeM, compareBlock.RollDeg, compareBlock.PitchDeg, compareBlock.YawDeg, K);
                 using Mat homogeneousPoints = new Mat();
-                Debug.WriteLine("+++++++++++++++++++++++++");
                 Debug.WriteLine(blockId.ToString());
                 for (int i = 0; i < 3; i++)
                 {
@@ -438,7 +438,7 @@ namespace SkyCombImage.ProcessLogic
             var feats = from ? fromFeatures : toFeatures;
             foreach (var obj in fromObs)
             {
-                Debug.Write(obj.ToString()+",");
+                Debug.Write((from? "From,":"To,") +obj.ToString()+",");
                 pointlist.Add(centroid(feats[obj].PixelBox));
             }
             return pointlist;
@@ -450,7 +450,7 @@ namespace SkyCombImage.ProcessLogic
             Point2d centroid = new Point2d();
             centroid.X = (rectangle.X + rectangle.Width / 2)/2;
             centroid.Y = (rectangle.Y + rectangle.Height / 2)/2;
-            Debug.Write(centroid.X.ToString() + "," + centroid.Y.ToString() + ",");
+            Debug.WriteLine(centroid.X.ToString() + "," + centroid.Y.ToString() + ",");
 
             return centroid;
 
