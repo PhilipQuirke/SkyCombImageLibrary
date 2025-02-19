@@ -303,29 +303,111 @@ namespace SkyCombImage.ProcessLogic
 
 //VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
         // Recalculate the Span.Objects.Features.LocationM and HeightM using triangulation.
+        public Mat K = Intrinsic(9.1, 640, 512, 7.68, 6.144);
         public void TriangulateSpanObjectsFeaturesLocationAndHeight(ProcessObjList theObjs)
         {
-            var blocksInfo = EstablishBlockInfo(theObjs); // Reorganise feature data so that it is ordered by block rather than object, and establish the projection matrix for that block.
             var compareInterval = 3; // Frame pair intervals constant, 3 frames is 1/20th of second. 5 frames is 1/6th of a second.
-            EstablishObjectPairs(blocksInfo, compareInterval); // Find the objects that have features in both blocks to be compared
-            RunTriangulationOnPairs(blocksInfo, compareInterval);
-        }
+            var totBlocks = Process.Blocks.Count;
+            foreach (var block in Process.Blocks.Values)
+            {
+                var blockId = block.BlockId;
+                var compareBlockId = blockId + compareInterval;
+                if (compareBlockId > totBlocks) break; // not enough compare interval left
+                var compareBlock = Process.Blocks[compareBlockId];
+                if (block.MinFeatureId < 1 || compareBlock.MinFeatureId < 1) continue; // no features in either this or compare
+                if (block.DroneLocnM.EastingM == compareBlock.DroneLocnM.EastingM
+                    && block.DroneLocnM.NorthingM == compareBlock.DroneLocnM.NorthingM) continue; // not enough drone location difference for the compare
+                var BlocksInfo = new BlockInfo();
 
+                for (var id = block.MinFeatureId ; id <= block.MaxFeatureId; id++)
+                {
+                    var feature = Process.ProcessFeatures[id];
+                    var objid = feature.ObjectId;
+                    for (var idC = compareBlock.MinFeatureId; idC <= compareBlock.MaxFeatureId; idC++)
+                    {
+                        var featureC = Process.ProcessFeatures[idC];
+                        var objidC = featureC.ObjectId;
+                        if (objid != objidC) continue;
+                        BlocksInfo.fromObs.Add(objid);
+                        BlocksInfo.fromFeatures.Add(objid, feature);
+                        BlocksInfo.toFeatures.Add(objid, featureC);
+                    }
+                }
+                if (BlocksInfo.fromObs.Count == 0) continue;
+                using var Points1 = ToTriangulationFormat(BlocksInfo.CreatePoints(true));
+                using var Points2 = ToTriangulationFormat(BlocksInfo.CreatePoints(false));
+                using var Projection1 = BlocksInfo.CreateProjectionMatrix(block.DroneLocnM.EastingM, block.DroneLocnM.NorthingM, block.AltitudeM, block.RollDeg, block.PitchDeg, block.YawDeg, K);
+                using var Projection2 = BlocksInfo.CreateProjectionMatrix(compareBlock.DroneLocnM.EastingM, compareBlock.DroneLocnM.NorthingM, compareBlock.AltitudeM, compareBlock.RollDeg, compareBlock.PitchDeg, compareBlock.YawDeg, K);
+                using Mat homogeneousPoints = new Mat();
+                Debug.WriteLine("+++++++++++++++++++++++++");
+                Debug.WriteLine(blockId.ToString());
+                for (int i = 0; i < 4; i++)
+                {
+                    for (int j = 0; j < 4; j++)
+                    {
+                        Debug.Write(Projection1.At<double>(i, j).ToString() + " ");
+                    }
+                    Debug.WriteLine("");
+                }
+
+                Cv2.TriangulatePoints(Projection1, Projection2, Points1, Points2, homogeneousPoints);
+
+                // Convert homogeneous coordinates to 3D and update the locations into YoloProcessFeature
+                int counter = 0;
+                foreach (var thisfeature in BlocksInfo.fromFeatures.Values)
+                {
+                    thisfeature.realLocation = [(float)(homogeneousPoints.At<double>(0, counter) / homogeneousPoints.At<double>(3, counter)),
+                            (float)(homogeneousPoints.At<double>(1, counter) / homogeneousPoints.At<double>(3, counter)),
+                            (float)(homogeneousPoints.At<double>(2, counter) / homogeneousPoints.At<double>(3, counter))];
+                    counter++;
+                }
+
+            }
+
+            // Overwriting existing feature LocationM and HeightM
+            double[] lastlocation = [0,0,0];
+            foreach (var obj in theObjs)
+                foreach (ProcessFeature thisfeature in obj.Value.ProcessFeatures.Values)
+                {
+                    if (thisfeature.realLocation[0] == 0 && thisfeature.realLocation[1] == 0) //this happens because of the compare interval, the location is written to the first feature of the pair.
+                    {
+                        thisfeature.LocationM = new DroneLocation((float)lastlocation[1], (float)lastlocation[0]);
+                        thisfeature.HeightM = (float)lastlocation[2];
+                    }
+                    else
+                    {
+                        thisfeature.LocationM = new DroneLocation((float)thisfeature.realLocation[1], (float)thisfeature.realLocation[0]);
+                        thisfeature.HeightM = (float)thisfeature.realLocation[2];
+                        lastlocation = thisfeature.realLocation;
+                    }
+                        Debug.WriteLine(thisfeature.BlockId.ToString() + "," + obj.Key.ToString() + "," + thisfeature.LocationM.EastingM.ToString() + "," + thisfeature.LocationM.NorthingM.ToString() + ",");
+                     
+                }
+
+        }
+/*
         // Reorganise feature data so that it is ordered by block rather than object, and establish the projection matrix for that block.
         public SortedList<int, BlockInfo> EstablishBlockInfo(ProcessObjList objlist)
         {
-            var intrinsic = Intrinsic(9.1, 640, 512, 7.68, 6.144); 
             // Above figures from https://sdk-forum.dji.net/hc/en-us/articles/12325496609689-What-is-the-custom-camera-parameters-for-Mavic-3-Enterprise-series-and-Mavic-3M
-            
             SortedList<int, BlockInfo> featureInfo = [];
             foreach (var obj in objlist)
             {
                 foreach (var feature in obj.Value.ProcessFeatures.Values)
                 {
+                    if (feature.NumHotPixels == 0) continue; // There seems to be crappy end data.
                     int thisBlock = feature.BlockId;
 
                     if (!featureInfo.ContainsKey(thisBlock)) // Make sure that all the drone info is available for the block
-                        featureInfo.Add(thisBlock, new BlockInfo(feature.Block, intrinsic));
+                        featureInfo.Add(thisBlock, new BlockInfo(
+                            thisBlock
+                            ,feature.Block.DroneLocnM.EastingM
+                            , feature.Block.DroneLocnM.NorthingM
+                            , feature.Block.AltitudeM
+                            , feature.Block.RollDeg
+                            , feature.Block.PitchDeg
+                            , feature.Block.YawDeg
+                            , K));
                     featureInfo[thisBlock].objectFeatures.Add(obj.Key, feature);
                 }
             }
@@ -376,16 +458,11 @@ namespace SkyCombImage.ProcessLogic
                         thisfeature.realLocation = [(float)(homogeneousPoints.At<double>(0, (objorder)) / homogeneousPoints.At<double>(3, objorder)),
                             (float)(homogeneousPoints.At<double>(1, objorder) / homogeneousPoints.At<double>(3, objorder)),
                             (float)(homogeneousPoints.At<double>(2, objorder) / homogeneousPoints.At<double>(3, objorder))];
-                        // Overwriting existing feature LocationM and HeightM
-                        thisfeature.LocationM = new DroneLocation((float)thisfeature.realLocation[1], (float)thisfeature.realLocation[0]);
-                        thisfeature.HeightM = (float)thisfeature.realLocation[2];
-                        Debug.Write(obj.ToString() + "," + thisfeature.LocationM.EastingM.ToString() + "," + thisfeature.LocationM.NorthingM.ToString() + ",");
-                        //this won't overwrite where we don't have information for the object feature, make sure we are not leaving the other data present
                     }
                 }
             }
         }
-
+*/
         // This was ChatGPT's formulation for the intrinsic matrix.
         private static Mat Intrinsic(double focalLength, double imageWidth, double imageHeight, double sensorWidth, double sensorHeight)
         {
@@ -443,29 +520,18 @@ namespace SkyCombImage.ProcessLogic
         public Mat Projection;
         public int BlockNumber;
         public double EastingM, NorthingM, AltitudeM, RollDeg, PitchDeg, YawDeg;
-        public SortedList<int, ProcessFeature> objectFeatures = new SortedList<int, ProcessFeature>();
+        public SortedList<int, ProcessFeature> fromFeatures = new SortedList<int, ProcessFeature>();
+        public SortedList<int, ProcessFeature> toFeatures = new SortedList<int, ProcessFeature>();
         public List<int> fromObs = new List<int>();
-        public List<int> toObs = new List<int>();
-        public BlockInfo(ProcessBlock block, Mat K)
-        {
-            BlockNumber = block.BlockId;
-            EastingM = block.DroneLocnM.EastingM;
-            NorthingM = block.DroneLocnM.NorthingM;
-            AltitudeM = block.AltitudeM;
-            RollDeg = block.RollDeg;
-            PitchDeg = block.PitchDeg;
-            YawDeg = block.YawDeg;
-            Projection = CreateProjectionMatrix(EastingM, NorthingM, AltitudeM, RollDeg, PitchDeg, YawDeg, K);
-        }
         // Create the points list
         public List<Point2d> CreatePoints(bool from)
         {
             var pointlist = new List<Point2d>();
-            var objs = from ? fromObs : toObs;
-            foreach (var obj in objs)
+            var feats = from ? fromFeatures : toFeatures;
+            foreach (var obj in fromObs)
             {
                 Debug.Write(obj.ToString()+",");
-                pointlist.Add(centroid(objectFeatures[obj].PixelBox));
+                pointlist.Add(centroid(feats[obj].PixelBox));
             }
             return pointlist;
         }
@@ -517,12 +583,10 @@ namespace SkyCombImage.ProcessLogic
 
         /* Calulate the projection matrices from K, using the camera intrinsic matrix, and the drone camera's rotation matrix.
              The general form of the projection matrix P is P=K⋅[R∣t], where [R∣t] is the camera's extrinsic matrix, composed of the rotation matrix R and the translation vector t. 
-             The translation vector t is derived from the camera's position C in the world as follows: t =  − R⋅C.
-*/
-        private static Mat CreateProjectionMatrix(
+             The translation vector t is derived from the camera's position C in the world as follows: t =  − R⋅C.   */
+        public Mat CreateProjectionMatrix(
             double easting, double northing, double altitude,
-            double rollDegrees, double pitchDegrees, double yawDegrees,
-            Mat K)
+            double rollDegrees, double pitchDegrees, double yawDegrees, Mat K)
         {
             // Create rotation matrix
             using Mat R = CreateRotationMatrix(rollDegrees, pitchDegrees, yawDegrees);
@@ -535,15 +599,13 @@ namespace SkyCombImage.ProcessLogic
 
             // Create [R|t] matrix
             using Mat Rt = new Mat(3, 4, MatType.CV_64F);
+            using Mat negRt = -R * t;
 
-            // Copy rotation matrix
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 3; i++) // Copy rotation matrix
                 for (int j = 0; j < 3; j++)
                     Rt.At<double>(i, j) = R.At<double>(i, j);
-
-            // Copy negative translation
-            using Mat negRt = -R * t;
-            for (int i = 0; i < 3; i++)
+            
+            for (int i = 0; i < 3; i++) // Copy negative translation
                 Rt.At<double>(i, 3) = negRt.At<double>(i, 0);
 
             // Calculate P = K[R|t]
