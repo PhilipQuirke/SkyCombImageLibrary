@@ -54,7 +54,7 @@ namespace SkyCombImage.ProcessLogic
             else if (blockMs < drone.SectionIdToVideoMs(drone.FlightSteps.MinStepId))
                 beforeStep = null;
             else
-                beforeStep = drone.FlightSteps.RoughFlightStepBeforeFlightMs(blockMs);
+                beforeStep = drone.FlightSteps.FlightStepAtOrBeforeFlightMs(blockMs);
             bool haveBeforeStep = (beforeStep != null);
             int beforeStepMs = (haveBeforeStep ? beforeStep.SumTimeMs : 0);
             Assert((!haveBeforeStep) || (beforeStepMs <= blockMs), "CalculateSettings_FromSteps: Logic 2");
