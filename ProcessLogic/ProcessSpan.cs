@@ -212,7 +212,7 @@ namespace SkyCombImage.ProcessLogic
             var legSteps = Process.Drone.FlightSteps.Steps.GetLegSteps(ProcessSpanId);
             var theObjs = Process.ProcessObjects.FilterByLeg(ProcessSpanId);
 
-            if (true)
+            if (false)
             {
                 // nq new method
                 TriangulateSpanObjectsFeaturesLocationAndHeight(theObjs);
@@ -221,8 +221,17 @@ namespace SkyCombImage.ProcessLogic
                 theObjs.CalculateSettings();
             }
             else
+            {
                 // Old method
-                CalculateSettings_FixValues(legSteps, theObjs);
+                //CalculateSettings_FixValues(legSteps, theObjs);
+
+                // No method
+                int theHFOVDeg = Process.Drone.InputVideo.HFOVDeg;
+                ResetBest();
+                CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs);
+                OrgSumLocnErrM = BestSumLocnErrM;
+                OrgSumHeightErrM = BestSumHeightErrM;
+            }
 
             SummariseSteps(legSteps);
         }

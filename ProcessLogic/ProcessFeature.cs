@@ -108,11 +108,12 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-
-
         // This feature consumes/absorbs/takes-hot-pixels-from the otherFeature, leaving otherFeature empty.
         public virtual void Consume(ProcessFeature otherFeature)
         {
+            Assert(otherFeature != null, "Consume: otherFeature not specified.");
+            Assert(ProcessAll is not YoloProcess, "Consume: YoloProcess not supported.");
+
             // Expand PixelBox
             var thisRect = this.PixelBox;
             var otherRect = otherFeature.PixelBox;
