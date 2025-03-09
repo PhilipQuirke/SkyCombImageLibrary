@@ -8,7 +8,7 @@ using System.Diagnostics;
 using System.Drawing;
 
 
-// Q1: Is zoom not zero?
+// Q1: Is zoom not zero? zoom is none or 1-1 or 100: "dzoom_ratio: 1.00"
 // Q2: Is there some factor in image I am mising related to elevation? Why does image appear 70 CDDown when it is 90 CDDown?
 // Q3: Save the object DEM in the Imagedata datastore tab.
 // Q4: Draw DEM values on output image.

@@ -4,6 +4,7 @@ using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
 using System.Drawing;
+using System.Windows.Forms;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -235,17 +236,23 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Get the class's settings as datapairs for use in ObjectForm
-        public DataPairList GetSettings_ObjectForm(RelativeLocation objectLocation)
+        public DataPairList GetSettings_ObjectForm(RelativeLocation objectLocation, double objectHeight)
         {
+            var centroidx = PixelBox.X + PixelBox.Width / 2;
+            var centroidy = PixelBox.Y + PixelBox.Height / 2;
             return new DataPairList
             {
                 { "Feature", FeatureId },
-                { "NorthingDiffCM", ( LocationM != null ? (LocationM.NorthingM - objectLocation.NorthingM ) * 100 : 0), 0},
-                { "EastingDiffCM", ( LocationM != null ? (LocationM.EastingM - objectLocation.EastingM) * 100 : 0), 0},
-                { "HeightCM", HeightM * 100, 0 },
+                { "blockid", BlockId },
                 { "WidthPixels", PixelBox.Width },
                 { "DepthPixels", PixelBox.Height },
                 { "#HotPixels", NumHotPixels },
+                { "centroid", "(" + centroidx + ", " + centroidy + ")"},
+                { "location", "(" + LocationM.EastingM + ", " + LocationM.NorthingM + ", " + HeightM + ")"},
+                { "NorthingDiffM", ( LocationM != null ? (LocationM.NorthingM - objectLocation.NorthingM ) : 0.0), 1},
+                { "EastingDiffM", ( LocationM != null ? (LocationM.EastingM - objectLocation.EastingM) : 0.0), 1},
+                { "HeightDiff", ( LocationM != null ? (HeightM - objectHeight) : 0), 1},
+                { "DroneLocation", "(" + Block.DroneLocnM.EastingM + ", " + Block.DroneLocnM.NorthingM + ", " + Block.AltitudeM + ")" },
             };
         }
     }
