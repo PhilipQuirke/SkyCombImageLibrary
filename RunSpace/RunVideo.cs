@@ -428,7 +428,7 @@ namespace SkyCombImage.RunSpace
         {
             int numSigObjs = 0;
 
-            try
+  //          try
             {
                 RunUI.DrawObjectGrid(this, false);
 
@@ -585,11 +585,11 @@ namespace SkyCombImage.RunSpace
 
                 videoWriter = null;
             }
-            catch (Exception ex)
+/*            catch (Exception ex)
             {
                 throw ThrowException("RunSpace.RunVideo.Run", ex);
             }
-
+*/
             return numSigObjs;
         }
 
