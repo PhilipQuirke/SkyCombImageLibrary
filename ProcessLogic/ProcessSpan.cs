@@ -6,6 +6,7 @@ using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.Windows.Forms;
 
 
 // Q1: Is zoom not zero? zoom is none or 1-1 or 100: "dzoom_ratio: 1.00"
@@ -334,20 +335,30 @@ namespace SkyCombImage.ProcessLogic
                 {
                     var feature = Process.ProcessFeatures[id];
                     if (!feature.Significant) continue;
+                    if ((feature.PixelBox.X <= 1) || (feature.PixelBox.X + feature.PixelBox.Width >= 1280) || (feature.PixelBox.Y <= 1) || (feature.PixelBox.Y + feature.PixelBox.Height >= 1024)) continue; //too close to edge
                     var objid = feature.ObjectId;
                     for (var idC = compareBlock.MinFeatureId; idC <= compareBlock.MaxFeatureId; idC++)
                     {
                         var featureC = Process.ProcessFeatures[idC];
+                        if ((featureC.PixelBox.X <= 1) || (featureC.PixelBox.X + featureC.PixelBox.Width >= 1280) || (featureC.PixelBox.Y <= 1) || (featureC.PixelBox.Y + featureC.PixelBox.Height >= 1024)) continue; //too close to edge
                         var objidC = featureC.ObjectId;
                         if (objid != objidC) continue;
                         BlocksInfo.fromObs.Add(objid);
                         BlocksInfo.fromFeatures.Add(objid, feature);
                         BlocksInfo.toFeatures.Add(objid, featureC);
+
+                        // Updating for new stuff 12/3
+                        var result = BlocksInfo.GetPoint(feature, featureC, K);
+                        if (result is not null)
+                        {
+                            feature.LocationM = new DroneLocation((float)result[0], (float)result[1]);
+                            feature.HeightM = (float)result[2];
+                        }
                     }
                 }
-                if (BlocksInfo.fromObs.Count == 0) continue;
+                /*if (BlocksInfo.fromObs.Count == 0) continue;
                 Debug.WriteLine("+++++++++++++++++++++++++");
-                /*using var Points1 = ToTriangulationFormat(BlocksInfo.CreatePoints(true));
+                using var Points1 = ToTriangulationFormat(BlocksInfo.CreatePoints(true));
                 using var Points2 = ToTriangulationFormat(BlocksInfo.CreatePoints(false));
                 using var Projection1 = BlocksInfo.CreateProjectionMatrix(block.DroneLocnM.EastingM, block.DroneLocnM.NorthingM, block.AltitudeM, block.RollDeg, block.PitchDeg, block.YawDeg, K);
                 using var Projection2 = BlocksInfo.CreateProjectionMatrix(compareBlock.DroneLocnM.EastingM, compareBlock.DroneLocnM.NorthingM, compareBlock.AltitudeM, compareBlock.RollDeg, compareBlock.PitchDeg, compareBlock.YawDeg, K);
@@ -372,6 +383,7 @@ namespace SkyCombImage.ProcessLogic
                             (float)(homogeneousPoints.At<double>(2, counter) / homogeneousPoints.At<double>(3, counter))];
                     counter++;
                 }*/
+                /*
                 var p1 = BlocksInfo.makeupstuff(block.DroneLocnM.EastingM, block.DroneLocnM.NorthingM, block.AltitudeM, block.RollDeg, block.PitchDeg, block.YawDeg, K, true);
                 var p2 = BlocksInfo.makeupstuff(compareBlock.DroneLocnM.EastingM, compareBlock.DroneLocnM.NorthingM, compareBlock.AltitudeM, compareBlock.RollDeg, compareBlock.PitchDeg, compareBlock.YawDeg, K, false);
                 //using Mat C = p1[1] - p2[1];
@@ -441,7 +453,7 @@ namespace SkyCombImage.ProcessLogic
                 }
                 Debug.WriteLine("");
 
-                Debug.WriteLine("");
+                Debug.WriteLine("");*/
             }
 
             /* Overwriting existing feature LocationM and HeightM
@@ -505,8 +517,6 @@ namespace SkyCombImage.ProcessLogic
     public class BlockInfo
     {
         private bool disposed = false;
-        public int BlockNumber;
-        public double EastingM, NorthingM, AltitudeM, RollDeg, PitchDeg, YawDeg;
         public SortedList<int, ProcessFeature> fromFeatures = new SortedList<int, ProcessFeature>();
         public SortedList<int, ProcessFeature> toFeatures = new SortedList<int, ProcessFeature>();
         public List<int> fromObs = new List<int>();
@@ -517,7 +527,7 @@ namespace SkyCombImage.ProcessLogic
             var feats = from ? fromFeatures : toFeatures;
             foreach (var obj in fromObs)
             {
-                Debug.Write((from? "From,":"To,") +obj.ToString()+",");
+                Debug.Write((from? "From obj,":"To obj,") +obj.ToString()+","+ "Feature " + feats[obj].FeatureId.ToString() + "," + "Drone altitude " + feats[obj].Block.AltitudeM.ToString() + ",");
                 pointlist.Add(centroid(feats[obj].PixelBox));
             }
             return pointlist;
@@ -604,7 +614,7 @@ namespace SkyCombImage.ProcessLogic
             // Create rotation matrix
             using Mat R = CreateRotationMatrix(rollDegrees, pitchDegrees, yawDegrees);
 
-            // Create translation vector
+            // drone + camera location
             Mat t = new Mat(3, 1, MatType.CV_64F); // was using
             t.At<double>(0, 0) = easting;
             t.At<double>(1, 0) = northing;
@@ -627,6 +637,80 @@ namespace SkyCombImage.ProcessLogic
             // Solve for found point = Camera world + someparam * ray world
             return result;
         }
+        public Mat PointDirection(ProcessFeature feat, Mat K)
+        {
+            using Mat R = CreateRotationMatrix(feat.Block.RollDeg, feat.Block.PitchDeg, feat.Block.YawDeg);
+
+            var featpoint = centroid(feat.PixelBox);
+            using Mat PixelPoint = new Mat(3, 1, MatType.CV_64F);
+            PixelPoint.At<double>(0, 0) = featpoint.X;
+            PixelPoint.At<double>(1, 0) = featpoint.Y;
+            PixelPoint.At<double>(2, 0) = 1;
+            return R * (K.Inv() * PixelPoint);
+        }
+        public List<double>? GetPoint(ProcessFeature fromF, ProcessFeature toF, Mat K)
+        {
+            using var RayFromF = PointDirection(fromF, K);
+            using var RayToF = PointDirection(toF, K);
+
+            using Mat C = new Mat(5, 1, MatType.CV_64F);
+            C.At<double>(0, 0) = fromF.Block.DroneLocnM.EastingM;
+            C.At<double>(1, 0) = fromF.Block.DroneLocnM.NorthingM;
+            C.At<double>(2, 0) = fromF.Block.AltitudeM;
+            C.At<double>(3, 0) = toF.Block.DroneLocnM.EastingM;
+            C.At<double>(4, 0) = toF.Block.DroneLocnM.NorthingM;
+
+            using Mat LHS = new Mat(5, 5, MatType.CV_64F);
+            LHS.At<double>(0, 0) = 1;
+            LHS.At<double>(1, 1) = 1;
+            LHS.At<double>(2, 2) = 1;
+
+            LHS.At<double>(3, 0) = 1;
+            LHS.At<double>(4, 1) = 1;
+
+            LHS.At<double>(0, 3) = -RayFromF.At<double>(0, 0);
+            LHS.At<double>(1, 3) = -RayFromF.At<double>(1, 0);
+            LHS.At<double>(2, 3) = -RayFromF.At<double>(2, 0);
+
+            LHS.At<double>(3, 4) = -RayToF.At<double>(0, 0);
+            LHS.At<double>(4, 4) = -RayToF.At<double>(1, 0);
+
+            var test = LHS.Determinant();
+            Debug.WriteLine("Det: " + test.ToString());
+            if (!(test != 0 && test < 1000)) return null;
+
+            using Mat Ans = LHS.Inv() * C;
+            List<double> result = new();
+
+            Debug.WriteLine("");
+            Debug.WriteLine("Params");
+            for (int j = 3; j < 5; j++)
+            {
+                Debug.Write(Math.Round(Ans.At<double>(j, 0), 2) + ", ");
+            }
+            Debug.WriteLine("");
+            Debug.WriteLine("Ray 1");
+            for (int j = 0; j < 3; j++)
+            {
+                Debug.Write(Math.Round(RayFromF.At<double>(j, 0), 2) + ", ");
+            }
+            Debug.WriteLine("");
+            Debug.WriteLine("Ray 2");
+            for (int j = 0; j < 3; j++)
+            {
+                Debug.Write(Math.Round(RayToF.At<double>(j, 0), 2) + ", ");
+            }
+            Debug.WriteLine("");
+            Debug.WriteLine("Object calc 1");
+            for (int j = 0; j < 3; j++)
+            {
+                Debug.Write(Math.Round(Ans.At<double>(j, 0), 2) + ", ");
+                result.Add(Ans.At<double>(j, 0));
+            }
+            Debug.WriteLine("");
+            return result;
+        }
+
     }
 
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
