@@ -248,7 +248,7 @@ namespace SkyCombImage.ProcessLogic
                 { "DepthPixels", PixelBox.Height },
                 { "#HotPixels", NumHotPixels },
                 { "centroid", "(" + centroidx + ", " + centroidy + ")"},
-                { "location", "(" + LocationM.EastingM + ", " + LocationM.NorthingM + ", " + HeightM + ")"},
+                { "location", ( LocationM != null ? "(" + LocationM.EastingM + ", " + LocationM.NorthingM + ", " + HeightM + ")":"")},
                 { "NorthingDiffM", ( LocationM != null ? (LocationM.NorthingM - objectLocation.NorthingM ) : 0.0), 1},
                 { "EastingDiffM", ( LocationM != null ? (LocationM.EastingM - objectLocation.EastingM) : 0.0), 1},
                 { "HeightDiff", ( LocationM != null ? (HeightM - objectHeight) : 0), 1},
@@ -328,7 +328,7 @@ namespace SkyCombImage.ProcessLogic
                 DroneLocation sumLocation = new();
 
                 foreach (var feature in this)
-                    if ((feature.Value.LocationM != null) &&
+                    if ((feature.Value.LocationM != null) && (feature.Value.HeightM != 0) &&
                         (feature.Value.Type == FeatureTypeEnum.Real))
                     {
                         sumCount++;

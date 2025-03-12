@@ -6,7 +6,7 @@ using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
 using System.Diagnostics;
 using System.Drawing;
-using System.Windows.Forms;
+
 
 
 // Q1: Is zoom not zero? zoom is none or 1-1 or 100: "dzoom_ratio: 1.00"
@@ -216,7 +216,7 @@ namespace SkyCombImage.ProcessLogic
             if (true)
             {
                 // nq new method
-                TriangulateSpanObjectsFeaturesLocationAndHeight(theObjs);
+                TriangulateSpanObjectsFeaturesLocationAndHeight(theObjs, Process);
                 foreach (var theObj in theObjs)
                     theObj.Value.Calculate_RealObject_SimpleMemberData();
                 theObjs.CalculateSettings();
@@ -311,12 +311,15 @@ namespace SkyCombImage.ProcessLogic
             return PercentOverlapWithRunFromTo(drone) >= FlightLegModel.MinOverlapPercent;
         }
 
-//VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
- //       Put K deeper into structure
- //           Fix and test with non zero animal
+
+        //VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+        // Copy the static Lennard Spark drone camera intrinsic matrix
+        public static Mat K = ProcessConfigModel.LennardsDroneK;
+
+
+        //           Fix and test with non zero animal
         // Recalculate the Span.Objects.Features.LocationM and HeightM using triangulation.
-        public Mat K = Intrinsic(9.1, 640, 512, 7.68, 6.144);
-        public void TriangulateSpanObjectsFeaturesLocationAndHeight(ProcessObjList theObjs)
+        public void TriangulateSpanObjectsFeaturesLocationAndHeight(ProcessObjList theObjs, ProcessAll processAll)
         {
             var compareInterval = 5; // Frame pair intervals constant, 3 frames is 1/20th of second. 5 frames is 1/6th of a second.
             var totBlocks = Process.Blocks.Count;
@@ -351,8 +354,11 @@ namespace SkyCombImage.ProcessLogic
                         var result = BlocksInfo.GetPoint(feature, featureC, K);
                         if (result is not null)
                         {
-                            feature.LocationM = new DroneLocation((float)result[0], (float)result[1]);
-                            feature.HeightM = (float)result[2];
+                            feature.LocationM = new DroneLocation((float)result[1], (float)result[0]); // Northing is stored first in location
+                            // Change from altitude to height based on ground altitude at location
+                            var obsDEM = processAll.GroundData.DemModel.GetElevationByDroneLocn(feature.LocationM);
+                            Assert(obsDEM != UnknownValue, objid.ToString() + " " + feature.FeatureId.ToString() + " object/feature location out of bounds");
+                            feature.HeightM = (float)result[2]- obsDEM;
                         }
                     }
                 }
@@ -383,77 +389,7 @@ namespace SkyCombImage.ProcessLogic
                             (float)(homogeneousPoints.At<double>(2, counter) / homogeneousPoints.At<double>(3, counter))];
                     counter++;
                 }*/
-                /*
-                var p1 = BlocksInfo.makeupstuff(block.DroneLocnM.EastingM, block.DroneLocnM.NorthingM, block.AltitudeM, block.RollDeg, block.PitchDeg, block.YawDeg, K, true);
-                var p2 = BlocksInfo.makeupstuff(compareBlock.DroneLocnM.EastingM, compareBlock.DroneLocnM.NorthingM, compareBlock.AltitudeM, compareBlock.RollDeg, compareBlock.PitchDeg, compareBlock.YawDeg, K, false);
-                //using Mat C = p1[1] - p2[1];
-                using Mat C = new Mat(5, 1, MatType.CV_64F);
-                C.At<double>(0, 0) = p1[1].At<double>(0, 0) ;
-                C.At<double>(1, 0) = p1[1].At<double>(1, 0) ;
-                C.At<double>(2, 0) = p1[1].At<double>(2, 0) ;
-                C.At<double>(3, 0) = p2[1].At<double>(0, 0) ;
-                C.At<double>(4, 0) = p2[1].At<double>(1, 0) ;
-
-                using Mat LHS = new Mat(5, 5, MatType.CV_64F);
-                LHS.At<double>(0, 0) = 1;
-                LHS.At<double>(1, 1) = 1;
-                LHS.At<double>(2, 2) = 1;
-
-                LHS.At<double>(3, 0) = 1;
-                LHS.At<double>(4, 1) = 1;
-
-                LHS.At<double>(0, 3) = -p1[0].At<double>(0, 0);
-                LHS.At<double>(1, 3) = -p1[0].At<double>(1, 0);
-                LHS.At<double>(2, 3) = -p1[0].At<double>(2, 0);
-
-                LHS.At<double>(3, 4) = -p2[0].At<double>(0, 0);
-                LHS.At<double>(4, 4) = -p2[0].At<double>(1, 0);
-
-                var test = LHS.Determinant();
-                Debug.WriteLine("Det: " + test.ToString());
-
-                using Mat Ans = LHS.Inv() * C;
-
-
-                Debug.WriteLine("");
-                Debug.WriteLine("Params");
-                for (int j = 3; j < 5; j++)
-                {
-                    Debug.Write(Math.Round(Ans.At<double>(j, 0), 2) + ", ");
-                }
-                Debug.WriteLine("");
-                Debug.WriteLine("Camera Position 1");
-                for (int j = 0; j < 3; j++)
-                {
-                    Debug.Write(Math.Round(p1[1].At<double>(j, 0), 2) + ", ");
-                }
-                Debug.WriteLine("");
-                Debug.WriteLine("Camera Position 2");
-                for (int j = 0; j < 3; j++)
-                {
-                    Debug.Write(Math.Round(p2[1].At<double>(j, 0), 2) + ", ");
-                }
-                Debug.WriteLine("");
-                Debug.WriteLine("Ray 1");
-                for (int j = 0; j < 3; j++)
-                {
-                    Debug.Write(Math.Round(p1[0].At<double>(j, 0), 2) + ", ");
-                }
-                Debug.WriteLine("");
-                Debug.WriteLine("Ray 2");
-                for (int j = 0; j < 3; j++)
-                {
-                    Debug.Write(Math.Round(p2[0].At<double>(j, 0), 2) + ", ");
-                }
-                Debug.WriteLine("");
-                Debug.WriteLine("Object calc 1");
-                for (int j = 0; j < 3; j++)
-                {
-                    Debug.Write(Math.Round(Ans.At<double>(j, 0),2) + ", ");
-                }
-                Debug.WriteLine("");
-
-                Debug.WriteLine("");*/
+                
             }
 
             /* Overwriting existing feature LocationM and HeightM
@@ -478,24 +414,6 @@ namespace SkyCombImage.ProcessLogic
             */
         }
 
-        // This was ChatGPT's formulation for the intrinsic matrix.
-        private static Mat Intrinsic(double focalLength, double imageWidth, double imageHeight, double sensorWidth, double sensorHeight)
-        {
-            var Cx = imageWidth / 2; var Cy = imageHeight / 2;
-            var Fx = focalLength * imageWidth / sensorWidth; // F * pixels per mm = focal length in mm x image width px / sensor width mm
-            var Fy = focalLength * imageHeight / sensorHeight;
-            Mat K = new Mat(3, 3, MatType.CV_64F);
-            K.At<double>(0, 0) = Fx;
-            K.At<double>(0, 1) = 0;
-            K.At<double>(0, 2) = Cx;
-            K.At<double>(1, 0) = 0;
-            K.At<double>(1, 1) = Fy;
-            K.At<double>(1, 2) = Cy;
-            K.At<double>(2, 0) = 0;
-            K.At<double>(2, 1) = 0;
-            K.At<double>(2, 2) = 1;
-            return K;
-        }
 
         // Convert collected points to OpenCV Mat format for triangulation
         public Mat ToTriangulationFormat(List<Point2d> points1)
@@ -608,35 +526,6 @@ namespace SkyCombImage.ProcessLogic
             // Calculate P = K[R|t]
             return K * Rt;
         }
-        public List<Mat> makeupstuff(double easting, double northing, double altitude,
-            double rollDegrees, double pitchDegrees, double yawDegrees, Mat K, bool from)
-        {
-            // Create rotation matrix
-            using Mat R = CreateRotationMatrix(rollDegrees, pitchDegrees, yawDegrees);
-
-            // drone + camera location
-            Mat t = new Mat(3, 1, MatType.CV_64F); // was using
-            t.At<double>(0, 0) = easting;
-            t.At<double>(1, 0) = northing;
-            t.At<double>(2, 0) = altitude;
-
-            // Create Points vector
-            var PointsVector = CreatePoints(from);
-            using Mat PixelPoint = new Mat(3, 1, MatType.CV_64F);
-            PixelPoint.At<double>(0, 0) = PointsVector[0].X;
-            PixelPoint.At<double>(1, 0) = PointsVector[0].Y;
-            PixelPoint.At<double>(2, 0) = 1;
-            //using Mat CamRay = K.Inv() * PixelPoint;
-            //using Mat RayWorld = R.Inv() * CamRay;
-            //using Mat CameraWorld = -R.Inv() * t;
-            List<Mat> result = new()
-            {
-                R * (K.Inv() * PixelPoint), // ray direction from camera
-                t // camera in world coordinates
-            };
-            // Solve for found point = Camera world + someparam * ray world
-            return result;
-        }
         public Mat PointDirection(ProcessFeature feat, Mat K)
         {
             using Mat R = CreateRotationMatrix(feat.Block.RollDeg, feat.Block.PitchDeg, feat.Block.YawDeg);
@@ -650,6 +539,10 @@ namespace SkyCombImage.ProcessLogic
         }
         public List<double>? GetPoint(ProcessFeature fromF, ProcessFeature toF, Mat K)
         {
+            Debug.WriteLine("=========  From object: " + fromF.ObjectId.ToString() + "=========  block: " + fromF.Block.BlockId.ToString() + "=========  feature: " + fromF.FeatureId.ToString());
+            Debug.WriteLine("=========  To object: " + toF.ObjectId.ToString() + "=========  block: " + toF.Block.BlockId.ToString() + "=========  feature: " + toF.FeatureId.ToString());
+            Debug.WriteLine("");
+            
             using var RayFromF = PointDirection(fromF, K);
             using var RayToF = PointDirection(toF, K);
 
@@ -660,7 +553,7 @@ namespace SkyCombImage.ProcessLogic
             C.At<double>(3, 0) = toF.Block.DroneLocnM.EastingM;
             C.At<double>(4, 0) = toF.Block.DroneLocnM.NorthingM;
 
-            using Mat LHS = new Mat(5, 5, MatType.CV_64F);
+            using Mat LHS = new Mat(5, 5, MatType.CV_64F, Scalar.All(0));
             LHS.At<double>(0, 0) = 1;
             LHS.At<double>(1, 1) = 1;
             LHS.At<double>(2, 2) = 1;
@@ -675,19 +568,18 @@ namespace SkyCombImage.ProcessLogic
             LHS.At<double>(3, 4) = -RayToF.At<double>(0, 0);
             LHS.At<double>(4, 4) = -RayToF.At<double>(1, 0);
 
-            var test = LHS.Determinant();
-            Debug.WriteLine("Det: " + test.ToString());
-            if (!(test != 0 && test < 1000)) return null;
 
-            using Mat Ans = LHS.Inv() * C;
-            List<double> result = new();
+            Debug.WriteLine("Camera Position 1");
+            Debug.Write(Math.Round(fromF.Block.DroneLocnM.EastingM, 2) + ", ");
+            Debug.Write(Math.Round(fromF.Block.DroneLocnM.NorthingM, 2) + ", ");
+            Debug.Write(Math.Round(fromF.Block.AltitudeM, 2) + ", ");
 
             Debug.WriteLine("");
-            Debug.WriteLine("Params");
-            for (int j = 3; j < 5; j++)
-            {
-                Debug.Write(Math.Round(Ans.At<double>(j, 0), 2) + ", ");
-            }
+            Debug.WriteLine("Camera Position 2");
+            Debug.Write(Math.Round(toF.Block.DroneLocnM.EastingM, 2) + ", ");
+            Debug.Write(Math.Round(toF.Block.DroneLocnM.NorthingM, 2) + ", ");
+            Debug.Write(Math.Round(toF.Block.AltitudeM, 2) + ", ");
+
             Debug.WriteLine("");
             Debug.WriteLine("Ray 1");
             for (int j = 0; j < 3; j++)
@@ -701,6 +593,25 @@ namespace SkyCombImage.ProcessLogic
                 Debug.Write(Math.Round(RayToF.At<double>(j, 0), 2) + ", ");
             }
             Debug.WriteLine("");
+            
+            
+            var test = LHS.Determinant();
+            Debug.WriteLine("Det");
+            Debug.WriteLine(test.ToString());
+            Debug.WriteLine("---------");
+
+
+            if (!(test != 0 && test < 1000)) return null;
+            using Mat Ans = LHS.Inv() * C;
+            List<double> result = new();
+
+            Debug.WriteLine("Params");
+            for (int j = 3; j < 5; j++)
+            {
+                Debug.Write(Math.Round(Ans.At<double>(j, 0), 2) + ", ");
+            }
+            Debug.WriteLine("");
+
             Debug.WriteLine("Object calc 1");
             for (int j = 0; j < 3; j++)
             {
@@ -708,6 +619,7 @@ namespace SkyCombImage.ProcessLogic
                 result.Add(Ans.At<double>(j, 0));
             }
             Debug.WriteLine("");
+            Debug.WriteLine("---------");
             return result;
         }
 
