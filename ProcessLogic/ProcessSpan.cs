@@ -539,88 +539,119 @@ namespace SkyCombImage.ProcessLogic
         }
         public List<double>? GetPoint(ProcessFeature fromF, ProcessFeature toF, Mat K)
         {
-            Debug.WriteLine("=========  From object: " + fromF.ObjectId.ToString() + "=========  block: " + fromF.Block.BlockId.ToString() + "=========  feature: " + fromF.FeatureId.ToString());
-            Debug.WriteLine("=========  To object: " + toF.ObjectId.ToString() + "=========  block: " + toF.Block.BlockId.ToString() + "=========  feature: " + toF.FeatureId.ToString());
-            Debug.WriteLine("");
+                            Debug.WriteLine("=========  From object: " + fromF.ObjectId.ToString() + "=========  block: " + fromF.Block.BlockId.ToString() + "=========  feature: " + fromF.FeatureId.ToString());
+                            Debug.WriteLine("=========  To object: " + toF.ObjectId.ToString() + "=========  block: " + toF.Block.BlockId.ToString() + "=========  feature: " + toF.FeatureId.ToString());
+                            Debug.WriteLine("");
             
             using var RayFromF = PointDirection(fromF, K);
             using var RayToF = PointDirection(toF, K);
 
-            using Mat C = new Mat(5, 1, MatType.CV_64F);
-            C.At<double>(0, 0) = fromF.Block.DroneLocnM.EastingM;
-            C.At<double>(1, 0) = fromF.Block.DroneLocnM.NorthingM;
-            C.At<double>(2, 0) = fromF.Block.AltitudeM;
-            C.At<double>(3, 0) = toF.Block.DroneLocnM.EastingM;
-            C.At<double>(4, 0) = toF.Block.DroneLocnM.NorthingM;
+            using Mat fromC = new Mat(3, 1, MatType.CV_64F);
+            fromC.At<double>(0, 0) = fromF.Block.DroneLocnM.EastingM;
+            fromC.At<double>(1, 0) = fromF.Block.DroneLocnM.NorthingM;
+            fromC.At<double>(2, 0) = fromF.Block.AltitudeM;
 
-            using Mat LHS = new Mat(5, 5, MatType.CV_64F, Scalar.All(0));
-            LHS.At<double>(0, 0) = 1;
-            LHS.At<double>(1, 1) = 1;
-            LHS.At<double>(2, 2) = 1;
+            using Mat toC = new Mat(3, 1, MatType.CV_64F);
+            fromC.At<double>(0, 0) = toF.Block.DroneLocnM.EastingM;
+            fromC.At<double>(1, 0) = toF.Block.DroneLocnM.NorthingM;
+            fromC.At<double>(2, 0) = toF.Block.AltitudeM;
 
-            LHS.At<double>(3, 0) = 1;
-            LHS.At<double>(4, 1) = 1;
+            using Mat C = fromC - toC;
 
-            LHS.At<double>(0, 3) = -RayFromF.At<double>(0, 0);
-            LHS.At<double>(1, 3) = -RayFromF.At<double>(1, 0);
-            LHS.At<double>(2, 3) = -RayFromF.At<double>(2, 0);
+            using Mat LHS = new Mat(3, 2, MatType.CV_64F, Scalar.All(0));
+            LHS.At<double>(0, 0) = -RayFromF.At<double>(0, 0);
+            LHS.At<double>(1, 0) = -RayFromF.At<double>(1, 0);
+            LHS.At<double>(2, 0) = -RayFromF.At<double>(2, 0);
 
-            LHS.At<double>(3, 4) = -RayToF.At<double>(0, 0);
-            LHS.At<double>(4, 4) = -RayToF.At<double>(1, 0);
-
-
-            Debug.WriteLine("Camera Position 1");
-            Debug.Write(Math.Round(fromF.Block.DroneLocnM.EastingM, 2) + ", ");
-            Debug.Write(Math.Round(fromF.Block.DroneLocnM.NorthingM, 2) + ", ");
-            Debug.Write(Math.Round(fromF.Block.AltitudeM, 2) + ", ");
-
-            Debug.WriteLine("");
-            Debug.WriteLine("Camera Position 2");
-            Debug.Write(Math.Round(toF.Block.DroneLocnM.EastingM, 2) + ", ");
-            Debug.Write(Math.Round(toF.Block.DroneLocnM.NorthingM, 2) + ", ");
-            Debug.Write(Math.Round(toF.Block.AltitudeM, 2) + ", ");
-
-            Debug.WriteLine("");
-            Debug.WriteLine("Ray 1");
-            for (int j = 0; j < 3; j++)
-            {
-                Debug.Write(Math.Round(RayFromF.At<double>(j, 0), 2) + ", ");
-            }
-            Debug.WriteLine("");
-            Debug.WriteLine("Ray 2");
-            for (int j = 0; j < 3; j++)
-            {
-                Debug.Write(Math.Round(RayToF.At<double>(j, 0), 2) + ", ");
-            }
-            Debug.WriteLine("");
-            
-            
-            var test = LHS.Determinant();
-            Debug.WriteLine("Det");
-            Debug.WriteLine(test.ToString());
-            Debug.WriteLine("---------");
+            LHS.At<double>(0, 1) = RayToF.At<double>(0, 0); 
+            LHS.At<double>(1, 1) = RayToF.At<double>(1, 0);
+            LHS.At<double>(2, 1) = RayToF.At<double>(2, 0);  
 
 
-            if (!(test != 0 && test < 1000)) return null;
-            using Mat Ans = LHS.Inv() * C;
+                            Debug.WriteLine("Camera Position 1");
+                            Debug.Write(Math.Round(fromF.Block.DroneLocnM.EastingM, 2) + ", ");
+                            Debug.Write(Math.Round(fromF.Block.DroneLocnM.NorthingM, 2) + ", ");
+                            Debug.Write(Math.Round(fromF.Block.AltitudeM, 2) + ", ");
+
+                            Debug.WriteLine("");
+                            Debug.WriteLine("Camera Position 2");
+                            Debug.Write(Math.Round(toF.Block.DroneLocnM.EastingM, 2) + ", ");
+                            Debug.Write(Math.Round(toF.Block.DroneLocnM.NorthingM, 2) + ", ");
+                            Debug.Write(Math.Round(toF.Block.AltitudeM, 2) + ", ");
+
+                            Debug.WriteLine("");
+                            Debug.WriteLine("Ray 1");
+                            for (int j = 0; j < 3; j++)
+                            {
+                                Debug.Write(Math.Round(RayFromF.At<double>(j, 0), 2) + ", ");
+                            }
+                            Debug.WriteLine("");
+                            Debug.WriteLine("Ray 2");
+                            for (int j = 0; j < 3; j++)
+                            {
+                                Debug.Write(Math.Round(RayToF.At<double>(j, 0), 2) + ", ");
+                            }
+                            Debug.WriteLine("");
+
+            //=====================================================================
+            //                        
+            using Mat Moore_Penrose_LHS_Inv = (LHS.Transpose() * LHS).Inv() * LHS.Transpose(); //https://en.wikipedia.org/wiki/Moore%E2%80%93Penrose_inverse
+            using Mat test0 = (LHS.Transpose() * LHS);
+            Debug.WriteLine(test0.Determinant().ToString()); //https://chatgpt.com/c/67d226cb-e424-800e-a424-2157f1b28340
+            using Mat Params = Moore_Penrose_LHS_Inv * C;
+            using Mat test1 = Moore_Penrose_LHS_Inv * LHS;
+            using Mat test2 = LHS * Params - C;
+            using Mat Ans1 = fromC + RayFromF * Params.At<double>(0, 0);
+            using Mat Ans2 = toC + RayToF * Params.At<double>(1, 0);
+            //
+            //=====================================================================
             List<double> result = new();
 
-            Debug.WriteLine("Params");
-            for (int j = 3; j < 5; j++)
-            {
-                Debug.Write(Math.Round(Ans.At<double>(j, 0), 2) + ", ");
-            }
-            Debug.WriteLine("");
+                            Debug.WriteLine("Params");
+                            for (int j = 0; j < 2; j++)
+                            {
+                                Debug.Write(Math.Round(Params.At<double>(j, 0), 2) + ", ");
+                            }
+                            Debug.WriteLine("");
 
-            Debug.WriteLine("Object calc 1");
-            for (int j = 0; j < 3; j++)
+                            Debug.WriteLine("Object calc 1");
+                            for (int j = 0; j < 3; j++)
+                            {
+                                result.Add(Ans1.At<double>(j, 0));
+                                Debug.Write(Math.Round(Ans1.At<double>(j, 0), 2) + ", ");
+                            }
+                            Debug.WriteLine("");
+
+                            Debug.WriteLine("Object calc 2");
+                            for (int j = 0; j < 3; j++)
+                            {
+                                Debug.Write(Math.Round(Ans2.At<double>(j, 0), 2) + ", ");
+                            }
+                            Debug.WriteLine("");
+                            Debug.WriteLine("Zero test");
+                            for (int j = 0; j < 3; j++)
+                            {
+                                Debug.Write(Math.Round(test2.At<double>(j, 0), 2) + ", ");
+                            }
+                            Debug.WriteLine("");
+
+                            Debug.WriteLine("Identity test");
+                            for (int j = 0; j < 2; j++)
+                            {
+                                for (int k = 0; k < 2; k++)
+                                {
+                                    Debug.Write(Math.Round(test1.At<double>(j, k), 2) + ", ");
+                                }
+                                Debug.WriteLine("");
+                            }
+                            Debug.WriteLine("");
+                            Debug.WriteLine("---------");
+            if (test2.At<double>(0, 0) < 0.1 && test2.At<double>(1, 0) < 0.1 && test2.At<double>(2, 0) < 0.1 
+                && test2.At<double>(0, 0) > -0.1 && test2.At<double>(1, 0) > -0.1 && test2.At<double>(2, 0) > -0.1)
             {
-                Debug.Write(Math.Round(Ans.At<double>(j, 0), 2) + ", ");
-                result.Add(Ans.At<double>(j, 0));
+                return result;
             }
-            Debug.WriteLine("");
-            Debug.WriteLine("---------");
-            return result;
+            else return null;
         }
 
     }
