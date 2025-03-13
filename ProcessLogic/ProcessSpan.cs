@@ -321,7 +321,7 @@ namespace SkyCombImage.ProcessLogic
         // Recalculate the Span.Objects.Features.LocationM and HeightM using triangulation.
         public void TriangulateSpanObjectsFeaturesLocationAndHeight(ProcessObjList theObjs, ProcessAll processAll)
         {
-            var compareInterval = 5; // Frame pair intervals constant, 3 frames is 1/20th of second. 5 frames is 1/6th of a second.
+            var compareInterval = 20; // Frame pair intervals constant, 3 frames is 1/20th of second. 5 frames is 1/6th of a second.
             var totBlocks = Process.Blocks.Count;
             foreach (var block in Process.Blocks.Values)
             {
@@ -526,7 +526,7 @@ namespace SkyCombImage.ProcessLogic
             // Calculate P = K[R|t]
             return K * Rt;
         }
-        public Mat PointDirection(ProcessFeature feat, Mat K)
+        public Mat PointDirection(ProcessFeature feat, Mat t, Mat K)
         {
             using Mat R = CreateRotationMatrix(feat.Block.RollDeg, feat.Block.PitchDeg, feat.Block.YawDeg);
 
@@ -535,7 +535,7 @@ namespace SkyCombImage.ProcessLogic
             PixelPoint.At<double>(0, 0) = featpoint.X;
             PixelPoint.At<double>(1, 0) = featpoint.Y;
             PixelPoint.At<double>(2, 0) = 1;
-            return R * (K.Inv() * PixelPoint);
+            return R.Inv() * (K.Inv() * PixelPoint - t);
         }
         public List<double>? GetPoint(ProcessFeature fromF, ProcessFeature toF, Mat K)
         {
@@ -543,20 +543,22 @@ namespace SkyCombImage.ProcessLogic
                             Debug.WriteLine("=========  To object: " + toF.ObjectId.ToString() + "=========  block: " + toF.Block.BlockId.ToString() + "=========  feature: " + toF.FeatureId.ToString());
                             Debug.WriteLine("");
             
-            using var RayFromF = PointDirection(fromF, K);
-            using var RayToF = PointDirection(toF, K);
+            using Mat t1 = new Mat(3, 1, MatType.CV_64F);
+            t1.At<double>(0, 0) = fromF.Block.DroneLocnM.EastingM;
+            t1.At<double>(1, 0) = fromF.Block.DroneLocnM.NorthingM;
+            t1.At<double>(2, 0) = fromF.Block.AltitudeM;
 
-            using Mat fromC = new Mat(3, 1, MatType.CV_64F);
-            fromC.At<double>(0, 0) = fromF.Block.DroneLocnM.EastingM;
-            fromC.At<double>(1, 0) = fromF.Block.DroneLocnM.NorthingM;
-            fromC.At<double>(2, 0) = fromF.Block.AltitudeM;
+            using Mat t2 = new Mat(3, 1, MatType.CV_64F);
+            t1.At<double>(0, 0) = toF.Block.DroneLocnM.EastingM;
+            t1.At<double>(1, 0) = toF.Block.DroneLocnM.NorthingM;
+            t1.At<double>(2, 0) = toF.Block.AltitudeM;
 
-            using Mat toC = new Mat(3, 1, MatType.CV_64F);
-            fromC.At<double>(0, 0) = toF.Block.DroneLocnM.EastingM;
-            fromC.At<double>(1, 0) = toF.Block.DroneLocnM.NorthingM;
-            fromC.At<double>(2, 0) = toF.Block.AltitudeM;
+            using var RayFromF = PointDirection(fromF, t1, K);
+            using var RayToF = PointDirection(toF, t2, K);
 
-            using Mat C = fromC - toC;
+
+
+            using Mat C = t1 - t2;
 
             using Mat LHS = new Mat(3, 2, MatType.CV_64F, Scalar.All(0));
             LHS.At<double>(0, 0) = -RayFromF.At<double>(0, 0);
@@ -601,8 +603,8 @@ namespace SkyCombImage.ProcessLogic
             using Mat Params = Moore_Penrose_LHS_Inv * C;
             using Mat test1 = Moore_Penrose_LHS_Inv * LHS;
             using Mat test2 = LHS * Params - C;
-            using Mat Ans1 = fromC + RayFromF * Params.At<double>(0, 0);
-            using Mat Ans2 = toC + RayToF * Params.At<double>(1, 0);
+            using Mat Ans1 = t1 + RayFromF * Params.At<double>(0, 0);
+            using Mat Ans2 = t2 + RayToF * Params.At<double>(1, 0);
             //
             //=====================================================================
             List<double> result = new();
