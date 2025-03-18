@@ -1,11 +1,31 @@
 // Copyright SkyComb Limited 2025. All rights reserved. 
+using Accord.Math;
+using Accord.Statistics.Kernels;
+using Accord;
+using MathNet.Numerics.LinearAlgebra.Factorization;
+using Microsoft.VisualBasic.ApplicationServices;
+using Microsoft.VisualBasic;
 using OpenCvSharp;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
+using System.Data;
 using System.Diagnostics;
+using System.DirectoryServices.ActiveDirectory;
 using System.Drawing;
+using static Emgu.CV.XImgproc.SupperpixelSLIC;
+using static MS.WindowsAPICodePack.Internal.CoreNativeMethods;
+using static OfficeOpenXml.ExcelErrorValue;
+using static System.Windows.Forms.AxHost;
+using static System.Windows.Forms.DataFormats;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolTip;
+using System.Dynamic;
+using System.Net;
+using System.Threading;
+using YoloDotNet.Models;
+using Emgu.CV.CvEnum;
+//using alglib;
 
 
 
@@ -216,7 +236,7 @@ namespace SkyCombImage.ProcessLogic
             if (true)
             {
                 // nq new method
-                TriangulateSpanObjectsFeaturesLocationAndHeight(theObjs, Process);
+                TriangulateSpanObjectsFeaturesLocationAndHeight(Process);
                 foreach (var theObj in theObjs)
                     theObj.Value.Calculate_RealObject_SimpleMemberData();
                 theObjs.CalculateSettings();
@@ -315,13 +335,12 @@ namespace SkyCombImage.ProcessLogic
         //VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
         // Copy the static Lennard Spark drone camera intrinsic matrix
         public static Mat K = ProcessConfigModel.LennardsDroneK;
-
-
+        public static Point2d ImageDim = ProcessConfigModel.LennardsDroneImageDimensions;
         //           Fix and test with non zero animal
         // Recalculate the Span.Objects.Features.LocationM and HeightM using triangulation.
-        public void TriangulateSpanObjectsFeaturesLocationAndHeight(ProcessObjList theObjs, ProcessAll processAll)
+        public void TriangulateSpanObjectsFeaturesLocationAndHeight(ProcessAll processAll)
         {
-            var compareInterval = 20; // Frame pair intervals constant, 3 frames is 1/20th of second. 5 frames is 1/6th of a second.
+            var compareInterval = 3; // Frame pair intervals constant, 3 frames is 1/20th of second. 5 frames is 1/6th of a second.
             var totBlocks = Process.Blocks.Count;
             foreach (var block in Process.Blocks.Values)
             {
@@ -337,118 +356,251 @@ namespace SkyCombImage.ProcessLogic
                 for (var id = block.MinFeatureId; id <= block.MaxFeatureId; id++)
                 {
                     var feature = Process.ProcessFeatures[id];
-                    if (!feature.Significant) continue;
-                    if ((feature.PixelBox.X <= 1) || (feature.PixelBox.X + feature.PixelBox.Width >= 1280) || (feature.PixelBox.Y <= 1) || (feature.PixelBox.Y + feature.PixelBox.Height >= 1024)) continue; //too close to edge
+                    if (!BlockInfo.DistinctFeature(feature, ImageDim)) continue;
                     var objid = feature.ObjectId;
                     for (var idC = compareBlock.MinFeatureId; idC <= compareBlock.MaxFeatureId; idC++)
                     {
                         var featureC = Process.ProcessFeatures[idC];
-                        if ((featureC.PixelBox.X <= 1) || (featureC.PixelBox.X + featureC.PixelBox.Width >= 1280) || (featureC.PixelBox.Y <= 1) || (featureC.PixelBox.Y + featureC.PixelBox.Height >= 1024)) continue; //too close to edge
                         var objidC = featureC.ObjectId;
                         if (objid != objidC) continue;
-                        BlocksInfo.fromObs.Add(objid);
-                        BlocksInfo.fromFeatures.Add(objid, feature);
-                        BlocksInfo.toFeatures.Add(objid, featureC);
+                        if (!BlockInfo.DistinctFeature(featureC, ImageDim)) continue;
 
-                        // Updating for new stuff 12/3
-                        var result = BlocksInfo.GetPoint(feature, featureC, K);
+                        var result = BlocksInfo.GetPoint(feature, featureC, K, processAll, ImageDim, compareInterval);
                         if (result is not null)
                         {
                             feature.LocationM = new DroneLocation((float)result[1], (float)result[0]); // Northing is stored first in location
                             // Change from altitude to height based on ground altitude at location
                             var obsDEM = processAll.GroundData.DemModel.GetElevationByDroneLocn(feature.LocationM);
                             Assert(obsDEM != UnknownValue, objid.ToString() + " " + feature.FeatureId.ToString() + " object/feature location out of bounds");
-                            feature.HeightM = (float)result[2]- obsDEM;
+                            feature.HeightM = (float)result[2] - obsDEM;
                         }
                     }
                 }
-                /*if (BlocksInfo.fromObs.Count == 0) continue;
-                Debug.WriteLine("+++++++++++++++++++++++++");
-                using var Points1 = ToTriangulationFormat(BlocksInfo.CreatePoints(true));
-                using var Points2 = ToTriangulationFormat(BlocksInfo.CreatePoints(false));
-                using var Projection1 = BlocksInfo.CreateProjectionMatrix(block.DroneLocnM.EastingM, block.DroneLocnM.NorthingM, block.AltitudeM, block.RollDeg, block.PitchDeg, block.YawDeg, K);
-                using var Projection2 = BlocksInfo.CreateProjectionMatrix(compareBlock.DroneLocnM.EastingM, compareBlock.DroneLocnM.NorthingM, compareBlock.AltitudeM, compareBlock.RollDeg, compareBlock.PitchDeg, compareBlock.YawDeg, K);
-                using Mat homogeneousPoints = new Mat();
-                Debug.WriteLine(blockId.ToString());
-                for (int i = 0; i < 3; i++)
-                {
-                    for (int j = 0; j < 4; j++)
-                    {
-                        Debug.Write(Projection1.At<double>(i, j).ToString() + " ");
-                    }
-                    Debug.WriteLine("");
-                }
-
-                Cv2.TriangulatePoints(Projection1, Projection2, Points1, Points2, homogeneousPoints);
-                // Convert homogeneous coordinates to 3D and update the locations into YoloProcessFeature
-                int counter = 0;
-                foreach (var thisfeature in BlocksInfo.fromFeatures.Values)
-                {
-                    thisfeature.realLocation = [(float)(homogeneousPoints.At<double>(0, counter) / homogeneousPoints.At<double>(3, counter)),
-                            (float)(homogeneousPoints.At<double>(1, counter) / homogeneousPoints.At<double>(3, counter)),
-                            (float)(homogeneousPoints.At<double>(2, counter) / homogeneousPoints.At<double>(3, counter))];
-                    counter++;
-                }*/
-                
             }
-
-            /* Overwriting existing feature LocationM and HeightM
-            double[] lastlocation = [0,0,0];
-            foreach (var obj in theObjs)
-                foreach (ProcessFeature thisfeature in obj.Value.ProcessFeatures.Values)
-                {
-                    if (thisfeature.realLocation[0] == 0 && thisfeature.realLocation[1] == 0) //this happens because of the compare interval, the location is written to the first feature of the pair.
-                    {
-                        thisfeature.LocationM = new DroneLocation((float)lastlocation[1], (float)lastlocation[0]);
-                        thisfeature.HeightM = (float)lastlocation[2];
-                    }
-                    else
-                    {
-                        thisfeature.LocationM = new DroneLocation((float)thisfeature.realLocation[1], (float)thisfeature.realLocation[0]);
-                        thisfeature.HeightM = (float)thisfeature.realLocation[2];
-                        lastlocation = thisfeature.realLocation;
-                    }
-                        Debug.WriteLine(thisfeature.BlockId.ToString() + "," + obj.Key.ToString() + "," + thisfeature.LocationM.EastingM.ToString() + "," + thisfeature.LocationM.NorthingM.ToString() + ",");
-                     
-                }
-            */
         }
 
-
-        // Convert collected points to OpenCV Mat format for triangulation
-        public Mat ToTriangulationFormat(List<Point2d> points1)
-        {
-            var points1Mat = new Mat(2, points1.Count, MatType.CV_64F);
-
-            for (int i = 0; i < points1.Count; i++)
-            {
-                points1Mat.Set<double>(0, i, points1[i].X);
-                points1Mat.Set<double>(1, i, points1[i].Y);
-            }
-
-            return points1Mat;
-        }
     }
 
     //-----------------------------------------------------------------------------------------------------------------------------------------------------
 
     public class BlockInfo
     {
-        private bool disposed = false;
-        public SortedList<int, ProcessFeature> fromFeatures = new SortedList<int, ProcessFeature>();
-        public SortedList<int, ProcessFeature> toFeatures = new SortedList<int, ProcessFeature>();
-        public List<int> fromObs = new List<int>();
-        // Create the points list
-        public List<Point2d> CreatePoints(bool from)
+        public static bool DistinctFeature(ProcessFeature feature, Point2d imageDim)
         {
-            var pointlist = new List<Point2d>();
-            var feats = from ? fromFeatures : toFeatures;
-            foreach (var obj in fromObs)
+            if (!feature.Significant) return false;
+            // we have to divide pixel box dimensions by 2 because the DJI camera is returning double intensity. 
+            if ((feature.PixelBox.X / 2 <= 1) || (feature.PixelBox.X / 2 + feature.PixelBox.Width / 2 >= imageDim.X) || (feature.PixelBox.Y / 2 <= 1) || (feature.PixelBox.Y / 2 + feature.PixelBox.Height / 2 >= imageDim.Y)) return false; //too close to edge
+            return true;
+        }
+        private static List<Point2d>? AdjustedPoints(ProcessFeature fromf, ProcessFeature tof, ProcessAll processAll, Point2d imageDim, int interval)
+        {
+            // we want to minimize: Sum over features f in selected interval I with feature centroid (cxf, cyf) feature width and height (wf, hf)
+            // of F(xf, yf) = (xf - cxf + yf - cyf) => min F(xf, yf) = xf + yf
+            //  where for every f: yf = a.yx + k
+            //      => if drone is going in a straight line at constant speed, for every f and the adjacent (f+1): xf - x(f+1) - q1 = 0, yf - y(f+1) - q2 = 0
+            //  and q1, q2 unconstrained
+            //  and for every fx: cxf - wf <= xf <= cxf + wf
+            //  and for every fy: cyf - hf <= yf <= cyf + hf
+            //Therefore we have (2*I + 2) variables xf, yf, q1, q2; I = number of features in the interval
+
+            /* Cost term: C array N. state=algorithm state
+              c = [Sum over f(xf + yf)]
+              minlpsetcost(minlpstate state, double[] c)
+
+             * General linear constraints are specified as AL<=A*x<=AU; AL,AU vectors, A matrix; K is the number of equality/inequality constraints
+              AL = [[cxf - wf/2], [cyf - hf/2], [0], [0]]
+              AU = [[cxf + wf/2], [cyf + hf/2], [0], [0]]
+              A = [[xf], [yf], [xf - x(f+1) - q1], [yf - y(f+1) - q2]]
+              K = (I-1) + (I-1) + I + I
+              minlpsetlc2(minlpstate state, sparsematrix a, double[] al, double[] au, int k)
+
+             * ALGLIB optimizers use scaling matrices to test stopping  conditions and as preconditioner. S=array[N], non-zero scaling coefficients
+                Scale of the I-th variable is a translation invariant measure of:
+                a) "how large" the variable is
+                b) how large the step should be to make significant changes in the function.
+                s = [1/2 image width, 1/2 image height
+                minlpsetscale(minlpstate state, double[] s)
+            */
+
+            /* If infeasible, we could add into the objective function quadruple weighted variables vxf and vyf (which would reveal where a feature was useless)
+             * such that:
+             *  0 <= xf - x(f+1) - q1 + vxf - vx(f+1) <= 0
+             *  0 <= yf - y(f+1) - q1 + vyf - vy(f+1) <= 0
+             *  vxf >= 0, vyf >= 0, scale 10?
+             *  The weight could be I, so cost function => min F(xf, yf, vxf, vyf) = xf + yf + I.vxf + I.vyf
+             *  
+             *  Conversely, if too many feasible points, could make xf double weighted and add half weighted variables constrained closer to the centroid.
+             */
+            var obj = fromf.ObjectId;
+            var firstFeat = fromf.Block.BlockId;
+            var lastfeat = tof.Block.BlockId;
+            var featlist = processAll.ProcessObjects[obj].ProcessFeatures.Values;
+            int M = (interval + 1) * 2 + 2*interval + (interval + 1) * 2 + 2; // xf and yf rectangle bounds, q fitting, vxf and vyf >= 0, q1 and q2 unconstrained
+            int N = (interval + 1) * 4 + 2; // xf, yf, vxf, vyf, q1, q2
+            double[] AL = new double[M]; 
+            double[] AU = new double[M];
+            double[,] A = new double[M,N];
+            double[] C = new double[N]; // including q1 & q2 in the cost function with multiplied by 0
+            double[] s = new double[N]; //scale
+            int featcount = 0;
+            foreach (var feature in featlist)            
             {
-                Debug.Write((from? "From obj,":"To obj,") +obj.ToString()+","+ "Feature " + feats[obj].FeatureId.ToString() + "," + "Drone altitude " + feats[obj].Block.AltitudeM.ToString() + ",");
-                pointlist.Add(centroid(feats[obj].PixelBox));
+                if ((feature.BlockId > lastfeat) || (feature.BlockId < firstFeat)) continue;
+                //xf
+                AL[featcount * 6] = feature.PixelBox.X / 2; 
+                AU[featcount * 6] = (feature.PixelBox.X + feature.PixelBox.Width) / 2;
+                A[featcount * 6, featcount * 4] = 1; 
+                //yf
+                AL[featcount * 6 + 1] = feature.PixelBox.Y / 2; 
+                AU[featcount * 6 + 1]=(feature.PixelBox.Y + feature.PixelBox.Height) / 2;
+                A[featcount * 6 + 1, featcount * 4 + 1] = 1; 
+                //vxf
+                AL[featcount * 6 + 2] = 0;
+                AU[featcount * 6 + 2] = System.Double.PositiveInfinity;
+                A[featcount * 6 + 2, featcount * 4 + 2] = 1; 
+                //vyf
+                AL[featcount * 6 + 3] = 0;
+                AU[featcount * 6 + 3] = System.Double.PositiveInfinity;
+                A[featcount * 6 + 3, featcount * 4 + 3] = 1; 
+
+                // cost function
+                C[featcount * 4] = 1; //xf
+                C[featcount * 4 + 1] = 1; //yf
+                C[featcount * 4 + 2] = interval; //vxf
+                C[featcount * 4 + 3] = interval; //vyf
+                // scaling for xf and yf
+                s[featcount * 4] = imageDim.X/interval;
+                s[featcount * 4 + 1] = imageDim.Y/interval;
+                s[featcount * 4 + 2] = 10;
+                s[featcount * 4 + 3] = 10;
+
+                if (feature.BlockId < lastfeat) 
+                {
+                    // [xf  +vxf - x(f+1) -vx(f+1)- q1 ]
+                    A[featcount * 6 + 4, featcount * 4 ] = 1;
+                    A[featcount * 6 + 4, featcount * 4 + 2] = 1;
+                    A[featcount * 6 + 4, (featcount + 1) * 4] = -1;
+                    A[featcount * 6 + 4, (featcount + 1) * 4 + 2] = -1;
+                    A[featcount * 6 + 4, interval * 4 + 4] = -1;
+                    // [yf  +vyf- y(f+1) -vy(f+1)- q2]
+                    A[featcount * 6 + 5, featcount * 4 + 1] = 1;
+                    A[featcount * 6 + 5, featcount * 4 + 3] = 1;
+                    A[featcount * 6 + 5, (featcount + 1) * 4 + 1] = -1;
+                    A[featcount * 6 + 5, (featcount + 1) * 4 + 3] = -1;
+                    A[featcount * 6 + 5, interval * 4 + 5] = -1;
+                    // AL and AU are zero by default
+                }
+                else
+                {
+                    // final scaling for q
+                    s[featcount * 4 + 4] = imageDim.X / interval;
+                    s[featcount * 4 + 5] = imageDim.Y / interval;
+                    // unconstrained q1 and q2
+                    A[featcount * 6 + 4, interval * 4 + 4] = 1;
+                    A[featcount * 6 + 5, interval * 4 + 5] = 1;
+                    AL[featcount * 6 + 4] = -System.Double.PositiveInfinity;
+                    AU[featcount * 6 + 4] = System.Double.PositiveInfinity;
+                    AL[featcount * 6 + 5] = -System.Double.PositiveInfinity;
+                    AU[featcount * 6 + 5] = System.Double.PositiveInfinity;
+                    // cost function for q1 & q2 auto set to zero because we don't want to minimize them
+                }
+                // Assuming at present that I don't have to put in bounds for q1 and q2, otherwise they would be set at -System.Double.PositiveInfinity and System.Double.PositiveInfinity
+                featcount++;
             }
-            return pointlist;
+            Debug.WriteLine("{0}", alglib.ap.format(A, 2));
+            Debug.WriteLine("{0}", alglib.ap.format(AL, 2));
+            Debug.WriteLine("{0}", alglib.ap.format(AU, 2));
+            Debug.WriteLine(alglib.ap.format(C, 2));
+
+            double[] ans;
+            alglib.minlpstate state;
+            alglib.minlpreport rep;
+
+            alglib.minlpcreate(N, out state);
+            alglib.minlpsetcost(state, C);
+            //alglib.minlpsetbc(state, bndl, bndu);
+            alglib.minlpsetlc2dense(state, A, AL, AU, M);
+            alglib.minlpsetscale(state, s);
+            alglib.minlpsetalgodss(state,0);
+            alglib.minlpoptimize(state);
+            alglib.minlpresults(state, out ans, out rep);
+            // Debug.WriteLine("{0}", alglib.ap.format(ans, 3));
+            Debug.WriteLine("{0}", rep.terminationtype);
+
+            return null;
+            /* The subroutine creates LP  solver.  After  initial  creation  it  contains
+            default optimization problem with zero cost vector and all variables being
+fixed to zero values and no constraints.
+
+In order to actually solve something you should:
+*set cost vector with minlpsetcost()
+*set variable bounds with minlpsetbc(), or minlpsetbcall() if constraints for all variables are same
+*
+*Following types of constraints are supported:
+
+    DESCRIPTION         CONSTRAINT              HOW TO SPECIFY
+    fixed variable      x[i]=Bnd[i]             BndL[i]=BndU[i]
+    lower bound         BndL[i]<=x[i]           BndU[i]=+INF
+    upper bound         x[i]<=BndU[i]           BndL[i]=-INF
+    range               BndL[i]<=x[i]<=BndU[i]  ...
+    free variable       -                       BndL[I]=-INF, BndU[I]+INF
+
+INPUT PARAMETERS:
+    State   -   structure stores algorithm state
+    BndL    -   lower bounds, array[N].
+    BndU    -   upper bounds, array[N].
+
+NOTE: infinite values can be specified by means of Double.PositiveInfinity
+      and  Double.NegativeInfinity  (in  C#)  and  alglib::fp_posinf   and
+      alglib::fp_neginf (in C++).
+*
+*
+*
+*specify constraint matrix with one of the following functions:
+            [*] minlpsetlc()        for dense one-sided constraints
+            [*] minlpsetlc2dense()  for dense two-sided constraints
+            [*] minlpsetlc2()       for sparse two-sided constraints
+                    [*] minlpaddlc2dense()  to add one dense row to constraint matrix
+                    [*] minlpaddlc2()       to add one row to constraint matrix(compressed format)
+* call minlpoptimize() to run the solver and  minlpresults()  to  get  the
+  solution vector and additional information.
+
+By  default, LP  solver uses best algorithm available.As of ALGLIB 3.17,
+sparse interior point(barrier) solver is used.Future releases of  ALGLIB
+may introduce other solvers.
+
+User may choose specific LP algorithm by calling:
+*minlpsetalgodss() for revised dual simplex method with DSE  pricing  and
+  bounds flipping ratio test(aka long dual step).Large - scale  sparse LU
+  solverwith  Forest - Tomlin update is used internally as linear  algebra
+  driver.
+* minlpsetalgoipm() for sparse interior point method
+
+INPUT PARAMETERS:
+    N - problem size
+
+OUTPUT PARAMETERS:
+    State - optimizer in the default state
+
+REPORT
+TerminationType field contains completion code, which can be:
+  -8    internal integrity control detected  infinite  or  NAN  values  in
+        function/gradient. Abnormal termination signalled.
+  -3    inconsistent constraints. Feasible point is
+        either nonexistent or too hard to find. Try to
+        restart optimizer with better initial approximation
+   1    relative function improvement is no more than EpsF.
+   2    relative step is no more than EpsX.
+   4    gradient norm is no more than EpsG
+   5    MaxIts steps was taken
+   7    stopping conditions are too stringent,
+        further improvement is impossible,
+        X contains best point found so far.
+   8    terminated by user who called minbleicrequesttermination(). X contains
+        point which was "current accepted" when  termination  request  was
+        submitted.
+
+*/
         }
 
         // Calculate the centroid of the pixelbox and convert location to real pixels, half that given, because the image has been double sized by DGI.
@@ -496,36 +648,6 @@ namespace SkyCombImage.ProcessLogic
             return Rz * Ry * Rx;
         }
 
-        /* Calulate the projection matrices from K, using the camera intrinsic matrix, and the drone camera's rotation matrix.
-             The general form of the projection matrix P is P=K⋅[R∣t], where [R∣t] is the camera's extrinsic matrix, composed of the rotation matrix R and the translation vector t. 
-             The translation vector t is derived from the camera's position C in the world as follows: t =  − R⋅C.   */
-        public Mat CreateProjectionMatrix(
-            double easting, double northing, double altitude,
-            double rollDegrees, double pitchDegrees, double yawDegrees, Mat K)
-        {
-            // Create rotation matrix
-            using Mat R = CreateRotationMatrix(rollDegrees, pitchDegrees, yawDegrees);
-
-            // Create translation vector
-            using Mat t = new Mat(3, 1, MatType.CV_64F);
-            t.At<double>(0, 0) = easting;
-            t.At<double>(1, 0) = northing;
-            t.At<double>(2, 0) = altitude;
-
-            // Create [R|t] matrix
-            using Mat Rt = new Mat(3, 4, MatType.CV_64F);
-            using Mat negRt = -R * t;
-
-            for (int i = 0; i < 3; i++) // Copy rotation matrix
-                for (int j = 0; j < 3; j++)
-                    Rt.At<double>(i, j) = R.At<double>(i, j);
-            
-            for (int i = 0; i < 3; i++) // Copy negative translation
-                Rt.At<double>(i, 3) = negRt.At<double>(i, 0);
-
-            // Calculate P = K[R|t]
-            return K * Rt;
-        }
         public Mat PointDirection(ProcessFeature feat, Mat t, Mat K)
         {
             using Mat R = CreateRotationMatrix(feat.Block.RollDeg, feat.Block.PitchDeg, feat.Block.YawDeg);
@@ -537,8 +659,9 @@ namespace SkyCombImage.ProcessLogic
             PixelPoint.At<double>(2, 0) = 1;
             return R.Inv() * (K.Inv() * PixelPoint - t);
         }
-        public List<double>? GetPoint(ProcessFeature fromF, ProcessFeature toF, Mat K)
+        public List<double>? GetPoint(ProcessFeature fromF, ProcessFeature toF, Mat K, ProcessAll process, Point2d imageDim, int interval)
         {
+            var adjustedPoints = AdjustedPoints(fromF, toF, process, imageDim, interval);
                             Debug.WriteLine("=========  From object: " + fromF.ObjectId.ToString() + "=========  block: " + fromF.Block.BlockId.ToString() + "=========  feature: " + fromF.FeatureId.ToString());
                             Debug.WriteLine("=========  To object: " + toF.ObjectId.ToString() + "=========  block: " + toF.Block.BlockId.ToString() + "=========  feature: " + toF.FeatureId.ToString());
                             Debug.WriteLine("");
@@ -555,8 +678,6 @@ namespace SkyCombImage.ProcessLogic
 
             using var RayFromF = PointDirection(fromF, t1, K);
             using var RayToF = PointDirection(toF, t2, K);
-
-
 
             using Mat C = t1 - t2;
 

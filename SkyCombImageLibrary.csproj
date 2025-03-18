@@ -18,8 +18,20 @@
     <PackageReference Include="SkiaSharp" Version="2.88.8" />
     <PackageReference Include="YoloDotNet" Version="2.2.0" />
   </ItemGroup>
+	<ItemGroup>
+		<Reference Include="alglib404gpl_net5.dll">
+			<HintPath>libs/alglib404gpl_net5.dll</HintPath>
+			<Private>True</Private>
+		</Reference>
+	</ItemGroup>
+	<ItemGroup>
+		<None Update="libs/alglib404gpl_net5.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 
-  <ItemGroup>
+
+	<ItemGroup>
     <ProjectReference Include="..\SkyCombDroneLibrary\SkyCombDroneLibrary.csproj" />
   </ItemGroup>
 

@@ -82,11 +82,11 @@ namespace SkyCombImage.ProcessModel
 
         // --------------------- Error Thresholds --------------------- 
         // The maximum +/- inaccuracy (in meters) in an object's estimated location to be considered "good" & colored green
-        public const float GoodLocationErrM = 2;
+        public const float GoodLocationErrM = 5;
         // The maximum +/- inaccuracy (in meters) in an object's estimated height to be considered "good" & colored green 
-        public const float GoodHeightErrM = 2;
+        public const float GoodHeightErrM = 5;
         // If height inaccuracy is too great then height calculation is abandoned.
-        public const float AbandonHeightErrM = 4;
+        public const float AbandonHeightErrM = 5;
 
 
         // --------------------- Processing Limits --------------------- 
@@ -222,9 +222,9 @@ namespace SkyCombImage.ProcessModel
             K.At<double>(2, 2) = 1;
             return K;
         }
-
+        public static Point2d LennardsDroneImageDimensions = new(X: 640, Y: 512);
 
         // Hardcode the drone camera intrinsic matrix for Lennard Sparks drone camera
-        public static Mat LennardsDroneK = Intrinsic(9.1, 640, 512, 7.68, 6.144);
+        public static Mat LennardsDroneK = Intrinsic(9.1, LennardsDroneImageDimensions.X, LennardsDroneImageDimensions.Y, 7.68, 6.144);
     }
 }
