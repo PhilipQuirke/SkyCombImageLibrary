@@ -435,8 +435,10 @@ namespace SkyCombImage.ProcessLogic
             var firstFeat = fromf.Block.BlockId;
             var lastfeat = tof.Block.BlockId;
             var featlist = processAll.ProcessObjects[obj].ProcessFeatures.Values;
-            int M = (interval + 1) * 2 + 2*interval + (interval + 1) * 2 + 2; // xf and yf rectangle bounds, q fitting, vxf and vyf >= 0, q1 and q2 unconstrained
+            int M = 2 * interval ; // q fitting
             int N = (interval + 1) * 4 + 2; // xf, yf, vxf, vyf, q1, q2
+            double[] bndl = new double[N]; // xf and yf rectangle bounds, vxf and vyf >= 0, q1 and q2 unconstrained
+            double[] bndu = new double[N];
             double[] AL = new double[M]; 
             double[] AU = new double[M];
             double[,] A = new double[M,N];
@@ -447,70 +449,58 @@ namespace SkyCombImage.ProcessLogic
             {
                 if ((feature.BlockId > lastfeat) || (feature.BlockId < firstFeat)) continue;
                 //xf
-                AL[featcount * 6] = feature.PixelBox.X / 2; 
-                AU[featcount * 6] = (feature.PixelBox.X + feature.PixelBox.Width) / 2;
-                A[featcount * 6, featcount * 4] = 1; 
-                //yf
-                AL[featcount * 6 + 1] = feature.PixelBox.Y / 2; 
-                AU[featcount * 6 + 1]=(feature.PixelBox.Y + feature.PixelBox.Height) / 2;
-                A[featcount * 6 + 1, featcount * 4 + 1] = 1; 
-                //vxf
-                AL[featcount * 6 + 2] = 0;
-                AU[featcount * 6 + 2] = System.Double.PositiveInfinity;
-                A[featcount * 6 + 2, featcount * 4 + 2] = 1; 
-                //vyf
-                AL[featcount * 6 + 3] = 0;
-                AU[featcount * 6 + 3] = System.Double.PositiveInfinity;
-                A[featcount * 6 + 3, featcount * 4 + 3] = 1; 
-
-                // cost function
+                bndl[featcount * 4] = feature.PixelBox.X / 2;
+                bndu[featcount * 4] = (feature.PixelBox.X + feature.PixelBox.Width) / 2;
                 C[featcount * 4] = 1; //xf
+                s[featcount * 4] = 100;
+                //yf
+                bndl[featcount * 4 + 1] = feature.PixelBox.Y / 2;
+                bndu[featcount * 4 + 1]=(feature.PixelBox.Y + feature.PixelBox.Height) / 2;
                 C[featcount * 4 + 1] = 1; //yf
+                s[featcount * 4 + 1] = 100;
+                //vxf
+                bndl[featcount * 4 + 2] = 0;
+                bndu[featcount * 4 + 2] = System.Double.PositiveInfinity;
                 C[featcount * 4 + 2] = interval; //vxf
+                s[featcount * 4 + 2] = 70;
+                //vyf
+                bndl[featcount * 4 + 3] = 0;
+                bndu[featcount * 4 + 3] = System.Double.PositiveInfinity;
                 C[featcount * 4 + 3] = interval; //vyf
-                // scaling for xf and yf
-                s[featcount * 4] = imageDim.X/interval;
-                s[featcount * 4 + 1] = imageDim.Y/interval;
-                s[featcount * 4 + 2] = 10;
-                s[featcount * 4 + 3] = 10;
+                s[featcount * 4 + 3] = 70;
 
                 if (feature.BlockId < lastfeat) 
                 {
                     // [xf  +vxf - x(f+1) -vx(f+1)- q1 ]
-                    A[featcount * 6 + 4, featcount * 4 ] = 1;
-                    A[featcount * 6 + 4, featcount * 4 + 2] = 1;
-                    A[featcount * 6 + 4, (featcount + 1) * 4] = -1;
-                    A[featcount * 6 + 4, (featcount + 1) * 4 + 2] = -1;
-                    A[featcount * 6 + 4, interval * 4 + 4] = -1;
+                    A[featcount * 2 + 0, featcount * 4 ] = 1;
+                    A[featcount * 2 + 0, featcount * 4 + 2] = 1;
+                    A[featcount * 2 + 0, (featcount + 1) * 4] = -1;
+                    A[featcount * 2 + 0, (featcount + 1) * 4 + 2] = -1;
+                    A[featcount * 2 + 0, interval * 4 + 4] = -1;
                     // [yf  +vyf- y(f+1) -vy(f+1)- q2]
-                    A[featcount * 6 + 5, featcount * 4 + 1] = 1;
-                    A[featcount * 6 + 5, featcount * 4 + 3] = 1;
-                    A[featcount * 6 + 5, (featcount + 1) * 4 + 1] = -1;
-                    A[featcount * 6 + 5, (featcount + 1) * 4 + 3] = -1;
-                    A[featcount * 6 + 5, interval * 4 + 5] = -1;
+                    A[featcount * 2 + 1, featcount * 4 + 1] = 1;
+                    A[featcount * 2 + 1, featcount * 4 + 3] = 1;
+                    A[featcount * 2 + 1, (featcount + 1) * 4 + 1] = -1;
+                    A[featcount * 2 + 1, (featcount + 1) * 4 + 3] = -1;
+                    A[featcount * 2 + 1, interval * 4 + 5] = -1;
                     // AL and AU are zero by default
                 }
                 else
                 {
                     // final scaling for q
-                    s[featcount * 4 + 4] = imageDim.X / interval;
-                    s[featcount * 4 + 5] = imageDim.Y / interval;
-                    // unconstrained q1 and q2
-                    A[featcount * 6 + 4, interval * 4 + 4] = 1;
-                    A[featcount * 6 + 5, interval * 4 + 5] = 1;
-                    AL[featcount * 6 + 4] = -System.Double.PositiveInfinity;
-                    AU[featcount * 6 + 4] = System.Double.PositiveInfinity;
-                    AL[featcount * 6 + 5] = -System.Double.PositiveInfinity;
-                    AU[featcount * 6 + 5] = System.Double.PositiveInfinity;
+                    //q1
+                    bndl[featcount * 4 + 4] = -System.Double.PositiveInfinity;
+                    bndu[featcount * 4 + 4] = System.Double.PositiveInfinity;
+                    s[featcount * 4 + 4] = 200;
+                    //q2
+                    bndl[featcount * 4 + 5] = -System.Double.PositiveInfinity;
+                    bndu[featcount * 4 + 5] = System.Double.PositiveInfinity;
+                    s[featcount * 4 + 5] = 200;
                     // cost function for q1 & q2 auto set to zero because we don't want to minimize them
                 }
                 // Assuming at present that I don't have to put in bounds for q1 and q2, otherwise they would be set at -System.Double.PositiveInfinity and System.Double.PositiveInfinity
                 featcount++;
             }
-            Debug.WriteLine("{0}", alglib.ap.format(A, 2));
-            Debug.WriteLine("{0}", alglib.ap.format(AL, 2));
-            Debug.WriteLine("{0}", alglib.ap.format(AU, 2));
-            Debug.WriteLine(alglib.ap.format(C, 2));
 
             double[] ans;
             alglib.minlpstate state;
@@ -518,16 +508,22 @@ namespace SkyCombImage.ProcessLogic
 
             alglib.minlpcreate(N, out state);
             alglib.minlpsetcost(state, C);
-            //alglib.minlpsetbc(state, bndl, bndu);
+            alglib.minlpsetbc(state, bndl, bndu);
             alglib.minlpsetlc2dense(state, A, AL, AU, M);
             alglib.minlpsetscale(state, s);
             alglib.minlpsetalgodss(state,0);
             alglib.minlpoptimize(state);
             alglib.minlpresults(state, out ans, out rep);
-            // Debug.WriteLine("{0}", alglib.ap.format(ans, 3));
-            Debug.WriteLine("{0}", rep.terminationtype);
+            //Debug.WriteLine("{0}", alglib.ap.format(ans, 3));
+            //Debug.WriteLine("{0}", rep.terminationtype);
 
-            return null;
+            if (rep.terminationtype != 1) return null;
+            List<Point2d> points = new();
+            points.Add(new Point2d(ans[0], ans[1]));
+            points.Add(new Point2d(ans[interval * 4], ans[interval * 4 + 1]));
+
+            return points;
+
             /* The subroutine creates LP  solver.  After  initial  creation  it  contains
             default optimization problem with zero cost vector and all variables being
 fixed to zero values and no constraints.
@@ -603,17 +599,6 @@ TerminationType field contains completion code, which can be:
 */
         }
 
-        // Calculate the centroid of the pixelbox and convert location to real pixels, half that given, because the image has been double sized by DGI.
-        private Point2d centroid(Rectangle rectangle)
-        {
-            Point2d centroid = new Point2d();
-            centroid.X = (rectangle.X + rectangle.Width / 2)/2;
-            centroid.Y = (rectangle.Y + rectangle.Height / 2)/2;
-            Debug.WriteLine(centroid.X.ToString() + "," + centroid.Y.ToString() + ",");
-
-            return centroid;
-
-        }
         // Using camera drone information, determine camera heading/position
         private static Mat CreateRotationMatrix(double rollDegrees, double pitchDegrees, double yawDegrees)
         {
@@ -648,11 +633,10 @@ TerminationType field contains completion code, which can be:
             return Rz * Ry * Rx;
         }
 
-        public Mat PointDirection(ProcessFeature feat, Mat t, Mat K)
+        public Mat PointDirection(ProcessFeature feat, Mat t, Mat K, Point2d featpoint)
         {
             using Mat R = CreateRotationMatrix(feat.Block.RollDeg, feat.Block.PitchDeg, feat.Block.YawDeg);
 
-            var featpoint = centroid(feat.PixelBox);
             using Mat PixelPoint = new Mat(3, 1, MatType.CV_64F);
             PixelPoint.At<double>(0, 0) = featpoint.X;
             PixelPoint.At<double>(1, 0) = featpoint.Y;
@@ -676,8 +660,8 @@ TerminationType field contains completion code, which can be:
             t1.At<double>(1, 0) = toF.Block.DroneLocnM.NorthingM;
             t1.At<double>(2, 0) = toF.Block.AltitudeM;
 
-            using var RayFromF = PointDirection(fromF, t1, K);
-            using var RayToF = PointDirection(toF, t2, K);
+            using var RayFromF = PointDirection(fromF, t1, K, adjustedPoints[0]);
+            using var RayToF = PointDirection(toF, t2, K, adjustedPoints[1]);
 
             using Mat C = t1 - t2;
 
