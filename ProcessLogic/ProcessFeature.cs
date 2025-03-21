@@ -136,7 +136,6 @@ namespace SkyCombImage.ProcessLogic
         // If yImageFrac = 0 then object is at the very bottom of the image (furtherest from drone)
         // If yImageFrac = 1/2 then object is in the middle of the image 
         // If yImageFrac = 1 then object is at the top of the image (closest to drone)
-        // Y = 1 is the top of the image, closest to the drone. 
         public (double xFraction01, double yFraction01) CentroidImageFractions()
         {
             double xCenterPixels = Math.Min(PixelBox.X + PixelBox.Width / 2.0, ProcessAll.VideoData.ImageWidth);
@@ -144,8 +143,9 @@ namespace SkyCombImage.ProcessLogic
 
             // Calculate position of center of feature as fraction of drone image area.
             double xFraction01 = xCenterPixels / ProcessAll.VideoData.ImageWidth;
-            // With image pixels, y = 0 is the top of the image. 
-            // Here we change the "sign" of Y, so that y = 0 is the bottom of the image.
+
+            // With image pixels, y = 0 is the top of the image, but we want y = 0 to be the bottom.
+            // Transform y-coordinate so that y = 0 is the bottom of the image and y = 1 is the top.
             double yFraction01 = (ProcessAll.VideoData.ImageHeight - yCenterPixels) / ProcessAll.VideoData.ImageHeight;
 
             return (xFraction01, yFraction01);
@@ -199,8 +199,8 @@ namespace SkyCombImage.ProcessLogic
 
                 phase = 5;
                 // Assumes that Zoom is constant at 1
-                DroneTargetCalculator droneTargetCalculator = new();
-                LocationResult? result = droneTargetCalculator.CalculateTargetLocation(terrainGrid, droneState, cameraParams, imagePosition);
+                DroneTargetCalculator droneTargetCalculator = new(droneState);
+                LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition, cameraParams, false, terrainGrid);
                 if (result != null)
                 {
                     phase = 6;
@@ -220,15 +220,25 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Get the class's settings as datapairs (e.g. for saving to the datastore)
+        // Get the class's settings as datapairs (e.g. for saving to the datastore)\
+        // Add derived data that is saved but not reloaded.
         public override DataPairList GetSettings()
         {
             var settings = base.GetSettings();
 
-            // Derived data that is saved but not reloaded.
+            // PQR temp: Copied code for debug purposes
+            (double xFraction01, double yFraction01) = CentroidImageFractions(); // Range 0 to 1
+            ImagePosition imagePosition = new();
+            imagePosition.HorizontalFraction = (float)(xFraction01 * 2 - 1); // Range -1 to +1
+            imagePosition.VerticalFraction = (float)(yFraction01 * 2 - 1); // Range -1 to +1
+
             settings.Add("Leg", (Block != null ? Block.FlightLegId : 0));
             // Horizontal distance from feature to drone.
             settings.Add("RangeM", (Block != null ? RelativeLocation.DistanceM(LocationM, Block.DroneLocnM) : 0), LocationNdp);
+            settings.Add("xFrac", xFraction01, LocationNdp); // Range 0 to 1
+            settings.Add("yFrac", yFraction01, LocationNdp); // Range 0 to 1
+            settings.Add("hFrac", imagePosition.HorizontalFraction, LocationNdp); // Range -1 to +1
+            settings.Add("vFrac", imagePosition.VerticalFraction, LocationNdp); // Range -1 to +1
 
             return settings;
         }

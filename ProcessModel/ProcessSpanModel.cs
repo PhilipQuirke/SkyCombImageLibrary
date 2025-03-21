@@ -75,9 +75,9 @@ namespace SkyCombImage.ProcessModel
             BestFixPitchDeg = fixPitchDeg;
             BestSumLocnErrM = objs.SumLocationErrM;
             BestSumHeightErrM = objs.SumHeightErrM;
-            Debug.Print("  Set BestFix( " +
-                "HFOV+"+ BestHFOVDeg.ToString() +", AltM=" + BestFixAltM.ToString() + ", YawDeg=" + BestFixYawDeg.ToString() + ", PitchDeg=" + BestFixPitchDeg.ToString() + 
-                ", SumLocnErrM=" + BestSumLocnErrM.ToString() + ", ImprovementM=" + improvementM.ToString() +")");
+            //Debug.Print("  Set BestFix( " +
+            //    "HFOV+"+ BestHFOVDeg.ToString() +", AltM=" + BestFixAltM.ToString() + ", YawDeg=" + BestFixYawDeg.ToString() + ", PitchDeg=" + BestFixPitchDeg.ToString() + 
+            //    ", SumLocnErrM=" + BestSumLocnErrM.ToString() + ", ImprovementM=" + improvementM.ToString() +")");
         }
 
 
