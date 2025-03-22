@@ -182,36 +182,43 @@ namespace SkyCombImage.ProcessLogic
                 droneState.Altitude = flightStep.FixedAltitudeM; // Relies on FixAltM
                 droneState.Yaw = flightStep.FixedYawDeg;  // Relies on FixYawDeg
                 droneState.CameraDownAngle = 90 - flightStep.FixedCameraToVerticalForwardDeg; // Relies on FixPitchDeg
-
-                CameraParameters cameraParams = new();
-                cameraParams.HorizontalFOV = ProcessAll.VideoData.HFOVDeg;
-                cameraParams.VerticalFOV = (float)ProcessAll.VideoData.VFOVDeg;
-
-                (double xFraction01, double yFraction01) = CentroidImageFractions(); // Range 0 to 1
-                ImagePosition imagePosition = new();
-                imagePosition.HorizontalFraction = (float)(xFraction01 * 2 - 1); // Range -1 to +1
-                imagePosition.VerticalFraction = (float)(yFraction01 * 2 - 1); // Range -1 to +1
-
+ 
                 // LOS algorithm works very inaccurately if the camera is pointing near the horizon.
                 phase = 4;
                 if (droneState.CameraDownAngle < 15)
                     return;
 
+                int reduction_factor = 2;
+
+                CameraParameters cameraParams = new();
+                cameraParams.HorizontalFOV = ProcessAll.VideoData.HFOVDeg;
+                cameraParams.VerticalFOV = ProcessAll.VideoData.VFOVDeg;
+                cameraParams.ImageWidth = ProcessAll.VideoData.ImageWidth / reduction_factor;
+                cameraParams.ImageHeight = ProcessAll.VideoData.ImageHeight / reduction_factor;
+
+                (double xFraction01, double yFraction01) = CentroidImageFractions(); // Range 0 to 1
+                ImagePosition imagePosition = new();
+                imagePosition.PixelX = (int)((PixelBox.X + PixelBox.Width / 2.0) / reduction_factor);
+                imagePosition.PixelY = (int)((PixelBox.Y + PixelBox.Height / 2.0) / reduction_factor);
+                imagePosition.HorizontalFraction = (float)(xFraction01 * 2 - 1); // Range -1 to +1
+                imagePosition.VerticalFraction = (float)(yFraction01 * 2 - 1); // Range -1 to +1
+
                 phase = 5;
                 // Assumes that Zoom is constant at 1
-                DroneTargetCalculator droneTargetCalculator = new(droneState);
-                LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition, cameraParams, false, terrainGrid);
+                DroneTargetCalculatorV2 droneTargetCalculator = new(droneState, cameraParams);
+                droneTargetCalculator.UnitTest(Block.DroneLocnM, terrainGrid);
+                LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition, false, terrainGrid);
                 if (result != null)
                 {
                     phase = 6;
-                    HeightAlgorithm = LineOfSightHeightAlgorithm + result.Method;
+                    HeightAlgorithm = LineOfSightHeightAlgorithm;
                     LocationM = result.LocationNE.Clone();
                     HeightM = 0;
                     if (groundData.HasDemModel)
                         HeightM = result.Elevation - groundData.DemModel.GetElevationByDroneLocn(LocationM);
                 }
                 else
-                    HeightAlgorithm = "LOS NoResult";
+                    HeightAlgorithm = "NoResult";
             }
             catch (Exception ex)
             {
@@ -226,19 +233,9 @@ namespace SkyCombImage.ProcessLogic
         {
             var settings = base.GetSettings();
 
-            // PQR temp: Copied code for debug purposes
-            (double xFraction01, double yFraction01) = CentroidImageFractions(); // Range 0 to 1
-            ImagePosition imagePosition = new();
-            imagePosition.HorizontalFraction = (float)(xFraction01 * 2 - 1); // Range -1 to +1
-            imagePosition.VerticalFraction = (float)(yFraction01 * 2 - 1); // Range -1 to +1
-
             settings.Add("Leg", (Block != null ? Block.FlightLegId : 0));
             // Horizontal distance from feature to drone.
             settings.Add("RangeM", (Block != null ? RelativeLocation.DistanceM(LocationM, Block.DroneLocnM) : 0), LocationNdp);
-            settings.Add("xFrac", xFraction01, LocationNdp); // Range 0 to 1
-            settings.Add("yFrac", yFraction01, LocationNdp); // Range 0 to 1
-            settings.Add("hFrac", imagePosition.HorizontalFraction, LocationNdp); // Range -1 to +1
-            settings.Add("vFrac", imagePosition.VerticalFraction, LocationNdp); // Range -1 to +1
 
             return settings;
         }
