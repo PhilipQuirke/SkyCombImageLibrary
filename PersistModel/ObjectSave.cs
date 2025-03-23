@@ -1,9 +1,10 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 
-using Emgu.CV.Structure;
 using OfficeOpenXml;
 using OfficeOpenXml.Drawing.Chart;
+using OfficeOpenXml.Table.PivotTable;
 using SkyCombDrone.CommonSpace;
+using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
 using SkyCombImage.CategorySpace;
 using SkyCombImage.DrawSpace;
@@ -105,6 +106,116 @@ namespace SkyCombImage.PersistModel
             }
         }
 
+
+        // Add a pivot table summarizing the animal locations, starting at cell (row,1):
+        // Show Leg on the vertical axis.
+        // Show columns num objects, average object location error, maximum object location error.
+        // Show grand totals.
+        public void AddProcessObjectLocationPivot(ExcelWorksheet ws, int startRow, int startCol)
+        {
+            try { 
+
+                const string PivotName = "AnimalLocationPivot";
+                if (ws.PivotTables[PivotName] != null)
+                    return;
+
+                // Prepare the pivot table area
+                (var pivotWs, var dataWs, var lastDataRow) = Data.PreparePivotArea(AnimalReportTabName, PivotName, AnimalsDataTabName);
+                if (pivotWs == null || dataWs == null || lastDataRow <= 1)
+                    return;
+
+                // Create pivot table
+                var pivotTableRange = dataWs.Cells[1, 1, lastDataRow, 34];
+                var pivotCell = pivotWs.Cells[startRow, startCol];
+                var pivotTable = pivotWs.PivotTables.Add(pivotCell, pivotTableRange, PivotName);
+
+                // Add row (vertical) field 
+                pivotTable.RowFields.Add(pivotTable.Fields["Leg"]);
+
+                // Add data fields
+                var numObjectsField = pivotTable.DataFields.Add(pivotTable.Fields["Name"]);
+                numObjectsField.Name = "# Objects";
+                numObjectsField.Function = DataFieldFunctions.Count;
+
+                var avgLocErrField = pivotTable.DataFields.Add(pivotTable.Fields["Locn Err M"]);
+                avgLocErrField.Name = "Avg Locn Err";
+                avgLocErrField.Function = DataFieldFunctions.Average;
+                avgLocErrField.Format = "0.0"; // 1 decimal place
+
+                var maxLocErrField = pivotTable.DataFields.Add(pivotTable.Fields["Locn Err M"]);
+                maxLocErrField.Name = "Max Locn Err";
+                maxLocErrField.Function = DataFieldFunctions.Max;
+                maxLocErrField.Format = "0.0"; // 1 decimal place
+
+                pivotTable.DataOnRows = false;
+                pivotTable.ShowDrill = true;
+                pivotTable.ShowHeaders = true;
+                pivotTable.UseAutoFormatting = true;
+                pivotTable.FirstDataCol = 2;
+
+                Data.AddConditionalFormattingToPivotTable(pivotTable);
+            }
+            catch (Exception ex)
+            {
+                // Suppress error
+            }
+        }
+
+
+        // Add a pivot table summarizing the animals, starting at cell (startRow,startCol):
+        // Show Leg on the vertical axis.
+        // Show columns num objects, average object height error, maximum object height error.
+        // Show grand totals.
+        public void AddProcessObjectHeightPivot(ExcelWorksheet ws, int startRow, int startCol)
+        {
+            try { 
+                const string PivotName = "AnimalHeightPivot";
+                if (ws.PivotTables[PivotName] != null)
+                    return;
+
+                // Prepare the pivot table area
+                (var pivotWs, var dataWs, var lastDataRow) = Data.PreparePivotArea(AnimalReportTabName, PivotName, AnimalsDataTabName);
+                if (pivotWs == null || dataWs == null || lastDataRow <= 1)
+                    return;
+
+                // Create pivot table
+                var pivotTableRange = dataWs.Cells[1, 1, lastDataRow, 34]; 
+                var pivotCell = pivotWs.Cells[startRow, startCol];
+                var pivotTable = pivotWs.PivotTables.Add(pivotCell, pivotTableRange, PivotName);
+
+                // Add row (vertical) field 
+                pivotTable.RowFields.Add(pivotTable.Fields["Leg"]);
+
+                // Add data fields
+                var numObjectsField = pivotTable.DataFields.Add(pivotTable.Fields["Name"]);
+                numObjectsField.Name = "# Objects";
+                numObjectsField.Function = DataFieldFunctions.Count;
+
+                var avgLocErrField = pivotTable.DataFields.Add(pivotTable.Fields["Hght Err M"]);
+                avgLocErrField.Name = "Avg Height Err";
+                avgLocErrField.Function = DataFieldFunctions.Average;
+                avgLocErrField.Format = "0.0"; // 1 decimal place
+
+                var maxLocErrField = pivotTable.DataFields.Add(pivotTable.Fields["Hght Err M"]);
+                maxLocErrField.Name = "Max Height Err";
+                maxLocErrField.Function = DataFieldFunctions.Max;
+                maxLocErrField.Format = "0.0"; // 1 decimal place
+
+                pivotTable.DataOnRows = false;
+                pivotTable.ShowDrill = true;
+                pivotTable.ShowHeaders = true;
+                pivotTable.UseAutoFormatting = true;
+                pivotTable.FirstDataCol = 2;
+
+                Data.AddConditionalFormattingToPivotTable(pivotTable);
+            }
+            catch (Exception ex)
+            {
+                // Suppress error
+            }
+        }
+
+
         public static void SetKeyResults(ExcelWorksheet ws, int numAnimals, double swatheM2, int col1, int col2)
         {
             var swatheKM2 = swatheM2 / 1000000.0;
@@ -165,7 +276,7 @@ namespace SkyCombImage.PersistModel
                 row = 3;
                 col = 15;
                 AnimalModelList animals = new();
-                animals.AddProcessObjects(0, processAll.Drone, processObjects, runVideo.ProcessAll.ProcessSpans);
+                animals.AddProcessObjects(0, processAll.Drone, processObjects, processAll.ProcessSpans);
                 (var message, var matrixBitmap) = AnimalMatrixDrawer.DrawAnimalMatrix(animals, runVideo.SizeImages, true);
                 Data.SetTitle(ref row, col, "Animal Size Height Matrix: " + message);
                 Data.SaveBitmap(matrixBitmap, "AnimalMatrix", row - 1, col - 1, 67);
@@ -192,6 +303,16 @@ namespace SkyCombImage.PersistModel
                 ws.Cells[row, 24].Value = "Drone";
                 ws.Cells[row+1, 24].Value = "Surface";
                 ws.Cells[row+2, 24].Value = "Ground";
+
+                // Draw the object pivot
+                row = 65;
+                col = 1;
+                Data.SetTitle(ref row, col, "Animals Location Error by Leg");
+                AddProcessObjectLocationPivot(ws, row, col);
+                row = 65;
+                col = 12;
+                Data.SetTitle(ref row, col, "Animals Height Error by Leg");
+                AddProcessObjectHeightPivot(ws, row, col);
             }
         }
     }
