@@ -4,7 +4,6 @@ using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
 using System.Drawing;
-using System.Windows.Forms;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -199,16 +198,16 @@ namespace SkyCombImage.ProcessLogic
 
                 (double xFraction01, double yFraction01) = CentroidImageFractions(); // Range 0 to 1
                 ImagePosition imagePosition = new();
-                imagePosition.PixelX = (int)((PixelBox.X + PixelBox.Width / 2.0) / reduction_factor);
-                imagePosition.PixelY = (int)((PixelBox.Y + PixelBox.Height / 2.0) / reduction_factor);
-                imagePosition.HorizontalFraction = (float)(xFraction01 * 2 - 1); // Range -1 to +1
-                imagePosition.VerticalFraction = (float)(yFraction01 * 2 - 1); // Range -1 to +1
+                imagePosition.PixelX = ((PixelBox.X + PixelBox.Width / 2.0) / reduction_factor);
+                imagePosition.PixelY = ((PixelBox.Y + PixelBox.Height / 2.0) / reduction_factor);
+                imagePosition.HorizontalFraction = (xFraction01 * 2 - 1); // Range -1 to +1
+                imagePosition.VerticalFraction = (yFraction01 * 2 - 1); // Range -1 to +1
 
                 phase = 5;
                 // Assumes that Zoom is constant at 1
                 DroneTargetCalculatorV2 droneTargetCalculator = new(droneState, cameraParams);
                 droneTargetCalculator.UnitTest(Block.DroneLocnM, terrainGrid);
-                LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition, false, terrainGrid);
+                LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition, true, terrainGrid);
                 if (result != null)
                 {
                     phase = 6;

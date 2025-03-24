@@ -1,7 +1,5 @@
 ﻿// Copyright SkyComb Limited 2025. All rights reserved.
-using SkyCombDrone.PersistModel;
 using SkyCombGround.CommonSpace;
-using SkyCombGround.GroundLogic;
 using SkyCombGround.GroundModel;
 using System.Diagnostics;
 using System.Numerics;
@@ -79,12 +77,12 @@ namespace SkyCombImage.ProcessLogic
     public class ImagePosition
     {
         // V2 approach
-        public float PixelX { get; set; } // Image X position in pixels
-        public float PixelY { get; set; } // Image Y position in pixels
+        public double PixelX { get; set; } // Image X position in pixels
+        public double PixelY { get; set; } // Image Y position in pixels
 
         // V1 approach
-        public float HorizontalFraction { get; set; } // -1 to +1, left to right
-        public float VerticalFraction { get; set; } // -1 to +1, bottom to top
+        public double HorizontalFraction { get; set; } // -1 to +1, left to right
+        public double VerticalFraction { get; set; } // -1 to +1, bottom to top
     }
 
     public class LocationResult
@@ -175,8 +173,8 @@ namespace SkyCombImage.ProcessLogic
         /// </summary>
         public LocationResult? CalculateTargetLocation(ImagePosition imagePosition, bool applyDistortionCorrection, TerrainGrid terrain)
         {
-            float px = imagePosition.PixelX;
-            float py = imagePosition.PixelY;
+            double px = imagePosition.PixelX;
+            double py = imagePosition.PixelY;
 
             /// <summary>
             /// Converts pixel coordinates in the camera image to a normalized direction vector in **camera space**.
@@ -186,32 +184,32 @@ namespace SkyCombImage.ProcessLogic
             /// - The **Z-axis** points **forward** (out of the camera).
             /// The returned vector is normalized.
             /// </summary>
-            Vector3 ComputeCameraDirection(float pixelX, float pixelY)
+            Vector3 ComputeCameraDirection(double pixelX, double pixelY)
             {
                 // Start with the given pixel coordinates.
-                float px = pixelX;
-                float py = pixelY;
+                double px = pixelX;
+                double py = pixelY;
                 if (applyDistortionCorrection)
                 {
                     // Normalize pixel to camera coordinates using intrinsics.
-                    float normX = (pixelX - DroneK.V02) / DroneK.V00;  // (u - cx) / fx
-                    float normY = (pixelY - DroneK.V12) / DroneK.V11;  // (v - cy) / fy
+                    double normX = (pixelX - DroneK.V02) / DroneK.V00;  // (u - cx) / fx
+                    double normY = (pixelY - DroneK.V12) / DroneK.V11;  // (v - cy) / fy
 
                     // Apply radial distortion correction using calibrated coefficients (k1, k2, etc.).
-                    float r2 = normX * normX + normY * normY;
-                    float k1 = 0.1f, k2 = 0.1f;  // example distortion coefficients. TODO set from calibration.
-                    float radialFactor = 1 + k1 * r2 + k2 * r2 * r2;
-                    float undistX = normX * radialFactor;
-                    float undistY = normY * radialFactor;
+                    double r2 = normX * normX + normY * normY;
+                    double k1 = 0.1f, k2 = 0.1f;  // example distortion coefficients. TODO set from calibration.
+                    double radialFactor = 1 + k1 * r2 + k2 * r2 * r2;
+                    double undistX = normX * radialFactor;
+                    double undistY = normY * radialFactor;
                     // Convert undistorted normalized coords back to pixel coordinates.
                     px = undistX * DroneK.V00 + DroneK.V02;
                     py = undistY * DroneK.V11 + DroneK.V12;
                 }
                 // Compute direction in camera coordinates (pinhole model) from pixel.
-                float x_cam = (px - DroneK.V02) / DroneK.V00;
-                float y_cam = (py - DroneK.V12) / DroneK.V11;
-                float z_cam = 1.0f;  // assume a point on the image plane at z=1
-                Vector3 camDir = new Vector3(x_cam, y_cam, z_cam);
+                double x_cam = (px - DroneK.V02) / DroneK.V00;
+                double y_cam = (py - DroneK.V12) / DroneK.V11;
+                double z_cam = 1.0;  // assume a point on the image plane at z=1
+                Vector3 camDir = new Vector3((float)x_cam, (float)y_cam, (float)z_cam);
                 return Vector3.Normalize(camDir);
             }
 
