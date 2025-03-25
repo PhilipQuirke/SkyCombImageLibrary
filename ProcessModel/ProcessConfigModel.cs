@@ -203,14 +203,29 @@ namespace SkyCombImage.ProcessModel
             };
         }
 
+        // Hardcode the drone camera intrinsic matrix for Lennard Sparks drone camera
+        public static CameraIntrinsic intrinsic = new CameraIntrinsic(9.1, 640, 512, 7.68, 6.144);
+        public static Mat K = intrinsic.K;
+    }
+    public class CameraIntrinsic
+    {
+        public Mat K = new Mat(3, 3, MatType.CV_64F);
+        public Mat KInv = new Mat(3, 3, MatType.CV_64F);
+        public double Cx;
+        public double Cy;
+        public double Fx;
+        public double Fy;
+        public double ImageWidth;
+        public double ImageHeight;
 
-        // Create a drone camera intrinsic matrix.
-        private static Mat Intrinsic(double focalLength, double imageWidth, double imageHeight, double sensorWidth, double sensorHeight)
+        public CameraIntrinsic(double focalLength, double imageWidth, double imageHeight, double sensorWidth, double sensorHeight)
         {
-            var Cx = imageWidth / 2; var Cy = imageHeight / 2;
-            var Fx = focalLength * imageWidth / sensorWidth; // F * pixels per mm = focal length in mm x image width px / sensor width mm
-            var Fy = focalLength * imageHeight / sensorHeight;
-            Mat K = new Mat(3, 3, MatType.CV_64F);
+            ImageWidth = imageWidth;
+            ImageHeight = imageHeight;
+            Cx = imageWidth / 2; 
+            Cy = imageHeight / 2;
+            Fx = focalLength * imageWidth / sensorWidth; // F * pixels per mm = focal length in mm x image width px / sensor width mm
+            Fy = focalLength * imageHeight / sensorHeight;
             K.At<double>(0, 0) = Fx;
             K.At<double>(0, 1) = 0;
             K.At<double>(0, 2) = Cx;
@@ -220,11 +235,8 @@ namespace SkyCombImage.ProcessModel
             K.At<double>(2, 0) = 0;
             K.At<double>(2, 1) = 0;
             K.At<double>(2, 2) = 1;
-            return K;
+            KInv = K.Inv();
         }
-        public static Point2d LennardsDroneImageDimensions = new(X: 640, Y: 512);
 
-        // Hardcode the drone camera intrinsic matrix for Lennard Sparks drone camera
-        public static Mat LennardsDroneK = Intrinsic(9.1, LennardsDroneImageDimensions.X, LennardsDroneImageDimensions.Y, 7.68, 6.144);
     }
 }
