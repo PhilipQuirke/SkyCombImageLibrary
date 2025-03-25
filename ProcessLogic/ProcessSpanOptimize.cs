@@ -169,42 +169,31 @@ namespace SkyCombImage.ProcessLogic
             FillMat(c2, new double[] { toF.Block.DroneLocnM.EastingM, toF.Block.AltitudeM, toF.Block.DroneLocnM.NorthingM });
             using Mat R1 = CreateRotationMatrix(fromF.Block.RollDeg, fromF.Block.PitchDeg, fromF.Block.YawDeg);
             using var RayFromF = PointDirection(adjustedPoints[0], R1);
-            using Mat t1 = R1 * c1;
             using Mat R2 = CreateRotationMatrix(toF.Block.RollDeg, toF.Block.PitchDeg, toF.Block.YawDeg);
             using var RayToF = PointDirection(adjustedPoints[1], R2);
-            using Mat t2 = R2 * c2;
 
-            using Mat C = c1 - c2;
-
-            using Mat LHS = new Mat(3, 2, MatType.CV_64F, Scalar.All(0));
-            LHS.At<double>(0,0)= -RayFromF.At<double>(0, 0);
-            LHS.At<double>(1,0)= -RayFromF.At<double>(1, 0);
-            LHS.At<double>(2,0)= -RayFromF.At<double>(2, 0);
-            LHS.At<double>(0,1)= RayToF.At<double>(0, 0);
-            LHS.At<double>(1,1)= RayToF.At<double>(1, 0);
-            LHS.At<double>(2,1)= RayToF.At<double>(2, 0);
+            using Mat RHS = new Mat(6, 1, MatType.CV_64F);
+            Cv2.VConcat(c1,c2,RHS);
+            using Mat I = new Mat(3, 3, MatType.CV_64F);
+            Cv2.SetIdentity(I);
+            using Mat StackI = new Mat(6, 3, MatType.CV_64F);
+            Cv2.VConcat(I, I, StackI);
+            using Mat StackD = new Mat(6, 1, MatType.CV_64F);
+            Cv2.VConcat(-RayFromF, -RayToF, StackD);
+            using Mat LHS = new Mat(6, 8, MatType.CV_64F);
+            Cv2.HConcat(StackI, StackD, LHS);
 
             //=====================================================================
             //                        
             using Mat Moore_Penrose_LHS_Inv = (LHS.Transpose() * LHS).Inv() * LHS.Transpose(); //https://en.wikipedia.org/wiki/Moore%E2%80%93Penrose_inverse
-            using Mat Params = Moore_Penrose_LHS_Inv * C;
-            using Mat zerotest = LHS * Params - C;
-            using Mat Ans1 = c1 + RayFromF * Params.At<double>(0, 0);
-            using Mat Ans2 = c2 + RayToF * Params.At<double>(1, 0);
+            using Mat Ans = Moore_Penrose_LHS_Inv * RHS;
             //
             //=====================================================================
             
             Debug.WriteLine("==  From obj: " + fromF.ObjectId.ToString() + "===  block: " + fromF.Block.BlockId.ToString() + "===  feature: " + fromF.FeatureId.ToString());
             Debug.WriteLine("==  To obj: " + toF.ObjectId.ToString() + "===  block: " + toF.Block.BlockId.ToString() + "===  feature: " + toF.FeatureId.ToString());
             Debug.WriteLine("");
-            Debug.WriteLine("Cam diff");
-            for (int j = 0; j < 3; j++)
-            {
-                Debug.Write(Math.Round(C.At<double>(j, 0), 3) + ", ");
-            }
-            Debug.WriteLine("");
-            Debug.WriteLine("Points");
-           
+            Debug.WriteLine("Points");          
             Debug.WriteLine(adjustedPoints[0].X.ToString() + ", " + adjustedPoints[0].Y.ToString() + ", " + adjustedPoints[1].X.ToString() + ", " + adjustedPoints[1].Y.ToString() );
             Debug.WriteLine("");
 
@@ -217,34 +206,25 @@ namespace SkyCombImage.ProcessLogic
             Debug.WriteLine(toF.Block.RollDeg.ToString() + ", " + toF.Block.PitchDeg + ", " + toF.Block.YawDeg);
 
             Debug.WriteLine("");
-            Debug.WriteLine("LHS = -Ray 1 | Ray 2");
-            for (int i = 0; i < 3; i++)
+            Debug.WriteLine("Ray 1 & Ray 2");
+            for (int j = 0; j < 6; j++)
             {
-                for (int j = 0; j < 2; j++)
-                {
-                    Debug.Write(Math.Round(LHS.At<double>(i, j), 3) + "  |  ");
-                }
-                Debug.WriteLine("");
+                Debug.Write(Math.Round(-StackD.At<double>(j, 0), 6) + ", ");
             }
             Debug.WriteLine("");
             Debug.WriteLine("Params");
-            for (int j = 0; j < 2; j++)
+            for (int j = 3; j < 6; j++)
             {
-                Debug.Write(Math.Round(Params.At<double>(j, 0), 2) + ", ");
+                Debug.Write(Math.Round(Ans.At<double>(j, 0), 6) + ", ");
             }
             Debug.WriteLine("");
 
-            Debug.WriteLine("Zero test");
-            for (int j = 0; j < 3; j++)
-            {
-                Debug.Write(Math.Round(zerotest.At<double>(j, 0), 2) + ", ");
-            }
             Debug.WriteLine("");
-            Debug.WriteLine("Object calc 1 | 2:");
+            Debug.WriteLine("Object calc:");
             
             for (int j = 0; j < 3; j++)
             {
-                Debug.WriteLine(Math.Round(Ans1.At<double>(j, 0), 3) + "   |   " + Math.Round(Ans2.At<double>(j, 0), 3));
+                Debug.WriteLine(Math.Round(Ans.At<double>(j, 0), 3));
             }
             Debug.WriteLine("");
             Debug.WriteLine("---------");
@@ -253,11 +233,7 @@ namespace SkyCombImage.ProcessLogic
  
             //=====================================================================
 
-            if (Ans1.At<double>(0, 0) + Ans1.At<double>(2, 0) > Ans2.At<double>(0, 0) + Ans2.At<double>(2, 0)) // northing or easting is negative
-            {
-                return [ Ans1.At<double>(0, 0), Ans1.At<double>(1, 0), Ans1.At<double>(2, 0) ];
-            }
-            else return [Ans2.At<double>(0, 0), Ans2.At<double>(1, 0), Ans2.At<double>(2, 0)];
+            return [Ans.At<double>(0, 0), Ans.At<double>(1, 0), Ans.At<double>(2, 0)];
         }
 
     
