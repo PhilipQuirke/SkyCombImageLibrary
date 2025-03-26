@@ -27,8 +27,9 @@ namespace SkyCombImage.ProcessLogic
         // Parent process
         private ProcessAll Process { get; }
         private int CompareInterval { get; }
+
         public static CameraIntrinsic intrinsic = ProcessConfigModel.intrinsic; // Copy the static Lennard Spark drone camera information
-        
+
         // Recalculate the Span.Objects.Features.LocationM and HeightM using triangulation.
         // Frame pair intervals constant, 3 frames is 1/20th of second. 5 frames is 1/6th of a second.
         public SpanOptimize(ProcessAll process, int compareInterval)
@@ -145,7 +146,7 @@ namespace SkyCombImage.ProcessLogic
         {
             for (int i = 0; i < values.Length; i++)
             {
-                    mat.At<double>(i) = values[i];
+                mat.At<double>(i) = values[i];
             }
         }
         public Mat PointDirection(Point2d featpoint, Mat R)
@@ -154,11 +155,11 @@ namespace SkyCombImage.ProcessLogic
             FillMat(PixelPoint, new double[] { featpoint.X, featpoint.Y, 1 });
             return R.Inv() * intrinsic.K.Inv() * PixelPoint;
         }
-        public List<double>? GetPoint(ProcessFeature fromF, ProcessFeature toF)
+        public double[] GetPoint(ProcessFeature fromF, ProcessFeature toF)
         {
             List<Point2d> adjustedPoints;
             //adjustedPoints = AdjustedPoints(fromF, toF);
-            adjustedPoints = new List<Point2d> { new Point2d(fromF.PixelBox.X/2 + fromF.PixelBox.Width/4, fromF.PixelBox.Y/2 + fromF.PixelBox.Height / 4), new Point2d(toF.PixelBox.X/2 + toF.PixelBox.Width / 4, toF.PixelBox.Y/2 + toF.PixelBox.Height / 4) };
+            adjustedPoints = new List<Point2d> { new Point2d(fromF.PixelBox.X / 2 + fromF.PixelBox.Width / 4, fromF.PixelBox.Y / 2 + fromF.PixelBox.Height / 4), new Point2d(toF.PixelBox.X / 2 + toF.PixelBox.Width / 4, toF.PixelBox.Y / 2 + toF.PixelBox.Height / 4) };
             if (false)
             {// for debugging
                 adjustedPoints = new List<Point2d> { new Point2d(694.8387729, 791.3252464), new Point2d(433.7235783, 351.4702146) };
@@ -173,7 +174,7 @@ namespace SkyCombImage.ProcessLogic
             using var RayToF = PointDirection(adjustedPoints[1], R2);
 
             using Mat RHS = new Mat(6, 1, MatType.CV_64F);
-            Cv2.VConcat(c1,c2,RHS);
+            Cv2.VConcat(c1, c2, RHS);
             using Mat I = new Mat(3, 3, MatType.CV_64F);
             Cv2.SetIdentity(I);
             using Mat StackI = new Mat(6, 3, MatType.CV_64F);
@@ -185,16 +186,18 @@ namespace SkyCombImage.ProcessLogic
 
             //=====================================================================
             //                        
-            using Mat Moore_Penrose_LHS_Inv = (LHS.Transpose() * LHS).Inv() * LHS.Transpose(); //https://en.wikipedia.org/wiki/Moore%E2%80%93Penrose_inverse
-            using Mat Ans = Moore_Penrose_LHS_Inv * RHS;
+            //using Mat Moore_Penrose_LHS_Inv = (LHS.Transpose() * LHS).Inv() * LHS.Transpose(); //https://en.wikipedia.org/wiki/Moore%E2%80%93Penrose_inverse
+            //using Mat Ans = Moore_Penrose_LHS_Inv * RHS;
+            var optimal = new SetOptimize(LHS, RHS);
+            var Ans = optimal.Ans;
             //
             //=====================================================================
-            
+
             Debug.WriteLine("==  From obj: " + fromF.ObjectId.ToString() + "===  block: " + fromF.Block.BlockId.ToString() + "===  feature: " + fromF.FeatureId.ToString());
             Debug.WriteLine("==  To obj: " + toF.ObjectId.ToString() + "===  block: " + toF.Block.BlockId.ToString() + "===  feature: " + toF.FeatureId.ToString());
             Debug.WriteLine("");
-            Debug.WriteLine("Points");          
-            Debug.WriteLine(adjustedPoints[0].X.ToString() + ", " + adjustedPoints[0].Y.ToString() + ", " + adjustedPoints[1].X.ToString() + ", " + adjustedPoints[1].Y.ToString() );
+            Debug.WriteLine("Points");
+            Debug.WriteLine(adjustedPoints[0].X.ToString() + ", " + adjustedPoints[0].Y.ToString() + ", " + adjustedPoints[1].X.ToString() + ", " + adjustedPoints[1].Y.ToString());
             Debug.WriteLine("");
 
             Debug.WriteLine("Camera Position 1");
@@ -213,237 +216,87 @@ namespace SkyCombImage.ProcessLogic
             }
             Debug.WriteLine("");
             Debug.WriteLine("Params");
-            for (int j = 3; j < 6; j++)
+            for (int j = 3; j < 5; j++)
             {
-                Debug.Write(Math.Round(Ans.At<double>(j, 0), 6) + ", ");
+                Debug.Write(Math.Round(Ans[j], 6) + ", ");
             }
             Debug.WriteLine("");
 
             Debug.WriteLine("");
             Debug.WriteLine("Object calc:");
-            
+
             for (int j = 0; j < 3; j++)
             {
-                Debug.WriteLine(Math.Round(Ans.At<double>(j, 0), 3));
+                Debug.WriteLine(Math.Round(Ans[j], 3));
             }
             Debug.WriteLine("");
             Debug.WriteLine("---------");
 
-//            Debug.WriteLine(Ans1.At<double>(0, 0) + ", " + Ans1.At<double>(1, 0) + ", " + Ans1.At<double>(2, 0) + ", " + Ans2.At<double>(0, 0) + ", " + Ans2.At<double>(1, 0) + ", " + Ans2.At<double>(2, 0));
- 
-            //=====================================================================
+            //            Debug.WriteLine(Ans1.At<double>(0, 0) + ", " + Ans1.At<double>(1, 0) + ", " + Ans1.At<double>(2, 0) + ", " + Ans2.At<double>(0, 0) + ", " + Ans2.At<double>(1, 0) + ", " + Ans2.At<double>(2, 0));
 
-            return [Ans.At<double>(0, 0), Ans.At<double>(1, 0), Ans.At<double>(2, 0)];
+            //=====================================================================
+            if (optimal.terminationtype == 2 || optimal.terminationtype == 7)
+            {
+                return Ans;
+            }
+            else
+            {
+                return null;
+            }
         }
+    }
+    public class SetOptimize
+    {
+        private Mat A;
+        private Mat b;
+        public double[] Ans;
+        public int terminationtype;
+        public SetOptimize(Mat first, Mat second)
+        {
+            A = first;
+            b = second;
+            int M = 6; // 3*2 = number of dimensions*number of images
+            int N = 5; // x, y, z, l1, l2
+            double[] bndl = new double[5] { -50, 0, -50, -System.Double.PositiveInfinity, -System.Double.PositiveInfinity };
+            double[] bndu = new double[5] { 1200, b.At<double>(1,0)-60, 600, System.Double.PositiveInfinity, System.Double.PositiveInfinity };
+            double[] s = new double[5] { 60, 60, 60, 30, 30 }; //scale
+            double[] x = new double[5] { b.At<double>(0, 0), b.At<double>(1, 0)-90, b.At<double>(2, 0), 1, 1 };
+            double EpsX = 0; // 0.0001;
+            int MaxIts = 500; // 0 means no limit
+            alglib.nlsstate state;
+            alglib.nlsreport rep;
+            alglib.nlscreatedfo(N,M,x, out state);
+            alglib.nlssetcond(state, EpsX, MaxIts);
+            alglib.nlssetscale(state, s);
+            alglib.nlssetbc(state, bndl, bndu);
+            alglib.nlssetalgodfolsa(state,3);
+            alglib.nlsoptimize(state, function1_fvec, null, null);
+            alglib.nlsresults(state, out x, out rep);
+            Debug.WriteLine("{0}", alglib.ap.format(x, 3));
+            Debug.WriteLine("{0}", rep.terminationtype);
+            Ans = x;
+            terminationtype = rep.terminationtype;
+        }
+        public void function1_fvec(double[] x, double[] fi, object obj)
+        {
+            //
+            // this callback calculates
+            // sum over x of ((Ax-b)^2)
+            // where each f_i corresponds to one element of the sum
+            //
+            for (int i = 0; i < fi.Length; i++)
+            {
+                fi[i] = 0;
+                for (int j = 0; j < x.Length; j++)
+                {
+                    fi[i] = fi[i] + A.At<double>(i, j) * x[j];
+                }
+                fi[i] = fi[i] - b.At<double>(i);
+                fi[i] = fi[i] * fi[i];
+            }
+        }
+    } 
+}
 
     
-        private List<Point2d>? AdjustedPoints(ProcessFeature fromf, ProcessFeature tof)
-        {
-            var obj = fromf.ObjectId;
-            var firstFeat = fromf.Block.BlockId;
-            var lastfeat = tof.Block.BlockId;
-            var featlist = Process.ProcessObjects[obj].ProcessFeatures.Values;
-            int M = 2 * CompareInterval; // q fitting
-            int N = (CompareInterval + 1) * 4 + 2; // xf, yf, vxf, vyf, q1, q2
-            double[] bndl = new double[N]; // xf and yf rectangle bounds, vxf and vyf >= 0, q1 and q2 unconstrained
-            double[] bndu = new double[N];
-            double[] AL = new double[M];
-            double[] AU = new double[M];
-            double[,] A = new double[M, N];
-            double[] C = new double[N]; // including q1 & q2 in the cost function with multiplied by 0
-            double[] s = new double[N]; //scale
-            int featcount = 0;
-            foreach (var feature in featlist)
-            {
-                if ((feature.BlockId > lastfeat) || (feature.BlockId < firstFeat)) continue;
-                //xf
-                bndl[featcount * 4] = feature.PixelBox.X / 2;
-                bndu[featcount * 4] = (feature.PixelBox.X + feature.PixelBox.Width) / 2;
-                C[featcount * 4] = 1; //xf
-                s[featcount * 4] = 100;
-                //yf
-                bndl[featcount * 4 + 1] = feature.PixelBox.Y / 2;
-                bndu[featcount * 4 + 1] = (feature.PixelBox.Y + feature.PixelBox.Height) / 2;
-                C[featcount * 4 + 1] = 1; //yf
-                s[featcount * 4 + 1] = 100;
-                //vxf
-                bndl[featcount * 4 + 2] = 0;
-                bndu[featcount * 4 + 2] = System.Double.PositiveInfinity;
-                C[featcount * 4 + 2] = CompareInterval; //vxf
-                s[featcount * 4 + 2] = 70;
-                //vyf
-                bndl[featcount * 4 + 3] = 0;
-                bndu[featcount * 4 + 3] = System.Double.PositiveInfinity;
-                C[featcount * 4 + 3] = CompareInterval; //vyf
-                s[featcount * 4 + 3] = 70;
 
-                if (feature.BlockId < lastfeat)
-                {
-                    // [xf  +vxf - x(f+1) -vx(f+1)- q1 ]
-                    A[featcount * 2 + 0, featcount * 4] = 1;
-                    A[featcount * 2 + 0, featcount * 4 + 2] = 1;
-                    A[featcount * 2 + 0, (featcount + 1) * 4] = -1;
-                    A[featcount * 2 + 0, (featcount + 1) * 4 + 2] = -1;
-                    A[featcount * 2 + 0, CompareInterval * 4 + 4] = -1;
-                    // [yf  +vyf- y(f+1) -vy(f+1)- q2]
-                    A[featcount * 2 + 1, featcount * 4 + 1] = 1;
-                    A[featcount * 2 + 1, featcount * 4 + 3] = 1;
-                    A[featcount * 2 + 1, (featcount + 1) * 4 + 1] = -1;
-                    A[featcount * 2 + 1, (featcount + 1) * 4 + 3] = -1;
-                    A[featcount * 2 + 1, CompareInterval * 4 + 5] = -1;
-                    // AL and AU are zero by default
-                }
-                else
-                {
-                    // final scaling for q
-                    //q1
-                    bndl[featcount * 4 + 4] = -System.Double.PositiveInfinity;
-                    bndu[featcount * 4 + 4] = System.Double.PositiveInfinity;
-                    s[featcount * 4 + 4] = 200;
-                    //q2
-                    bndl[featcount * 4 + 5] = -System.Double.PositiveInfinity;
-                    bndu[featcount * 4 + 5] = System.Double.PositiveInfinity;
-                    s[featcount * 4 + 5] = 200;
-                    // cost function for q1 & q2 auto set to zero because we don't want to minimize them
-                }
-                featcount++;
-            }
-
-            double[] ans;
-            alglib.minlpstate state;
-            alglib.minlpreport rep;
-
-            alglib.minlpcreate(N, out state);
-            alglib.minlpsetcost(state, C);
-            alglib.minlpsetbc(state, bndl, bndu);
-            alglib.minlpsetlc2dense(state, A, AL, AU, M);
-            alglib.minlpsetscale(state, s);
-            alglib.minlpsetalgodss(state, 0);
-            alglib.minlpoptimize(state);
-            alglib.minlpresults(state, out ans, out rep);
-            //Debug.WriteLine("{0}", alglib.ap.format(ans, 3));
-            //Debug.WriteLine("{0}", rep.terminationtype);
-
-            if (rep.terminationtype != 1) return null;
-            List<Point2d> points = new();
-            points.Add(new Point2d(ans[0], ans[1]));
-            points.Add(new Point2d(ans[CompareInterval * 4], ans[CompareInterval * 4 + 1]));
-
-            return points;
-
-            /* The subroutine creates LP  solver.  After  initial  creation  it  contains
-            default optimization problem with zero cost vector and all variables being
-fixed to zero values and no constraints.
-
-In order to actually solve something you should:
-*set cost vector with minlpsetcost()
-*set variable bounds with minlpsetbc(), or minlpsetbcall() if constraints for all variables are same
-*
-*Following types of constraints are supported:
-
-    DESCRIPTION         CONSTRAINT              HOW TO SPECIFY
-    fixed variable      x[i]=Bnd[i]             BndL[i]=BndU[i]
-    lower bound         BndL[i]<=x[i]           BndU[i]=+INF
-    upper bound         x[i]<=BndU[i]           BndL[i]=-INF
-    range               BndL[i]<=x[i]<=BndU[i]  ...
-    free variable       -                       BndL[I]=-INF, BndU[I]+INF
-
-INPUT PARAMETERS:
-    State   -   structure stores algorithm state
-    BndL    -   lower bounds, array[N].
-    BndU    -   upper bounds, array[N].
-
-NOTE: infinite values can be specified by means of Double.PositiveInfinity
-      and  Double.NegativeInfinity  (in  C#)  and  alglib::fp_posinf   and
-      alglib::fp_neginf (in C++).
-*
-*
-*
-*specify constraint matrix with one of the following functions:
-            [*] minlpsetlc()        for dense one-sided constraints
-            [*] minlpsetlc2dense()  for dense two-sided constraints
-            [*] minlpsetlc2()       for sparse two-sided constraints
-                    [*] minlpaddlc2dense()  to add one dense row to constraint matrix
-                    [*] minlpaddlc2()       to add one row to constraint matrix(compressed format)
-* call minlpoptimize() to run the solver and  minlpresults()  to  get  the
-  solution vector and additional information.
-
-By  default, LP  solver uses best algorithm available.As of ALGLIB 3.17,
-sparse interior point(barrier) solver is used.Future releases of  ALGLIB
-may introduce other solvers.
-
-User may choose specific LP algorithm by calling:
-*minlpsetalgodss() for revised dual simplex method with DSE  pricing  and
-  bounds flipping ratio test(aka long dual step).Large - scale  sparse LU
-  solverwith  Forest - Tomlin update is used internally as linear  algebra
-  driver.
-* minlpsetalgoipm() for sparse interior point method
-
-INPUT PARAMETERS:
-    N - problem size
-
-OUTPUT PARAMETERS:
-    State - optimizer in the default state
-
-REPORT
-TerminationType field contains completion code, which can be:
-  -8    internal integrity control detected  infinite  or  NAN  values  in
-        function/gradient. Abnormal termination signalled.
-  -3    inconsistent constraints. Feasible point is
-        either nonexistent or too hard to find. Try to
-        restart optimizer with better initial approximation
-   1    relative function improvement is no more than EpsF.
-   2    relative step is no more than EpsX.
-   4    gradient norm is no more than EpsG
-   5    MaxIts steps was taken
-   7    stopping conditions are too stringent,
-        further improvement is impossible,
-        X contains best point found so far.
-   8    terminated by user who called minbleicrequesttermination(). X contains
-        point which was "current accepted" when  termination  request  was
-        submitted.
-
-*/
-            // we want to minimize: Sum over features f in selected interval I with feature centroid (cxf, cyf) feature width and height (wf, hf)
-            // of F(xf, yf) = (xf - cxf + yf - cyf) => min F(xf, yf) = xf + yf
-            //  where for every f: yf = a.yx + k
-            //      => if drone is going in a straight line at constant speed, for every f and the adjacent (f+1): xf - x(f+1) - q1 = 0, yf - y(f+1) - q2 = 0
-            //  and q1, q2 unconstrained
-            //  and for every fx: cxf - wf <= xf <= cxf + wf
-            //  and for every fy: cyf - hf <= yf <= cyf + hf
-            //Therefore we have (2*I + 2) variables xf, yf, q1, q2; I = number of features in the interval
-
-            /* Cost term: C array N. state=algorithm state
-              c = [Sum over f(xf + yf)]
-              minlpsetcost(minlpstate state, double[] c)
-
-             * General linear constraints are specified as AL<=A*x<=AU; AL,AU vectors, A matrix; K is the number of equality/inequality constraints
-              AL = [[cxf - wf/2], [cyf - hf/2], [0], [0]]
-              AU = [[cxf + wf/2], [cyf + hf/2], [0], [0]]
-              A = [[xf], [yf], [xf - x(f+1) - q1], [yf - y(f+1) - q2]]
-              K = (I-1) + (I-1) + I + I
-              minlpsetlc2(minlpstate state, sparsematrix a, double[] al, double[] au, int k)
-
-             * ALGLIB optimizers use scaling matrices to test stopping  conditions and as preconditioner. S=array[N], non-zero scaling coefficients
-                Scale of the I-th variable is a translation invariant measure of:
-                a) "how large" the variable is
-                b) how large the step should be to make significant changes in the function.
-                s = [1/2 image width, 1/2 image height
-                minlpsetscale(minlpstate state, double[] s)
-            */
-
-            /* If infeasible, we could add into the objective function quadruple weighted variables vxf and vyf (which would reveal where a feature was useless)
-             * such that:
-             *  0 <= xf - x(f+1) - q1 + vxf - vx(f+1) <= 0
-             *  0 <= yf - y(f+1) - q1 + vyf - vy(f+1) <= 0
-             *  vxf >= 0, vyf >= 0, scale 10?
-             *  The weight could be I, so cost function => min F(xf, yf, vxf, vyf) = xf + yf + I.vxf + I.vyf
-             *  
-             *  Conversely, if too many feasible points, could make xf double weighted and add half weighted variables constrained closer to the centroid.
-             */
-
-
-        }
-
-    }
-}
