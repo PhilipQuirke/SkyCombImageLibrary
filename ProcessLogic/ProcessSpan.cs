@@ -8,13 +8,6 @@ using System.Diagnostics;
 using System.Drawing;
 
 
-
-// Q1: Is zoom not zero? zoom is none or 1-1 or 100: "dzoom_ratio: 1.00"
-// Q2: Is there some factor in image I am mising related to elevation? Why does image appear 70 CDDown when it is 90 CDDown?
-// Q3: Save the object DEM in the Imagedata datastore tab.
-// Q4: Draw DEM values on output image.
-
-
 namespace SkyCombImage.ProcessLogic
 {
     // ProcessSpan relates to either the steps in a FlightLeg OR a sequence of FlightSteps (not related to a FlightLeg).
@@ -39,6 +32,22 @@ namespace SkyCombImage.ProcessLogic
             Assert(ProcessSpanId > 0, "ProcessSpan.AssertGood: Bad SpanId");
             Assert(MinBlockId > 0, "ProcessSpan.AssertGood: Bad MinBlockId");
             Assert(MaxBlockId > 0, "ProcessSpan.AssertGood: Bad MaxBlockId");
+        }
+
+
+        public void DebugPrintBest(string prefix = "")
+        {
+            var answer = "";
+
+            if (BestFixAltM != 0) answer += " BestFixAltM=" + BestFixAltM.ToString();
+            if (BestFixYawDeg != 0) answer += " BestFixYawDeg=" + BestFixYawDeg.ToString();
+            if (BestFixPitchDeg != 0) answer += " BestFixPitchDeg=" + BestFixPitchDeg.ToString();
+
+            if (answer != "")
+                Debug.Print(
+                    "CalculateSettings_FixValues:" + prefix + " " + answer + 
+                    " BestSumLocnErrM=" + BestSumLocnErrM.ToString() +
+                    " BestSumHeightErrM=" + BestSumHeightErrM.ToString());
         }
 
 
@@ -106,6 +115,11 @@ namespace SkyCombImage.ProcessLogic
         // Lock in the legSteps.Fix* value that reduces the error most.
         public void CalculateSettings_FixValues(FlightStepList theSteps, ProcessObjList theObjs)
         {
+            bool optimiseHFOVDeg = false;
+            bool optimiseFixAltM = true;
+            bool optimiseFixYawDeg = false;
+            bool optimiseFixPitchDeg = false;
+
             try
             {
                 Debug.Print("CalculateSettings_FixAltM_Start");
@@ -114,12 +128,17 @@ namespace SkyCombImage.ProcessLogic
                 if ((theSteps.Count == 0) || (NumSignificantObjects == 0))
                     return;
 
-                //NQ Optimise
-                float altRangeM = 25;
+                float altRangeM = 90;
                 float yawRangeDeg = 10;
                 float pitchRangeDeg = 20;
 
                 int theHFOVDeg = Process.Drone.InputVideo.HFOVDeg;
+                float bestAltM = 0;
+                float bestAltErr = 0;
+                float bestYawDeg = 0;
+                float bestYawErr = 0;
+                float bestPitchDeg = 0;
+                float bestPitchErr = 0;
 
                 ResetBest();
                 CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, theSteps, theObjs);
@@ -131,43 +150,59 @@ namespace SkyCombImage.ProcessLogic
                     // DIMENSION 1: Video HFOVDeg
                     // The drone.InputVideo.HFOVDeg value is guessed from attributes of the SRT file. This is weak.
                     // Known hardware values for HFOVDeg are 38, 42 & 57. Test reasonable values around these.
-                    CalculateSettings_ApplyFixValues(36, 0, 0, 0, theSteps, theObjs);
-                    CalculateSettings_ApplyFixValues(38, 0, 0, 0, theSteps, theObjs);
-                    CalculateSettings_ApplyFixValues(40, 0, 0, 0, theSteps, theObjs);
-                    CalculateSettings_ApplyFixValues(42, 0, 0, 0, theSteps, theObjs);
-                    CalculateSettings_ApplyFixValues(44, 0, 0, 0, theSteps, theObjs);
-                    CalculateSettings_ApplyFixValues(57, 0, 0, 0, theSteps, theObjs);
-                    theHFOVDeg = BestHFOVDeg;
+                    if (optimiseHFOVDeg)
+                    {
+                        CalculateSettings_ApplyFixValues(36, 0, 0, 0, theSteps, theObjs);
+                        CalculateSettings_ApplyFixValues(38, 0, 0, 0, theSteps, theObjs);
+                        CalculateSettings_ApplyFixValues(40, 0, 0, 0, theSteps, theObjs);
+                        CalculateSettings_ApplyFixValues(42, 0, 0, 0, theSteps, theObjs);
+                        CalculateSettings_ApplyFixValues(44, 0, 0, 0, theSteps, theObjs);
+                        CalculateSettings_ApplyFixValues(57, 0, 0, 0, theSteps, theObjs);
+                        theHFOVDeg = BestHFOVDeg;
+                    }
 
                     // DIMENSION 2: Drone altitude 
-                    ResetBest();
-                    for (float fixAltM = -altRangeM; fixAltM <= altRangeM; fixAltM += 1)
-                        CalculateSettings_ApplyFixValues(theHFOVDeg, fixAltM, 0, 0, theSteps, theObjs);
-                    var bestAltM = BestFixAltM;
-                    var bestAltErr = BestSumLocnErrM;
+                    if (optimiseFixAltM)
+                    {
+                        ResetBest();
+                        for (float fixAltM = altRangeM; fixAltM >= -altRangeM; fixAltM -= 1)
+                            if( CalculateSettings_ApplyFixValues(theHFOVDeg, fixAltM, 0, 0, theSteps, theObjs) )
+                                DebugPrintBest();
+                        bestAltM = BestFixAltM;
+                        bestAltErr = BestSumLocnErrM;
+                    }
 
                     // DIMENSION 3: Drone yaw 
-                    ResetBest();
-                    for (float fixYawDeg = -yawRangeDeg; fixYawDeg <= yawRangeDeg; fixYawDeg += 1)
-                        CalculateSettings_ApplyFixValues(theHFOVDeg, 0, fixYawDeg, 0, theSteps, theObjs);
-                    var bestYawDeg = BestFixYawDeg;
-                    var bestYawErr = BestSumLocnErrM;
+                    if (optimiseFixYawDeg)
+                    {
+                        ResetBest();
+                        for (float fixYawDeg = -yawRangeDeg; fixYawDeg <= yawRangeDeg; fixYawDeg += 1)
+                            CalculateSettings_ApplyFixValues(theHFOVDeg, 0, fixYawDeg, 0, theSteps, theObjs);
+                        bestYawDeg = BestFixYawDeg;
+                        bestYawErr = BestSumLocnErrM;
+                    }
 
                     // DIMENSION 4: Drone pitch 
-                    ResetBest();
-                    for (float fixPitchDeg = -pitchRangeDeg; fixPitchDeg <= pitchRangeDeg; fixPitchDeg += 1)
-                        CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, fixPitchDeg, theSteps, theObjs);
-                    var bestPitchDeg = BestFixPitchDeg;
-                    var bestPitchErr = BestSumLocnErrM;
+                    if (optimiseFixPitchDeg)
+                    {
+                        ResetBest();
+                        for (float fixPitchDeg = -pitchRangeDeg; fixPitchDeg <= pitchRangeDeg; fixPitchDeg += 1)
+                            CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, fixPitchDeg, theSteps, theObjs);
+                        bestPitchDeg = BestFixPitchDeg;
+                        bestPitchErr = BestSumLocnErrM;
+                    }
 
                     // DIMENSION 2..4: Fine tune
                     // Vary dimensions 2 to 4 around the above rough values
-                    ResetBest();
-                    CalculateSettings_ApplyFixValues(theHFOVDeg, bestAltM, bestYawDeg, bestPitchDeg, theSteps, theObjs);
-                    for (float fixAltM = bestAltM - 1.25f; fixAltM <= bestAltM + 1.25f; fixAltM += 0.25f)
-                        for (float fixYawDeg = bestYawDeg - 1.25f; fixYawDeg <= bestYawDeg + 1.25f; fixYawDeg += 0.25f)
-                            for (float fixPitchDeg = bestPitchDeg - 1.25f; fixPitchDeg <= bestPitchDeg + 1.25f; fixPitchDeg += 0.25f)
-                                CalculateSettings_ApplyFixValues(theHFOVDeg, fixAltM, fixYawDeg, fixPitchDeg, theSteps, theObjs);
+                    if (optimiseFixAltM && optimiseFixYawDeg && optimiseFixPitchDeg)
+                    {
+                        ResetBest();
+                        CalculateSettings_ApplyFixValues(theHFOVDeg, bestAltM, bestYawDeg, bestPitchDeg, theSteps, theObjs);
+                        for (float fixAltM = bestAltM - 1.25f; fixAltM <= bestAltM + 1.25f; fixAltM += 0.25f)
+                            for (float fixYawDeg = bestYawDeg - 1.25f; fixYawDeg <= bestYawDeg + 1.25f; fixYawDeg += 0.25f)
+                                for (float fixPitchDeg = bestPitchDeg - 1.25f; fixPitchDeg <= bestPitchDeg + 1.25f; fixPitchDeg += 0.25f)
+                                    CalculateSettings_ApplyFixValues(theHFOVDeg, fixAltM, fixYawDeg, fixPitchDeg, theSteps, theObjs);
+                    }
                 }
 
                 // Lock in the best single value across the leg steps
@@ -176,7 +211,7 @@ namespace SkyCombImage.ProcessLogic
                 BestSumHeightErrM = theObjs.SumHeightErrM;
                 Process.ProcessObjects.CalculateSettings();
 
-                Debug.Print("CalculateSettings_FixValues: theHFOVDeg=" + theHFOVDeg.ToString() + "BestFixAltM=\" + BestFixAltM.ToString() + \"BestFixYawDeg=" + BestFixYawDeg.ToString() + " BestFixPitchDeg=" + BestFixPitchDeg.ToString());
+                DebugPrintBest();
             }
             catch (Exception ex)
             {
@@ -223,15 +258,76 @@ namespace SkyCombImage.ProcessLogic
             }
             else
             {
-                // Old method
+                // Old pq optimization method
+                // For 2164 video on Leg A a Best Fix Alt of 19m gave a 13cm reduction in avg locn err. Not worth it.
                 //CalculateSettings_FixValues(legSteps, theObjs);
 
-                // No method
+                // No optimization method
                 int theHFOVDeg = Process.Drone.InputVideo.HFOVDeg;
                 ResetBest();
                 CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs);
                 OrgSumLocnErrM = BestSumLocnErrM;
                 OrgSumHeightErrM = BestSumHeightErrM;
+
+                /*
+                // Test if DroneTargetCalculator.DroneK contains bad data.
+                // Default DroneK is Intrinsic(9.1, 640, 512, 7.68, 6.144);
+                Debug.Print("Default DroneK: OrgSumLocnErrM=" + OrgSumLocnErrM + " OrgSumHeightErrM=" + OrgSumHeightErrM );
+
+                //Modifying x and y only has 3% impact
+                //for (int x = -20; x <= +20; x += 5)
+                //    for (int y = -20; y <= +20; y += 5)
+                //    {
+                //        DroneTargetCalculator.DroneK = DroneTargetCalculator.Intrinsic(9.1, 640 + x, 512 + y, 7.68, 6.144);
+                //        if (CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs))
+                //            Debug.Print("x=" + x + ", y=" + y + ", BestSumLocnErrM=" + BestSumLocnErrM  + " BestSumHeightErrM=" + BestSumHeightErrM );
+                //    }
+
+                // At f = 4.95, has 50% reduction (OrgSumLocnErrM=286, BestSumLocnErrM=149) but tightens objects to the flight line. BAD?
+                //for (float f = 0.9f; f <= 5; f += 0.05f)
+                //{
+                //    DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1 * f, 640, 512, 7.68, 6.144);
+                //    if (CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs))
+                //        Debug.Print("f=" + f + ", BestSumLocnErrM=" + BestSumLocnErrM + " BestSumHeightErrM=" + BestSumHeightErrM );
+                //}
+
+                // Modifying w has no impact
+                //for (float w = 0.2f; w >= 0.01f; w -= 0.01f)
+                //{
+                //    DroneTargetCalculator.DroneK = DroneTargetCalculator.Intrinsic(9.1, 640, 512, 7.68 * w, 6.144);
+                //    if (CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs))
+                //        Debug.Print("w=" + w + " BestSumLocnErrM=" + BestSumLocnErrM  + " BestSumHeightErrM=" + BestSumHeightErrM );
+                //}
+
+                // At h = 0.02 (98% reduction), has 60% reduction in location inaccuracy: OrgSumLocnErrM=286, BestSumLocnErrM=119
+                // Does not appear to shift objects towards flightpath. GOOD
+                for (float h = 0.2f; h >= 0.01f; h -= 0.01f)
+                {
+                    DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * h);
+                    if (CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs))
+                        Debug.Print("h=" + h + " BestSumLocnErrM=" + BestSumLocnErrM + " BestSumHeightErrM=" + BestSumHeightErrM);
+                }
+
+                //Debug.Print("Default DroneK: OrgSumLocnErrM=" + OrgSumLocnErrM + " OrgSumHeightErrM=" + OrgSumHeightErrM);
+                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1 * 4.95, 640, 512, 7.68, 6.144);  // BAD. At f = 4.95, has 50% reduction. tightens objects to flight pathight line
+                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1 * 4.95, 640, 512, 7.68 * 0.02, 6.144 * 0.02); // BAD. Pinned to line
+                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68 * 0.02, 6.144 * 0.02); // BAD. Pinned to line
+
+                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 1.0); // h=1.0 => 286/286
+                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.8); // h=0.8 => 251/286
+                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.4); // h=0.4 => 182/286 
+                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.3); // h=0.3 => 166/286  
+                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.2); // h=0.2 => 149/286 
+                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.15); // h=0.15 => 140/286 
+                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.1); // h=0.1 => 132/286  
+                DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.05); // h=0.05 => 124/286  
+                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.02); // h=0.02 => 119/286 
+                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.01); // h=0.01 => 117/286  
+                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.001); // h=0.001 => 116/286  
+                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.0001); // h=0.0001 => 116/286  
+                CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs);
+                Debug.Print("BestSumLocnErrM=" + BestSumLocnErrM + " BestSumHeightErrM=" + BestSumHeightErrM);
+                */
             }
 
             SummariseSteps(legSteps);
@@ -311,10 +407,24 @@ namespace SkyCombImage.ProcessLogic
             return PercentOverlapWithRunFromTo(drone) >= FlightLegModel.MinOverlapPercent;
         }
 
-
+        // utility
+        public void printMat(Mat mat, string desc)
+        {
+            Debug.WriteLine(desc);
+            for (int i = 0; i < mat.Rows; i++)
+            {
+                for (int j = 0; j < mat.Cols; j++)
+                {
+                    Debug.Write(mat.At<double>(i, j).ToString() + ",");
+                }
+                Debug.WriteLine("");
+            }
+        }
+        
         //VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
         // Copy the static Lennard Spark drone camera intrinsic matrix
         public static Mat K = ProcessConfigModel.LennardsDroneK;
+        public Mat K = Intrinsic(9.1, 640, 512, 7.68, 6.144);
 
 
         //           Fix and test with non zero animal
@@ -322,11 +432,12 @@ namespace SkyCombImage.ProcessLogic
         public void TriangulateSpanObjectsFeaturesLocationAndHeight(ProcessObjList theObjs, ProcessAll processAll)
         {
             var compareInterval = 5; // Frame pair intervals constant, 3 frames is 1/20th of second. 5 frames is 1/6th of a second.
+
             var totBlocks = Process.Blocks.Count;
             foreach (var block in Process.Blocks.Values)
             {
                 var blockId = block.BlockId;
-                var compareBlockId = blockId + compareInterval;
+                var compareBlockId = blockId + compareInterval; // NOTE this depends on blockId as being sequential !!!!!!!
                 if (compareBlockId > totBlocks) break; // not enough compare interval left
                 var compareBlock = Process.Blocks[compareBlockId];
                 if (block.MinFeatureId < 1 || compareBlock.MinFeatureId < 1) continue; // no features in either this or compare
@@ -364,26 +475,26 @@ namespace SkyCombImage.ProcessLogic
                 }
                 /*if (BlocksInfo.fromObs.Count == 0) continue;
                 Debug.WriteLine("+++++++++++++++++++++++++");
+                Debug.WriteLine(blockId.ToString());
+                Debug.WriteLine(block.DroneLocnM.EastingM.ToString() + "," + block.DroneLocnM.NorthingM.ToString() + "," + block.AltitudeM.ToString() + "," + block.RollDeg.ToString() + "," + block.PitchDeg.ToString() + "," + block.YawDeg);
+*/                
                 using var Points1 = ToTriangulationFormat(BlocksInfo.CreatePoints(true));
                 using var Points2 = ToTriangulationFormat(BlocksInfo.CreatePoints(false));
                 using var Projection1 = BlocksInfo.CreateProjectionMatrix(block.DroneLocnM.EastingM, block.DroneLocnM.NorthingM, block.AltitudeM, block.RollDeg, block.PitchDeg, block.YawDeg, K);
                 using var Projection2 = BlocksInfo.CreateProjectionMatrix(compareBlock.DroneLocnM.EastingM, compareBlock.DroneLocnM.NorthingM, compareBlock.AltitudeM, compareBlock.RollDeg, compareBlock.PitchDeg, compareBlock.YawDeg, K);
                 using Mat homogeneousPoints = new Mat();
-                Debug.WriteLine(blockId.ToString());
-                for (int i = 0; i < 3; i++)
-                {
-                    for (int j = 0; j < 4; j++)
-                    {
-                        Debug.Write(Projection1.At<double>(i, j).ToString() + " ");
-                    }
-                    Debug.WriteLine("");
-                }
-
+/*
+                printMat(Projection1, "Proj1");
+                printMat(Points1, "Points1");
+                printMat(Projection2, "Proj2");
+                printMat(Points2, "Points2"); 
+*/
                 Cv2.TriangulatePoints(Projection1, Projection2, Points1, Points2, homogeneousPoints);
                 // Convert homogeneous coordinates to 3D and update the locations into YoloProcessFeature
                 int counter = 0;
-                foreach (var thisfeature in BlocksInfo.fromFeatures.Values)
+                foreach (var obs in BlocksInfo.fromObs)
                 {
+                    var thisfeature = BlocksInfo.fromFeatures[obs];
                     thisfeature.realLocation = [(float)(homogeneousPoints.At<double>(0, counter) / homogeneousPoints.At<double>(3, counter)),
                             (float)(homogeneousPoints.At<double>(1, counter) / homogeneousPoints.At<double>(3, counter)),
                             (float)(homogeneousPoints.At<double>(2, counter) / homogeneousPoints.At<double>(3, counter))];
@@ -414,18 +525,57 @@ namespace SkyCombImage.ProcessLogic
             */
         }
 
+/*                    // Overwriting existing feature LocationM
+                    thisfeature.LocationM = new DroneLocation((float)thisfeature.realLocation[1], (float)thisfeature.realLocation[0]);
+
+                    // Change from altitude to height based on ground altitude at location
+                    var droneDEM = processAll.GroundData.DemModel.GetElevationByDroneLocn(thisfeature.Block.DroneLocnM);
+                    Assert(droneDEM != UnknownValue, thisfeature.FeatureId.ToString() + " drone location out of bounds");
+                    var obsDEM = processAll.GroundData.DemModel.GetElevationByDroneLocn(thisfeature.LocationM);
+                    Assert(obsDEM != UnknownValue,obs.ToString() + " " + thisfeature.FeatureId.ToString() + " object/feature location out of bounds");
+                    thisfeature.HeightM = (float)thisfeature.realLocation[2] - obsDEM;  
+                    var droneHeight = thisfeature.Block.AltitudeM - droneDEM;
+                    Debug.WriteLine(thisfeature.BlockId.ToString() + "," + obs.ToString() 
+                        + "," + thisfeature.LocationM.EastingM.ToString() + "," + thisfeature.LocationM.NorthingM.ToString() 
+                        + "," + thisfeature.HeightM.ToString() + "," + thisfeature.realLocation[2].ToString()
+                        + "," + droneHeight.ToString()+ "," + thisfeature.Block.AltitudeM.ToString()
+                        + "," + thisfeature.Block.DroneLocnM.EastingM.ToString()+ "," + thisfeature.Block.DroneLocnM.NorthingM.ToString()
+                        + "," + block.RollDeg.ToString() + "," + block.PitchDeg.ToString() + "," + block.YawDeg
+                        );
+
+                }
+            }
+        }
+*/
+
+        // Formulation for the intrinsic matrix.
+        private static Mat Intrinsic(double focalLength, double imageWidth, double imageHeight, double sensorWidth, double sensorHeight)
+        {
+            var Cx = imageWidth / 2; var Cy = imageHeight / 2;
+            var Fx = focalLength * imageWidth / sensorWidth; // F * pixels per mm = focal length in mm x image width px / sensor width mm
+            var Fy = focalLength * imageHeight / sensorHeight;
+            Mat K = new Mat(3, 3, MatType.CV_64F);
+            K.At<double>(0, 0) = Fx;
+            K.At<double>(0, 1) = 0;
+            K.At<double>(0, 2) = Cx;
+            K.At<double>(1, 0) = 0;
+            K.At<double>(1, 1) = Fy;
+            K.At<double>(1, 2) = Cy;
+            K.At<double>(2, 0) = 0;
+            K.At<double>(2, 1) = 0;
+            K.At<double>(2, 2) = 1;
+            return K;
+        }
 
         // Convert collected points to OpenCV Mat format for triangulation
         public Mat ToTriangulationFormat(List<Point2d> points1)
         {
             var points1Mat = new Mat(2, points1.Count, MatType.CV_64F);
-
             for (int i = 0; i < points1.Count; i++)
             {
                 points1Mat.Set<double>(0, i, points1[i].X);
                 points1Mat.Set<double>(1, i, points1[i].Y);
             }
-
             return points1Mat;
         }
     }
@@ -447,28 +597,18 @@ namespace SkyCombImage.ProcessLogic
             {
                 Debug.Write((from? "From obj,":"To obj,") +obj.ToString()+","+ "Feature " + feats[obj].FeatureId.ToString() + "," + "Drone altitude " + feats[obj].Block.AltitudeM.ToString() + ",");
                 pointlist.Add(centroid(feats[obj].PixelBox));
+                // pointlist.Add(new Point2d((feats[obj].PixelBox.X + feats[obj].PixelBox.Width/2 )/ 2, (feats[obj].PixelBox.Y + feats[obj].PixelBox.Height/2) / 2));
             }
             return pointlist;
         }
 
-        // Calculate the centroid of the pixelbox and convert location to real pixels, half that given, because the image has been double sized by DGI.
-        private Point2d centroid(Rectangle rectangle)
-        {
-            Point2d centroid = new Point2d();
-            centroid.X = (rectangle.X + rectangle.Width / 2)/2;
-            centroid.Y = (rectangle.Y + rectangle.Height / 2)/2;
-            Debug.WriteLine(centroid.X.ToString() + "," + centroid.Y.ToString() + ",");
-
-            return centroid;
-
-        }
         // Using camera drone information, determine camera heading/position
         private static Mat CreateRotationMatrix(double rollDegrees, double pitchDegrees, double yawDegrees)
         {
             // Convert angles to radians
-            double roll = rollDegrees * Math.PI / 180.0;
-            double pitch = pitchDegrees * Math.PI / 180.0;
-            double yaw = yawDegrees * Math.PI / 180.0;
+            double roll = rollDegrees * Math.PI / 180.0; //x
+            double pitch = pitchDegrees * Math.PI / 180.0; //y
+            double yaw = yawDegrees * Math.PI / 180.0; //z
 
             // Create rotation matrices
             using Mat Rx = new Mat(3, 3, MatType.CV_64F);
@@ -507,21 +647,20 @@ namespace SkyCombImage.ProcessLogic
             using Mat R = CreateRotationMatrix(rollDegrees, pitchDegrees, yawDegrees);
 
             // Create translation vector
-            using Mat t = new Mat(3, 1, MatType.CV_64F);
-            t.At<double>(0, 0) = easting;
-            t.At<double>(1, 0) = northing;
-            t.At<double>(2, 0) = altitude;
+            using Mat C = new Mat(3, 1, MatType.CV_64F);
+            C.At<double>(0, 0) = easting;
+            C.At<double>(1, 0) = northing;
+            C.At<double>(2, 0) = altitude;
 
             // Create [R|t] matrix
+            using Mat t = -R * C;
             using Mat Rt = new Mat(3, 4, MatType.CV_64F);
-            using Mat negRt = -R * t;
-
             for (int i = 0; i < 3; i++) // Copy rotation matrix
                 for (int j = 0; j < 3; j++)
                     Rt.At<double>(i, j) = R.At<double>(i, j);
             
             for (int i = 0; i < 3; i++) // Copy negative translation
-                Rt.At<double>(i, 3) = negRt.At<double>(i, 0);
+                Rt.At<double>(i, 3) = t.At<double>(i, 0);
 
             // Calculate P = K[R|t]
             return K * Rt;
