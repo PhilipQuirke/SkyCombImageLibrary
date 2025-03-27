@@ -1,21 +1,10 @@
 // Copyright SkyComb Limited 2025. All rights reserved. 
-using Accord.Math;
-using Accord.Statistics.Kernels;
-using Accord;
-using MathNet.Numerics.LinearAlgebra.Factorization;
-using Microsoft.VisualBasic.ApplicationServices;
-using Microsoft.VisualBasic;
+
 using OpenCvSharp;
-using SkyCombDrone.DroneLogic;
-using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
-using System.Data;
 using System.Diagnostics;
-using System.Drawing;
-using System.Security.Cryptography.Xml;
-using System.Net.Mail;
-using System.Windows.Forms; // temporary for unit test
+
 
 
 namespace SkyCombImage.ProcessLogic
@@ -30,11 +19,7 @@ namespace SkyCombImage.ProcessLogic
         private int CompareInterval { get; }
         private double[][] LHS;
         private double[] RHS;
-
         public static CameraIntrinsic intrinsic = ProcessConfigModel.intrinsic; // Copy the static Lennard Spark drone camera information
-
-        // Recalculate the Span.Objects.Features.LocationM and HeightM using triangulation.
-        // Frame pair intervals constant, 3 frames is 1/20th of second. 5 frames is 1/6th of a second.
         public SpanOptimize(ProcessAll process, int compareInterval)
         {
             Process = process;
@@ -112,9 +97,9 @@ namespace SkyCombImage.ProcessLogic
             if ((feature.PixelBox.X / 2 <= 1) || (feature.PixelBox.X / 2 + feature.PixelBox.Width / 2 >= intrinsic.ImageWidth) || (feature.PixelBox.Y / 2 <= 1) || (feature.PixelBox.Y / 2 + feature.PixelBox.Height / 2 >= intrinsic.ImageHeight)) return false; //too close to edge
             return true;
         }
-        // Using camera drone information, determine camera heading/position
         private static Mat CreateRotationMatrix(double rollDegrees, double pitchDegrees, double yawDegrees)
         {
+            // Using camera drone information, determine camera heading/position
             // Convert angles to radians
             double roll = rollDegrees * Math.PI / 180.0;
             double pitch = pitchDegrees * Math.PI / 180.0;

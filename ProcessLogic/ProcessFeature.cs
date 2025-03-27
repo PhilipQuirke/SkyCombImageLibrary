@@ -4,7 +4,6 @@ using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
 using System.Drawing;
-using System.Windows.Forms;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -134,7 +133,6 @@ namespace SkyCombImage.ProcessLogic
         // If yImageFrac = 0 then object is at the very bottom of the image (furtherest from drone)
         // If yImageFrac = 1/2 then object is in the middle of the image 
         // If yImageFrac = 1 then object is at the top of the image (closest to drone)
-        // Y = 1 is the top of the image, closest to the drone. 
         public (double xFraction01, double yFraction01) CentroidImageFractions()
         {
             double xCenterPixels = Math.Min(PixelBox.X + PixelBox.Width / 2.0, ProcessAll.VideoData.ImageWidth);
@@ -142,8 +140,9 @@ namespace SkyCombImage.ProcessLogic
 
             // Calculate position of center of feature as fraction of drone image area.
             double xFraction01 = xCenterPixels / ProcessAll.VideoData.ImageWidth;
-            // With image pixels, y = 0 is the top of the image. 
-            // Here we change the "sign" of Y, so that y = 0 is the bottom of the image.
+
+            // With image pixels, y = 0 is the top of the image, but we want y = 0 to be the bottom.
+            // Transform y-coordinate so that y = 0 is the bottom of the image and y = 1 is the top.
             double yFraction01 = (ProcessAll.VideoData.ImageHeight - yCenterPixels) / ProcessAll.VideoData.ImageHeight;
 
             return (xFraction01, yFraction01);
@@ -180,36 +179,43 @@ namespace SkyCombImage.ProcessLogic
                 droneState.Altitude = flightStep.FixedAltitudeM; // Relies on FixAltM
                 droneState.Yaw = flightStep.FixedYawDeg;  // Relies on FixYawDeg
                 droneState.CameraDownAngle = 90 - flightStep.FixedCameraToVerticalForwardDeg; // Relies on FixPitchDeg
-
-                CameraParameters cameraParams = new();
-                cameraParams.HorizontalFOV = ProcessAll.VideoData.HFOVDeg;
-                cameraParams.VerticalFOV = (float)ProcessAll.VideoData.VFOVDeg;
-
-                (double xFraction01, double yFraction01) = CentroidImageFractions(); // Range 0 to 1
-                ImagePosition imagePosition = new();
-                imagePosition.HorizontalFraction = (float)(xFraction01 * 2 - 1); // Range -1 to +1
-                imagePosition.VerticalFraction = (float)(yFraction01 * 2 - 1); // Range -1 to +1
-
+ 
                 // LOS algorithm works very inaccurately if the camera is pointing near the horizon.
                 phase = 4;
                 if (droneState.CameraDownAngle < 15)
                     return;
 
+                int reduction_factor = 2;
+
+                CameraParameters cameraParams = new();
+                cameraParams.HorizontalFOV = ProcessAll.VideoData.HFOVDeg;
+                cameraParams.VerticalFOV = (float)ProcessAll.VideoData.VFOVDeg;
+                cameraParams.ImageWidth = ProcessAll.VideoData.ImageWidth / reduction_factor;
+                cameraParams.ImageHeight = ProcessAll.VideoData.ImageHeight / reduction_factor;
+
+                (double xFraction01, double yFraction01) = CentroidImageFractions(); // Range 0 to 1
+                ImagePosition imagePosition = new();
+                imagePosition.PixelX = ((PixelBox.X + PixelBox.Width / 2.0) / reduction_factor);
+                imagePosition.PixelY = ((PixelBox.Y + PixelBox.Height / 2.0) / reduction_factor);
+                imagePosition.HorizontalFraction = (xFraction01 * 2 - 1); // Range -1 to +1
+                imagePosition.VerticalFraction = (yFraction01 * 2 - 1); // Range -1 to +1
+
                 phase = 5;
                 // Assumes that Zoom is constant at 1
-                DroneTargetCalculator droneTargetCalculator = new();
-                LocationResult? result = droneTargetCalculator.CalculateTargetLocation(terrainGrid, droneState, cameraParams, imagePosition);
+                DroneTargetCalculatorV2 droneTargetCalculator = new(droneState, cameraParams);
+                droneTargetCalculator.UnitTest(Block.DroneLocnM, terrainGrid);
+                LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition, true, terrainGrid);
                 if (result != null)
                 {
                     phase = 6;
-                    HeightAlgorithm = LineOfSightHeightAlgorithm + result.Method;
+                    HeightAlgorithm = LineOfSightHeightAlgorithm;
                     LocationM = result.LocationNE.Clone();
                     HeightM = 0;
                     if (groundData.HasDemModel)
                         HeightM = result.Elevation - groundData.DemModel.GetElevationByDroneLocn(LocationM);
                 }
                 else
-                    HeightAlgorithm = "LOS NoResult";
+                    HeightAlgorithm = "NoResult";
             }
             catch (Exception ex)
             {
@@ -218,12 +224,12 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Get the class's settings as datapairs (e.g. for saving to the datastore)
+        // Get the class's settings as datapairs (e.g. for saving to the datastore)\
+        // Add derived data that is saved but not reloaded.
         public override DataPairList GetSettings()
         {
             var settings = base.GetSettings();
 
-            // Derived data that is saved but not reloaded.
             settings.Add("Leg", (Block != null ? Block.FlightLegId : 0));
             // Horizontal distance from feature to drone.
             settings.Add("RangeM", (Block != null ? RelativeLocation.DistanceM(LocationM, Block.DroneLocnM) : 0), LocationNdp);
