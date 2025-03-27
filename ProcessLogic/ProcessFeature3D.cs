@@ -1,6 +1,5 @@
 ﻿// Copyright SkyComb Limited 2025. All rights reserved.
 using SkyCombGround.CommonSpace;
-using SkyCombGround.GroundModel;
 
 
 /*
@@ -42,84 +41,38 @@ The code process is:
 
 namespace SkyCombImage.ProcessLogic
 {
-    public class TerrainGrid
-    {
-        private readonly GroundModel GroundModel;
-
-        public TerrainGrid(GroundModel groundModel)
-        {
-            GroundModel = groundModel;
-        }
-
-        public float GetElevation(DroneLocation positionNE)
-        {
-            return GroundModel.GetElevationByDroneLocn(positionNE);
-        }
-
-        public float VerticalUnitM { get { return GroundModel.VerticalUnitM; } }
-    }
-
-    public class DroneState
-    {
-        public DroneLocation LocationNE { get; set; }  // Northing, Easting
-        public float Altitude { get; set; } // Meters above sea level
-        public float Yaw { get; set; } // Degrees, 0 = North, clockwise positive
-        public float CameraDownAngle { get; set; } // Degrees from horizontal
-    }
-
-    public class CameraParameters
-    {
-        public float HorizontalFOV { get; set; } // Degrees
-        public float VerticalFOV { get; set; } // Degrees
-    }
-
-    public class ImagePosition
-    {
-        public float HorizontalFraction { get; set; } // -1 to +1, left to right
-        public float VerticalFraction { get; set; } // -1 to +1, bottom to top
-    }
-
-    public class LocationResult
-    {
-        public DroneLocation LocationNE { get; set; }
-        public float Elevation { get; set; } // Meters above sea level
-        public float Confidence { get; set; } // 0-1 scale
-        public string Method { get; set; } = "";
-    }
-
-    public class DroneTargetCalculator
+    public class DroneTargetCalculatorV1
     {
         private readonly float MinDroneHeight = 40; // Minimum height above terrain
         private readonly float MaxSearchDistanceM = 1000; // Maximum search distance in meters
         private readonly float BaseStepSizeM = 1; // Base step size for iteration
 
-        public DroneTargetCalculator()
+        private readonly DroneState DroneState;
+        private readonly CameraParameters CameraParams;
+
+        public DroneTargetCalculatorV1(DroneState droneState, CameraParameters cameraParams)
         {
+            DroneState = droneState;
+            CameraParams = cameraParams;
         }
 
-        public LocationResult? CalculateTargetLocation(
-            TerrainGrid terrain,
-            DroneState drone,
-            CameraParameters camera,
-            ImagePosition targetImage)
+        public LocationResult? CalculateTargetLocation(ImagePosition targetImage, bool applyDistortionCorrection, TerrainGrid terrain)
         {
-            // Validate inputs
-            ValidateInputs(drone, camera, targetImage);
+            ValidateInputs(targetImage);
 
             // Calculate viewing angles
-            float targetDownAngle = CalculateDownAngle(drone.CameraDownAngle, camera.VerticalFOV, targetImage.VerticalFraction);
-            float targetDirection = CalculateDirection(drone.Yaw, camera.HorizontalFOV, targetImage.HorizontalFraction);
+            var targetDownAngle = CalculateDownAngle(DroneState.CameraDownAngle, CameraParams.VerticalFOV, targetImage.VerticalFraction);
+            var targetDirection = CalculateDirection(DroneState.Yaw, CameraParams.HorizontalFOV, targetImage.HorizontalFraction);
 
-            // Convert angles to radians for calculations
-            float downAngleRad = targetDownAngle * (float)Math.PI / 180.0f;
-            float directionRad = targetDirection * (float)Math.PI / 180.0f;
+            var downAngleRad = targetDownAngle * Math.PI / 180.0f;
+            var directionRad = targetDirection * Math.PI / 180.0f;
 
-            return FindTerrainIntersection(terrain, drone, targetDirection, downAngleRad, directionRad);
+            return FindTerrainIntersection(terrain, targetDirection, downAngleRad, directionRad);
         }
 
-        private void ValidateInputs(DroneState drone, CameraParameters camera, ImagePosition targetImage)
+        private void ValidateInputs( ImagePosition targetImage)
         {
-            if (drone.Altitude < MinDroneHeight)
+            if (DroneState.Altitude < MinDroneHeight)
                 throw new ArgumentException("Drone altitude is below minimum safe height");
 
             if (targetImage.HorizontalFraction < -1 || targetImage.HorizontalFraction > 1 ||
@@ -127,57 +80,49 @@ namespace SkyCombImage.ProcessLogic
                 throw new ArgumentException("Image position fractions must be between -1 and 1");
         }
 
-        private float CalculateDownAngle(float cameraAngleDeg, float vFov, float verticalFraction)
+        private double CalculateDownAngle(float cameraAngleDeg, float vFov, double verticalFraction)
         {
-            // Claude first implementation
-            //return cameraAngleDeg - 0.5f * vFov * verticalFraction;
-
-            // Claude second implementation
             // Convert FOV to radians
-            float halfVFovRad = vFov * 0.5f * (float)Math.PI / 180.0f;
+            var halfVFovRad = vFov * 0.5f * Math.PI / 180.0f;
 
             // Calculate the actual angle from the center using tangent relationship
-            float angleFromCenterRad = (float)Math.Atan(verticalFraction * Math.Tan(halfVFovRad));
+            var angleFromCenterRad = Math.Atan(verticalFraction * Math.Tan(halfVFovRad));
 
             // Convert back to degrees and add to camera angle
-            return cameraAngleDeg - angleFromCenterRad * 180.0f / (float)Math.PI;
+            return cameraAngleDeg - angleFromCenterRad * 180.0f / Math.PI;
         }
 
-        private float CalculateDirection(float yawDeg, float hFov, float horizontalFraction)
+        private double CalculateDirection(float yawDeg, float hFov, double horizontalFraction)
         {
-            // Claude first implementation
-            //float direction = yawDeg - 0.5f * hFov * horizontalFraction;
-
-            // Claude second implementation
             // Convert FOV to radians
-            float halfHFovRad = hFov * 0.5f * (float)Math.PI / 180.0f;
+            double halfHFovRad = hFov * 0.5f * Math.PI / 180.0f;
 
             // Calculate the actual angle from the center using tangent relationship
-            float angleFromCenterRad = (float)Math.Atan(horizontalFraction * Math.Tan(halfHFovRad));
+            double angleFromCenterRad = Math.Atan(horizontalFraction * Math.Tan(halfHFovRad));
 
             // Convert back to degrees and add to yaw
-            float direction = yawDeg + angleFromCenterRad * 180.0f / (float)Math.PI;
+            double direction = yawDeg + angleFromCenterRad * 180.0f / Math.PI;
 
             // Normalize to 0-360 degrees
             return ((direction % 360) + 360) % 360;
         }
 
         // The code does NOT depend on FlightStep.InputImageCenter/InputImageSize/InputImageUnitVector/InputImageDemM/InputImageDsmM
-        private LocationResult? FindTerrainIntersection(TerrainGrid terrain, DroneState drone, float targetDirection, float downAngleRad, float directionRad)
+        private LocationResult? FindTerrainIntersection(TerrainGrid terrain, double targetDirection, double downAngleRad, double directionRad)
         {
             // Convert angle back to degrees to compare easily
-            float downAngleDeg = downAngleRad * 180.0f / (float)Math.PI;
+            var downAngleDeg = downAngleRad * 180.0f / Math.PI;
 
-            DroneLocation currentPosition = drone.LocationNE;
-            float currentAltitude = drone.Altitude;
-            float totalDistance = 0;
-            float confidence = 0;
+            DroneLocation currentPosition = DroneState.LocationNE;
+            double currentAltitude = DroneState.Altitude;
+            double totalDistance = 0;
+            double confidence = 0;
             float currTerrainHeight = 0;
             int numSteps = 0;
 
             // Calculate initial height above terrain
-            float terrainHeightAtStart = terrain.GetElevation(currentPosition);
-            float heightAboveTerrain = currentAltitude - terrainHeightAtStart;
+            var terrainHeightAtStart = terrain.GetElevation(currentPosition);
+            var heightAboveTerrain = currentAltitude - terrainHeightAtStart;
 
             DroneLocation directionVector = new(
                 (float)Math.Cos(directionRad),   // North component
@@ -185,28 +130,28 @@ namespace SkyCombImage.ProcessLogic
             );
 
             // Initial step size based on height
-            float horizontalStepSize = CalculateAdaptiveStepSize(terrain, heightAboveTerrain);
+            var horizontalStepSize = CalculateAdaptiveStepSize(terrain, heightAboveTerrain);
 
             // Check if we should use near-vertical logic
             bool isNearVertical = (downAngleDeg > 85);
 
             string theMethod = "Norm";
-            if (!isNearVertical)
-            {
+            //if (!isNearVertical)
+            //{
                 //
                 // -----------------
                 // Normal Approach
                 // -----------------
                 //
-                float tanDownAngle = (float)Math.Tan(downAngleRad);
+                var tanDownAngle = Math.Tan(downAngleRad);
                 while (totalDistance < MaxSearchDistanceM)
                 {
                     numSteps++;
 
                     // Move horizontally, drop altitude by tan(angle) * horizontalStep
-                    float verticalStep = horizontalStepSize * tanDownAngle;
+                    var verticalStep = horizontalStepSize * tanDownAngle;
 
-                    currentPosition = currentPosition.Add(directionVector.Multiply(horizontalStepSize));
+                    currentPosition = currentPosition.Add(directionVector.Multiply((float)horizontalStepSize));
                     currentAltitude -= verticalStep;
                     totalDistance += horizontalStepSize;
 
@@ -231,18 +176,18 @@ namespace SkyCombImage.ProcessLogic
                     if (currentAltitude + terrain.VerticalUnitM <= terrainHeight)
                     {
                         // Interpolate back
-                        float overshoot = terrainHeight - currentAltitude;
-                        float stepBack = overshoot / verticalStep * horizontalStepSize;
-                        currentPosition = currentPosition.Add(directionVector.Multiply(-stepBack));
+                        var overshoot = terrainHeight - currentAltitude;
+                        var stepBack = overshoot / verticalStep * horizontalStepSize;
+                        currentPosition = currentPosition.Add(directionVector.Multiply((float)-stepBack));
 
                         terrainHeight = terrain.GetElevation(currentPosition);
 
-                        confidence = CalculateConfidence(totalDistance, drone.Altitude);
+                        confidence = CalculateConfidence(totalDistance, DroneState.Altitude);
                         return new LocationResult
                         {
                             LocationNE = currentPosition,
                             Elevation = terrainHeight,
-                            Confidence = confidence,
+                            Confidence = (float)confidence,
                             Method = theMethod,
                         };
                     }
@@ -260,142 +205,145 @@ namespace SkyCombImage.ProcessLogic
                     Confidence = 0,
                     Method = theMethod,
                 };
-            }
-            else
-            {
-                //
-                // ----------------------------------------------
-                // Near-Vertical Approach
-                // ----------------------------------------------
-                //
-                // Here, we rely mostly on decreasing altitude in small steps and only 
-                // moving horizontally enough to keep things stable.
-                theMethod = "Vert";
-
-                // Example: take small vertical steps, compute horizontal offset from tan
-                // The smaller the step, the less "blow-up" from tan(near 90°).
-                float verticalStepSize = 1.0f;  // or terrain.VerticalUnitM, etc.
-
-                // if downAngleDeg is exactly 90°, tanDownAngle would be infinite
-                // so we clamp to a safe "maxTan" if angle is above 89° or so:
-                float safeTan = (float)Math.Tan(Math.Min(downAngleRad, 1.55334f));
-                // 1.55334 rad ~ 89 degrees, to prevent infinite blow-up
-
-
-                float droneYaw = drone.Yaw;          // 0°=North, clockwise
-                float cameraYaw = targetDirection;   // 0°=North, clockwise
-
-                // Put both in range [0..360) — though your code does this normalizing step for targetDirection
-                // Then compute a difference in the range -180..+180:
-                float rawDiff = cameraYaw - droneYaw;
-                float relDiff = ((rawDiff + 180) % 360) - 180;
-                // relDiff is now between -180 and +180, with negative meaning camera is to the “left” 
-                // or behind, positive meaning “right” or ahead, depending on your perspective
-
-                bool isCameraBehindDrone = (Math.Abs(relDiff) > 90.0f);
-                theMethod += isCameraBehindDrone ? "Behind" : "Front";
-
-                while (totalDistance < MaxSearchDistanceM)
+            /*
+             * This code is buggy - it produced an "L" shaped flight path
+                        }
+                else
                 {
-                    numSteps++;
+                    //
+                    // ----------------------------------------------
+                    // Near-Vertical Approach
+                    // ----------------------------------------------
+                    //
+                    // Here, we rely mostly on decreasing altitude in small steps and only 
+                    // moving horizontally enough to keep things stable.
+                    theMethod = "Vert";
 
-                    // Step down in altitude by a small amount
-                    currentAltitude -= verticalStepSize;
+                    // Example: take small vertical steps, compute horizontal offset from tan
+                    // The smaller the step, the less "blow-up" from tan(near 90°).
+                    float verticalStepSize = 1.0f;  // or terrain.VerticalUnitM, etc.
 
-                    // Horizontal movement: 
-                    float horizontalStep = verticalStepSize / safeTan;
+                    // if downAngleDeg is exactly 90°, tanDownAngle would be infinite
+                    // so we clamp to a safe "maxTan" if angle is above 89° or so:
+                    float safeTan = (float)Math.Tan(Math.Min(downAngleRad, 1.55334f));
+                    // 1.55334 rad ~ 89 degrees, to prevent infinite blow-up
 
-                    // Decide if we apply +horizontalStep or -horizontalStep:
-                    float signedStep = horizontalStep; // Run 1, 4 & 6
-                    //float signedStep = isCameraBehindDrone ? -horizontalStep : horizontalStep; // Run 2
-                    //float signedStep = ! isCameraBehindDrone ? -horizontalStep : horizontalStep; // Run 3
-                    //float signedStep = - horizontalStep; // Run 5
 
-                    currentPosition = currentPosition.Add(directionVector.Multiply(signedStep));
-                    totalDistance += horizontalStep;
+                    float droneYaw = drone.Yaw;          // 0°=North, clockwise
+                    float cameraYaw = targetDirection;   // 0°=North, clockwise
 
-                    float terrainHeight = terrain.GetElevation(currentPosition);
-                    if (terrainHeight < 0)
+                    // Put both in range [0..360) — though your code does this normalizing step for targetDirection
+                    // Then compute a difference in the range -180..+180:
+                    float rawDiff = cameraYaw - droneYaw;
+                    float relDiff = ((rawDiff + 180) % 360) - 180;
+                    // relDiff is now between -180 and +180, with negative meaning camera is to the “left” 
+                    // or behind, positive meaning “right” or ahead, depending on your perspective
+
+                    bool isCameraBehindDrone = (Math.Abs(relDiff) > 90.0f);
+                    theMethod += isCameraBehindDrone ? "Behind" : "Front";
+
+                    while (totalDistance < MaxSearchDistanceM)
                     {
-                        if (numSteps >= 10)
+                        numSteps++;
+
+                        // Step down in altitude by a small amount
+                        currentAltitude -= verticalStepSize;
+
+                        // Horizontal movement: 
+                        float horizontalStep = verticalStepSize / safeTan;
+
+                        // Decide if we apply +horizontalStep or -horizontalStep:
+                        float signedStep = horizontalStep; // Run 1, 4 & 6
+                        //float signedStep = isCameraBehindDrone ? -horizontalStep : horizontalStep; // Run 2
+                        //float signedStep = ! isCameraBehindDrone ? -horizontalStep : horizontalStep; // Run 3
+                        //float signedStep = - horizontalStep; // Run 5
+
+                        currentPosition = currentPosition.Add(directionVector.Multiply(signedStep));
+                        totalDistance += horizontalStep;
+
+                        float terrainHeight = terrain.GetElevation(currentPosition);
+                        if (terrainHeight < 0)
                         {
+                            if (numSteps >= 10)
+                            {
+                                return new LocationResult
+                                {
+                                    LocationNE = currentPosition,
+                                    Elevation = currTerrainHeight,
+                                    Confidence = 0,
+                                    Method = theMethod,
+                                };
+                            }
+                            return null;
+                        }
+                        currTerrainHeight = terrainHeight;
+
+                        // Check for intersection
+                        if (currentAltitude + terrain.VerticalUnitM <= terrainHeight)
+                        {
+                            // Interpolate back to find exact intersection
+                            float overshoot = terrainHeight - currentAltitude;
+                            float stepBackFrac = overshoot / verticalStepSize; // fraction of the vertical step
+                                                                                // horizontal step back
+                            float backDist = horizontalStep * stepBackFrac;
+
+                            currentPosition = currentPosition.Add(directionVector.Multiply(-backDist));
+                            terrainHeight = terrain.GetElevation(currentPosition);
+
+                            confidence = CalculateConfidence(totalDistance, drone.Altitude);
+
                             return new LocationResult
                             {
                                 LocationNE = currentPosition,
-                                Elevation = currTerrainHeight,
-                                Confidence = 0,
+                                Elevation = terrainHeight,
+                                Confidence = confidence,
                                 Method = theMethod,
                             };
                         }
-                        return null;
-                    }
-                    currTerrainHeight = terrainHeight;
 
-                    // Check for intersection
-                    if (currentAltitude + terrain.VerticalUnitM <= terrainHeight)
-                    {
-                        // Interpolate back to find exact intersection
-                        float overshoot = terrainHeight - currentAltitude;
-                        float stepBackFrac = overshoot / verticalStepSize; // fraction of the vertical step
-                                                                           // horizontal step back
-                        float backDist = horizontalStep * stepBackFrac;
-
-                        currentPosition = currentPosition.Add(directionVector.Multiply(-backDist));
-                        terrainHeight = terrain.GetElevation(currentPosition);
-
-                        confidence = CalculateConfidence(totalDistance, drone.Altitude);
-
-                        return new LocationResult
+                        // Update step size if we want finer stepping 
+                        heightAboveTerrain = currentAltitude - terrainHeight;
+                        if (heightAboveTerrain < 10f)
                         {
-                            LocationNE = currentPosition,
-                            Elevation = terrainHeight,
-                            Confidence = confidence,
-                            Method = theMethod,
-                        };
+                            // Take smaller vertical steps if close to ground
+                            verticalStepSize = 0.2f;
+                        }
+                        else if (heightAboveTerrain < 50f)
+                        {
+                            verticalStepSize = 0.5f;
+                        }
+                        else
+                        {
+                            verticalStepSize = 1.0f;
+                        }
                     }
 
-                    // Update step size if we want finer stepping 
-                    heightAboveTerrain = currentAltitude - terrainHeight;
-                    if (heightAboveTerrain < 10f)
+                    // If no intersection up to maxSearchDistance
+                    return new LocationResult
                     {
-                        // Take smaller vertical steps if close to ground
-                        verticalStepSize = 0.2f;
-                    }
-                    else if (heightAboveTerrain < 50f)
-                    {
-                        verticalStepSize = 0.5f;
-                    }
-                    else
-                    {
-                        verticalStepSize = 1.0f;
-                    }
+                        LocationNE = currentPosition,
+                        Elevation = currTerrainHeight,
+                        Confidence = 0,
+                        Method = theMethod,
+                    };
                 }
-
-                // If no intersection up to maxSearchDistance
-                return new LocationResult
-                {
-                    LocationNE = currentPosition,
-                    Elevation = currTerrainHeight,
-                    Confidence = 0,
-                    Method = theMethod,
-                };
-            }
+            */
         }
 
 
-        private float CalculateAdaptiveStepSize(TerrainGrid terrain, float heightAboveTerrain)
+        private double CalculateAdaptiveStepSize(TerrainGrid terrain, double heightAboveTerrain)
         {
             // Smaller steps when closer to ground, larger steps when higher
-            return Math.Max(terrain.VerticalUnitM, Math.Min(BaseStepSizeM * (heightAboveTerrain / 50.0f), 5.0f));
+            return Math.Max(terrain.VerticalUnitM, Math.Min(BaseStepSizeM * (heightAboveTerrain / 50.0), 5.0));
         }
 
 
-        private float CalculateConfidence(float distance, float initialHeight)
+        private double CalculateConfidence(double distance, float initialHeight)
         {
             // Confidence decreases with distance and initial height
-            float distanceFactor = 1.0f - (distance / MaxSearchDistanceM);
-            float heightFactor = 1.0f - (Math.Min(initialHeight, 300) / 300);
-            return distanceFactor * 0.7f + heightFactor * 0.3f;
+            var distanceFactor = 1.0 - (distance / MaxSearchDistanceM);
+            var heightFactor = 1.0 - (Math.Min(initialHeight, 300) / 300);
+            return distanceFactor * 0.7 + heightFactor * 0.3;
         }
     }
 }
