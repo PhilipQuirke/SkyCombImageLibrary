@@ -19,9 +19,6 @@ namespace SkyCombImage.ProcessLogic
         // A feature is associated 1-1 with a Block  ??NQ to PQ: many-to-1
         public ProcessBlock Block { get; set; }
 
-        // Triangulated locations with Z in terms of altitude
-        public double[] realLocation { get; set; } = new double[3];
-
         // Location of hot pixels in this feature.
         public PixelHeatList? Pixels { get; set; } = null;
 
