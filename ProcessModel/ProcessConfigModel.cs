@@ -1,4 +1,5 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+using OpenCvSharp;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 
@@ -202,5 +203,28 @@ namespace SkyCombImage.ProcessModel
             };
         }
 
+
+        // Create a drone camera intrinsic matrix.
+        private static Mat Intrinsic(double focalLength, double imageWidth, double imageHeight, double sensorWidth, double sensorHeight)
+        {
+            var Cx = imageWidth / 2; var Cy = imageHeight / 2;
+            var Fx = focalLength * imageWidth / sensorWidth; // F * pixels per mm = focal length in mm x image width px / sensor width mm
+            var Fy = focalLength * imageHeight / sensorHeight;
+            Mat K = new Mat(3, 3, MatType.CV_64F);
+            K.At<double>(0, 0) = Fx;
+            K.At<double>(0, 1) = 0;
+            K.At<double>(0, 2) = Cx;
+            K.At<double>(1, 0) = 0;
+            K.At<double>(1, 1) = Fy;
+            K.At<double>(1, 2) = Cy;
+            K.At<double>(2, 0) = 0;
+            K.At<double>(2, 1) = 0;
+            K.At<double>(2, 2) = 1;
+            return K;
+        }
+
+
+        // Hardcode the drone camera intrinsic matrix for Lennard Sparks drone camera
+        public static Mat LennardsDroneK = Intrinsic(9.1, 640, 512, 7.68, 6.144);
     }
 }
