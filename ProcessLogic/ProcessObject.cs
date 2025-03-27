@@ -311,10 +311,7 @@ namespace SkyCombImage.ProcessLogic
             if (firstStep == null)
                 return;
 
-            if (firstStep.InputImageDemM != UnknownValue)
-                DemM = firstStep.InputImageDemM;
-            else
-                DemM = firstStep.DemM;
+            DemM = firstStep.DemM;
         }
 
 
