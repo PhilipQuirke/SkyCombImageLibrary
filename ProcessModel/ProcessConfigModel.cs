@@ -1,4 +1,5 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+using OpenCvSharp;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 
@@ -81,11 +82,11 @@ namespace SkyCombImage.ProcessModel
 
         // --------------------- Error Thresholds --------------------- 
         // The maximum +/- inaccuracy (in meters) in an object's estimated location to be considered "good" & colored green
-        public const float GoodLocationErrM = 2;
+        public const float GoodLocationErrM = 5;
         // The maximum +/- inaccuracy (in meters) in an object's estimated height to be considered "good" & colored green 
-        public const float GoodHeightErrM = 2;
+        public const float GoodHeightErrM = 5;
         // If height inaccuracy is too great then height calculation is abandoned.
-        public const float AbandonHeightErrM = 4;
+        public const float AbandonHeightErrM = 5;
 
 
         // --------------------- Processing Limits --------------------- 
@@ -200,6 +201,41 @@ namespace SkyCombImage.ProcessModel
                 "" => "none",
                 _ => throw ThrowException("ModelConfig.AllSomeOrNone: Bad value: " + answer),
             };
+        }
+
+        // Hardcode the drone camera intrinsic matrix for Lennard Sparks drone camera
+        public static CameraIntrinsic intrinsic = new CameraIntrinsic(9.1, 640, 512, 7.68, 6.144);
+        public static Mat K = intrinsic.K;
+    }
+    public class CameraIntrinsic
+    {
+        public Mat K = new Mat(3, 3, MatType.CV_64F);
+        public Mat KInv = new Mat(3, 3, MatType.CV_64F);
+        public double Cx;
+        public double Cy;
+        public double Fx;
+        public double Fy;
+        public double ImageWidth;
+        public double ImageHeight;
+
+        public CameraIntrinsic(double focalLength, double imageWidth, double imageHeight, double sensorWidth, double sensorHeight)
+        {
+            ImageWidth = imageWidth;
+            ImageHeight = imageHeight;
+            Cx = imageWidth / 2; 
+            Cy = imageHeight / 2;
+            Fx = focalLength * imageWidth / sensorWidth; // F * pixels per mm = focal length in mm x image width px / sensor width mm
+            Fy = focalLength * imageHeight / sensorHeight;
+            K.At<double>(0, 0) = Fx;
+            K.At<double>(0, 1) = 0;
+            K.At<double>(0, 2) = Cx;
+            K.At<double>(1, 0) = 0;
+            K.At<double>(1, 1) = Fy;
+            K.At<double>(1, 2) = Cy;
+            K.At<double>(2, 0) = 0;
+            K.At<double>(2, 1) = 0;
+            K.At<double>(2, 2) = 1;
+            KInv = K.Inv();
         }
 
     }

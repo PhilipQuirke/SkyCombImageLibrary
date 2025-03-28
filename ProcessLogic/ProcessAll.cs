@@ -380,7 +380,7 @@ namespace SkyCombImage.ProcessLogic
 
         public void ProcessFlightLegEndWrapper(ProcessScope scope, int legId)
         {
-            try
+ //           try
             {
                 if (Drone.UseFlightLegs)
                     OnObservation(ProcessEventEnum.LegEnd_Before, new ProcessEventArgs(scope, legId));
@@ -400,11 +400,11 @@ namespace SkyCombImage.ProcessLogic
 
                 BaseConstants.GcFreeMemory();
             }
-            catch (Exception ex)
+/*            catch (Exception ex)
             {
                 throw ThrowException("ProcessFlightLegEndWrapper", ex);
             }
-        }
+*/        }
 
 
         // If we have been tracking some significant objects, create a ProcessSpan for them

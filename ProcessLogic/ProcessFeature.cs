@@ -19,9 +19,6 @@ namespace SkyCombImage.ProcessLogic
         // A feature is associated 1-1 with a Block  ??NQ to PQ: many-to-1
         public ProcessBlock Block { get; set; }
 
-        // Triangulated locations with Z in terms of altitude
-        public double[] realLocation { get; set; } = new double[3];
-
         // Location of hot pixels in this feature.
         public PixelHeatList? Pixels { get; set; } = null;
 
@@ -258,7 +255,7 @@ namespace SkyCombImage.ProcessLogic
                 { "DepthPixels", PixelBox.Height },
                 { "#HotPixels", NumHotPixels },
                 { "centroid", "(" + centroidx + ", " + centroidy + ")"},
-                { "location", "(" + LocationM.EastingM + ", " + LocationM.NorthingM + ", " + HeightM + ")"},
+                { "location", ( LocationM != null ? "(" + LocationM.EastingM + ", " + LocationM.NorthingM + ", " + HeightM + ")":"")},
                 { "NorthingDiffM", ( LocationM != null ? (LocationM.NorthingM - objectLocation.NorthingM ) : 0.0), 1},
                 { "EastingDiffM", ( LocationM != null ? (LocationM.EastingM - objectLocation.EastingM) : 0.0), 1},
                 { "HeightDiff", ( LocationM != null ? (HeightM - objectHeight) : 0), 1},
@@ -338,7 +335,7 @@ namespace SkyCombImage.ProcessLogic
                 DroneLocation sumLocation = new();
 
                 foreach (var feature in this)
-                    if ((feature.Value.LocationM != null) &&
+                    if ((feature.Value.LocationM != null) && (feature.Value.HeightM != 0) &&
                         (feature.Value.Type == FeatureTypeEnum.Real))
                     {
                         sumCount++;
