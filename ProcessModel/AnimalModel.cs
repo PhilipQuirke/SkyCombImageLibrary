@@ -30,7 +30,6 @@ namespace SkyCombImage.ProcessModel
         public float BestFixPitchDeg { get; }
 
 
-
         public AnimalModel(int flightNum, Drone drone, ProcessSpanList? processSpans, ProcessObject theObj)
         {
             try
@@ -90,6 +89,26 @@ namespace SkyCombImage.ProcessModel
                 throw new Exception("AnimalModel: " + ex.Message);
             }
         }
+
+
+        // Zero-based column indexes for animal data
+        public const int ColFlightNum = 0;
+        public const int ColName = 1;
+        public const int ColLocation = 2;
+        public const int ColLocationErrM = 3;
+        public const int ColSizeClass = 4;
+        public const int ColSizeCM2 = 5;
+        public const int ColHeightClass = 6;
+        public const int ColHeightM = 7;
+        public const int ColHeightErrM = 8;
+        public const int ColSpineM = 9;
+        public const int ColGirthM = 10;
+        public const int ColCameraDownDegs = 11;
+        public const int ColAvgRangeM = 12;
+        public const int ColFixHFOVDegs = 13;
+        public const int ColFixAltM = 14;
+        public const int ColFixYawDeg = 15;
+        public const int ColFixPitchDeg = 16;
 
         public DataPairList GetSettings()
         {

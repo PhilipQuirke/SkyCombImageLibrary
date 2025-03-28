@@ -88,7 +88,7 @@ namespace SkyCombImage.ProcessLogic
     public class LocationResult
     {
         public DroneLocation LocationNE { get; set; }
-        public float Elevation { get; set; } // Meters above sea level
+        public float Elevation { get; set; } // Object meters above sea level. Also DEM (Digital Ground Model) height
         public float Confidence { get; set; } // 0-1 scale
         public string Method { get; set; }
     }
@@ -426,32 +426,48 @@ namespace SkyCombImage.ProcessLogic
             return null;
         }
 
-
-        public void UnitTest(DroneLocation droneLocation, TerrainGrid terrain)
+#if DEBUG
+        // Unit test: With camera almost straight down, an object near the image center
+        // should be in roughly same location as the drone, and at same DEM as Block
+        public void UnitTest(ProcessBlock block, TerrainGrid terrain)
         {
-            // Center obj
+            // Move object to very near the centre of the image
             ImagePosition imagePosition = new();
-            imagePosition.PixelX = CameraParams.ImageWidth / 2;
-            imagePosition.PixelY = CameraParams.ImageHeight / 2;
-            imagePosition.HorizontalFraction = 0;
-            imagePosition.VerticalFraction = 0;
+            imagePosition.PixelX = CameraParams.ImageWidth / 2.0 - 1;
+            imagePosition.PixelY = CameraParams.ImageHeight / 2.0 - 1;
+            imagePosition.HorizontalFraction = 0.05;
+            imagePosition.VerticalFraction = 0.05;
 
+            // Set camera to straight down 
             var old_value = DroneState.CameraDownAngle;
             DroneState.CameraDownAngle = 89.9f;
+
 
             LocationResult? result = CalculateTargetLocation(imagePosition, false, terrain);
             if (result != null)
             {
-                var delta = droneLocation.Subtract(result.LocationNE);
-                var len = delta.DiagonalM;
-                if (len > 1)
+                var locnDiff = block.DroneLocnM.Subtract(result.LocationNE);
+                var locnDist = locnDiff.DiagonalM;
+
+                var heightDiff = Math.Abs(block.FlightStep.DemM - result.Elevation);
+
+                if (locnDist > 2)
                 {
-                    Debug.Print(droneLocation.ToString(), result.LocationNE.ToString(), len);
-                    BaseConstants.Assert(false, "ProcessFeature3v2 bad centering");
+                    Debug.Print(block.DroneLocnM.ToString(), result.LocationNE.ToString(), locnDist);
+                    BaseConstants.Assert(false, "ProcessFeature3v2 bad location");
+                }
+
+                if (heightDiff > 4)
+                {
+                    LocationResult? result2 = CalculateTargetLocation(imagePosition, false, terrain);
+
+                    Debug.Print(block.FlightStep.DemM.ToString(), result.Elevation, heightDiff);
+                    BaseConstants.Assert(false, "ProcessFeature3v2 bad height");
                 }
             }
 
             DroneState.CameraDownAngle = old_value;
         }
+#endif
     }
 }

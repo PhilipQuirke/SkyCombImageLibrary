@@ -154,7 +154,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Calculate object location and height considering land contour undulations.
-        // "Walk" sight-line from drone to object in 3D space. Stop when line intersects DSM.
+        // "Walk" sight-line from drone to object in 3D space. Stop when line intersects DEM.
         // This code depends on ProcessAll.VideoData.HFOVDeg, FlightStep.FixAltM, FixYawDeg and FixPitchDeg (via FixedCameraToVerticalForwardDeg).
         // These "fixed" values are used to link into ProcessSpan optimisation algorithm.
         // This code does NOT depend on FlightStep.InputImageCenter/InputImageSize/InputImageUnitVector/InputImageDemM/InputImageDsmM
@@ -169,8 +169,9 @@ namespace SkyCombImage.ProcessLogic
                 phase = 1;
                 var flightStep = Block.FlightStep;
 
+                // Use ground (not surface) model for this calculation.
                 phase = 2;
-                var groundModel = groundData.HasDsmModel ? groundData.DsmModel : groundData.DemModel;
+                var groundModel = groundData.HasDemModel ? groundData.DemModel : groundData.DsmModel;
                 if (groundModel == null)
                     return;
 
@@ -206,7 +207,10 @@ namespace SkyCombImage.ProcessLogic
                 phase = 5;
                 // Assumes that Zoom is constant at 1
                 DroneTargetCalculatorV2 droneTargetCalculator = new(droneState, cameraParams);
-                droneTargetCalculator.UnitTest(Block.DroneLocnM, terrainGrid);
+#if DEBUG
+                // Only call if FixAlt is zero.
+                // PQR droneTargetCalculator.UnitTest(Block, terrainGrid);
+#endif
                 LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition, true, terrainGrid);
                 if (result != null)
                 {
