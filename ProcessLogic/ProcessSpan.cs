@@ -254,7 +254,21 @@ namespace SkyCombImage.ProcessLogic
                 // nq new method. Second parameter: Frame pair intervals constant, 3 frames is 1/20th of second. 5 frames is 1/6th of a second.
                 SpanOptimize triangulation = new(Process, 40);
                 foreach (var theObj in theObjs)
-                    theObj.Value.Calculate_RealObject_SimpleMemberData();
+                {
+                    //theObj.Value.Calculate_RealObject_SimpleMemberData();
+
+                    // Calculate OBJECT size in square centimeters (based on maximum # hot pixels over real features).
+                    theObj.Value.Calculate_SizeCM2();
+
+                    // Calculate the range of the OBJECT from the drone in meters (as average over real features).
+                    theObj.Value.Calculate_AvgRangeM();
+
+                    // Calculate the OBJECT maximum heat value (of any pixel over real features).
+                    theObj.Value.Calculate_MaxHeat();
+
+                    // Is this OBJECT significant?
+                    theObj.Value.Calculate_Significant();
+                }
                 theObjs.CalculateSettings();
             }
             else

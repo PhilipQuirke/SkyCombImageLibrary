@@ -4,8 +4,11 @@ using Accord.Math;
 using OpenCvSharp;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
+using System;
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using System.Security.Cryptography.X509Certificates;
+using System.Windows.Forms;
 
 
 
@@ -25,7 +28,7 @@ namespace SkyCombImage.ProcessLogic
         public SpanOptimize(ProcessAll process, int compareInterval)
         {
             Process = process;
-            CompareInterval = compareInterval;
+            var ObjList = Process.ProcessObjects;
             var totBlocks = Process.Blocks.Count;
             if (false)
             { // for debugging. Ensure that the time chosen includes features in the blocks.
@@ -51,48 +54,34 @@ namespace SkyCombImage.ProcessLogic
                 process.ProcessFeatures[secondfeature].Significant = true;
 
             }
-            foreach (var block in Process.Blocks.Values)
+            foreach (var obj in ObjList.Values)
             {
-                var blockId = block.BlockId;
-                var compareBlockId = blockId + CompareInterval;
-                if (compareBlockId > totBlocks) break; // not enough compare interval left
-                var compareBlock = Process.Blocks[compareBlockId];
-                if (block.MinFeatureId < 1 || compareBlock.MinFeatureId < 1) continue; // no features in either this or compare
-                if (block.DroneLocnM.EastingM == compareBlock.DroneLocnM.EastingM
-                    && block.DroneLocnM.NorthingM == compareBlock.DroneLocnM.NorthingM) continue; // not enough drone location difference for the compare
+                var objid = obj.ObjectId;
+                int objectFeatures = obj.ProcessFeatures.Count;
+                if (objectFeatures < 2) continue; // not enough features to triangulate
+                int centralFeatureid = obj.ProcessFeatures.GetKeyAtIndex(objectFeatures / 2);
+                var centralFeature = obj.ProcessFeatures[centralFeatureid];
 
-                for (var id = block.MinFeatureId; id <= block.MaxFeatureId; id++)
+                var featurelist = new List<ProcessFeature>();
+                foreach (var feature in obj.ProcessFeatures.Values)
                 {
-                    Process.ProcessFeatures.TryGetValue(id, out var feature);
-                    if (feature == null)
-                        continue;
-
                     if (!DistinctFeature(feature)) continue;
-                    var objid = feature.ObjectId;
-                    int objectFeatures = Process.ProcessObjects[objid].ProcessFeatures.Count;
-                    if (objectFeatures < 2) continue; // not enough features to triangulate
-                    int centralFeatureid = Process.ProcessObjects[objid].ProcessFeatures.GetKeyAtIndex(objectFeatures/2);
-                    var centralFeature = Process.ProcessObjects[objid].ProcessFeatures[centralFeatureid];
+                    featurelist.Add(feature);
+                }
 
-                    for (var idC = compareBlock.MinFeatureId; idC <= compareBlock.MaxFeatureId; idC++)
+                var result = new SetOptimize(featurelist, centralFeature);
+                if (result.terminationtype > 0)
+                {
+                    obj.LocationM = new DroneLocation((float)result.Ans[2], (float)result.Ans[0]); // Northing is stored first in location
+                    // Change from altitude to height based on ground altitude at location
+                    var obsDEM = process.GroundData.DemModel.GetElevationByDroneLocn(obj.LocationM);
+                    obj.HeightM = (float)result.Ans[1] - obsDEM;
+
+                    foreach (var feature in obj.ProcessFeatures.Values)
                     {
-                        Process.ProcessFeatures.TryGetValue(idC, out var featureC);
-                        if (featureC == null)
-                            continue;
-
-                        var objidC = featureC.ObjectId;
-                        if (objid != objidC) continue;
-                        if (!DistinctFeature(featureC)) continue;
-
-                        var result = GetPoint(feature, featureC, centralFeature);
-                        if (result is not null)
-                        {
-                            feature.LocationM = new DroneLocation((float)result[2], (float)result[0]); // Northing is stored first in location
-                            // Change from altitude to height based on ground altitude at location
-                            var obsDEM = process.GroundData.DemModel.GetElevationByDroneLocn(feature.LocationM);
-                            Debug.Assert(obsDEM != -999, objid.ToString() + " " + feature.FeatureId.ToString() + " object/feature location out of bounds");
-                            feature.HeightM = (float)result[1] - obsDEM;
-                        }
+                        if (feature.HeightM != -999)
+                            feature.HeightM = feature.HeightM - process.GroundData.DemModel.GetElevationByDroneLocn(feature.LocationM);
+                        else feature.LocationM = new DroneLocation(-999, -999);
                     }
                 }
             }
@@ -144,42 +133,11 @@ namespace SkyCombImage.ProcessLogic
                 mat.At<double>(i) = values[i];
             }
         }
-        public double[] GetPoint(ProcessFeature fromF, ProcessFeature toF, ProcessFeature midF)
-        {
-            var features = GetObjectPoints(fromF, toF);
-            var optimal = new SetOptimize(features, midF);
-            if (optimal.terminationtype == 2 || optimal.terminationtype == 7 || optimal.terminationtype == 5)
-            {
-                return optimal.Ans;
-            }
-            else
-            {
-                return null;
-            }
-        }
-        public List<ProcessFeature> GetObjectPoints(ProcessFeature fromf, ProcessFeature tof) {
-            var featurelist = new List<ProcessFeature>();
-            var obj = fromf.ObjectId;
-            var firstFeat = fromf.Block.BlockId;
-            var lastfeat = tof.Block.BlockId;
-            var featlist = Process.ProcessObjects[obj].ProcessFeatures.Values;
-            int featcount = 0;
-            Point2d adjustedPoint;
-            foreach (var feature in featlist)
-            {
-                if ((feature.BlockId > lastfeat) || (feature.BlockId < firstFeat)) continue;
-                if (!DistinctFeature(feature)) continue;
-                featurelist.Add(feature);
-                featcount++;
-            }
-            return featurelist;
-        }
-
         public class SetOptimize
         {
             private double[][] LHS;
             private double[] RHS;
-            public double[] Ans;
+            public double[] Ans = null;
             public int terminationtype;
             public double camHeight = 100; // Camera height in meters
             public void BuildMatrices(List<ProcessFeature> featurelist)
@@ -213,6 +171,7 @@ namespace SkyCombImage.ProcessLogic
             public bool RightOfCamera(ProcessFeature feature) => feature.PixelBox.X > intrinsic.ImageWidth; // Because of the halving, imagewidth would normally be divided by 2;
             public SetOptimize(List<ProcessFeature> featurelist, ProcessFeature midF)
             {
+                if (featurelist.Count < 2) return;
                 BuildMatrices(featurelist);
                 var frames = featurelist.Count;
                 int M = frames * 3; // 3*2 = number of dimensions*number of features
@@ -242,7 +201,7 @@ namespace SkyCombImage.ProcessLogic
                     x[i] = 1;
                 }
                 double EpsX = 0.0001;
-                int MaxIts = 2000; // 0 means no limit
+                int MaxIts = 5000; // 0 means no limit
                 alglib.nlsstate state;
                 alglib.nlsreport rep;
                 alglib.nlscreatedfo(N, M, x, out state);
@@ -253,9 +212,54 @@ namespace SkyCombImage.ProcessLogic
                 alglib.nlsoptimize(state, function1_fvec, null, null);
                 alglib.nlsresults(state, out x, out rep);
                 Debug.WriteLine("{0}", alglib.ap.format(x, 3));
-                Debug.WriteLine("{0}", rep.terminationtype);
+                switch (rep.terminationtype)
+                {
+                    case 1:
+                        Debug.WriteLine("Termination: Relative function improvement is no more than EpsF.");
+                        break;
+                    case 2:
+                        Debug.WriteLine($"Termination: Relative step is no more than {EpsX}.");
+                        break;
+                    case 4:
+                        Debug.WriteLine("Termination: Gradient norm is no more than EpsG.");
+                        break;
+                    case 5:
+                        Debug.WriteLine($"Termination: Maximum number of iterations reached ({MaxIts}).");
+                        break;
+                    case 7:
+                        Debug.WriteLine("Termination: No further improvement possible with current stopping conditions. Best point found.");
+                        break;
+                    case 8:
+                        Debug.WriteLine("Termination: Process terminated by user.");
+                        break;
+                    default:
+                        Debug.WriteLine($"Termination: Unknown termination type ({rep.terminationtype}).");
+                        break;
+                }
                 Ans = x;
                 terminationtype = rep.terminationtype;
+                fillFeatureResults(featurelist);
+                terminationtype = rep.terminationtype;
+            }
+            public void fillFeatureResults(List<ProcessFeature> featurelist)
+            {
+                //
+                // this callback calculates lambda * direction + camera location
+                // lambda = Ans[feature row], direction = -LHS[feature column and rows], camera location = RHS[feature rows]
+                // where b is the camera location, and A is the negative direction of the feature
+                //
+                double[] vector;
+                int i = 0;
+                foreach (var feature in featurelist)
+                {
+                    vector = new double[3] { RHS[i*3] - LHS[i*3][3 + i]*Ans[3 + i]
+                        , RHS[i*3 + 1] - LHS[i*3 + 1][3 + i]*Ans[3 + i]
+                        , RHS[i*3 + 2] - LHS[i*3 + 2][3 + i]*Ans[3 + i] };
+                    feature.LocationM = new DroneLocation((float)vector[2], (float)vector[0]);
+                    feature.HeightM = (float)vector[1];
+                    i++;
+                }
+
             }
             public void function1_fvec(double[] x, double[] fi, object obj)
             {
