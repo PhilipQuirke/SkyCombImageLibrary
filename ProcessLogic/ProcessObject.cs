@@ -296,7 +296,7 @@ namespace SkyCombImage.ProcessLogic
                 return;
 
             // Most accurate method. Nearly always works.
-            var newDemM = ProcessAll.GroundData.DemModel.GetElevationByDroneLocn(LocationM);
+            var newDemM = ProcessAll.GroundData.DemModel.GetElevationByLocn(LocationM);
             if (newDemM != UnknownValue)
             {
                 DemM = newDemM;

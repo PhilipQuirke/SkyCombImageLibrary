@@ -6,6 +6,7 @@ using SkyCombDrone.PersistModel;
 using SkyCombImage.DrawSpace;
 using SkyCombImage.PersistModel;
 using SkyCombImage.ProcessLogic;
+using System.Windows.Forms;
 
 
 // Continuation of RunVideo.cs, contains both Skycomb-specific runners
@@ -36,9 +37,9 @@ namespace SkyCombImage.RunSpace
 
 
         // Process start &/or end of drone flight legs.
-        public override void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId)
+        public override void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId, TextBox outputText)
         {
-            ProcessAll.ProcessFlightLegStartAndEnd(scope, prevLegId, currLegId);
+            ProcessAll.ProcessFlightLegStartAndEnd(scope, prevLegId, currLegId, outputText);
 
             CombProcess.DeleteFeaturePixelsForObjects();
         }

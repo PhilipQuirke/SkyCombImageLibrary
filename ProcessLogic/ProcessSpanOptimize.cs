@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Diagnostics.Eventing.Reader;
 using System.Security.Cryptography.X509Certificates;
 using System.Windows.Forms;
+using static alglib;
 
 
 
@@ -21,18 +22,18 @@ namespace SkyCombImage.ProcessLogic
     {
         // Parent process
         private ProcessAll Process { get; }
-        private int CompareInterval { get; }
         // Camera information
         public static double camViewAngle = 15;
         public static CameraIntrinsic intrinsic = ProcessConfigModel.intrinsic; // Copy the static Lennard Spark drone camera information
-        public SpanOptimize(ProcessAll process, int compareInterval)
+        public static int FramesBehind = 0; // Number of frames behind the current block to use for drone location
+        public SpanOptimize(ProcessAll process,TextBox? output = null)
         {
             Process = process;
+            output?.ResetText();
             var ObjList = Process.ProcessObjects;
             var totBlocks = Process.Blocks.Count;
             if (false)
             { // for debugging. Ensure that the time chosen includes features in the blocks.
-                CompareInterval = 1;
                 totBlocks = 2;
                 process.Blocks[1].DroneLocnM = new DroneLocation(2, 0);
                 process.Blocks[1].AltitudeM = 20;
@@ -56,32 +57,44 @@ namespace SkyCombImage.ProcessLogic
             }
             foreach (var obj in ObjList.Values)
             {
-                var objid = obj.ObjectId;
-                int objectFeatures = obj.ProcessFeatures.Count;
-                if (objectFeatures < 2) continue; // not enough features to triangulate
-                int centralFeatureid = obj.ProcessFeatures.GetKeyAtIndex(objectFeatures / 2);
-                var centralFeature = obj.ProcessFeatures[centralFeatureid];
+                if (obj.FirstFeature is null) continue;
+                var objectFeatures = obj.ProcessFeatures;
+                if (objectFeatures.Count < 2) continue; // not enough features to triangulate
+                int centralFeatureid = objectFeatures.GetKeyAtIndex(objectFeatures.Count / 2);
+                var centralFeature = objectFeatures[centralFeatureid];
 
                 var featurelist = new List<ProcessFeature>();
-                foreach (var feature in obj.ProcessFeatures.Values)
+                foreach (var feature in objectFeatures.Values)
                 {
                     if (!DistinctFeature(feature)) continue;
                     featurelist.Add(feature);
                 }
+                if (featurelist.Count < 2) continue;
+                if (featurelist[0].BlockId - FramesBehind <= 0 || featurelist[^1].BlockId - FramesBehind > totBlocks)
+                {
+                    Debug.WriteLine($"Start analysis earlier/later for object {obj.Name}");
+                    output?.AppendText($"\nStart analysis {((FramesBehind < 0)? "later":"earlier")} for object {obj.Name}\r\n");
+                    continue;
+                }
+                Debug.WriteLine($"Outcome for object {obj.Name} with {FramesBehind} frames behind");
+                if (output != null) output.AppendText($"Outcome for object {obj.Name} with {FramesBehind} frames behind\r\n");
 
-                var result = new SetOptimize(featurelist, centralFeature);
+                var result = new SetOptimize(featurelist, centralFeature, Process, output);
+                if (result.Ans == null) continue;
                 if (result.terminationtype > 0)
                 {
                     obj.LocationM = new DroneLocation((float)result.Ans[2], (float)result.Ans[0]); // Northing is stored first in location
-                    // Change from altitude to height based on ground altitude at location
-                    var obsDEM = process.GroundData.DemModel.GetElevationByDroneLocn(obj.LocationM);
-                    obj.HeightM = (float)result.Ans[1] - obsDEM;
+                    obj.HeightM = (float)result.Ans[1] - Process.GroundData.DemModel.GetElevationByLocn(obj.LocationM); 
 
                     foreach (var feature in obj.ProcessFeatures.Values)
                     {
-                        if (feature.HeightM != -999)
-                            feature.HeightM = feature.HeightM - process.GroundData.DemModel.GetElevationByDroneLocn(feature.LocationM);
-                        else feature.LocationM = new DroneLocation(-999, -999);
+                        if (featurelist.Contains(feature))
+                            feature.HeightM = feature.HeightM - process.GroundData.DemModel.GetElevationByLocn(feature.LocationM);
+                        else
+                        {
+                            feature.HeightM = -999;
+                            feature.LocationM = null;
+                        }
                     }
                 }
             }
@@ -89,8 +102,7 @@ namespace SkyCombImage.ProcessLogic
         public bool DistinctFeature(ProcessFeature feature)
         {
             if (!feature.Significant) return false;
-            // we have to divide pixel box dimensions by 2 because the DJI camera is returning double intensity. 
-            if ((feature.PixelBox.X / 2 <= 1) || (feature.PixelBox.X / 2 + feature.PixelBox.Width / 2 >= intrinsic.ImageWidth) || (feature.PixelBox.Y / 2 <= 1) || (feature.PixelBox.Y / 2 + feature.PixelBox.Height / 2 >= intrinsic.ImageHeight)) return false; //too close to edge
+            if ((feature.PixelBox.X <= 1) || (feature.PixelBox.X + feature.PixelBox.Width >= intrinsic.ImageWidth) || (feature.PixelBox.Y <= 1) || (feature.PixelBox.Y + feature.PixelBox.Height >= intrinsic.ImageHeight)) return false; //too close to edge
             return true;
         }
         private static Mat CreateRotationMatrix(double rollDegrees, double pitchDegrees, double yawDegrees)
@@ -135,43 +147,59 @@ namespace SkyCombImage.ProcessLogic
         }
         public class SetOptimize
         {
-            private double[][] LHS;
-            private double[] RHS;
-            public double[] Ans = null;
+            private double[][]? LHS;
+            private double[]? RHS;
+            private ProcessAll Process;
+            public double[]? Ans = null;
             public int terminationtype;
-            public double camHeight = 100; // Camera height in meters
+            public double camHeight = 90; // Camera height in meters
+            public double[]? GetDroneInfFromFeature(ProcessFeature feature)
+            { // No need for checking because this is done in the parent class
+                var beforeBlock = Process.Blocks[(int) feature.BlockId - FramesBehind];
+
+                return new double[] { beforeBlock.DroneLocnM.EastingM, beforeBlock.AltitudeM, beforeBlock.DroneLocnM.NorthingM
+                    , beforeBlock.RollDeg, beforeBlock.PitchDeg, beforeBlock.YawDeg};
+            }
             public void BuildMatrices(List<ProcessFeature> featurelist)
             {
+                // This builds the matrices for the optimization of minimize:
+                // sum over all points i of:
+                // best final location - (best point location) 
+                // = best final location - (camera location at point(i) + lambda(i)*direction(i))
+                // RHS = camera location at point i, with three dimensions at each point
+                // LHS = identity - direction(i)
                 int M = featurelist.Count;
                 RHS = new double[M*3];           
                 LHS = new double[M * 3][];
-                for (int i = 0; i < M; i++)
+                for (int i = 0; i < M; i++) // for each point
                 {
                     var feature = featurelist[i];
-                    RHS[i * 3] = feature.Block.DroneLocnM.EastingM;
-                    RHS[i * 3 + 1] = feature.Block.AltitudeM;
-                    RHS[i * 3 + 2] = feature.Block.DroneLocnM.NorthingM;
-                    using Mat R = CreateRotationMatrix(feature.Block.RollDeg, feature.Block.PitchDeg, feature.Block.YawDeg);
-                    var adjustedPoint = new Point2d(feature.PixelBox.X / 2 + feature.PixelBox.Width / 4, feature.PixelBox.Y / 2 + feature.PixelBox.Height / 4);
+                    var dronePosture = GetDroneInfFromFeature(feature);
+                    if (dronePosture == null) continue;
+                    RHS[i * 3] = dronePosture[0]; // negative of cam postition at each point (easting)
+                    RHS[i * 3 + 1] = dronePosture[1]; // negative of cam postition at each point (height)
+                    RHS[i * 3 + 2] = dronePosture[2]; // negative of cam postition at each point (northing)
+                    using Mat R = CreateRotationMatrix(dronePosture[3], dronePosture[4], dronePosture[5]);
+                    var adjustedPoint = new Point2d(feature.PixelBox.X  + feature.PixelBox.Width / 2, feature.PixelBox.Y + feature.PixelBox.Height / 2);
                     using Mat Ray = PointDirection(adjustedPoint, R);
-                    for (int j = 0; j < 3; j++)
+                    for (int j = 0; j < 3; j++) // for each of easting, height, northing
                     {
                         LHS[i * 3 + j] = new double[3+M];
-                        LHS[i * 3 + j][j] = 1;
-                        LHS[i * 3 + j][3 + i] = -Ray.At<double>(j,0);
+                        LHS[i * 3 + j][j] = 1; // Identity matrix for the x0, x1, x2 final result
+                        LHS[i * 3 + j][3 + i] = -Ray.At<double>(j,0); // the ray d(ij) for the lambda. The first 3 cols are reserved for the identity, then each subsequent column for each point
                     }
                 }    
             }
-            public Mat PointDirection(Point2d featpoint, Mat R)
+            public static Mat PointDirection(Point2d featpoint, Mat R)
             {
                 using Mat PixelPoint = new Mat(3, 1, MatType.CV_64F);
                 FillMat(PixelPoint, new double[] { featpoint.X, featpoint.Y, 1 });
-                return R.Inv() * intrinsic.K.Inv() * PixelPoint;
+                return R * intrinsic.K.Inv() * PixelPoint;
             }
-            public bool RightOfCamera(ProcessFeature feature) => feature.PixelBox.X > intrinsic.ImageWidth; // Because of the halving, imagewidth would normally be divided by 2;
-            public SetOptimize(List<ProcessFeature> featurelist, ProcessFeature midF)
+            public static bool RightOfCamera(ProcessFeature feature) => feature.PixelBox.X > intrinsic.ImageWidth; // Because of the halving, imagewidth would normally be divided by 2;
+            public SetOptimize(List<ProcessFeature> featurelist, ProcessFeature midF, ProcessAll process, TextBox? output = null)
             {
-                if (featurelist.Count < 2) return;
+                Process = process;
                 BuildMatrices(featurelist);
                 var frames = featurelist.Count;
                 int M = frames * 3; // 3*2 = number of dimensions*number of features
@@ -181,18 +209,21 @@ namespace SkyCombImage.ProcessLogic
                 double[] s = new double[N];
                 double[] x = new double[N];
                 var camRadius = Math.Tan((90 - Math.Abs(midF.Block.PitchDeg) + (camViewAngle / 2)) * (Math.PI / 180.0)) * camHeight;
-                bndl[0] = midF.Block.DroneLocnM.EastingM - camRadius;
+                var midFPosture = GetDroneInfFromFeature(midF);
+                if (midFPosture == null) return;
+
+                bndl[0] = midFPosture[0] - camRadius;
                 bndl[1] = 0;
-                bndl[2] = midF.Block.DroneLocnM.NorthingM - camRadius;
-                bndu[0] = midF.Block.DroneLocnM.EastingM + camRadius;
-                bndu[1] = midF.Block.AltitudeM - 60;
-                bndu[2] = midF.Block.DroneLocnM.NorthingM + camRadius;
-                s[0] = 80;
-                s[1] = 80;
-                s[2] = 80;
-                x[0] = midF.Block.DroneLocnM.EastingM;
-                x[1] = midF.Block.AltitudeM-camHeight;
-                x[2] = midF.Block.DroneLocnM.NorthingM;
+                bndl[2] = midFPosture[2] - camRadius;
+                bndu[0] = midFPosture[0] + camRadius;
+                bndu[1] = midFPosture[1] - 60;
+                bndu[2] = midFPosture[2] + camRadius;
+                s[0] = 30;
+                s[1] = 30;
+                s[2] = 30;
+                x[0] = midF.LocationM.EastingM; // PQ solution
+                x[1] = 15;
+                x[2] = midF.LocationM.NorthingM; // PQ solution
                 for (int i = 3; i < N; i++)
                 {
                     bndl[i] = -System.Double.PositiveInfinity;
@@ -207,7 +238,7 @@ namespace SkyCombImage.ProcessLogic
                 alglib.nlscreatedfo(N, M, x, out state);
                 alglib.nlssetcond(state, EpsX, MaxIts);
                 alglib.nlssetscale(state, s);
-                alglib.nlssetbc(state, bndl, bndu);
+//                alglib.nlssetbc(state, bndl, bndu);
                 alglib.nlssetalgodfolsa(state, 3);
                 alglib.nlsoptimize(state, function1_fvec, null, null);
                 alglib.nlsresults(state, out x, out rep);
@@ -240,6 +271,9 @@ namespace SkyCombImage.ProcessLogic
                 terminationtype = rep.terminationtype;
                 fillFeatureResults(featurelist);
                 terminationtype = rep.terminationtype;
+                output?.AppendText($"Northing: {Math.Round(x[2], 3)}\r\nEasting: {Math.Round(x[0], 3)}\r\nHeight: {Math.Round(x[1], 3)}\r\n");
+                Debug.WriteLine($"Current objective ({SquareResult(M)}).");
+                if (output != null) output.AppendText($"Current objective ({SquareResult(M)}).\r\n");
             }
             public void fillFeatureResults(List<ProcessFeature> featurelist)
             {
@@ -265,7 +299,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 //
                 // this callback calculates
-                // sum over x of ((Ax-b)^2)
+                // f(i) = (sum over x:(LHS[i][x])-RHS[i]) ^ 2
                 // where each f_i corresponds to one element of the sum
                 //
                 for (int i = 0; i < fi.Length; i++)
@@ -278,6 +312,19 @@ namespace SkyCombImage.ProcessLogic
                     fi[i] = fi[i] - RHS[i];
                     fi[i] = fi[i] * fi[i];
                 }
+            }
+            public long SquareResult(int M)
+            {
+                //
+                // this callback calculates the sum of squares of elements of the vector 
+                //
+                double result = 0;
+                double[] fi = new double[M];
+                object obj = null;
+                function1_fvec(Ans, fi, obj);
+                for (int i = 0; i < M; i++)
+                    result += fi[i];
+                return (long) Math.Sqrt(result);
             }
         }
     }

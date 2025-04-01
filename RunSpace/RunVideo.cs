@@ -13,6 +13,7 @@ using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.Windows.Forms;
 
 
 // Namespace for processing of a video made up of multiple images (frames).
@@ -220,7 +221,7 @@ namespace SkyCombImage.RunSpace
 
 
         // Process start &/or end of drone flight legs.
-        public abstract void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId);
+        public abstract void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId, TextBox outputText);
 
 
         // Process/analyse a single input video frame 
@@ -424,7 +425,7 @@ namespace SkyCombImage.RunSpace
 
 
         // Process the input video frame by frame and display/save the output video
-        public int Run()
+        public int Run(TextBox outputText)
         {
             int numSigObjs = 0;
 
@@ -508,7 +509,7 @@ namespace SkyCombImage.RunSpace
                             Assert(inputVideo.CurrFrameId == PSM.CurrInputFrameId, "RunVideo.Run: Bad FrameId 1");
 
                             // Process start &/or end of drone flight legs.
-                            ProcessFlightLegChange(this, prevLegId, PSM.CurrRunLegId);
+                            ProcessFlightLegChange(this, prevLegId, PSM.CurrRunLegId, outputText);
 
                             // If we have just ended a leg change, then may have just calculated FixAltM/FixYawDeg/FixPitchDeg
                             // so display the UI so the object-feature-lines are redrawn using the refined locations.
@@ -559,7 +560,7 @@ namespace SkyCombImage.RunSpace
 
                     // End the last leg (if any)
                     if (PSM.CurrRunLegId > 0)
-                        ProcessFlightLegChange(this, PSM.CurrRunLegId, UnknownValue);
+                        ProcessFlightLegChange(this, PSM.CurrRunLegId, UnknownValue, outputText);
 
                     ProcessAll.EndInterval();
                     numSigObjs += ProcessAll.ProcessObjects.NumSignificantObjects;
@@ -652,7 +653,7 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        public override void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId) { }
+        public override void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId, TextBox textBox) { }
 
 
         // Process/analyse a single frame at a time.
