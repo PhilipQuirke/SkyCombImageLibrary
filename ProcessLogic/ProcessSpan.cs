@@ -249,7 +249,7 @@ namespace SkyCombImage.ProcessLogic
             var legSteps = Process.Drone.FlightSteps.Steps.GetLegSteps(ProcessSpanId);
             var theObjs = Process.ProcessObjects.FilterByLeg(ProcessSpanId);
 
-            if (true)
+            if (false)
             {
                 // nq new method
                 SpanOptimize triangulation = new(Process, 5);

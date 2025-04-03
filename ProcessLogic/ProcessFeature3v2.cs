@@ -207,7 +207,7 @@ namespace SkyCombImage.ProcessLogic
                 }
                 // Compute direction in camera coordinates (pinhole model) from pixel.
                 double x_cam = (px - DroneK.V02) / DroneK.V00;
-                double y_cam = (py - DroneK.V12) / DroneK.V11;
+                double y_cam = -(py - DroneK.V12) / DroneK.V11;
                 double z_cam = 1.0;  // assume a point on the image plane at z=1
                 Vector3 camDir = new Vector3((float)x_cam, (float)y_cam, (float)z_cam);
                 return Vector3.Normalize(camDir);
