@@ -309,7 +309,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 //
                 // this callback calculates
-                // f(i) = (sum over x:(LHS[i][x])-RHS[i]) ^ 2
+                // f(i) = (sum over x:(I|CamPosn[i][x])-RHS[i]) ^ 2
                 // where each f_i corresponds to one element of the sum
                 //
                 for (int i = 0; i < fi.Length; i++)
