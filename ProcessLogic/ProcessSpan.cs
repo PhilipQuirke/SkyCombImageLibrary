@@ -6,6 +6,7 @@ using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
 using System.Diagnostics;
+using System.Windows.Forms;
 
 
 
@@ -238,7 +239,7 @@ namespace SkyCombImage.ProcessLogic
 
         // Analyse ProcessObjects in the FlightLeg, assuming various inaccuracies.
         // Lock in the FlightSteps.FixAltM/FixYawDeg/FixPitchDeg values that reduces the location wobble most.
-        public void CalculateSettings_from_FlightLeg()
+        public void CalculateSettings_from_FlightLeg(TextBox outputText)
         {
             ResetBest();
             ResetTardis();
@@ -251,10 +252,31 @@ namespace SkyCombImage.ProcessLogic
 
             if (false)
             {
-                // nq new method
-                SpanOptimize triangulation = new(Process, 5);
+                // PQ base method for setting object location
+                int theHFOVDeg = Process.Drone.InputVideo.HFOVDeg;
+                ResetBest();
+                CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs);
+                OrgSumLocnErrM = BestSumLocnErrM;
+                OrgSumHeightErrM = BestSumHeightErrM;
+                
+                // nq new method. Second parameter: Frame pair intervals constant, 3 frames is 1/20th of second. 5 frames is 1/6th of a second.
+                SpanOptimize triangulation = new(Process, outputText);
                 foreach (var theObj in theObjs)
-                    theObj.Value.Calculate_RealObject_SimpleMemberData();
+                {
+                    //theObj.Value.Calculate_RealObject_SimpleMemberData();
+
+                    // Calculate OBJECT size in square centimeters (based on maximum # hot pixels over real features).
+                    theObj.Value.Calculate_SizeCM2();
+
+                    // Calculate the range of the OBJECT from the drone in meters (as average over real features).
+                    theObj.Value.Calculate_AvgRangeM();
+
+                    // Calculate the OBJECT maximum heat value (of any pixel over real features).
+                    theObj.Value.Calculate_MaxHeat();
+
+                    // Is this OBJECT significant?
+                    theObj.Value.Calculate_Significant();
+                }
                 theObjs.CalculateSettings();
             }
             else

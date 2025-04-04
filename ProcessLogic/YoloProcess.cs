@@ -4,6 +4,7 @@ using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombImage.RunSpace;
 using System.Drawing;
+using System.Windows.Forms;
 using YoloDotNet.Models;
 
 
@@ -51,9 +52,9 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        protected override void ProcessFlightLegEnd(ProcessScope scope, int legId)
+        protected override void ProcessFlightLegEnd(ProcessScope scope, int legId, TextBox outputText)
         {
-            base.ProcessFlightLegEnd(scope, legId);
+            base.ProcessFlightLegEnd(scope, legId, outputText);
         }
 
 

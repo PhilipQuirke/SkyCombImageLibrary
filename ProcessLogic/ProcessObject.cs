@@ -296,7 +296,7 @@ namespace SkyCombImage.ProcessLogic
                 return;
 
             // Most accurate method. Nearly always works.
-            var newDemM = ProcessAll.GroundData.DemModel.GetElevationByDroneLocn(LocationM);
+            var newDemM = ProcessAll.GroundData.DemModel.GetElevationByLocn(LocationM);
             if (newDemM != UnknownValue)
             {
                 DemM = newDemM;
@@ -517,7 +517,7 @@ namespace SkyCombImage.ProcessLogic
 
         // Calculate the average horizontal range of the object from the drone in meters.
         // Relies on object.LocationM already being calculated.
-        protected void Calculate_AvgRangeM()
+        public void Calculate_AvgRangeM()
         {
             var firstFeature = FirstFeature;
             var lastRealFeature = LastRealFeature;
@@ -543,7 +543,7 @@ namespace SkyCombImage.ProcessLogic
         // The object's (maximum over frames) "spine" length, is a proxy for size. 
         // The object's (maximum over frames) "girth" length (at right angles to the spine length), is a proxy for size. 
         // If unobscured, these are very good proxies, else they are lower bounds.
-        protected void Calculate_SizeCM2()
+        public void Calculate_SizeCM2()
         {
             if ((ProcessAll == null) || (ProcessAll.VideoData == null))
                 return;
@@ -587,7 +587,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Calculate the maximum heat value of any pixel in this object in any frame 
-        protected void Calculate_MaxHeat()
+        public void Calculate_MaxHeat()
         {
             (int _, int maxHeat, int _) = ProcessFeatures.HeatSummary();
             MaxHeat = maxHeat;

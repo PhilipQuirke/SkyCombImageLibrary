@@ -190,7 +190,7 @@ namespace SkyCombImage.ProcessLogic
 
                 CameraParameters cameraParams = new();
                 cameraParams.HorizontalFOV = ProcessAll.VideoData.HFOVDeg;
-                cameraParams.VerticalFOV = ProcessAll.VideoData.VFOVDeg;
+                cameraParams.VerticalFOV = (float)ProcessAll.VideoData.VFOVDeg;
                 cameraParams.ImageWidth = ProcessAll.VideoData.ImageWidth / reduction_factor;
                 cameraParams.ImageHeight = ProcessAll.VideoData.ImageHeight / reduction_factor;
 
@@ -216,7 +216,7 @@ namespace SkyCombImage.ProcessLogic
                     LocationM = result.LocationNE.Clone();
                     HeightM = 0;
                     if (groundData.HasDemModel)
-                        HeightM = result.Elevation - groundData.DemModel.GetElevationByDroneLocn(LocationM);
+                        HeightM = result.Elevation - groundData.DemModel.GetElevationByLocn(LocationM);
                 }
                 else
                     HeightAlgorithm = "NoResult";
