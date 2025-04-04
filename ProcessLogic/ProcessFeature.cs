@@ -208,7 +208,7 @@ namespace SkyCombImage.ProcessLogic
                 if( flightStep.FixAltM == 0)
                     droneTargetCalculator.UnitTest(Block, terrainGrid);
 #endif
-                LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition, true, terrainGrid);
+                LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition, false, terrainGrid);
                 if (result != null)
                 {
                     phase = 6;

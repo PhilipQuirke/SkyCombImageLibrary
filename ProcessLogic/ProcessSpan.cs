@@ -1,13 +1,11 @@
 // Copyright SkyComb Limited 2025. All rights reserved. 
 using Accord.Math;
-using OpenCvSharp;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
 using System.Diagnostics;
 using System.Windows.Forms;
-
 
 
 namespace SkyCombImage.ProcessLogic
@@ -250,15 +248,24 @@ namespace SkyCombImage.ProcessLogic
             var legSteps = Process.Drone.FlightSteps.Steps.GetLegSteps(ProcessSpanId);
             var theObjs = Process.ProcessObjects.FilterByLeg(ProcessSpanId);
 
+            // Feature-level dead-reckoning ground-intercept set object location and location error. Heights are ~0.
+            int theHFOVDeg = Process.Drone.InputVideo.HFOVDeg;
+            ResetBest();
+            CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs);
+            OrgSumLocnErrM = BestSumLocnErrM;
+            OrgSumHeightErrM = BestSumHeightErrM;
+
+            // Traditional FixAltM algorithm
+            // Mosgt recently tested via SkyCombFlights_2024-04 - D_Run05Apr_DistortFalse_AltOptM.xls
+            // Error at 90 degrees down reduced by 66! Good.
+            // But for video 2614 the Bst Fix Alt M values range from - 21 to - 48.These are too big:
+            // Drone was originally 90m over ground so fix => drone is actually 69 to 42m above ground.
+            // Lennard does want to go under 60m above ground. Seems unlikely to be true. 
+            // Decision: Suppress this optimisation   
+            // CalculateSettings_FixValues(legSteps, theObjs);
+
             if (false)
-            {
-                // PQ base method for setting object location
-                int theHFOVDeg = Process.Drone.InputVideo.HFOVDeg;
-                ResetBest();
-                CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs);
-                OrgSumLocnErrM = BestSumLocnErrM;
-                OrgSumHeightErrM = BestSumHeightErrM;
-                
+            {               
                 // nq new method. Second parameter: Frame pair intervals constant, 3 frames is 1/20th of second. 5 frames is 1/6th of a second.
                 SpanOptimize triangulation = new(Process, outputText);
                 foreach (var theObj in theObjs)
@@ -281,18 +288,8 @@ namespace SkyCombImage.ProcessLogic
             }
             else
             {
-                // Old pq optimization method
-                // For 2164 video on Leg A a Best Fix Alt of 19m gave a 13cm reduction in avg locn err. Not worth it.
-                //CalculateSettings_FixValues(legSteps, theObjs);
-
-                // No optimization method
-                int theHFOVDeg = Process.Drone.InputVideo.HFOVDeg;
-                ResetBest();
-                CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs);
-                OrgSumLocnErrM = BestSumLocnErrM;
-                OrgSumHeightErrM = BestSumHeightErrM;
-
-                /*
+                /* Test harness for DroneTargetCalculator.DroneK 
+                 * 
                 // Test if DroneTargetCalculator.DroneK contains bad data.
                 // Default DroneK is Intrinsic(9.1, 640, 512, 7.68, 6.144);
                 Debug.Print("Default DroneK: OrgSumLocnErrM=" + OrgSumLocnErrM + " OrgSumHeightErrM=" + OrgSumHeightErrM );

@@ -151,7 +151,9 @@ namespace SkyCombImage.ProcessLogic
         /// **Parameters:**
         /// - `targetImage` (ImagePosition): The object's location in the image (normalized -1 to +1).
         /// - `camera` (CameraParameters): The camera's horizontal and vertical field of view (FOV).
-        /// - `applyDistortionCorrection` (bool) 
+        /// - `applyDistortionCorrection`: (bool) Recommend false 
+        ///         Tests on CC\2024-04-D videos on 4/5Apr25 show ~9% differeence between true and false, with false better.
+        ///         The difference in calculated location is very small (~10cm)
         /// - `terrain` (TerrainGrid): The terrain model, used to determine ground elevation.
         ///
         /// **Returns:**
