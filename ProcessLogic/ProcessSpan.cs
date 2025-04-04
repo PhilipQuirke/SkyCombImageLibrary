@@ -239,7 +239,7 @@ namespace SkyCombImage.ProcessLogic
 
         // Analyse ProcessObjects in the FlightLeg, assuming various inaccuracies.
         // Lock in the FlightSteps.FixAltM/FixYawDeg/FixPitchDeg values that reduces the location wobble most.
-        public void CalculateSettings_from_FlightLeg(TextBox outputText)
+        public void CalculateSettings_from_FlightLeg(TextBox? outputText)
         {
             ResetBest();
             ResetTardis();

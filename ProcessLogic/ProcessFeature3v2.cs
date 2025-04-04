@@ -54,7 +54,7 @@ namespace SkyCombImage.ProcessLogic
 
         public float GetElevation(DroneLocation positionNE)
         {
-            return GroundModel.GetElevationByLocn(positionNE);
+            return GroundModel.GetElevationByDroneLocn(positionNE);
         }
     }
 

@@ -356,7 +356,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // A drone flight leg has finished. 
-        protected virtual void ProcessFlightLegEnd(ProcessScope scope, int legId, TextBox outputText)
+        protected virtual void ProcessFlightLegEnd(ProcessScope scope, int legId, TextBox? outputText)
         {
             if (Drone.UseFlightLegs)
             {
@@ -379,7 +379,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public void ProcessFlightLegEndWrapper(ProcessScope scope, int legId, TextBox outputText)
+        public void ProcessFlightLegEndWrapper(ProcessScope scope, int legId, TextBox? outputText)
         {
             try
             {

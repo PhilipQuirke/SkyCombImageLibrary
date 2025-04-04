@@ -425,11 +425,11 @@ namespace SkyCombImage.RunSpace
 
 
         // Process the input video frame by frame and display/save the output video
-        public int Run(TextBox outputText)
+        public int Run(TextBox? outputText = null)
         {
             int numSigObjs = 0;
 
-  //          try
+            try
             {
                 RunUI.DrawObjectGrid(this, false);
 
@@ -586,11 +586,11 @@ namespace SkyCombImage.RunSpace
 
                 videoWriter = null;
             }
-/*            catch (Exception ex)
+            catch (Exception ex)
             {
                 throw ThrowException("RunSpace.RunVideo.Run", ex);
             }
-*/
+
             return numSigObjs;
         }
 

@@ -87,7 +87,7 @@ namespace SkyCombImage.ProcessLogic
                 if (result.terminationtype > 0)
                 {
                     obj.LocationM = new DroneLocation((float)result.Ans[1], (float)result.Ans[0]); // Northing is stored first in location
-                    obj.HeightM = (float)result.Ans[2] - Process.GroundData.DemModel.GetElevationByLocn(obj.LocationM); 
+                    obj.HeightM = (float)result.Ans[2] - Process.GroundData.DemModel.GetElevationByDroneLocn(obj.LocationM); 
 
                     foreach (var feature in obj.ProcessFeatures.Values)
                     // These have been filled in fillFeatureResults, we are now changing the values to be relative to the ground
@@ -95,7 +95,7 @@ namespace SkyCombImage.ProcessLogic
                         BaseConstants.Assert(feature.ObjectId == obj.ObjectId, "Logic 3");
 
                         if (featurelist.Contains(feature))
-                            feature.HeightM = feature.HeightM - process.GroundData.DemModel.GetElevationByLocn(feature.LocationM);
+                            feature.HeightM = feature.HeightM - process.GroundData.DemModel.GetElevationByDroneLocn(feature.LocationM);
                         else
                         {
                             feature.HeightM = -999;

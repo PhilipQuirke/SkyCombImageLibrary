@@ -216,7 +216,7 @@ namespace SkyCombImage.ProcessLogic
                     LocationM = result.LocationNE.Clone();
                     HeightM = 0;
                     if (groundData.HasDemModel)
-                        HeightM = result.Elevation - groundData.DemModel.GetElevationByLocn(LocationM);
+                        HeightM = result.Elevation - groundData.DemModel.GetElevationByDroneLocn(LocationM);
                 }
                 else
                     HeightAlgorithm = "NoResult";
