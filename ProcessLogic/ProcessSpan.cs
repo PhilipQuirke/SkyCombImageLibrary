@@ -4,6 +4,7 @@ using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
+using System;
 using System.Diagnostics;
 using System.Windows.Forms;
 
@@ -248,7 +249,7 @@ namespace SkyCombImage.ProcessLogic
             var legSteps = Process.Drone.FlightSteps.Steps.GetLegSteps(ProcessSpanId);
             var theObjs = Process.ProcessObjects.FilterByLeg(ProcessSpanId);
 
-            // Feature-level dead-reckoning ground-intercept set object location and location error. Heights are ~0.
+            // Feature-level dead-reckoning ground-intercept set object location and location error. Heights are set to ~0.
             int theHFOVDeg = Process.Drone.InputVideo.HFOVDeg;
             ResetBest();
             CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs);
@@ -256,12 +257,12 @@ namespace SkyCombImage.ProcessLogic
             OrgSumHeightErrM = BestSumHeightErrM;
 
             // Traditional FixAltM algorithm
-            // Mosgt recently tested via SkyCombFlights_2024-04 - D_Run05Apr_DistortFalse_AltOptM.xls
+            // Mosgt recently tested via SkyCombFlights_2024-04-D_Run05Apr_DistortFalse_AltOptM.xls
             // Error at 90 degrees down reduced by 66! Good.
             // But for video 2614 the Bst Fix Alt M values range from - 21 to - 48.These are too big:
             // Drone was originally 90m over ground so fix => drone is actually 69 to 42m above ground.
-            // Lennard does want to go under 60m above ground. Seems unlikely to be true. 
-            // Decision: Suppress this optimisation   
+            // Lennard does want to go under 60m above ground. Seems unlikely to represent physical reality. 
+            // Decision: Suppress this optimisation as unprincipled.  
             // CalculateSettings_FixValues(legSteps, theObjs);
 
             if (false)
@@ -288,66 +289,8 @@ namespace SkyCombImage.ProcessLogic
             }
             else
             {
-                /* Test harness for DroneTargetCalculator.DroneK 
-                 * 
                 // Test if DroneTargetCalculator.DroneK contains bad data.
-                // Default DroneK is Intrinsic(9.1, 640, 512, 7.68, 6.144);
-                Debug.Print("Default DroneK: OrgSumLocnErrM=" + OrgSumLocnErrM + " OrgSumHeightErrM=" + OrgSumHeightErrM );
-
-                //Modifying x and y only has 3% impact
-                //for (int x = -20; x <= +20; x += 5)
-                //    for (int y = -20; y <= +20; y += 5)
-                //    {
-                //        DroneTargetCalculator.DroneK = DroneTargetCalculator.Intrinsic(9.1, 640 + x, 512 + y, 7.68, 6.144);
-                //        if (CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs))
-                //            Debug.Print("x=" + x + ", y=" + y + ", BestSumLocnErrM=" + BestSumLocnErrM  + " BestSumHeightErrM=" + BestSumHeightErrM );
-                //    }
-
-                // At f = 4.95, has 50% reduction (OrgSumLocnErrM=286, BestSumLocnErrM=149) but tightens objects to the flight line. BAD?
-                //for (float f = 0.9f; f <= 5; f += 0.05f)
-                //{
-                //    DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1 * f, 640, 512, 7.68, 6.144);
-                //    if (CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs))
-                //        Debug.Print("f=" + f + ", BestSumLocnErrM=" + BestSumLocnErrM + " BestSumHeightErrM=" + BestSumHeightErrM );
-                //}
-
-                // Modifying w has no impact
-                //for (float w = 0.2f; w >= 0.01f; w -= 0.01f)
-                //{
-                //    DroneTargetCalculator.DroneK = DroneTargetCalculator.Intrinsic(9.1, 640, 512, 7.68 * w, 6.144);
-                //    if (CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs))
-                //        Debug.Print("w=" + w + " BestSumLocnErrM=" + BestSumLocnErrM  + " BestSumHeightErrM=" + BestSumHeightErrM );
-                //}
-
-                // At h = 0.02 (98% reduction), has 60% reduction in location inaccuracy: OrgSumLocnErrM=286, BestSumLocnErrM=119
-                // Does not appear to shift objects towards flightpath. GOOD
-                for (float h = 0.2f; h >= 0.01f; h -= 0.01f)
-                {
-                    DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * h);
-                    if (CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs))
-                        Debug.Print("h=" + h + " BestSumLocnErrM=" + BestSumLocnErrM + " BestSumHeightErrM=" + BestSumHeightErrM);
-                }
-
-                //Debug.Print("Default DroneK: OrgSumLocnErrM=" + OrgSumLocnErrM + " OrgSumHeightErrM=" + OrgSumHeightErrM);
-                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1 * 4.95, 640, 512, 7.68, 6.144);  // BAD. At f = 4.95, has 50% reduction. tightens objects to flight pathight line
-                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1 * 4.95, 640, 512, 7.68 * 0.02, 6.144 * 0.02); // BAD. Pinned to line
-                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68 * 0.02, 6.144 * 0.02); // BAD. Pinned to line
-
-                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 1.0); // h=1.0 => 286/286
-                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.8); // h=0.8 => 251/286
-                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.4); // h=0.4 => 182/286 
-                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.3); // h=0.3 => 166/286  
-                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.2); // h=0.2 => 149/286 
-                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.15); // h=0.15 => 140/286 
-                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.1); // h=0.1 => 132/286  
-                DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.05); // h=0.05 => 124/286  
-                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.02); // h=0.02 => 119/286 
-                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.01); // h=0.01 => 117/286  
-                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.001); // h=0.001 => 116/286  
-                //DroneTargetCalculatorV2.DroneK = DroneTargetCalculatorV2.Intrinsic(9.1, 640, 512, 7.68, 6.144 * 0.0001); // h=0.0001 => 116/286  
-                CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs);
-                Debug.Print("BestSumLocnErrM=" + BestSumLocnErrM + " BestSumHeightErrM=" + BestSumHeightErrM);
-                */
+                // DroneTargetCalculatorV2.UnitTest_ScanHyperParams(theHFOVDeg, this, legSteps, theObjs);
             }
 
             SummariseSteps(legSteps);

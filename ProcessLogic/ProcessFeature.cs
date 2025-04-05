@@ -206,7 +206,7 @@ namespace SkyCombImage.ProcessLogic
                 DroneTargetCalculatorV2 droneTargetCalculator = new(droneState, cameraParams);
 #if DEBUG
                 if( flightStep.FixAltM == 0)
-                    droneTargetCalculator.UnitTest(Block, terrainGrid);
+                    droneTargetCalculator.UnitTest_Centroid(Block, terrainGrid);
 #endif
                 LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition, false, terrainGrid);
                 if (result != null)

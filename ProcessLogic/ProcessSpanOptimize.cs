@@ -25,7 +25,7 @@ namespace SkyCombImage.ProcessLogic
         private ProcessAll Process { get; }
         // Camera information
         public static double camViewAngle = 15;
-        public static CameraIntrinsic intrinsic = ProcessConfigModel.intrinsic; // Copy the static Lennard Spark drone camera information
+        public static CameraIntrinsic intrinsic = ProcessConfigModel.CameraIntrinsic; // Copy the static Lennard Spark drone camera information
         public static int FramesBehind = 0; // Number of frames behind the current block to use for drone location
         public SpanOptimize(ProcessAll process,TextBox? output = null)
         {

@@ -28,11 +28,11 @@ namespace SkyCombImage.ProcessModel
         public float BestFixAltM { get; set; } = 0;
         public float BestFixYawDeg { get; set; } = 0;
         public float BestFixPitchDeg { get; set; } = 0;
-        protected float BestSumLocnErrM { get; set; } = UnknownValue;
-        protected float BestSumHeightErrM { get; set; } = UnknownValue;
+        public float BestSumLocnErrM { get; set; } = UnknownValue;
+        public float BestSumHeightErrM { get; set; } = UnknownValue;
         // The original (before) error values (with FlightLeg.FixAltM/FixYawDeg/FixPitchDeg set to 0)
-        protected float OrgSumLocnErrM { get; set; } = UnknownValue;
-        protected float OrgSumHeightErrM { get; set; } = UnknownValue;
+        public float OrgSumLocnErrM { get; set; } = UnknownValue;
+        public float OrgSumHeightErrM { get; set; } = UnknownValue;
 
 
 
