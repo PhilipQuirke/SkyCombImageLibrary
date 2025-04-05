@@ -32,19 +32,12 @@ namespace SkyCombImage.ProcessModel
 
 
         // Best estimate of Height of the object above ground level in metres (not Altitude above sea level).
-        // Calculated using "trig look down" method based on first and last real features. 
         public float HeightM { get; set; }
         // Minimum estimate of Height of the object above ground level in metres 
         public float MinHeightM { get; set; }
         // Maximum estimate of Height of the object above ground level in metres 
         public float MaxHeightM { get; set; }
-        // The longer the "baseline" the drone travels, while viewing the object,
-        // the more accurate the HeightM calculation. So we measure height range 
-        // and error based on the last 8 frame calculations. The "8" is arbitrary.
-        // It is > 1 in case there is some drone turbulence or "end of leg" yawing 
-        // in the data. For DJI Mavic 8 is equivalent to 1 second.
-        public const int NumRealFeaturesForHeightErr = 8;
-        // The variation in feature estimates of HeightM in metres over last 8 calcs
+        // The variation in feature estimates of HeightM in metres 
         public float HeightErrM { get; set; }
 
 
@@ -54,6 +47,10 @@ namespace SkyCombImage.ProcessModel
         public float MaxSpinePixels { get; set; }
         // Maximum object "girth" pixel (at right angles to spine) length over all real features
         public float MaxGirthPixels { get; set; }
+        // Object spine length in CM
+        public int SpineCM { get; set; }
+        // Object girth length in CM
+        public int GirthCM { get; set; }
 
 
         // The average distance from the object to the drone in meters
@@ -118,6 +115,8 @@ namespace SkyCombImage.ProcessModel
             SizeCM2 = 0;
             MaxSpinePixels = 0;
             MaxGirthPixels = 0;
+            SpineCM = 0;
+            GirthCM = 0;
             AvgRangeM = UnknownValue;
             MaxHeat = 0;
             DemM = 0;
@@ -197,6 +196,8 @@ namespace SkyCombImage.ProcessModel
         public const int MaxRealPixelHeightSetting = 29;
         public const int MaxSpinePixelsSetting = 30;
         public const int MaxGirthPixelsSetting = 31;
+        public const int SpineCMSetting = 32;
+        public const int GirthCMSetting = 33;
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
@@ -231,6 +232,8 @@ namespace SkyCombImage.ProcessModel
                 { "Max Real Px Height", MaxRealPixelHeight },
                 { "Max Spine Pxs", MaxSpinePixels, 2 },
                 { "Max Girth Pxs", MaxGirthPixels, 2 },
+                { "Spine CM", SpineCM },
+                { "Girth CM", GirthCM },
             };
         }
 
@@ -264,10 +267,10 @@ namespace SkyCombImage.ProcessModel
             MaxRealHotPixels = StringToInt(settings[ProcessObjectModel.MaxRealHotPixelsSetting - 1]);
             MaxRealPixelWidth = StringToInt(settings[ProcessObjectModel.MaxRealPixelWidthSetting - 1]);
             MaxRealPixelHeight = StringToInt(settings[ProcessObjectModel.MaxRealPixelHeightSetting - 1]);
-            if(settings.Count > ProcessObjectModel.MaxSpinePixelsSetting - 1)
-                MaxSpinePixels = StringToInt(settings[ProcessObjectModel.MaxSpinePixelsSetting - 1]);
-            if (settings.Count > ProcessObjectModel.MaxGirthPixelsSetting - 1)
-                MaxGirthPixels = StringToInt(settings[ProcessObjectModel.MaxGirthPixelsSetting - 1]);
+            MaxSpinePixels = StringToInt(settings[ProcessObjectModel.MaxSpinePixelsSetting - 1]);
+            MaxGirthPixels = StringToInt(settings[ProcessObjectModel.MaxGirthPixelsSetting - 1]);
+            SpineCM = StringToInt(settings[ProcessObjectModel.SpineCMSetting - 1]);
+            GirthCM = StringToInt(settings[ProcessObjectModel.GirthCMSetting - 1]);
 
             if (HeightM == UnknownHeight) HeightM = UnknownValue;
             if (MinHeightM == UnknownHeight) MinHeightM = UnknownValue;

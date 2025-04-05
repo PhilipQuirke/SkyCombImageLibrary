@@ -4,7 +4,6 @@ using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
-using System;
 using System.Diagnostics;
 using System.Windows.Forms;
 

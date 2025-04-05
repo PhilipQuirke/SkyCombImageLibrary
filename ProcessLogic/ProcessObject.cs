@@ -6,7 +6,6 @@ using SkyCombImage.CategorySpace;
 using SkyCombImage.ProcessModel;
 using SkyCombImage.RunSpace;
 using System.Drawing;
-using System.Reflection.Metadata.Ecma335;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -561,9 +560,9 @@ namespace SkyCombImage.ProcessLogic
             BoundingBoxAnalyzer analyzer = new(area.X, area.Y, area.X + area.Width, area.Y + area.Height);
             double thisSpinePixels = analyzer.CalcSpineLength();
             double thisGirthPixels = lastFeature.Pixels != null ? analyzer.CalcGirthLength(lastFeature.Pixels) : thisSpinePixels / 4.0f;
-            Assert(thisSpinePixels >= 0, "Calculate_SizeCM2: maxSpineM <= 0");
-            Assert(thisGirthPixels >= 0, "Calculate_SizeCM2: maxGirthM <= 0");
-            Assert(thisSpinePixels + 1 >= thisGirthPixels, "Calculate_SizeCM2: maxSpineM < maxGirthM");
+            Assert(thisSpinePixels >= 0, "Calculate_SizeCM2: spinePixels <= 0");
+            Assert(thisGirthPixels >= 0, "Calculate_SizeCM2: girthPixels <= 0");
+            Assert(thisSpinePixels + 1 >= thisGirthPixels, "Calculate_SizeCM2: spinePixels < girthPixels");
 
             MaxSpinePixels = Math.Max(MaxSpinePixels, (float)thisSpinePixels);
             MaxGirthPixels = Math.Max(MaxGirthPixels, (float)thisGirthPixels);
@@ -573,16 +572,18 @@ namespace SkyCombImage.ProcessLogic
 
             // Grab the drone input image area
             float imageAreaM2 = lastFeature.Block.FlightStep.InputImageSizeM.AreaM2();
-
             // Calculate the number of pixels in the video image
             float framePixels = ProcessAll.VideoData.ImageWidth * ProcessAll.VideoData.ImageHeight;
 
             // Calculate the size of the object in this frame in square centimeters
             float thisSizeM2 = imageAreaM2 * hotPixels / framePixels;
-
             var thisSizeCM2 = (int)(thisSizeM2 * 100 * 100);
 
             SizeCM2 = Math.Max(SizeCM2, thisSizeCM2);
+
+            float cmPerPixel = MathF.Sqrt(imageAreaM2 * 10000 / framePixels);
+            SpineCM = Math.Max(1, (int)(thisSpinePixels * cmPerPixel));
+            GirthCM = Math.Max(1, (int)(thisGirthPixels * cmPerPixel));
         }
 
 

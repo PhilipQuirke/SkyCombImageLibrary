@@ -48,8 +48,8 @@ namespace SkyCombImage.ProcessModel
                 HeightM = theObj.HeightM;
                 HeightErrM = theObj.HeightErrM;
 
-                SpineM = theObj.MaxSpinePixels / 10; // PQR TODO Convert to M
-                GirthM = theObj.MaxGirthPixels / 10; // PQR TODO Convert to M
+                SpineM = 1.0f * theObj.SpineCM / 100.0f;
+                GirthM = 1.0f * theObj.GirthCM / 100.0f;
 
                 CameraDownDegs = 0;
                 var flightStep = theObj?.LastRealFeature?.Block?.FlightStep;
