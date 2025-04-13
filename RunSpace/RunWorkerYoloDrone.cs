@@ -14,9 +14,9 @@ using YoloDotNet.Models;
 namespace SkyCombImage.RunSpace
 {
     // YOLO (You only look once) V8 video processing.
-    class RunVideoYoloDrone : RunVideoPersist
+    class RunWorkerYoloDrone : RunWorkerPersist
     {
-        public RunVideoYoloDrone(RunUserInterface runUI, RunConfig config, DroneDataStore dataStore, Drone drone)
+        public RunWorkerYoloDrone(RunUserInterface runUI, RunConfig config, DroneDataStore dataStore, Drone drone)
             : base(runUI, config, dataStore, drone, ProcessFactory.NewYoloProcess(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig, runUI, config.YoloDirectory))
         {
         }
@@ -45,7 +45,7 @@ namespace SkyCombImage.RunSpace
 
 
         // Process/analyse a single frame
-        public override ProcessBlock AddBlockAndProcessInputVideoFrame()
+        public override ProcessBlock AddBlockAndProcessInputRunFrame()
         {
             try
             {
@@ -93,7 +93,7 @@ namespace SkyCombImage.RunSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("RunVideoYoloDrone.AddBlockAndProcessInputVideoFrame", ex);
+                throw ThrowException("RunWorkerYoloDrone.AddBlockAndProcessInputRunFrame", ex);
             }
         }
 

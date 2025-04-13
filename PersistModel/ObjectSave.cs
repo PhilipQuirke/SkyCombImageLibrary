@@ -235,7 +235,7 @@ namespace SkyCombImage.PersistModel
 
 
         // Add object summary with charts and graphs
-        public void SaveObjectReport(int maxBlockId, RunVideoPersist runVideo)
+        public void SaveObjectReport(int maxBlockId, RunWorkerPersist runVideo)
         {
             var processAll = runVideo.ProcessAll;
             var processScope = runVideo;

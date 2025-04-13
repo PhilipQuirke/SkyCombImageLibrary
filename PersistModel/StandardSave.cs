@@ -87,7 +87,7 @@ namespace SkyCombImage.PersistModel
 
 
         // Save the Run & Model data to the dataStore
-        public void ProcessAll(RunVideoPersist runVideo, bool fullSave)
+        public void ProcessAll(RunWorkerPersist runVideo, bool fullSave)
         {
             try
             {

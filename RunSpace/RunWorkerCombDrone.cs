@@ -24,9 +24,9 @@ namespace SkyCombImage.RunSpace
     // - the Comb-specific video-level CombObject.ClaimFeature compares the current and previous frame features to detect significant CombObjects
     //
     // The thermal flight data associated provides drone location, altitude, timestamp & speed information for each frame.
-    public class RunVideoCombDrone : RunVideoPersist
+    public class RunWorkerCombDrone : RunWorkerPersist
     {
-        public RunVideoCombDrone(RunUserInterface runUI, RunConfig config, DroneDataStore dataStore, Drone drone)
+        public RunWorkerCombDrone(RunUserInterface runUI, RunConfig config, DroneDataStore dataStore, Drone drone)
             : base(runUI, config, dataStore, drone,
                   ProcessFactory.NewCombProcess(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig, runUI))
         {
@@ -46,7 +46,7 @@ namespace SkyCombImage.RunSpace
 
 
         // Process/analyse a single frame
-        public override ProcessBlock AddBlockAndProcessInputVideoFrame()
+        public override ProcessBlock AddBlockAndProcessInputRunFrame()
         {
             try
             {
@@ -89,7 +89,7 @@ namespace SkyCombImage.RunSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("RunVideoCombDrone.AddBlockAndProcessInputVideoFrame", ex);
+                throw ThrowException("RunWorkerCombDrone.AddBlockAndProcessInputVideoFrame", ex);
             }
         }
 

@@ -6,37 +6,37 @@ using SkyCombImage.PersistModel;
 using SkyCombImage.ProcessLogic;
 
 
-// Continuation of RunVideo.cs, contains both Skycomb-specific runners
+// Continuation of RunWorker.cs, contains both Skycomb-specific runners
 namespace SkyCombImage.RunSpace
 {
     // Given the Config, and the corresponding file(s) found on disk,
-    // create the appropriate RunVideo object.
-    public class RunVideoFactory
+    // create the appropriate RunWorker object.
+    public class RunWorkerFactory
     {
 
-        // Create the appropriate VideoRunner object
-        public static RunVideo CreateRunVideo(RunUserInterface parent, RunConfig runConfig, DroneDataStore dataStore, Drone drone, DroneIntervalList? intervals, ObservationHandler<ProcessAll>? processHook)
+        // Create the appropriate RunWorker object
+        public static RunWorker CreateRunWorker(RunUserInterface parent, RunConfig runConfig, DroneDataStore dataStore, Drone drone, DroneIntervalList? intervals, ObservationHandler<ProcessAll>? processHook)
         {
-            RunVideo? answer = null;
+            RunWorker? answer = null;
 
             switch (runConfig.RunProcess)
             {
                 case RunProcessEnum.Yolo:
-                    var yoloRunner = new RunVideoYoloDrone(parent, runConfig, dataStore, drone);
+                    var yoloRunner = new RunWorkerYoloDrone(parent, runConfig, dataStore, drone);
                     yoloRunner.ProcessDrawScope.Process = yoloRunner.ProcessAll;
                     if (processHook != null)
                         yoloRunner.YoloProcess.Observation += processHook;
                     answer = yoloRunner;
                     break;
                 case RunProcessEnum.Comb:
-                    var combRunner = new RunVideoCombDrone(parent, runConfig, dataStore, drone);
+                    var combRunner = new RunWorkerCombDrone(parent, runConfig, dataStore, drone);
                     combRunner.ProcessDrawScope.Process = combRunner.ProcessAll;
                     if (processHook != null)
                         combRunner.CombProcess.Observation += processHook;
                     answer = combRunner;
                     break;
                 default:
-                    answer = new RunVideoStandard(parent, runConfig, dataStore, drone);
+                    answer = new RunWorkerStandard(parent, runConfig, dataStore, drone);
                     break;
             }
             answer.SizeImages = parent.GetSizeImages();
@@ -57,7 +57,7 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        public static RunVideo Create(RunUserInterface parent, RunConfig runConfig, DroneDataStore dataStore, Drone drone, DroneIntervalList intervals, ObservationHandler<ProcessAll>? processHook)
+        public static RunWorker Create(RunUserInterface parent, RunConfig runConfig, DroneDataStore dataStore, Drone drone, DroneIntervalList intervals, ObservationHandler<ProcessAll>? processHook)
         {
             try
             {
@@ -75,11 +75,12 @@ namespace SkyCombImage.RunSpace
                 var theRunModel = runConfig.RunProcess;
 
                 if (firstTime)
-                    // If we are not processing the video then (by default) dont create a video output .
-                    if (theRunModel == RunProcessEnum.None)
+                    // If we are not processing the video then (by default)
+                    // or we dont have a video then dont create a video output
+                    if((theRunModel == RunProcessEnum.None) || (runConfig.InputIsImages))
                         runConfig.ProcessConfig.SaveAnnotatedVideo = false;
 
-                return CreateRunVideo(parent, runConfig, dataStore, drone, intervals, processHook);
+                return CreateRunWorker(parent, runConfig, dataStore, drone, intervals, processHook);
             }
             catch (Exception ex)
             {
