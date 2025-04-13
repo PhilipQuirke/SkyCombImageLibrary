@@ -61,13 +61,24 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        public bool RunFileIsVideo()
+        public bool InputIsVideo
         {
-            if (InputFileName.Length < 5)
-                return false;
+            get
+            {
+                if (InputFileName.Length < 5)
+                    return false;
 
-            string suffix = InputFileName.Substring(InputFileName.Length - 4, 4).ToLower();
-            return suffix == ".mp4" || suffix == ".avi";
+                string suffix = InputFileName.Substring(InputFileName.Length - 4, 4).ToLower();
+                return suffix == ".mp4" || suffix == ".avi";
+            }
+        }
+
+        public bool InputIsImages
+        {
+            get
+            {
+                return (InputDirectory != "") && (InputFileName == "");
+            }
         }
 
 

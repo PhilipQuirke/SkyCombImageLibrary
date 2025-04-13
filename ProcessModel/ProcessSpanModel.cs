@@ -24,7 +24,7 @@ namespace SkyCombImage.ProcessModel
 
         // DATA USED TO CALCULATE best fix values
         // The original (after) error value with best altitude fix 
-        public int BestHFOVDeg { get; set; } = 0;
+        public float BestHFOVDeg { get; set; } = 0;
         public float BestFixAltM { get; set; } = 0;
         public float BestFixYawDeg { get; set; } = 0;
         public float BestFixPitchDeg { get; set; } = 0;
@@ -65,7 +65,7 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        protected void SetBest(int hfovDeg, float fixAltM, float fixYawDeg, float fixPitchDeg, ProcessObjList objs)
+        protected void SetBest(float hfovDeg, float fixAltM, float fixYawDeg, float fixPitchDeg, ProcessObjList objs)
         {
             var improvementM = (BestSumLocnErrM == 9999 ? 0 : BestSumLocnErrM - objs.SumLocationErrM );
 
@@ -110,7 +110,7 @@ namespace SkyCombImage.ProcessModel
                 { "Process Leg Id", ProcessSpanId },
                 { "Name", Name },
                 { "Num Sig Objs", NumSignificantObjects },
-                { "Bst Fix HFOV", BestHFOVDeg},
+                { "Bst Fix HFOV", BestHFOVDeg, 1},
                 { "Bst Fix Alt M", BestFixAltM, HeightNdp},
                 { "Bst Fix Yaw Deg", BestFixYawDeg, DegreesNdp},
                 { "Bst Fix Pitch Deg", BestFixPitchDeg, DegreesNdp},

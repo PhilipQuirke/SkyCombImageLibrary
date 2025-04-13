@@ -52,7 +52,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Apply FixValues to theSteps and on to the ProcessObjects and their ProcessFeatures
-        public void CalculateSettings_ApplyFixValues_Core(int hFOVDeg, float fixAltM, float fixYawDeg, float fixPitchDeg, FlightStepList theSteps, ProcessObjList objs)
+        public void CalculateSettings_ApplyFixValues_Core(float hFOVDeg, float fixAltM, float fixYawDeg, float fixPitchDeg, FlightStepList theSteps, ProcessObjList objs)
         {
             // The image area of the camera now covers a slightly different area (m2) of the ground
             Process.Drone.InputVideo.HFOVDeg = hFOVDeg;
@@ -92,7 +92,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Apply FixValues to theSteps and on to the ProcessObjects and their ProcessFeatures //PQ??
-        public bool CalculateSettings_ApplyFixValues(int hFOVDeg, float fixAltM, float fixYawDeg, float fixPitchDeg, FlightStepList theSteps, ProcessObjList objs)
+        public bool CalculateSettings_ApplyFixValues(float hFOVDeg, float fixAltM, float fixYawDeg, float fixPitchDeg, FlightStepList theSteps, ProcessObjList objs)
         {
             CalculateSettings_ApplyFixValues_Core(hFOVDeg, fixAltM, fixYawDeg, fixPitchDeg, theSteps, objs);
 
@@ -132,7 +132,7 @@ namespace SkyCombImage.ProcessLogic
                 float yawRangeDeg = 10;
                 float pitchRangeDeg = 20;
 
-                int theHFOVDeg = Process.Drone.InputVideo.HFOVDeg;
+                float theHFOVDeg = Process.Drone.InputVideo.HFOVDeg;
                 float bestAltM = 0;
                 float bestAltErr = 0;
                 float bestYawDeg = 0;
@@ -249,7 +249,7 @@ namespace SkyCombImage.ProcessLogic
             var theObjs = Process.ProcessObjects.FilterByLeg(ProcessSpanId);
 
             // Feature-level dead-reckoning ground-intercept set object location and location error. Heights are set to ~0.
-            int theHFOVDeg = Process.Drone.InputVideo.HFOVDeg;
+            float theHFOVDeg = Process.Drone.InputVideo.HFOVDeg;
             ResetBest();
             CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs);
             OrgSumLocnErrM = BestSumLocnErrM;
