@@ -20,11 +20,11 @@ namespace SkyCombImage.PersistModel
 
 
         // Create an output video file writer (if user wants MP4 output)
-        public static (VideoWriter?, string) CreateVideoWriter(
+        public static VideoWriter? CreateVideoWriter(
             RunConfig Config, string inputFileName, double Fps, Size frameSize)
         {
             if (!Config.ProcessConfig.SaveAnnotatedVideo || Fps <= 0.1 || frameSize.Width == 0 || frameSize.Height == 0)
-                return (null, "");
+                return null;
 
             return VideoData.CreateVideoWriter(inputFileName, Config.OutputElseInputDirectory, Fps, frameSize);
         }

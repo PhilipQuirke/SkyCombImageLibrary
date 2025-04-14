@@ -68,11 +68,11 @@ namespace SkyCombImage.ProcessLogic
             else
                 this.ResetSteps();
 
-            ResetCurrImages();
+            ResetCurrImage();
         }
 
 
-        public void ResetCurrImages()
+        public void ResetCurrImage()
         {
             CurrInputImage?.Dispose();
             CurrInputImage = null;
@@ -172,9 +172,9 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Return current input video frame and corresponding display video frame (if any)
-        public void ConvertCurrImages()
+        public void ConvertCurrImage()
         {
-            ResetCurrImages();
+            ResetCurrImage();
 
             if (Drone.HaveFrame())
             {

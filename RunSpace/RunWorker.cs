@@ -157,11 +157,10 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        public void ResetModifiedImages()
+        public void ResetModifiedImage()
         {
             ModifiedInputImage?.Dispose();
             ModifiedInputImage = null;
-
         }
 
 
@@ -226,7 +225,7 @@ namespace SkyCombImage.RunSpace
         // Process a single input frame/image for the specified block, returning the modified input frame to show 
         public void DrawFrameImage(ProcessBlockModel? block = null)
         {
-            ResetModifiedImages();
+            ResetModifiedImage();
 
             if (CurrInputImage == null)
                 return;
@@ -275,8 +274,8 @@ namespace SkyCombImage.RunSpace
         }
         public void RunStart_Interval()
         {
-            ResetCurrImages();
-            ResetModifiedImages();
+            ResetCurrImage();
+            ResetModifiedImage();
             ConfigureModelScope();
             ProcessDrawScope.Reset(this, Drone);
             ProcessDrawPath.Reset(ProcessDrawScope);
@@ -418,8 +417,55 @@ namespace SkyCombImage.RunSpace
         }
 
 
+        private bool GetCurrImage_InputIsVideo()
+        {
+            if (!Drone.HaveFrame())
+                return false;
 
-        // Process the input video frame by frame and display/save the output video
+            // Convert the already loaded Mat into an Image
+            ConvertCurrImage();
+            return true;
+        }
+
+
+        // Given PSM.CurrInputFrameId, get the file name from the corresponding FlightStep, load the image and convert to 
+        private bool GetCurrImage_InputIsImages()
+        {
+            var section = Drone.FlightSections.Sections[PSM.CurrInputFrameId];
+            Assert(section != null, "GetCurrImage_InputIsImages: bad logic 1");
+
+            var imageFileName = section.ImageFileName;
+            Assert(imageFileName != "", "GetCurrImage_InputIsImages: bad logic 2");
+            Assert(System.IO.File.Exists(imageFileName), "GetCurrImage_InputIsImages: bad logic 2");
+
+            // Read the image from the input directory into memory
+            ResetCurrImage();
+            CurrInputImage = new Image<Bgr, byte>(RunConfig.InputDirectory + "\\" + imageFileName);
+            CalculateSettings();
+            return true;
+        }
+
+
+        // Surprisingly, a long series of sequential "seek next frame" GetVideoFrames 
+        // calls can give a CurrVideoFrameMs value that is, after 100 seconds, 400ms different
+        // from the CurrVideoFrameMs value if we seek direct to CurrVideoFrameID!
+        // So at the start of each new Leg we do a direct (slow) seek.
+        private bool ProcessFlightLegChange_InputIsVideo()
+        { 
+            if (PSM.CurrRunLegId > 0)
+                Drone.SetAndGetCurrFrame(PSM.CurrInputFrameId);
+
+            if( ! GetCurrImage_InputIsVideo())
+                return false;
+
+            Assert(Drone.InputVideo.CurrFrameId == PSM.CurrInputFrameId, "RunVideo.Run: Bad FrameId 1");
+            return true;
+        }
+
+
+        // Process either:
+        // - the input video frame by frame and display/save the output video
+        // - the input images one at a time and display the images
         public int Run(TextBox? outputText = null)
         {
             int numSigObjs = 0;
@@ -435,8 +481,9 @@ namespace SkyCombImage.RunSpace
                 RunStart_Process(this);
 
                 // Create an output video file writer (if user wants MP4 output)
-                (var videoWriter, var _) =
-                    StandardSave.CreateVideoWriter(RunConfig, InputVideoFileName(), VideoBase.Fps, VideoBase.ImageSize);
+                VideoWriter? videoWriter = null;
+                if(RunConfig.InputIsVideo)
+                    videoWriter = StandardSave.CreateVideoWriter(RunConfig, InputVideoFileName(), VideoBase.Fps, VideoBase.ImageSize);
 
                 var inputVideo = Drone.InputVideo;
                 int intervalCount = 0;
@@ -481,27 +528,25 @@ namespace SkyCombImage.RunSpace
 
                         var calcWatch = Stopwatch.StartNew();
 
-                        if (!Drone.HaveFrame())
-                            break;
 
-                        // Convert the already loaded Mat(s) into Image(s)
-                        ConvertCurrImages();
+                        // Obtain the image we will process
+                        if (RunConfig.InputIsVideo)
+                        {
+                            if (!GetCurrImage_InputIsVideo())
+                                break;
+                        }
+                        else
+                        {
+                            if (!GetCurrImage_InputIsImages())
+                                break;
+                        }
+
 
                         if (prevLegId != PSM.CurrRunLegId)
                         {
-                            if (PSM.CurrRunLegId > 0)
-                                // Surprisingly, a long series of sequential "seek next frame" GetVideoFrames 
-                                // calls can give a CurrVideoFrameMs value that is, after 100 seconds, 400ms different
-                                // from the CurrVideoFrameMs value if we seek direct to CurrVideoFrameID!
-                                // So at the start of each new Leg we do a direct (slow) seek.
-                                Drone.SetAndGetCurrFrame(PSM.CurrInputFrameId);
-
-                            if (!Drone.HaveFrame())
-                                break;
-
-                            ConvertCurrImages();
-
-                            Assert(inputVideo.CurrFrameId == PSM.CurrInputFrameId, "RunVideo.Run: Bad FrameId 1");
+                            if (RunConfig.InputIsVideo)
+                                if( !ProcessFlightLegChange_InputIsVideo())
+                                    break;
 
                             // Process start &/or end of drone flight legs.
                             ProcessFlightLegChange(this, prevLegId, PSM.CurrRunLegId, outputText);
@@ -571,8 +616,8 @@ namespace SkyCombImage.RunSpace
                 SafeRunEnd();
 
                 DrawUI();
-                ResetModifiedImages();
-                ResetCurrImages();
+                ResetModifiedImage();
+                ResetCurrImage();
                 RunUI.DrawObjectGrid(this, true);
                 RefreshAll();
 
