@@ -1,10 +1,10 @@
-﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 using SkyCombDrone.DrawSpace;
+using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.CategorySpace;
 using SkyCombImage.ProcessModel;
-using System.Drawing;
 
 
 namespace SkyCombImage.RunSpace
@@ -87,6 +87,9 @@ namespace SkyCombImage.RunSpace
         public string OutputElseInputDirectory { get { return OutputDirectory != "" ? OutputDirectory : InputDirectory; } }
 
         public bool MaxRunSpeed { get { return RunSpeed == RunSpeedEnum.Max; } }
+
+        // Return just the last section of either the input file name or the folder name. 
+        public string ShortInputSource { get { return InputFileName == "" ? VideoData.ShortFolderFileName(InputDirectory.Trim('\\')) : VideoData.ShortFolderFileName(InputFileName); } }
 
 
 
