@@ -125,14 +125,29 @@ namespace SkyCombImage.ProcessLogic
 
             CalculateInputScope(inputVideoFromS, inputVideoToS);
 
-            Drone.SetAndGetCurrFrame(PSM.FirstInputFrameId);
+            if(Drone.InputIsVideo)
+                Drone.SetAndGetCurrFrame(PSM.FirstInputFrameId);
+            else
+            {
+                Drone.InputVideo.ResetCurrFrame();
+                Drone.InputVideo.CurrFrameId = PSM.FirstInputFrameId;
+                Drone.InputVideo.CurrFrameMs = PSM.FirstVideoFrameMs;
+            }
 
             if (Drone.HasFlightSteps)
             {
-                SetCurrRunStepAndLeg(Drone.MsToNearestFlightStep(PSM.FirstVideoFrameMs));
+                if (Drone.InputIsVideo)
+                {
+                    SetCurrRunStepAndLeg(Drone.MsToNearestFlightStep(PSM.FirstVideoFrameMs));
 
-                var toStep = Drone.MsToNearestFlightStep(PSM.LastVideoFrameMs);
-                ResetScope(CurrRunFlightStep, toStep);
+                    ResetScope(CurrRunFlightStep, Drone.MsToNearestFlightStep(PSM.LastVideoFrameMs));
+                }
+                else
+                {
+                    SetCurrRunStepAndLeg(Drone.FlightSteps.Steps[PSM.FirstInputFrameId]);
+
+                    ResetScope(CurrRunFlightStep, Drone.FlightSteps.Steps[PSM.LastInputFrameId]);
+                }
             }
             else
             {
