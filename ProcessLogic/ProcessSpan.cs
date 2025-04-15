@@ -289,7 +289,7 @@ namespace SkyCombImage.ProcessLogic
             else
             {
                 // Test if DroneTargetCalculator.DroneK contains bad data.
-                // DroneTargetCalculatorV2.UnitTest_ScanHyperParams(theHFOVDeg, this, legSteps, theObjs);
+                // DroneTargetCalculator.UnitTest_ScanHyperParams(theHFOVDeg, this, legSteps, theObjs);
             }
 
             SummariseSteps(legSteps);

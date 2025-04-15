@@ -13,10 +13,9 @@ namespace SkyCombImage.ProcessLogic
     {
         // Parent process model
         protected ProcessAll ProcessAll { get; }
-        public ProcessConfigModel? ProcessConfig { get { return ProcessAll == null ? null : ProcessAll.ProcessConfig; } }
 
 
-        // A feature is associated 1-1 with a Block  ??NQ to PQ: many-to-1
+        // A feature is associated 1-1 with a Block 
         public ProcessBlock Block { get; set; }
 
         // Location of hot pixels in this feature.
@@ -149,7 +148,6 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-
         // Calculate object location and height considering land contour undulations.
         // "Walk" sight-line from drone to object in 3D space. Stop when line intersects DEM.
         // This code depends on ProcessAll.VideoData.HFOVDeg, FlightStep.FixAltM, FixYawDeg and FixPitchDeg (via FixedCameraToVerticalForwardDeg).
@@ -203,7 +201,7 @@ namespace SkyCombImage.ProcessLogic
 
                 phase = 5;
                 // Assumes that Zoom is constant at 1
-                DroneTargetCalculatorV2 droneTargetCalculator = new(droneState, cameraParams);
+                DroneTargetCalculator droneTargetCalculator = new(droneState, cameraParams);
 #if DEBUG
                 if( flightStep.FixAltM == 0)
                     droneTargetCalculator.UnitTest_Centroid(Block, terrainGrid);
@@ -402,37 +400,6 @@ namespace SkyCombImage.ProcessLogic
                     minHeight, maxHeight);
 
             return (BaseConstants.UnknownValue, BaseConstants.UnknownValue, BaseConstants.UnknownValue, BaseConstants.UnknownValue);
-        }
-
-
-        // Return the average altitude of the drone over the object features.
-        public float AverageFlightStepFixedAltitudeM()
-        {
-            float answer = 0;
-            int count = 0;
-
-            foreach (var feature in this)
-            {
-                if (feature.Value.Type == FeatureTypeEnum.Real)
-                {
-                    var step = feature.Value.Block.FlightStep;
-                    if (step != null)
-                    {
-                        var atlM = feature.Value.Block.FlightStep.FixedAltitudeM;
-                        if (atlM != BaseConstants.UnknownValue)
-                        {
-                            answer += atlM;
-                            count++;
-                        }
-                    }
-                }
-            }
-            if (count > 0)
-                answer /= count;
-            else
-                answer = BaseConstants.UnknownValue;
-
-            return answer;
         }
 
 

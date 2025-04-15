@@ -1,6 +1,5 @@
-﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 using Emgu.CV;
-using Emgu.CV.Ocl;
 using Emgu.CV.Structure;
 using SkyCombDrone.DrawSpace;
 using SkyCombDrone.DroneLogic;
@@ -431,17 +430,24 @@ namespace SkyCombImage.RunSpace
         // Given PSM.CurrInputFrameId, get the file name from the corresponding FlightStep, load the image and convert to 
         private bool GetCurrImage_InputIsImages()
         {
-            var section = Drone.FlightSections.Sections[PSM.CurrInputFrameId];
-            Assert(section != null, "GetCurrImage_InputIsImages: bad logic 1");
+            var frameID = PSM.CurrRunStepId;
+            var section = SetInputVideo_InputIsImages(frameID);
+
+            PSM.CurrInputFrameId = frameID;
+            PSM.CurrInputFrameMs = section.TimeMs;
+
+            SetCurrRunStepAndLeg(Drone?.FlightSteps?.Steps[frameID]);
 
             var imageFileName = section.ImageFileName;
             Assert(imageFileName != "", "GetCurrImage_InputIsImages: bad logic 2");
-            Assert(System.IO.File.Exists(imageFileName), "GetCurrImage_InputIsImages: bad logic 2");
+
+            imageFileName = RunConfig.InputDirectory.Trim('\\') + "\\" + imageFileName;
+            Assert(File.Exists(imageFileName), "GetCurrImage_InputIsImages: bad logic 3");
 
             // Read the image from the input directory into memory
             ResetCurrImage();
-            CurrInputImage = new Image<Bgr, byte>(RunConfig.InputDirectory + "\\" + imageFileName);
-            CalculateSettings();
+            CurrInputImage = new Image<Bgr, byte>(imageFileName);
+
             return true;
         }
 
@@ -459,6 +465,30 @@ namespace SkyCombImage.RunSpace
                 return false;
 
             Assert(Drone.InputVideo.CurrFrameId == PSM.CurrInputFrameId, "RunVideo.Run: Bad FrameId 1");
+            return true;
+        }
+
+
+        private FlightSection SetInputVideo_InputIsImages(int frameId)
+        {
+            var section = Drone?.FlightSections?.Sections[frameId];
+            Assert(section != null, "SetInputVideo_InputIsImages: No section");
+
+            Drone.InputVideo.CurrFrameMat = null;
+            Drone.InputVideo.CurrFrameId = frameId;
+            Drone.InputVideo.CurrFrameMs = section.TimeMs;
+
+            return section;
+        }
+
+
+        private bool ProcessFlightLegChange_InputIsImages()
+        {
+            if (PSM.CurrRunLegId > 0)
+            {
+                SetInputVideo_InputIsImages(PSM.CurrInputFrameId);
+                GetCurrImage_InputIsImages();
+            }
             return true;
         }
 
@@ -545,8 +575,15 @@ namespace SkyCombImage.RunSpace
                         if (prevLegId != PSM.CurrRunLegId)
                         {
                             if (RunConfig.InputIsVideo)
-                                if( !ProcessFlightLegChange_InputIsVideo())
+                            {
+                                if (!ProcessFlightLegChange_InputIsVideo())
                                     break;
+                            }
+                            else
+                            {
+                                if (!ProcessFlightLegChange_InputIsImages())
+                                    break;
+                            }
 
                             // Process start &/or end of drone flight legs.
                             ProcessFlightLegChange(this, prevLegId, PSM.CurrRunLegId, outputText);
@@ -593,9 +630,19 @@ namespace SkyCombImage.RunSpace
                         if (StopProcessing_Part2())
                             break;
 
-                        // Move to the next frame(s)
-                        if (!Drone.GetNextFrame())
-                            break;
+                        if (RunConfig.InputIsVideo)
+                        {
+                            // Move to the next frame(s)
+                            if (!Drone.GetNextFrame())
+                                break;
+                        }
+                        else
+                        {
+                            if (PSM.CurrRunStepId >= PSM.LastInputFrameId)
+                                break;
+                            PSM.CurrRunStepId++;
+                            GetCurrImage_InputIsImages();
+                        }
                     }
 
                     // End the last leg (if any)

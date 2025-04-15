@@ -92,18 +92,16 @@ namespace SkyCombImage.ProcessLogic
         public DroneLocation LocationNE { get; set; }
         public float Elevation { get; set; } // Object meters above sea level. Also DEM (Digital Ground Model) height
         public float Confidence { get; set; } // 0-1 scale
-        public string Method { get; set; }
     }
 
-    public class DroneTargetCalculatorV2
+    public class DroneTargetCalculator
     {
-
         public static Accord.Math.Matrix3x3 DroneK = CameraIntrinsic.Default3x3();
 
         private readonly DroneState DroneState;
         private readonly CameraParameters CameraParams;
 
-        public DroneTargetCalculatorV2(DroneState droneState, CameraParameters cameraParams)
+        public DroneTargetCalculator(DroneState droneState, CameraParameters cameraParams)
         {
             DroneState = droneState;
             CameraParams = cameraParams;
@@ -464,7 +462,7 @@ namespace SkyCombImage.ProcessLogic
             for (int x = -20; x <= +20; x += 5)
                 for (int y = -20; y <= +20; y += 5)
                 {
-                    DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(1, x, y, 1, 1);
+                    DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, x, y, 1, 1);
                     if (span.CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs))
                         Debug.Print("x=" + x + ", y=" + y + ", BestSumLocnErrM=" + span.BestSumLocnErrM  + " BestSumHeightErrM=" + span.BestSumHeightErrM );
                 }
@@ -472,7 +470,7 @@ namespace SkyCombImage.ProcessLogic
             // At f = 4.95, has 50% reduction (OrgSumLocnErrM=286, BestSumLocnErrM=149) but tightens objects to the flight line. BAD?
             for (float f = 0.9f; f <= 5; f += 0.05f)
             {
-                DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(f, 0, 0, 1, 1);
+                DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(f, 0, 0, 1, 1);
                 if (span.CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs))
                     Debug.Print("f=" + f + ", BestSumLocnErrM=" + span.BestSumLocnErrM + " BestSumHeightErrM=" + span.BestSumHeightErrM );
             }
@@ -480,7 +478,7 @@ namespace SkyCombImage.ProcessLogic
             // Modifying w has no impact
             for (float w = 0.2f; w >= 0.01f; w -= 0.01f)
             {
-                DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, w, 1);
+                DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, w, 1);
                 if (span.CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs))
                     Debug.Print("w=" + w + " BestSumLocnErrM=" + span.BestSumLocnErrM  + " BestSumHeightErrM=" + span.BestSumHeightErrM );
             }
@@ -489,28 +487,28 @@ namespace SkyCombImage.ProcessLogic
             // Does not appear to shift objects towards flightpath. GOOD
             for (float h = 0.2f; h >= 0.01f; h -= 0.01f)
             {
-                DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, h);
+                DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, h);
                 if (span.CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs))
                     Debug.Print("h=" + h + " BestSumLocnErrM=" + span.BestSumLocnErrM + " BestSumHeightErrM=" + span.BestSumHeightErrM);
             }
 
             Debug.Print("Default DroneK: OrgSumLocnErrM=" + span.OrgSumLocnErrM + " OrgSumHeightErrM=" + span.OrgSumHeightErrM);
-            DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(4.95, 0, 0, 1, 1);  // BAD. At f = 4.95, has 50% reduction. tightens objects to flight pathight line
-            DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(4.95, 0, 0, 0.02, 0.02); // BAD. Pinned to line
-            DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 0.02, 0.02); // BAD. Pinned to line
+            DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(4.95, 0, 0, 1, 1);  // BAD. At f = 4.95, has 50% reduction. tightens objects to flight pathight line
+            DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(4.95, 0, 0, 0.02, 0.02); // BAD. Pinned to line
+            DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 0.02, 0.02); // BAD. Pinned to line
 
-            DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 1.0); // h=1.0 => 286/286
-            DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.8); // h=0.8 => 251/286
-            DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.4); // h=0.4 => 182/286 
-            DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.3); // h=0.3 => 166/286  
-            DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.2); // h=0.2 => 149/286 
-            DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.15); // h=0.15 => 140/286 
-            DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.1); // h=0.1 => 132/286  
-            DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.05); // h=0.05 => 124/286  
-            DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.02); // h=0.02 => 119/286 
-            DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.01); // h=0.01 => 117/286  
-            DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.001); // h=0.001 => 116/286  
-            DroneTargetCalculatorV2.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.0001); // h=0.0001 => 116/286  
+            DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 1.0); // h=1.0 => 286/286
+            DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.8); // h=0.8 => 251/286
+            DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.4); // h=0.4 => 182/286 
+            DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.3); // h=0.3 => 166/286  
+            DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.2); // h=0.2 => 149/286 
+            DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.15); // h=0.15 => 140/286 
+            DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.1); // h=0.1 => 132/286  
+            DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.05); // h=0.05 => 124/286  
+            DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.02); // h=0.02 => 119/286 
+            DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.01); // h=0.01 => 117/286  
+            DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.001); // h=0.001 => 116/286  
+            DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.0001); // h=0.0001 => 116/286  
             
             span.CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs);
             Debug.Print("BestSumLocnErrM=" + span.BestSumLocnErrM + " BestSumHeightErrM=" + span.BestSumHeightErrM);
