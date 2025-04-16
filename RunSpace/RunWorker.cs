@@ -434,7 +434,7 @@ namespace SkyCombImage.RunSpace
             var section = SetInputVideo_InputIsImages(frameID);
 
             PSM.CurrInputFrameId = frameID;
-            PSM.CurrInputFrameMs = section.TimeMs;
+            PSM.CurrInputFrameMs = section.SumTimeMs;
 
             SetCurrRunStepAndLeg(Drone?.FlightSteps?.Steps[frameID]);
 
