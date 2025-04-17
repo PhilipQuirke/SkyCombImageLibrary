@@ -422,31 +422,25 @@ namespace SkyCombImage.RunSpace
                 return false;
 
             // Convert the already loaded Mat into an Image
-            ConvertCurrImage();
+            ConvertCurrImage_InputIsVideo();
             return true;
         }
 
 
         // Given PSM.CurrInputFrameId, get the file name from the corresponding FlightStep, load the image and convert to 
-        private bool GetCurrImage_InputIsImages()
+        public bool GetCurrImage_InputIsImages()
         {
-            var frameID = PSM.CurrRunStepId;
-            var section = SetInputVideo_InputIsImages(frameID);
+            var frameId = PSM.CurrRunStepId;
+            var section = SetInputVideo_InputIsImages(frameId);
 
-            PSM.CurrInputFrameId = frameID;
+            PSM.CurrInputFrameId = frameId;
             PSM.CurrInputFrameMs = section.SumTimeMs;
 
-            SetCurrRunStepAndLeg(Drone?.FlightSteps?.Steps[frameID]);
-
-            var imageFileName = section.ImageFileName;
-            Assert(imageFileName != "", "GetCurrImage_InputIsImages: bad logic 2");
-
-            imageFileName = RunConfig.InputDirectory.Trim('\\') + "\\" + imageFileName;
-            Assert(File.Exists(imageFileName), "GetCurrImage_InputIsImages: bad logic 3");
+            SetCurrRunStepAndLeg(Drone?.FlightSteps?.Steps[frameId]);
 
             // Read the image from the input directory into memory
             ResetCurrImage();
-            CurrInputImage = new Image<Bgr, byte>(imageFileName);
+            CurrInputImage = Drone.GetCurrImage_InputIsImages(RunConfig.InputDirectory, frameId);
 
             return true;
         }

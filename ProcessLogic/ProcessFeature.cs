@@ -203,8 +203,10 @@ namespace SkyCombImage.ProcessLogic
                 // Assumes that Zoom is constant at 1
                 DroneTargetCalculator droneTargetCalculator = new(droneState, cameraParams);
 #if DEBUG
+/* PQR TODO
                 if( flightStep.FixAltM == 0)
                     droneTargetCalculator.UnitTest_Centroid(Block, terrainGrid);
+*/
 #endif
                 LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition, false, terrainGrid);
                 if (result != null)

@@ -69,7 +69,7 @@ namespace SkyCombImage.RunSpace
                     return false;
 
                 string suffix = InputFileName.Substring(InputFileName.Length - 4, 4).ToLower();
-                return suffix == ".mp4" || suffix == ".avi";
+                return suffix == ".mp4" || suffix == ".avi" || suffix == ".srt";
             }
         }
 

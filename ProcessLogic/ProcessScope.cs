@@ -104,15 +104,24 @@ namespace SkyCombImage.ProcessLogic
 
             BaseConstants.Assert(PSM.FirstInputFrameId <= PSM.LastInputFrameId, "SetInputScope");
             BaseConstants.Assert(PSM.FirstVideoFrameMs <= PSM.LastVideoFrameMs, "SetInputScope");
-
         }
 
 
         // Given Config.RunVideoFromS and Config.RunVideoToS, which input video frames will we process?
         public void CalculateInputScope(float inputVideoFromS, float inputVideoToS)
         {
-            (PSM.FirstInputFrameId, PSM.LastInputFrameId, PSM.FirstVideoFrameMs, PSM.LastVideoFrameMs) =
-                Drone.InputVideo.CalculateFromToS(inputVideoFromS, inputVideoToS);
+            if (Drone.InputIsVideo)
+                (PSM.FirstInputFrameId, PSM.LastInputFrameId, PSM.FirstVideoFrameMs, PSM.LastVideoFrameMs) =
+                    Drone.InputVideo.CalculateFromToS(inputVideoFromS, inputVideoToS);
+            else
+            {
+                var fromSection = Drone.FlightSections.SecondToFlightSection(inputVideoFromS);
+                var toSection = Drone.FlightSections.SecondToFlightSection(inputVideoToS);
+                PSM.FirstInputFrameId = fromSection.SectionId;
+                PSM.LastInputFrameId = toSection.SectionId;
+                PSM.FirstVideoFrameMs = fromSection.SumTimeMs;
+                PSM.LastVideoFrameMs = toSection.SumTimeMs;
+            }
         }
 
 
@@ -170,7 +179,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Return current input video frame and corresponding display video frame (if any)
-        public void ConvertCurrImage()
+        public void ConvertCurrImage_InputIsVideo()
         {
             ResetCurrImage();
 

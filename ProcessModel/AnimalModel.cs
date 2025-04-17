@@ -62,6 +62,7 @@ namespace SkyCombImage.ProcessModel
                 BestFixAltM = 0;
                 BestFixYawDeg = 0;
                 BestFixPitchDeg = 0;
+/* PQR TODO
                 if (processSpans != null)
                 {
                     var block = theObj?.LastRealFeature?.Block;
@@ -77,7 +78,7 @@ namespace SkyCombImage.ProcessModel
                         }
                     }
                 }
-
+PQR */
                 // Convert -999 to -2
                 if (LocationErrM == BaseConstants.UnknownValue) LocationErrM = -2;
                 if (HeightM == BaseConstants.UnknownValue) HeightM = -2;
