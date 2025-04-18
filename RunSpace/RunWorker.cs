@@ -463,6 +463,8 @@ namespace SkyCombImage.RunSpace
         }
 
 
+
+
         private FlightSection SetInputVideo_InputIsImages(int frameId)
         {
             var section = Drone?.FlightSections?.Sections[frameId];
@@ -473,17 +475,6 @@ namespace SkyCombImage.RunSpace
             Drone.InputVideo.CurrFrameMs = section.TimeMs;
 
             return section;
-        }
-
-
-        private bool ProcessFlightLegChange_InputIsImages()
-        {
-            if (PSM.CurrRunLegId > 0)
-            {
-                SetInputVideo_InputIsImages(PSM.CurrInputFrameId);
-                GetCurrImage_InputIsImages();
-            }
-            return true;
         }
 
 
@@ -556,12 +547,12 @@ namespace SkyCombImage.RunSpace
                         // Obtain the image we will process
                         if (RunConfig.InputIsVideo)
                         {
-                            if (!GetCurrImage_InputIsVideo())
+                            if (!GetCurrImage_InputIsVideo())           // Sets PSM.CurrRunLegId
                                 break;
                         }
                         else
                         {
-                            if (!GetCurrImage_InputIsImages())
+                            if (!GetCurrImage_InputIsImages())           // Sets PSM.CurrRunLegId
                                 break;
                         }
 
@@ -569,15 +560,10 @@ namespace SkyCombImage.RunSpace
                         if (prevLegId != PSM.CurrRunLegId)
                         {
                             if (RunConfig.InputIsVideo)
-                            {
+                                // A long series of sequential "seek next frame" GetVideoFrames can cause inaccuracies.
+                                // Sequence of images do not have the same "seek next frame" problem as video.
                                 if (!ProcessFlightLegChange_InputIsVideo())
                                     break;
-                            }
-                            else
-                            {
-                                if (!ProcessFlightLegChange_InputIsImages())
-                                    break;
-                            }
 
                             // Process start &/or end of drone flight legs.
                             ProcessFlightLegChange(this, prevLegId, PSM.CurrRunLegId, outputText);
@@ -635,7 +621,6 @@ namespace SkyCombImage.RunSpace
                             if (PSM.CurrRunStepId >= PSM.LastInputFrameId)
                                 break;
                             PSM.CurrRunStepId++;
-                            GetCurrImage_InputIsImages();
                         }
                     }
 

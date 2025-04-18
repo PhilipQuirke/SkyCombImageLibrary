@@ -250,22 +250,22 @@ namespace SkyCombImage.ProcessLogic
                 {
                     // Yes, this is worth tracking.
                 }
-                else if (ProcessConfigModel.ObjectMaxUnrealBlocks > 0)
-                {
+                else
                     // Are we still on the persistance window?
                     BeingTracked = (LastFeature.Block.BlockId - LastRealFeature.Block.BlockId < ProcessConfigModel.ObjectMaxUnrealBlocks);
-                }
-                else
-                    BeingTracked = false;
             }
 
             return BeingTracked;
         }
 
 
-        // How long has this object been seen for in Config.ObjectMinDurationMs units?
+        // How many units of Config.ObjectMinDurationMs has this object been seen for?
+        // If input is images we always return 1
         public double SeenForMinDurations()
         {
+            if (ProcessAll.Drone.InputIsImages)
+                return 1;
+
             var minDuration = ProcessConfigModel.ObjectMinDurationMs; // Say 500ms
             var timeSeenMs = (1000.0F * NumRealFeatures()) / ProcessAll.VideoData.Fps;
             return (timeSeenMs / minDuration);
@@ -425,6 +425,8 @@ namespace SkyCombImage.ProcessLogic
                 var elevationOK = (HeightM >= 0);
                 var elevationGood = (HeightM > 2);
                 var elevationGreat = (HeightM > 4);
+                if (ProcessAll.Drone.InputIsImages)
+                    elevationGood = true;
 
                 // Key calculation of Comb algorithm for identifying significant objects
                 Significant =

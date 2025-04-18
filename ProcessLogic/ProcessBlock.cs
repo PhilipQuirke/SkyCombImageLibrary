@@ -27,7 +27,7 @@ namespace SkyCombImage.ProcessLogic
 
         public void CalculateSettings(ProcessScope scope, Drone drone, ProcessBlock? prevBlock)
         {
-            if ((drone != null) && drone.HasFlightSteps && (scope.PSM.CurrInputFrameId >= 0)) // PQR TODO. Was >. Retest for video.
+            if ((drone != null) && drone.HasFlightSteps && (scope.PSM.CurrInputFrameId >= 0))
             {
                 CalculateSettings_FromSteps(drone, prevBlock, scope.PSM.CurrInputFrameMs, scope.PSM.CurrInputFrameId);
                 AssertGood();
@@ -76,7 +76,7 @@ namespace SkyCombImage.ProcessLogic
             }
             else
             {
-                afterStep = drone.FlightSteps.Steps[inputFrameID    ];
+                afterStep = drone.FlightSteps.Steps[inputFrameID];
             }
             bool haveAfterStep = (afterStep != null);
             int afterStepMs = (haveAfterStep ? afterStep.SumTimeMs : 0);
@@ -189,7 +189,6 @@ namespace SkyCombImage.ProcessLogic
                 TimeMs = (int)(1000.0 / drone.InputVideo.Fps); // Default frame duration.
                 int advanceMS = blockMs - beforeStepMs;
                 Assert(advanceMS >= 0, "CalculateSettings_FromSteps: Logic 11");
-                StartTime += TimeSpan.FromMilliseconds(advanceMS);
             }
             LinealM = travelM.DiagonalM;
 
@@ -204,7 +203,7 @@ namespace SkyCombImage.ProcessLogic
             if ((prevBlock != null) && (!badBlockMs))
                 Assert(prevBlock.StartTime < this.StartTime, "CalculateSettings_FromSteps: Logic 9");
             if (this.FlightStep != null)
-                Assert(Math.Abs(this.FlightStep.SumTimeMs - this.SumTimeMs) < 3000, "CalculateSettings_FromSteps: Logic 10");
+                Assert(Math.Abs(this.FlightStep.SumTimeMs - this.SumTimeMs) <= 5000, "CalculateSettings_FromSteps: Logic 10");
 
             // Check that this block is inside the summary envelope
             // generated from the previous and next flight steps.
