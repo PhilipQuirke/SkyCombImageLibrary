@@ -52,9 +52,9 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        protected override void ProcessFlightLegEnd(ProcessScope scope, int legId, TextBox outputText)
+        protected override void ProcessFlightLegEnd(ProcessScope scope, int legId, SkyCombImageLibrary.ProcessLogic.ProcessObjectParameters parameters)
         {
-            base.ProcessFlightLegEnd(scope, legId, outputText);
+            base.ProcessFlightLegEnd(scope, legId, parameters);
         }
 
 

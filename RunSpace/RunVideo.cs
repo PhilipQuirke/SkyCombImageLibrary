@@ -221,7 +221,7 @@ namespace SkyCombImage.RunSpace
 
 
         // Process start &/or end of drone flight legs.
-        public abstract void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId, TextBox outputText);
+        public abstract void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId, SkyCombImageLibrary.ProcessLogic.ProcessObjectParameters parameters);
 
 
         // Process/analyse a single input video frame 
@@ -425,7 +425,7 @@ namespace SkyCombImage.RunSpace
 
 
         // Process the input video frame by frame and display/save the output video
-        public int Run(TextBox? outputText = null)
+        public int Run(SkyCombImageLibrary.ProcessLogic.ProcessObjectParameters parameters)
         {
             int numSigObjs = 0;
 
@@ -509,7 +509,7 @@ namespace SkyCombImage.RunSpace
                             Assert(inputVideo.CurrFrameId == PSM.CurrInputFrameId, "RunVideo.Run: Bad FrameId 1");
 
                             // Process start &/or end of drone flight legs.
-                            ProcessFlightLegChange(this, prevLegId, PSM.CurrRunLegId, outputText);
+                            ProcessFlightLegChange(this, prevLegId, PSM.CurrRunLegId, parameters);
 
                             // If we have just ended a leg change, then may have just calculated FixAltM/FixYawDeg/FixPitchDeg
                             // so display the UI so the object-feature-lines are redrawn using the refined locations.
@@ -560,7 +560,7 @@ namespace SkyCombImage.RunSpace
 
                     // End the last leg (if any)
                     if (PSM.CurrRunLegId > 0)
-                        ProcessFlightLegChange(this, PSM.CurrRunLegId, UnknownValue, outputText);
+                        ProcessFlightLegChange(this, PSM.CurrRunLegId, UnknownValue, parameters);
 
                     ProcessAll.EndInterval();
                     numSigObjs += ProcessAll.ProcessObjects.NumSignificantObjects;
@@ -653,7 +653,7 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        public override void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId, TextBox textBox) { }
+        public override void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId, SkyCombImageLibrary.ProcessLogic.ProcessObjectParameters parameters) { }
 
 
         // Process/analyse a single frame at a time.

@@ -3,12 +3,14 @@ using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
+using System.Text.Json.Serialization;
 
 
 namespace SkyCombImage.ProcessLogic
 {
     public class ProcessBlock : ProcessBlockModel
     {
+        [JsonIgnore]
         public FlightStep? FlightStep { get; set; } = null;
 
 

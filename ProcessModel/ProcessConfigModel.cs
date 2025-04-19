@@ -204,8 +204,8 @@ namespace SkyCombImage.ProcessModel
         }
 
         // Hardcode the drone camera intrinsic matrix for Lennard Sparks drone camera
-        //        public static CameraIntrinsic intrinsic = new CameraIntrinsic(9.1, 640, 512, 7.68, 6.144);
-                public static CameraIntrinsic intrinsic = new CameraIntrinsic(9.1, 1280, 1024, 7.68, 6.144);
+                public static CameraIntrinsic intrinsic = new CameraIntrinsic(9.1, 640, 512, 7.68, 6.144);
+        //        public static CameraIntrinsic intrinsic = new CameraIntrinsic(9.1, 1280, 1024, 7.68, 6.144);
         //public static CameraIntrinsic intrinsic = new CameraIntrinsic(40, 1280, 1024, 640, 512);
         public static Mat K = intrinsic.K;
     }
@@ -226,7 +226,7 @@ namespace SkyCombImage.ProcessModel
             ImageHeight = imageHeight;
             Cx = imageWidth / 2; 
             Cy = imageHeight / 2;
-            Fx = focalLength * imageWidth / sensorWidth; // F * pixels per mm = focal length in mm x image width px / sensor width mm
+            Fx = -focalLength * imageWidth / sensorWidth; // F * pixels per mm = focal length in mm x image width px / sensor width mm
             Fy = focalLength * imageHeight / sensorHeight;
             K.At<double>(0, 0) = Fx;
             K.At<double>(0, 1) = 0;

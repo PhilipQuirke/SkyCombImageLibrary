@@ -4,6 +4,7 @@ using OpenCvSharp;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
+using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
 using System.Diagnostics;
 using System.Windows.Forms;
@@ -239,7 +240,7 @@ namespace SkyCombImage.ProcessLogic
 
         // Analyse ProcessObjects in the FlightLeg, assuming various inaccuracies.
         // Lock in the FlightSteps.FixAltM/FixYawDeg/FixPitchDeg values that reduces the location wobble most.
-        public void CalculateSettings_from_FlightLeg(TextBox? outputText)
+        public void CalculateSettings_from_FlightLeg(SkyCombImageLibrary.ProcessLogic.ProcessObjectParameters parameters)
         {
             ResetBest();
             ResetTardis();
@@ -250,7 +251,7 @@ namespace SkyCombImage.ProcessLogic
             var legSteps = Process.Drone.FlightSteps.Steps.GetLegSteps(ProcessSpanId);
             var theObjs = Process.ProcessObjects.FilterByLeg(ProcessSpanId);
 
-            if (false)
+            if (parameters.Triangulate)
             {
                 // PQ base method for setting object location
                 int theHFOVDeg = Process.Drone.InputVideo.HFOVDeg;
@@ -259,8 +260,8 @@ namespace SkyCombImage.ProcessLogic
                 OrgSumLocnErrM = BestSumLocnErrM;
                 OrgSumHeightErrM = BestSumHeightErrM;
                 
-                // nq new method. Second parameter: Frame pair intervals constant, 3 frames is 1/20th of second. 5 frames is 1/6th of a second.
-                SpanOptimize triangulation = new(Process, outputText);
+                // nq  method. 
+                SpanOptimize triangulation = new(theObjs, Process.GroundData, parameters.Output);
                 foreach (var theObj in theObjs)
                 {
                     //theObj.Value.Calculate_RealObject_SimpleMemberData();

@@ -356,7 +356,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // A drone flight leg has finished. 
-        protected virtual void ProcessFlightLegEnd(ProcessScope scope, int legId, TextBox? outputText)
+        protected virtual void ProcessFlightLegEnd(ProcessScope scope, int legId, SkyCombImageLibrary.ProcessLogic.ProcessObjectParameters parameters)
         {
             if (Drone.UseFlightLegs)
             {
@@ -370,7 +370,7 @@ namespace SkyCombImage.ProcessLogic
                     // Post process the objects found in the leg & maybe set FlightLegs.FixAltM/FixYawDeg/FixPitchDeg 
                     var theSpan = ProcessFactory.NewProcessSpan(this, legId);
                     ProcessSpans.AddSpan(theSpan);
-                    theSpan.CalculateSettings_from_FlightLeg(outputText);
+                    theSpan.CalculateSettings_from_FlightLeg(parameters);
                     theSpan.AssertGood();
                 }
             }
@@ -379,14 +379,14 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        public void ProcessFlightLegEndWrapper(ProcessScope scope, int legId, TextBox? outputText)
+        public void ProcessFlightLegEndWrapper(ProcessScope scope, int legId, SkyCombImageLibrary.ProcessLogic.ProcessObjectParameters parameters)
         {
             try
             {
                 if (Drone.UseFlightLegs)
                     OnObservation(ProcessEventEnum.LegEnd_Before, new ProcessEventArgs(scope, legId));
 
-                ProcessFlightLegEnd(scope, legId, outputText);
+                ProcessFlightLegEnd(scope, legId, parameters);
 
                 if (Drone.UseFlightLegs)
                 {
@@ -479,10 +479,10 @@ namespace SkyCombImage.ProcessLogic
 
 
         // A drone flight leg has finished &/or started. 
-        public void ProcessFlightLegStartAndEnd(ProcessScope scope, int prevLegId, int currLegId, TextBox outputText)
+        public void ProcessFlightLegStartAndEnd(ProcessScope scope, int prevLegId, int currLegId, SkyCombImageLibrary.ProcessLogic.ProcessObjectParameters parameters)
         {
             if ((prevLegId > 0) && (prevLegId != currLegId))
-                ProcessFlightLegEndWrapper(scope, prevLegId, outputText);
+                ProcessFlightLegEndWrapper(scope, prevLegId, parameters);
 
             if ((currLegId > 0) && (prevLegId != currLegId))
                 ProcessFlightLegStartWrapper(scope, currLegId);
