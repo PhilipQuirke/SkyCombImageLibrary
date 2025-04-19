@@ -463,8 +463,6 @@ namespace SkyCombImage.RunSpace
         }
 
 
-
-
         private FlightSection SetInputVideo_InputIsImages(int frameId)
         {
             var section = Drone?.FlightSections?.Sections[frameId];
