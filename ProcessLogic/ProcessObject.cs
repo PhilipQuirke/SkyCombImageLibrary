@@ -279,6 +279,12 @@ namespace SkyCombImage.ProcessLogic
             var minToMs = Math.Min(RunToVideoS * 1000, scope.PSM.LastVideoFrameMs);
 
             var overlapMs = minToMs - maxFromMs;
+
+            if (ProcessAll.Drone.InputIsImages)
+                // When InputIsImages, object duration is zero.
+                if (overlapMs == 0)
+                    return true;
+
             if (overlapMs <= 0)
                 return false;
 
