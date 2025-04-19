@@ -454,7 +454,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Test if DroneTargetCalculator.DroneK contains bad data.
-        public static void UnitTest_ScanHyperParams(int theHFOVDeg, ProcessSpan span, FlightStepList legSteps, ProcessObjList theObjs)
+        public static void UnitTest_ScanHyperParams(ProcessSpan span, FlightStepList legSteps, ProcessObjList theObjs)
         {
             Debug.Print("Default DroneK: OrgSumLocnErrM=" + span.OrgSumLocnErrM + " OrgSumHeightErrM=" + span.OrgSumHeightErrM);
 
@@ -463,7 +463,7 @@ namespace SkyCombImage.ProcessLogic
                 for (int y = -20; y <= +20; y += 5)
                 {
                     DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, x, y, 1, 1);
-                    if (span.CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs))
+                    if (span.CalculateSettings_ApplyFixValues(0, legSteps, theObjs))
                         Debug.Print("x=" + x + ", y=" + y + ", BestSumLocnErrM=" + span.BestSumLocnErrM  + " BestSumHeightErrM=" + span.BestSumHeightErrM );
                 }
 
@@ -471,7 +471,7 @@ namespace SkyCombImage.ProcessLogic
             for (float f = 0.9f; f <= 5; f += 0.05f)
             {
                 DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(f, 0, 0, 1, 1);
-                if (span.CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs))
+                if (span.CalculateSettings_ApplyFixValues(0, legSteps, theObjs))
                     Debug.Print("f=" + f + ", BestSumLocnErrM=" + span.BestSumLocnErrM + " BestSumHeightErrM=" + span.BestSumHeightErrM );
             }
 
@@ -479,7 +479,7 @@ namespace SkyCombImage.ProcessLogic
             for (float w = 0.2f; w >= 0.01f; w -= 0.01f)
             {
                 DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, w, 1);
-                if (span.CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs))
+                if (span.CalculateSettings_ApplyFixValues(0, legSteps, theObjs))
                     Debug.Print("w=" + w + " BestSumLocnErrM=" + span.BestSumLocnErrM  + " BestSumHeightErrM=" + span.BestSumHeightErrM );
             }
 
@@ -488,7 +488,7 @@ namespace SkyCombImage.ProcessLogic
             for (float h = 0.2f; h >= 0.01f; h -= 0.01f)
             {
                 DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, h);
-                if (span.CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs))
+                if (span.CalculateSettings_ApplyFixValues( 0, legSteps, theObjs))
                     Debug.Print("h=" + h + " BestSumLocnErrM=" + span.BestSumLocnErrM + " BestSumHeightErrM=" + span.BestSumHeightErrM);
             }
 
@@ -510,7 +510,7 @@ namespace SkyCombImage.ProcessLogic
             DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.001); // h=0.001 => 116/286  
             DroneTargetCalculator.DroneK = CameraIntrinsic.Test3x3(1, 0, 0, 1, 0.0001); // h=0.0001 => 116/286  
             
-            span.CalculateSettings_ApplyFixValues(theHFOVDeg, 0, 0, 0, legSteps, theObjs);
+            span.CalculateSettings_ApplyFixValues(0, legSteps, theObjs);
             Debug.Print("BestSumLocnErrM=" + span.BestSumLocnErrM + " BestSumHeightErrM=" + span.BestSumHeightErrM);
         }
 #endif

@@ -176,8 +176,8 @@ namespace SkyCombImage.ProcessLogic
                 DroneState droneState = new();
                 droneState.LocationNE = Block.DroneLocnM;
                 droneState.Altitude = flightStep.FixedAltitudeM; // Relies on FixAltM
-                droneState.Yaw = flightStep.FixedYawDeg;  // Relies on FixYawDeg
-                droneState.CameraDownAngle = 90 - flightStep.FixedCameraToVerticalForwardDeg; // Relies on FixPitchDeg
+                droneState.Yaw = flightStep.YawDeg; 
+                droneState.CameraDownAngle = 90 - flightStep.CameraToVerticalForwardDeg;
  
                 // LOS algorithm works very inaccurately if the camera is pointing near the horizon.
                 phase = 4;

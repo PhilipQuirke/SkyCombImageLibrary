@@ -24,10 +24,7 @@ namespace SkyCombImage.ProcessModel
 
         // DATA USED TO CALCULATE best fix values
         // The original (after) error value with best altitude fix 
-        public float BestHFOVDeg { get; set; } = 0;
         public float BestFixAltM { get; set; } = 0;
-        public float BestFixYawDeg { get; set; } = 0;
-        public float BestFixPitchDeg { get; set; } = 0;
         public float BestSumLocnErrM { get; set; } = UnknownValue;
         public float BestSumHeightErrM { get; set; } = UnknownValue;
         // The original (before) error values (with FlightLeg.FixAltM/FixYawDeg/FixPitchDeg set to 0)
@@ -55,28 +52,22 @@ namespace SkyCombImage.ProcessModel
 
         protected void ResetBest()
         {
-            BestHFOVDeg = 38;
             BestFixAltM = 0;
-            BestFixYawDeg = 0;
-            BestFixPitchDeg = 0;
             BestSumLocnErrM = 9999;
             BestSumHeightErrM = 9999;
             //Debug.Print("  ResetBest");
         }
 
 
-        protected void SetBest(float hfovDeg, float fixAltM, float fixYawDeg, float fixPitchDeg, ProcessObjList objs)
+        protected void SetBest(float fixAltM, ProcessObjList objs)
         {
             var improvementM = (BestSumLocnErrM == 9999 ? 0 : BestSumLocnErrM - objs.SumLocationErrM );
 
-            BestHFOVDeg = hfovDeg;
             BestFixAltM = fixAltM;
-            BestFixYawDeg = fixYawDeg;
-            BestFixPitchDeg = fixPitchDeg;
             BestSumLocnErrM = objs.SumLocationErrM;
             BestSumHeightErrM = objs.SumHeightErrM;
             //Debug.Print("  Set BestFix( " +
-            //    "HFOV+"+ BestHFOVDeg.ToString() +", AltM=" + BestFixAltM.ToString() + ", YawDeg=" + BestFixYawDeg.ToString() + ", PitchDeg=" + BestFixPitchDeg.ToString() + 
+            //    AltM=" + BestFixAltM.ToString() + 
             //    ", SumLocnErrM=" + BestSumLocnErrM.ToString() + ", ImprovementM=" + improvementM.ToString() +")");
         }
 
@@ -85,21 +76,18 @@ namespace SkyCombImage.ProcessModel
         public const int SpanIdSetting = 1;
         public const int SpanNameSetting = 2;
         public const int NumSigObjsSetting = 3;
-        public const int BestHFOVSetting = 4;
-        public const int BestFixAltMSetting = 5;
-        public const int BestFixYawDegSetting = 6;
-        public const int BestFixPitchDegSetting = 7;
-        public const int BestSumLocnErrMSetting = 8;
-        public const int BestObjLocnErrMSetting = 9;
-        public const int BestSumHeightErrMSetting = 10;
-        public const int BestObjHeightErrMSetting = 11;
-        public const int OrgSumLocnErrMSetting = 12;
-        public const int OrgObjLocnErrMSetting = 13;
-        public const int OrgSumHeightErrMSetting = 14;
-        public const int OrgObjHeightErrMSetting = 15;
-        public const int MinStepIdSetting = 16;
-        public const int MaxStepIdSetting = 17;
-        public const int NumBlocksSetting = 18;
+        public const int BestFixAltMSetting = 4;
+        public const int BestSumLocnErrMSetting = 5;
+        public const int BestObjLocnErrMSetting = 6;
+        public const int BestSumHeightErrMSetting = 7;
+        public const int BestObjHeightErrMSetting = 8;
+        public const int OrgSumLocnErrMSetting = 9;
+        public const int OrgObjLocnErrMSetting = 10;
+        public const int OrgSumHeightErrMSetting = 11;
+        public const int OrgObjHeightErrMSetting = 12;
+        public const int MinStepIdSetting = 13;
+        public const int MaxStepIdSetting = 14;
+        public const int NumBlocksSetting = 15;
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore)
@@ -110,10 +98,7 @@ namespace SkyCombImage.ProcessModel
                 { "Process Leg Id", ProcessSpanId },
                 { "Name", Name },
                 { "Num Sig Objs", NumSignificantObjects },
-                { "Bst Fix HFOV", BestHFOVDeg, 1},
                 { "Bst Fix Alt M", BestFixAltM, HeightNdp},
-                { "Bst Fix Yaw Deg", BestFixYawDeg, DegreesNdp},
-                { "Bst Fix Pitch Deg", BestFixPitchDeg, DegreesNdp},
                 { "Bst Sum Locn Err M", BestSumLocnErrM, LocationNdp },
                 { "Bst Avg Locn Err M", (NumSignificantObjects > 0 ? BestSumLocnErrM / NumSignificantObjects : UnknownValue), LocationNdp },
                 { "Bst Sum Ht Err M", BestSumHeightErrM, LocationNdp },
@@ -141,10 +126,7 @@ namespace SkyCombImage.ProcessModel
             ProcessSpanId = StringToInt(settings[i++]);
             i++; // Skip LegName  
             NumSignificantObjects = StringToInt(settings[i++]);
-            BestHFOVDeg = StringToInt(settings[i++]);
             BestFixAltM = StringToFloat(settings[i++]);
-            BestFixYawDeg = StringToFloat(settings[i++]);
-            BestFixPitchDeg = StringToFloat(settings[i++]);
             BestSumLocnErrM = StringToFloat(settings[i++]);
             i++; // BestObjLocnErrM  
             BestSumHeightErrM = StringToFloat(settings[i++]);
