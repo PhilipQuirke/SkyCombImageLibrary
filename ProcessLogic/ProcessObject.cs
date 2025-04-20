@@ -435,17 +435,19 @@ namespace SkyCombImage.ProcessLogic
                 var elevationOK = (HeightM >= 0);
                 var elevationGood = (HeightM > 2);
                 var elevationGreat = (HeightM > 4);
-                if (ProcessAll.Drone.InputIsImages)
-                    elevationGood = true;
 
-                // Key calculation of Comb algorithm for identifying significant objects
-                Significant =
-                    pixelsOk &&
-                    timeOk &&
-                    (
-                        elevationGood ||
-                        pixelsGood
-                    );
+                if (ProcessAll.Drone.InputIsImages || ProcessAll is YoloProcess)
+                    // With image input or when using the Yolo process we assume object is significant.
+                    Significant = true;
+                else
+                    // Key calculation of Comb algorithm for identifying significant objects
+                    Significant =
+                        pixelsOk &&
+                        timeOk &&
+                        (
+                            elevationGood ||
+                            pixelsGood
+                        );
 
                 if (Significant)
                     NumSigBlocks++;
@@ -505,17 +507,6 @@ namespace SkyCombImage.ProcessLogic
         protected void Calculate_LocationM_and_LocationErrM()
         {
             (LocationM, LocationErrM) = ProcessFeatures.Calculate_Avg_LocationM_and_LocationErrM();
-        }
-
-
-        protected bool HasMoved()
-        {
-            // Drone moved from point A to point B (base-line distance L) in metres.
-            double baselineM = RelativeLocation.DistanceM(
-                FirstFeature.Block.DroneLocnM,
-                LastRealFeature.Block.DroneLocnM);
-            // If drone has not moved enough this method will be very inaccurate.
-            return (baselineM >= 2);
         }
 
 
@@ -663,6 +654,36 @@ namespace SkyCombImage.ProcessLogic
             catch (Exception ex)
             {
                 throw ThrowException("ProcessObject.Calculate_RealObject_SimpleMemberData", ex);
+            }
+        }
+
+
+        // For each real feature in the object, store last-calculated location and height
+        // If feature location and height are not specified, assign them last-calculated location and height
+        public void Calculate_RealObjectFeatures_MissingLocationsAndHeights()
+        {
+            DroneLocation prevFeatureLocationM = null;
+            float prevFeatureHeightM = UnknownHeight;
+
+            foreach((var _, var feature) in ProcessFeatures)
+            {
+                if (feature.Type == FeatureTypeEnum.Real)
+                {
+                    bool fix = false;
+
+                    if (feature.LocationM != null)
+                        prevFeatureLocationM = feature.LocationM;
+                    else
+                        fix = true;
+
+                    if (feature.HeightM > UnknownHeight)
+                        prevFeatureHeightM = feature.HeightM;
+                    else
+                        fix = true;
+
+                    if(fix)
+                        feature.Set_LocationM_HeightM(prevFeatureLocationM, prevFeatureHeightM);
+                }
             }
         }
 

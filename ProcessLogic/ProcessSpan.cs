@@ -194,24 +194,24 @@ namespace SkyCombImage.ProcessLogic
                 // nq  method. 
                 SpanOptimize triangulation = new(theObjs, Process.GroundData, Process.RunUI.OutputTextBox());
 
-                foreach (var theObj in theObjs)
+                foreach ((var _,var theObj) in theObjs)
                 {
-                    // For each feature in the object, store last-calculated location and height
-                    // If feature location and height are not specified, assign them last-calculated location and height
-                    // PQR TODO
-
+                    // For each real feature in the object, 
+                    // if feature location and/or height are not specified,
+                    // assign them last-specified location and height
+                    theObj.Calculate_RealObjectFeatures_MissingLocationsAndHeights();
 
                     // Calculate OBJECT size in square centimeters (based on maximum # hot pixels over real features).
-                    theObj.Value.Calculate_SizeCM2();
+                    theObj.Calculate_SizeCM2();
 
                     // Calculate the range of the OBJECT from the drone in meters (as average over real features).
-                    theObj.Value.Calculate_AvgRangeM();
+                    theObj.Calculate_AvgRangeM();
 
                     // Calculate the OBJECT maximum heat value (of any pixel over real features).
-                    theObj.Value.Calculate_MaxHeat();
+                    theObj.Calculate_MaxHeat();
 
                     // Is this OBJECT significant?
-                    theObj.Value.Calculate_Significant();
+                    theObj.Calculate_Significant();
                 }
                 theObjs.CalculateSettings();
             }
