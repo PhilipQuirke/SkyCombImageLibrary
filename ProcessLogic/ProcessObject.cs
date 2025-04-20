@@ -790,11 +790,15 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Ensure each object has at least an "insignificant" name e.g. #16
-        public void EnsureObjectsNamed()
+        public void EnsureObjectsNamed(ProcessAll processAll)
         {
             foreach (var theObj in this)
                 if (theObj.Value.Name == "")
-                    theObj.Value.SetName();
+                {
+                    processAll.NumInsignificantObjects++;
+
+                    theObj.Value.SetName("#", processAll.NumInsignificantObjects);
+                }
         }
 
 

@@ -133,7 +133,7 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        public void SetName(int positionInLeg = UnknownValue)
+        public void SetName(string flightLegName, int positionInLeg)
         {
             if (Name != null && Name.Length > 0 && Name.ToCharArray()[0] != '#')
             {
@@ -141,24 +141,7 @@ namespace SkyCombImage.ProcessModel
                 return; // Name already set (e.g. C5)
             }
 
-            if (positionInLeg != UnknownValue)
-                Name = FlightLegName + positionInLeg.ToString(); // e.g. C5
-            else if (ObjectId == 0)
-                Name = "A";
-            else
-            {
-                const int baseValue = 26;
-                int number = ObjectId;
-
-                Name = "";
-                while (number > 0)
-                {
-                    int remainder = (number - 1) % baseValue;
-                    char letter = (char)('A' + remainder);
-                    Name = letter + Name;
-                    number = (number - 1) / baseValue;
-                }
-            }
+            Name = flightLegName + positionInLeg.ToString(); // e.g. C5
 
             Assert(Name.Length < 10, "ProcessObjectModel.SetName: Bad length");
         }

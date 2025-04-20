@@ -1,13 +1,9 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
-using MathNet.Numerics.Distributions;
 using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombImage.RunSpace;
-using System.Text;
-using System.Windows.Forms;
-
 
 
 namespace SkyCombImage.ProcessLogic
@@ -83,6 +79,7 @@ namespace SkyCombImage.ProcessLogic
         public int FlightSteps_MinStepId { get; set; }
         public int FlightSteps_MaxStepId { get; set; }
 
+        public int NumInsignificantObjects { get; set; } = 0;
 
 
         public ProcessAll(GroundData groundData, VideoData video, Drone drone, ProcessConfigModel config, RunUserInterface runUI)
@@ -116,7 +113,7 @@ namespace SkyCombImage.ProcessLogic
         // Ensure each object has at least an "insignificant" name e.g. #16
         public virtual void EnsureObjectsNamed() 
         {
-            ProcessObjects.EnsureObjectsNamed();
+            ProcessObjects.EnsureObjectsNamed(this);
         }
 
 
@@ -132,7 +129,7 @@ namespace SkyCombImage.ProcessLogic
                    (theObj.Name == ""))
                 {
                     sigObjects++;
-                    theObj.SetName(sigObjects);
+                    theObj.SetName(theObj.FlightLegName, sigObjects);
                 }
             }
 
@@ -442,7 +439,7 @@ namespace SkyCombImage.ProcessLogic
         {
             if (!Drone.UseFlightLegs)
             {
-                inScopeObjects.EnsureObjectsNamed();
+                inScopeObjects.EnsureObjectsNamed(this);
 
                 int sigObjects = inScopeObjects.NumSignificantObjects;
                 if (sigObjects > 0)
