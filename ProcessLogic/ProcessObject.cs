@@ -246,7 +246,11 @@ namespace SkyCombImage.ProcessLogic
             // Once inactive, an object stops being tracked permanently.
             if (BeingTracked)
             {
-                if (LastRealFeature.Block.BlockId >= BlockId)
+                if (ProcessAll.Drone.InputIsImages)
+                    // For images we do not use unreal persistance features.
+                    BeingTracked = false;
+
+                else if (LastRealFeature.Block.BlockId >= BlockId)
                 {
                     // Yes, this is worth tracking.
                 }

@@ -57,7 +57,7 @@ namespace SkyCombImage.ProcessModel
         // Object characteristics:
         // Duration (in milliseconds) that object must be tracked for before it is highlighted
         public const int ObjectMinDurationMs = 500;
-        // Minimum percentage difference between ground speed and object speed for object to be considered above ground.
+        // Maximum number of "unreal" features after a real feature. Applies to videos only.
         public const int ObjectMaxUnrealBlocks = 5;
         // To be highlighted, an object must have this many hot pixels in at least one real step
         public const int ObjectMinPixels = 5;
