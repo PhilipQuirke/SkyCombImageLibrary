@@ -46,9 +46,6 @@ namespace SkyCombImage.ProcessLogic
                 {
                     // not enough features to triangulate
                     output?.AppendText($"Not enough features for object {obj.Name}\r\n");
-                    // get rid of PQ data
-                    //featurelist[0].LocationM = null;
-                    //featurelist[0].HeightM = -999;
                     continue; 
                 }
                 
@@ -62,10 +59,10 @@ namespace SkyCombImage.ProcessLogic
                     obj.HeightM = (float)result.Ans[2] - groundInfo.DemModel.GetElevationByDroneLocn(obj.LocationM);
                     output?.AppendText($"NQ height: {Math.Round(obj.HeightM, 3)}\r\n");
                     foreach (var feature in featurelist)
-                    // These have been filled in fillFeatureResults, we are now changing the values to be relative to the ground
-                    {
-                        feature.HeightM = feature.HeightM - groundInfo.DemModel.GetElevationByDroneLocn(feature.LocationM);
-                    }
+                        // These have been filled in fillFeatureResults, we are now changing the values to be relative to the ground
+                        feature.Set_LocationM_HeightM(
+                            feature.LocationM, 
+                            feature.HeightM - groundInfo.DemModel.GetElevationByDroneLocn(feature.LocationM));
                 }
             }
         }
@@ -79,9 +76,9 @@ namespace SkyCombImage.ProcessLogic
                 return true; // first feature that is far enough from the edge
             else if ((compare != null) && (Math.Abs(feature.PixelBox.X - compare.PixelBox.X + feature.PixelBox.Width/2 - compare.PixelBox.Width/2) >= 2) && (Math.Abs(feature.PixelBox.Y - compare.PixelBox.Y + feature.PixelBox.Height / 2 - compare.PixelBox.Height / 2) >= 2)) 
                 return true; // different enough from compare
-            // get rid of PQ data
-            feature.LocationM = null;
-            feature.HeightM = -999;
+
+            // Remove dead-reckoning location and height
+            feature.Set_LocationM_HeightM();
             return false;
         }
         private static Mat CreateRotationMatrix(double rollDegrees, double pitchDegrees, double yawDegrees)
@@ -289,8 +286,10 @@ namespace SkyCombImage.ProcessLogic
                     vector = new double[3] { CamPosn[i*3] - Direction[i*3][3 + i]*Ans[3 + i]
                         , CamPosn[i*3 + 1] - Direction[i*3 + 1][3 + i]*Ans[3 + i]
                         , CamPosn[i*3 + 2] - Direction[i*3 + 2][3 + i]*Ans[3 + i] };
-                    feature.LocationM = new DroneLocation((float)vector[1], (float)vector[0]);
-                    feature.HeightM = (float)vector[2];
+
+                    feature.Set_LocationM_HeightM(
+                        new DroneLocation((float)vector[1], (float)vector[0]), 
+                        (float)vector[2]);
                     i++;
                 }
 

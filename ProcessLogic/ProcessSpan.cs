@@ -196,7 +196,10 @@ namespace SkyCombImage.ProcessLogic
 
                 foreach (var theObj in theObjs)
                 {
-                    //theObj.Value.Calculate_RealObject_SimpleMemberData();
+                    // For each feature in the object, store last-calculated location and height
+                    // If feature location and height are not specified, assign them last-calculated location and height
+                    // PQR TODO
+
 
                     // Calculate OBJECT size in square centimeters (based on maximum # hot pixels over real features).
                     theObj.Value.Calculate_SizeCM2();

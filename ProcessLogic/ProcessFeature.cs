@@ -213,10 +213,8 @@ namespace SkyCombImage.ProcessLogic
                 {
                     phase = 6;
                     HeightAlgorithm = LineOfSightHeightAlgorithm;
-                    LocationM = result.LocationNE.Clone();
-                    HeightM = 0;
-                    if (groundData.HasDemModel)
-                        HeightM = result.Elevation - groundData.DemModel.GetElevationByDroneLocn(LocationM);
+                    var heightM = (groundData.HasDemModel ? result.Elevation - groundData.DemModel.GetElevationByDroneLocn(LocationM) : 0);
+                    Set_LocationM_HeightM(result.LocationNE, heightM);
                 }
                 else
                     HeightAlgorithm = "NoResult";

@@ -79,6 +79,13 @@ namespace SkyCombImage.ProcessModel
         }
 
 
+        public void Set_LocationM_HeightM(DroneLocation? location = null, float heightM = BaseConstants.UnknownHeight)
+        {
+            LocationM = (location == null ? null : location.Clone());
+            HeightM = heightM;
+        }
+
+
         // Reset member data to mirror a newly created feature.
         // Used in experimentation to allow repeated calculation run against this feature.
         public void ResetCalcedMemberData()
@@ -86,8 +93,9 @@ namespace SkyCombImage.ProcessModel
             IsTracked = true;
             Significant = false;
             ObjectId = 0;
-            LocationM = null;
-            HeightM = BaseConstants.UnknownHeight;
+
+            Set_LocationM_HeightM();
+
             HeightAlgorithm = "";
             // NumHotPixels = 0; Derived from image processing. Can't be recalced. So excldued 
         }
