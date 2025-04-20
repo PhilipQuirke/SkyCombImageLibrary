@@ -120,6 +120,10 @@ namespace SkyCombImage.ProcessLogic
                 if( StopYoloSecondBlockClaim(theFeature) )
                     return false;
 
+                if ((FlightLegId == 0) && (LastRealFeature != null) && (theFeature.Block.FlightLegId > 0))
+                    // First object feature(s) were not in a leg, but this feature is in a leg. Update the object leg id.   
+                    FlightLegId = theFeature.Block.FlightLegId;
+
                 // Associate the feature with this object.
                 theFeature.ObjectId = this.ObjectId;
 

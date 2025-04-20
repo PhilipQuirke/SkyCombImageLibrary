@@ -31,7 +31,7 @@ namespace SkyCombImage.ProcessLogic
         public void AssertGood()
         {
             Assert(ProcessSpanId > 0, "ProcessSpan.AssertGood: Bad SpanId");
-            Assert(MinBlockId > 0, "ProcessSpan.AssertGood: Bad MinBlockId");
+            Assert(MinBlockId >= 0, "ProcessSpan.AssertGood: Bad MinBlockId");
             Assert(MaxBlockId > 0, "ProcessSpan.AssertGood: Bad MaxBlockId");
         }
 
