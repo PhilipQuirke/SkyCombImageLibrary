@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.DrawSpace;
@@ -16,7 +16,7 @@ using System.Drawing;
 using System.Windows.Forms;
 
 
-// Namespace for processing of a video made up of multiple images (frames).
+// Namespace for processing of multiple images (frames).
 // Some classes contain code that persists information between frames
 namespace SkyCombImage.RunSpace
 {
@@ -29,30 +29,26 @@ namespace SkyCombImage.RunSpace
     }
 
 
-    // Base video class that does not persist information betweem frames
-    public abstract class RunVideo : ProcessScope, IDisposable
+    // Base worker class that does not persist information between frames
+    public abstract class RunWorker : ProcessScope, IDisposable
     {
         public RunUserInterface RunUI { get; }
 
-        // The configuration data used in processing the video
+        // The configuration data used in processing the images
         public RunConfig RunConfig { get; set; }
         // We may be given a series of intervals to process
         public DroneIntervalList? RunIntervals { get; set; } = null;
 
-        // All drone input data: video (definitely), flight (maybe) and ground (maybe) data 
-        // public Drone Drone { get; set; }
-
         // The data store (spreadsheet) that meta-data is saved to / read from. 
         public DroneDataStore DataStore { get; set; }
 
-        // The processing model apply to to the video. 
+        // The processing model apply to to the images. 
         public ProcessAll ProcessAll { get; set; }
 
         public CategoryAll CategoryAll { get; set; }
 
-        // Basic attributes of the input video
+        // Basic attributes of the input video. Null when processing multiple images.
         public VideoModel? VideoBase = null;
-
 
         // Has user requested we stop processing?
         public bool StopRunning { get; set; } = false;
@@ -77,8 +73,8 @@ namespace SkyCombImage.RunSpace
         public DrawLeg DrawLeg;
 
 
-        public RunVideo(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone, ProcessAll processAll) : base(drone)
-        {
+        public RunWorker(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone, ProcessAll processAll) : base(drone)
+         {
             RunUI = parent;
             RunConfig = config;
             DataStore = dataStore;
@@ -86,7 +82,6 @@ namespace SkyCombImage.RunSpace
             ProcessAll = processAll;
             VideoBase = null;
             CategoryAll = new();
-
             ProcessDrawScope = new(ProcessAll, this, Drone);
 
             // What is the maximum scope of objects we draw?
@@ -108,7 +103,6 @@ namespace SkyCombImage.RunSpace
             }
             ProcessDrawPath = new(ProcessDrawScope, objList, drawObjectScope);
 
-            //DrawCombAltitudeByTime = new(processAll, DrawScope);
             ProcessDrawElevation = new(processAll, ProcessDrawScope, RunConfig);
             DrawSpeed = new(ProcessDrawScope);
             DrawPitch = new(ProcessDrawScope);
@@ -162,11 +156,10 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        public void ResetModifiedImages()
+        public void ResetModifiedImage()
         {
             ModifiedInputImage?.Dispose();
             ModifiedInputImage = null;
-
         }
 
 
@@ -208,7 +201,7 @@ namespace SkyCombImage.RunSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("RunVideoYolo.LoadDataStore", ex);
+                throw ThrowException("RunWorker.LoadDataStore", ex);
             }
         }
 
@@ -221,23 +214,23 @@ namespace SkyCombImage.RunSpace
 
 
         // Process start &/or end of drone flight legs.
-        public abstract void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId, SkyCombImageLibrary.ProcessLogic.ProcessObjectParameters parameters);
+        public abstract void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId);
 
 
-        // Process/analyse a single input video frame 
-        public abstract ProcessBlock AddBlockAndProcessInputVideoFrame();
+        // Process/analyse a single input frame/image
+        public abstract ProcessBlock AddBlockAndProcessInputRunFrame();
 
 
-        // Process a single input video frame for the specified block, returning the modified input frame to show 
-        public void DrawVideoFrames(ProcessBlockModel? block = null)
+        // Process a single input frame/image for the specified block, returning the modified input frame to show 
+        public void DrawFrameImage(ProcessBlockModel? block = null)
         {
-            ResetModifiedImages();
+            ResetModifiedImage();
 
             if (CurrInputImage == null)
                 return;
 
             ModifiedInputImage =
-                DrawSpace.DrawVideoFrames.Draw(
+                DrawSpace.DrawFrameImage.Draw(
                     RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, Drone, CurrInputImage,
                     UnknownValue, block, ProcessAll);
 
@@ -253,7 +246,7 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        // Do any final activity at the end processing (aka running) of video / flight data
+        // Do any final activity at the end processing (aka running) of images / flight data
         public virtual void RunEnd()
         {
         }
@@ -280,8 +273,8 @@ namespace SkyCombImage.RunSpace
         }
         public void RunStart_Interval()
         {
-            ResetCurrImages();
-            ResetModifiedImages();
+            ResetCurrImage();
+            ResetModifiedImage();
             ConfigureModelScope();
             ProcessDrawScope.Reset(this, Drone);
             ProcessDrawPath.Reset(ProcessDrawScope);
@@ -340,7 +333,7 @@ namespace SkyCombImage.RunSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("RunSpace.RunVideo.SafeRunEnd", ex);
+                throw ThrowException("RunWorker.SafeRunEnd", ex);
             }
         }
 
@@ -423,9 +416,71 @@ namespace SkyCombImage.RunSpace
         }
 
 
+        private bool GetCurrImage_InputIsVideo()
+        {
+            if (!Drone.HaveFrame())
+                return false;
 
+            // Convert the already loaded Mat into an Image
+            ConvertCurrImage_InputIsVideo();
+            return true;
+        }
+
+
+        // Given PSM.CurrInputFrameId, get the file name from the corresponding FlightStep, load the image and convert to 
+        public bool GetCurrImage_InputIsImages()
+        {
+            var frameId = PSM.CurrRunStepId;
+            var section = SetInputVideo_InputIsImages(frameId);
+
+            PSM.CurrInputFrameId = frameId;
+            PSM.CurrInputFrameMs = section.SumTimeMs;
+
+            SetCurrRunStepAndLeg(Drone?.FlightSteps?.Steps[frameId]);
+
+            // Read the image from the input directory into memory
+            ResetCurrImage();
+            CurrInputImage = Drone.GetCurrImage_InputIsImages(RunConfig.InputDirectory, frameId);
+
+            return true;
+        }
+
+
+        // Surprisingly, a long series of sequential "seek next frame" GetVideoFrames 
+        // calls can give a CurrVideoFrameMs value that is, after 100 seconds, 400ms different
+        // from the CurrVideoFrameMs value if we seek direct to CurrVideoFrameID!
+        // So at the start of each new Leg we do a direct (slow) seek.
+        private bool ProcessFlightLegChange_InputIsVideo()
+        { 
+            if (PSM.CurrRunLegId > 0)
+                Drone.SetAndGetCurrFrame(PSM.CurrInputFrameId);
+
+            if( ! GetCurrImage_InputIsVideo())
+                return false;
+
+            Assert(Drone.InputVideo.CurrFrameId == PSM.CurrInputFrameId, "RunVideo.Run: Bad FrameId 1");
+            return true;
+        }
+
+
+        private FlightSection SetInputVideo_InputIsImages(int frameId)
+        {
+            var section = Drone?.FlightSections?.Sections[frameId];
+            Assert(section != null, "SetInputVideo_InputIsImages: No section");
+
+            Drone.InputVideo.CurrFrameMat = null;
+            Drone.InputVideo.CurrFrameId = frameId;
+            Drone.InputVideo.CurrFrameMs = section.TimeMs;
+
+            return section;
+        }
+
+
+        // Process either:
+        // - the input video frame by frame and display/save the output video
+        // - the input images one at a time and display the images
         // Process the input video frame by frame and display/save the output video
-        public int Run(SkyCombImageLibrary.ProcessLogic.ProcessObjectParameters parameters)
+        public int Run()
         {
             int numSigObjs = 0;
 
@@ -440,8 +495,9 @@ namespace SkyCombImage.RunSpace
                 RunStart_Process(this);
 
                 // Create an output video file writer (if user wants MP4 output)
-                (var videoWriter, var _) =
-                    StandardSave.CreateVideoWriter(RunConfig, InputVideoFileName(), VideoBase.Fps, VideoBase.ImageSize);
+                VideoWriter? videoWriter = null;
+                if(RunConfig.InputIsVideo)
+                    videoWriter = StandardSave.CreateVideoWriter(RunConfig, InputVideoFileName(), VideoBase.Fps, VideoBase.ImageSize);
 
                 var inputVideo = Drone.InputVideo;
                 int intervalCount = 0;
@@ -486,30 +542,30 @@ namespace SkyCombImage.RunSpace
 
                         var calcWatch = Stopwatch.StartNew();
 
-                        if (!Drone.HaveFrame())
-                            break;
 
-                        // Convert the already loaded Mat(s) into Image(s)
-                        ConvertCurrImages();
+                        // Obtain the image we will process
+                        if (RunConfig.InputIsVideo)
+                        {
+                            if (!GetCurrImage_InputIsVideo())           // Sets PSM.CurrRunLegId
+                                break;
+                        }
+                        else
+                        {
+                            if (!GetCurrImage_InputIsImages())           // Sets PSM.CurrRunLegId
+                                break;
+                        }
+
 
                         if (prevLegId != PSM.CurrRunLegId)
                         {
-                            if (PSM.CurrRunLegId > 0)
-                                // Surprisingly, a long series of sequential "seek next frame" GetVideoFrames 
-                                // calls can give a CurrVideoFrameMs value that is, after 100 seconds, 400ms different
-                                // from the CurrVideoFrameMs value if we seek direct to CurrVideoFrameID!
-                                // So at the start of each new Leg we do a direct (slow) seek.
-                                Drone.SetAndGetCurrFrame(PSM.CurrInputFrameId);
-
-                            if (!Drone.HaveFrame())
-                                break;
-
-                            ConvertCurrImages();
-
-                            Assert(inputVideo.CurrFrameId == PSM.CurrInputFrameId, "RunVideo.Run: Bad FrameId 1");
+                            if (RunConfig.InputIsVideo)
+                                // A long series of sequential "seek next frame" GetVideoFrames can cause inaccuracies.
+                                // Sequence of images do not have the same "seek next frame" problem as video.
+                                if (!ProcessFlightLegChange_InputIsVideo())
+                                    break;
 
                             // Process start &/or end of drone flight legs.
-                            ProcessFlightLegChange(this, prevLegId, PSM.CurrRunLegId, parameters);
+                            ProcessFlightLegChange(this, prevLegId, PSM.CurrRunLegId);
 
                             // If we have just ended a leg change, then may have just calculated FixAltM/FixYawDeg/FixPitchDeg
                             // so display the UI so the object-feature-lines are redrawn using the refined locations.
@@ -522,13 +578,13 @@ namespace SkyCombImage.RunSpace
                             break;
 
                         // Apply process model to this new frame
-                        var thisBlock = AddBlockAndProcessInputVideoFrame();
+                        var thisBlock = AddBlockAndProcessInputRunFrame();
 
                         Assert(inputVideo.CurrFrameId == thisBlock.InputFrameId, "RunVideo.Run: Bad FrameId 2");
 
                         // If we need it, draw the output for this new frame
                         if ((videoWriter != null) || (!suppressUiUpdate))
-                            DrawVideoFrames(thisBlock);
+                            DrawFrameImage(thisBlock);
 
                         // Save the output frame to disk. 
                         if ((videoWriter != null) && (ModifiedInputImage != null))
@@ -553,14 +609,23 @@ namespace SkyCombImage.RunSpace
                         if (StopProcessing_Part2())
                             break;
 
-                        // Move to the next frame(s)
-                        if (!Drone.GetNextFrame())
-                            break;
+                        if (RunConfig.InputIsVideo)
+                        {
+                            // Move to the next frame(s)
+                            if (!Drone.GetNextFrame())
+                                break;
+                        }
+                        else
+                        {
+                            if (PSM.CurrRunStepId >= PSM.LastInputFrameId)
+                                break;
+                            PSM.CurrRunStepId++;
+                        }
                     }
 
                     // End the last leg (if any)
                     if (PSM.CurrRunLegId > 0)
-                        ProcessFlightLegChange(this, PSM.CurrRunLegId, UnknownValue, parameters);
+                        ProcessFlightLegChange(this, PSM.CurrRunLegId, UnknownValue);
 
                     ProcessAll.EndInterval();
                     numSigObjs += ProcessAll.ProcessObjects.NumSignificantObjects;
@@ -576,8 +641,8 @@ namespace SkyCombImage.RunSpace
                 SafeRunEnd();
 
                 DrawUI();
-                ResetModifiedImages();
-                ResetCurrImages();
+                ResetModifiedImage();
+                ResetCurrImage();
                 RunUI.DrawObjectGrid(this, true);
                 RefreshAll();
 
@@ -588,7 +653,7 @@ namespace SkyCombImage.RunSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("RunSpace.RunVideo.Run", ex);
+                throw ThrowException("RunWorker.Run", ex);
             }
 
             return numSigObjs;
@@ -637,27 +702,27 @@ namespace SkyCombImage.RunSpace
         }
 
 
-        ~RunVideo()
+        ~RunWorker()
         {
             Dispose(false);
         }
     }
 
 
-    // Video class that uses the ImageStandard techniques. No persistance of info between frames
-    internal class RunVideoStandard : RunVideo
+    // Class that uses the ImageStandard techniques. No persistance of info between frames
+    internal class RunWorkerStandard : RunWorker
     {
-        public RunVideoStandard(RunUserInterface runUI, RunConfig config, DroneDataStore dataStore, Drone drone)
+        public RunWorkerStandard(RunUserInterface runUI, RunConfig config, DroneDataStore dataStore, Drone drone)
             : base(runUI, config, dataStore, drone, ProcessFactory.NewProcessModel(config.ProcessConfig, drone, runUI))
         {
         }
 
 
-        public override void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId, SkyCombImageLibrary.ProcessLogic.ProcessObjectParameters parameters) { }
+        public override void ProcessFlightLegChange(ProcessScope scope, int prevLegId, int currLegId) { }
 
 
         // Process/analyse a single frame at a time.
-        public override ProcessBlock AddBlockAndProcessInputVideoFrame()
+        public override ProcessBlock AddBlockAndProcessInputRunFrame()
         {
             try
             {
@@ -673,12 +738,12 @@ namespace SkyCombImage.RunSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("RunSpace.RunVideoStandard.AddBlockAndProcessInputVideoFrame", ex);
+                throw ThrowException("RunWorkerStandard.AddBlockAndProcessInputRunFrame", ex);
             }
         }
 
 
-        // Do any final activity at the end processing of video
+        // Do any final activity at the end processing of images
         public override void RunEnd()
         {
             StandardSave dataWriter = new(Drone, DataStore);
@@ -698,10 +763,10 @@ namespace SkyCombImage.RunSpace
     };
 
 
-    // Class to implement processing of a video, with information persisted from frame to frame in member data.
-    public abstract class RunVideoPersist : RunVideo
+    // Class to implement processing of a images, with information persisted from frame to frame in member data.
+    public abstract class RunWorkerPersist : RunWorker
     {
-        public RunVideoPersist(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone, ProcessAll processAll)
+        public RunWorkerPersist(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone, ProcessAll processAll)
             : base(parent, config, dataStore, drone, processAll)
         {
         }

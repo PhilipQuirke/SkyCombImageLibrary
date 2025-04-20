@@ -14,8 +14,8 @@ using System.Drawing;
 
 namespace SkyCombImage.DrawSpace
 {
-    // Code to draw images on video frames based on hot spot data
-    public class DrawVideoFrames : Draw
+    // Code to draw object etc images on a frame image based on hot spot data
+    public class DrawFrameImage : Draw
     {
         // Draw the hot pixels
         public static void HotPixels(
@@ -92,7 +92,7 @@ namespace SkyCombImage.DrawSpace
                     BoundingRectangle(config, ref image, scaledRect, theColor, thickness, config.AreaPadding * config.BoxExtraScale);
 
                     // Helps identify points visually on image to facilitate mapping to xls data.
-                    // Combined with a very small Video time span to process, can be very useful.
+                    // Combined with a very small video time span to process, can be very useful.
                     if (feature.Significant || isFocusObject ||
                         (focusObjectId == -1)) // Draw object # for all objects if focusObjectId is -1
                     {
@@ -128,11 +128,14 @@ namespace SkyCombImage.DrawSpace
                 if (block.FlightLegId > 0)
                 {
                     var video = process.Drone.InputVideo;
-                    int theY = video.ImageHeight * 98 / 100; // pixels
-                    int theX = video.ImageWidth * 92 / 100; // pixels
-                    var fontScale = video.FontScale;
-                    Text(ref outputImg, "Leg " + block.FlightLegName,
-                            new Point(theX, theY), fontScale / 2.0f, DroneColors.LegNameBgr, fontScale);
+                    if (video != null)
+                    {
+                        int theY = video.ImageHeight * 98 / 100; // pixels
+                        int theX = video.ImageWidth * 92 / 100; // pixels
+                        var fontScale = video.FontScale;
+                        Text(ref outputImg, "Leg " + block.FlightLegName,
+                                new Point(theX, theY), fontScale / 2.0f, DroneColors.LegNameBgr, fontScale);
+                    }
                 }
 
                 for (int featureId = block.MinFeatureId; featureId <= block.MaxFeatureId; featureId++)
@@ -155,7 +158,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("DrawVideoFrames.DrawRunProcess", ex);
+                throw ThrowException("DrawFrameImage.DrawRunProcess", ex);
             }
         }
 
@@ -189,7 +192,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("DrawVideoFrames.Draw", ex);
+                throw ThrowException("DrawFrameImage.Draw", ex);
             }
         }
 
@@ -271,7 +274,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("ProcessDrawAltitudeByLinealM.GraphObjects", ex);
+                throw ThrowException("ProcessDrawElevations.GraphObjects", ex);
             }
         }
 

@@ -13,10 +13,9 @@ namespace SkyCombImage.ProcessLogic
     {
         // Parent process model
         protected ProcessAll ProcessAll { get; }
-        public ProcessConfigModel? ProcessConfig { get { return ProcessAll == null ? null : ProcessAll.ProcessConfig; } }
 
 
-        // A feature is associated 1-1 with a Block  ??NQ to PQ: many-to-1
+        // A feature is associated 1-1 with a Block 
         public ProcessBlock Block { get; set; }
 
         // Location of hot pixels in this feature.
@@ -149,7 +148,6 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-
         // Calculate object location and height considering land contour undulations.
         // "Walk" sight-line from drone to object in 3D space. Stop when line intersects DEM.
         // This code depends on ProcessAll.VideoData.HFOVDeg, FlightStep.FixAltM, FixYawDeg and FixPitchDeg (via FixedCameraToVerticalForwardDeg).
@@ -178,8 +176,8 @@ namespace SkyCombImage.ProcessLogic
                 DroneState droneState = new();
                 droneState.LocationNE = Block.DroneLocnM;
                 droneState.Altitude = flightStep.FixedAltitudeM; // Relies on FixAltM
-                droneState.Yaw = flightStep.FixedYawDeg;  // Relies on FixYawDeg
-                droneState.CameraDownAngle = 90 - flightStep.FixedCameraToVerticalForwardDeg; // Relies on FixPitchDeg
+                droneState.Yaw = flightStep.YawDeg; 
+                droneState.CameraDownAngle = 90 - flightStep.CameraToVerticalForwardDeg;
  
                 // LOS algorithm works very inaccurately if the camera is pointing near the horizon.
                 phase = 4;
@@ -203,12 +201,14 @@ namespace SkyCombImage.ProcessLogic
 
                 phase = 5;
                 // Assumes that Zoom is constant at 1
-                DroneTargetCalculatorV2 droneTargetCalculator = new(droneState, cameraParams);
+                DroneTargetCalculator droneTargetCalculator = new(droneState, cameraParams);
 #if DEBUG
+/* PQR TODO
                 if( flightStep.FixAltM == 0)
-                    droneTargetCalculator.UnitTest(Block, terrainGrid);
+                    droneTargetCalculator.UnitTest_Centroid(Block, terrainGrid);
+*/
 #endif
-                LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition, true, terrainGrid);
+                LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition, false, terrainGrid);
                 if (result != null)
                 {
                     phase = 6;
@@ -402,37 +402,6 @@ namespace SkyCombImage.ProcessLogic
                     minHeight, maxHeight);
 
             return (BaseConstants.UnknownValue, BaseConstants.UnknownValue, BaseConstants.UnknownValue, BaseConstants.UnknownValue);
-        }
-
-
-        // Return the average altitude of the drone over the object features.
-        public float AverageFlightStepFixedAltitudeM()
-        {
-            float answer = 0;
-            int count = 0;
-
-            foreach (var feature in this)
-            {
-                if (feature.Value.Type == FeatureTypeEnum.Real)
-                {
-                    var step = feature.Value.Block.FlightStep;
-                    if (step != null)
-                    {
-                        var atlM = feature.Value.Block.FlightStep.FixedAltitudeM;
-                        if (atlM != BaseConstants.UnknownValue)
-                        {
-                            answer += atlM;
-                            count++;
-                        }
-                    }
-                }
-            }
-            if (count > 0)
-                answer /= count;
-            else
-                answer = BaseConstants.UnknownValue;
-
-            return answer;
         }
 
 

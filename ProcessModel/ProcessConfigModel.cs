@@ -204,23 +204,40 @@ namespace SkyCombImage.ProcessModel
         }
 
         // Hardcode the drone camera intrinsic matrix for Lennard Sparks drone camera
-                public static CameraIntrinsic intrinsic = new CameraIntrinsic(9.1, 640, 512, 7.68, 6.144);
-        //        public static CameraIntrinsic intrinsic = new CameraIntrinsic(9.1, 1280, 1024, 7.68, 6.144);
-        //public static CameraIntrinsic intrinsic = new CameraIntrinsic(40, 1280, 1024, 640, 512);
-        public static Mat K = intrinsic.K;
+        // public static CameraIntrinsic intrinsic = new CameraIntrinsic( );
+        public static CameraIntrinsic CameraIntrinsic = new CameraIntrinsic(
+            CameraIntrinsic.DefaultFocalLength,
+            CameraIntrinsic.DefaultImageWidth * 2,
+            CameraIntrinsic.DefaultImageHeight * 2);
     }
+
+
     public class CameraIntrinsic
     {
-        public Mat K = new Mat(3, 3, MatType.CV_64F);
-        public Mat KInv = new Mat(3, 3, MatType.CV_64F);
+        public const double DefaultFocalLength = 9.1; // mm
+        public const double DefaultImageWidth = 640; // px
+        public const double DefaultImageHeight = 512; // px
+        public const double DefaultSensorWidth = 7.68; // mm
+        public const double DefaultSensorHeight = 6.144; // mm
+
+
+        public double ImageWidth;
+        public double ImageHeight;
         public double Cx;
         public double Cy;
         public double Fx;
         public double Fy;
-        public double ImageWidth;
-        public double ImageHeight;
+        public Mat K = new Mat(3, 3, MatType.CV_64F);
+        public Mat KInv = new Mat(3, 3, MatType.CV_64F);
 
-        public CameraIntrinsic(double focalLength, double imageWidth, double imageHeight, double sensorWidth, double sensorHeight)
+
+        // Drone camera intrinsic matrix constructor.
+        public CameraIntrinsic(
+            double focalLength = DefaultFocalLength, 
+            double imageWidth = DefaultImageWidth, 
+            double imageHeight = DefaultImageHeight, 
+            double sensorWidth = DefaultSensorWidth, 
+            double sensorHeight = DefaultSensorHeight)
         {
             ImageWidth = imageWidth;
             ImageHeight = imageHeight;
@@ -240,5 +257,37 @@ namespace SkyCombImage.ProcessModel
             KInv = K.Inv();
         }
 
+
+        // Create a drone camera intrinsic matrix.
+        public static Accord.Math.Matrix3x3 Intrinsic(double focalLength, double imageWidth, double imageHeight, double sensorWidth, double sensorHeight)
+        {
+            var Cx = imageWidth / 2;
+            var Cy = imageHeight / 2;
+            var Fx = focalLength * imageWidth / sensorWidth; // F * pixels per mm = focal length in mm x image width px / sensor width mm
+            var Fy = focalLength * imageHeight / sensorHeight;
+            Accord.Math.Matrix3x3 K = new();
+            K.V00 = (float)Fx;
+            K.V01 = 0;
+            K.V02 = (float)Cx;
+            K.V10 = 0;
+            K.V11 = (float)Fy;
+            K.V12 = (float)Cy;
+            K.V20 = 0;
+            K.V21 = 0;
+            K.V22 = 1;
+            return K;
+        }
+
+
+        public static Accord.Math.Matrix3x3 Default3x3() 
+        { 
+            return Intrinsic(DefaultFocalLength, DefaultImageWidth, DefaultImageHeight, DefaultSensorWidth, DefaultSensorHeight); 
+        }
+
+
+        public static Accord.Math.Matrix3x3 Test3x3( double f = 1, int iw = 0, int ih = 0, double sw = 1, double sh = 1 ) 
+        { 
+            return Intrinsic(DefaultFocalLength * f, DefaultImageWidth + iw, DefaultImageHeight + ih, DefaultSensorWidth * sw, DefaultSensorHeight * sh);
+        }
     }
 }

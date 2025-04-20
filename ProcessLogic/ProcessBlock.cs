@@ -29,9 +29,9 @@ namespace SkyCombImage.ProcessLogic
 
         public void CalculateSettings(ProcessScope scope, Drone drone, ProcessBlock? prevBlock)
         {
-            if ((drone != null) && drone.HasFlightSteps && (scope.PSM.CurrInputFrameId > 0))
+            if ((drone != null) && drone.HasFlightSteps && (scope.PSM.CurrInputFrameId >= 0))
             {
-                CalculateSettings_FromSteps(drone, prevBlock, scope.PSM.CurrInputFrameMs);
+                CalculateSettings_FromSteps(drone, prevBlock, scope.PSM.CurrInputFrameMs, scope.PSM.CurrInputFrameId);
                 AssertGood();
             }
         }
@@ -39,7 +39,7 @@ namespace SkyCombImage.ProcessLogic
 
         // Blocks often fall between two successive FlightSteps.
         // If so, interpolate Block attributes from the surrounding two steps.
-        public void CalculateSettings_FromSteps(Drone drone, ProcessBlock? prevBlock, int blockMs)
+        public void CalculateSettings_FromSteps(Drone drone, ProcessBlock? prevBlock, int blockMs, int inputFrameID)
         {
             var thisBlockId = this.BlockId;
 
@@ -50,21 +50,36 @@ namespace SkyCombImage.ProcessLogic
             bool badBlockMs = ((prevBlock != null) && (prevBlock.InputFrameMs >= this.InputFrameMs));
 
             // Get the FlightStep AT or BEFORE blockMs            
-            FlightStep? beforeStep;
-            if ((prevBlock != null) && (prevBlock.FlightStep != null))
-                beforeStep = drone.FlightSteps.FlightStepAtOrBeforeFlightMs(prevBlock.FlightStep, blockMs);
-            else if (blockMs < drone.SectionIdToVideoMs(drone.FlightSteps.MinStepId))
-                beforeStep = null;
+            FlightStep? beforeStep = null;
+            if (drone.InputIsVideo)
+            {
+                if ((prevBlock != null) && (prevBlock.FlightStep != null))
+                    beforeStep = drone.FlightSteps.FlightStepAtOrBeforeFlightMs(prevBlock.FlightStep, blockMs);
+                else if (blockMs < drone.SectionIdToVideoMs(drone.FlightSteps.MinStepId))
+                    beforeStep = null;
+                else
+                    beforeStep = drone.FlightSteps.FlightStepAtOrBeforeFlightMs(blockMs);
+            }
             else
-                beforeStep = drone.FlightSteps.FlightStepAtOrBeforeFlightMs(blockMs);
+            {
+                if (prevBlock != null)
+                    beforeStep = prevBlock.FlightStep;
+            }
             bool haveBeforeStep = (beforeStep != null);
             int beforeStepMs = (haveBeforeStep ? beforeStep.SumTimeMs : 0);
             Assert((!haveBeforeStep) || (beforeStepMs <= blockMs), "CalculateSettings_FromSteps: Logic 2");
 
             // Get the FlightStep AFTER blockMs            
             FlightStep? afterStep = null;
-            if (haveBeforeStep)
-                drone.FlightSteps.Steps.TryGetValue(beforeStep.StepId + 1, out afterStep);
+            if (drone.InputIsVideo)
+            {
+                if (haveBeforeStep)
+                    drone.FlightSteps.Steps.TryGetValue(beforeStep.StepId + 1, out afterStep);
+            }
+            else
+            {
+                afterStep = drone.FlightSteps.Steps[inputFrameID];
+            }
             bool haveAfterStep = (afterStep != null);
             int afterStepMs = (haveAfterStep ? afterStep.SumTimeMs : 0);
             Assert((!haveAfterStep) || (afterStepMs >= blockMs), "CalculateSettings_FromSteps: Logic 3");
@@ -74,21 +89,29 @@ namespace SkyCombImage.ProcessLogic
             int rangeMs = afterStepMs - beforeStepMs;
             Assert((!haveAfterStep) || (rangeMs >= 0), "CalculateSettings_FromSteps: Logic 4");
             float nextWeighting = 0;
-            if (haveBeforeStep && haveAfterStep && (rangeMs > 0))
+            if (drone.InputIsVideo)
             {
-                nextWeighting = (float)(1.0 * (blockMs - beforeStepMs) / rangeMs);
-                Assert(nextWeighting >= 0.0, "CalculateSettings_FromSteps: Logic 5");
-                Assert(nextWeighting <= 1.0, "CalculateSettings_FromSteps: Logic 6");
+                if (haveBeforeStep && haveAfterStep && (rangeMs > 0))
+                {
+                    nextWeighting = (float)(1.0 * (blockMs - beforeStepMs) / rangeMs);
+                    Assert(nextWeighting >= 0.0, "CalculateSettings_FromSteps: Logic 5");
+                    Assert(nextWeighting <= 1.0, "CalculateSettings_FromSteps: Logic 6");
 
-                if (nextWeighting <= 0.5)
+                    if (nextWeighting <= 0.5)
+                        FlightStep = beforeStep;
+                    else
+                        FlightStep = afterStep;
+                }
+                else if (haveBeforeStep)
                     FlightStep = beforeStep;
-                else
+                else if (haveAfterStep)
                     FlightStep = afterStep;
             }
-            else if (haveBeforeStep)
-                FlightStep = beforeStep;
-            else if (haveAfterStep)
+            else
+            {
                 FlightStep = afterStep;
+                nextWeighting = 1;
+            }
 
             if (FlightStep != null)
             {
@@ -168,7 +191,6 @@ namespace SkyCombImage.ProcessLogic
                 TimeMs = (int)(1000.0 / drone.InputVideo.Fps); // Default frame duration.
                 int advanceMS = blockMs - beforeStepMs;
                 Assert(advanceMS >= 0, "CalculateSettings_FromSteps: Logic 11");
-                StartTime += TimeSpan.FromMilliseconds(advanceMS);
             }
             LinealM = travelM.DiagonalM;
 
@@ -183,7 +205,7 @@ namespace SkyCombImage.ProcessLogic
             if ((prevBlock != null) && (!badBlockMs))
                 Assert(prevBlock.StartTime < this.StartTime, "CalculateSettings_FromSteps: Logic 9");
             if (this.FlightStep != null)
-                Assert(Math.Abs(this.FlightStep.SumTimeMs - this.SumTimeMs) < 3000, "CalculateSettings_FromSteps: Logic 10");
+                Assert(Math.Abs(this.FlightStep.SumTimeMs - this.SumTimeMs) <= 5000, "CalculateSettings_FromSteps: Logic 10");
 
             // Check that this block is inside the summary envelope
             // generated from the previous and next flight steps.

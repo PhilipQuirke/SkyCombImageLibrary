@@ -48,8 +48,8 @@ namespace SkyCombImage.ProcessModel
                 HeightM = theObj.HeightM;
                 HeightErrM = theObj.HeightErrM;
 
-                SpineM = theObj.MaxSpinePixels / 10; // PQR TODO Convert to M
-                GirthM = theObj.MaxGirthPixels / 10; // PQR TODO Convert to M
+                SpineM = 1.0f * theObj.SpineCM / 100.0f;
+                GirthM = 1.0f * theObj.GirthCM / 100.0f;
 
                 CameraDownDegs = 0;
                 var flightStep = theObj?.LastRealFeature?.Block?.FlightStep;
@@ -62,6 +62,7 @@ namespace SkyCombImage.ProcessModel
                 BestFixAltM = 0;
                 BestFixYawDeg = 0;
                 BestFixPitchDeg = 0;
+/* PQR TODO
                 if (processSpans != null)
                 {
                     var block = theObj?.LastRealFeature?.Block;
@@ -77,7 +78,7 @@ namespace SkyCombImage.ProcessModel
                         }
                     }
                 }
-
+PQR */
                 // Convert -999 to -2
                 if (LocationErrM == BaseConstants.UnknownValue) LocationErrM = -2;
                 if (HeightM == BaseConstants.UnknownValue) HeightM = -2;
@@ -123,8 +124,8 @@ namespace SkyCombImage.ProcessModel
                 { "Height Class", HeightClass },
                 { "Height M", HeightM, 1 },
                 { "Height Err M", HeightErrM, 1 },
-                { "Spine M", SpineM, 1 },
-                { "Girth M", GirthM, 1 },
+                { "Spine M", SpineM, 2 },
+                { "Girth M", GirthM, 2 },
                 { "Camera Down Degs", CameraDownDegs },
                 { "Avg Range M", AvgRangeM, 0 },
                 { "Fix HFOV Degs", BestHFOVDegs, 1 },

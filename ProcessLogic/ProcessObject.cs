@@ -6,7 +6,6 @@ using SkyCombImage.CategorySpace;
 using SkyCombImage.ProcessModel;
 using SkyCombImage.RunSpace;
 using System.Drawing;
-using System.Reflection.Metadata.Ecma335;
 
 
 namespace SkyCombImage.ProcessLogic
@@ -251,22 +250,22 @@ namespace SkyCombImage.ProcessLogic
                 {
                     // Yes, this is worth tracking.
                 }
-                else if (ProcessConfigModel.ObjectMaxUnrealBlocks > 0)
-                {
+                else
                     // Are we still on the persistance window?
                     BeingTracked = (LastFeature.Block.BlockId - LastRealFeature.Block.BlockId < ProcessConfigModel.ObjectMaxUnrealBlocks);
-                }
-                else
-                    BeingTracked = false;
             }
 
             return BeingTracked;
         }
 
 
-        // How long has this object been seen for in Config.ObjectMinDurationMs units?
+        // How many units of Config.ObjectMinDurationMs has this object been seen for?
+        // If input is images we always return 1
         public double SeenForMinDurations()
         {
+            if (ProcessAll.Drone.InputIsImages)
+                return 1;
+
             var minDuration = ProcessConfigModel.ObjectMinDurationMs; // Say 500ms
             var timeSeenMs = (1000.0F * NumRealFeatures()) / ProcessAll.VideoData.Fps;
             return (timeSeenMs / minDuration);
@@ -280,6 +279,12 @@ namespace SkyCombImage.ProcessLogic
             var minToMs = Math.Min(RunToVideoS * 1000, scope.PSM.LastVideoFrameMs);
 
             var overlapMs = minToMs - maxFromMs;
+
+            if (ProcessAll.Drone.InputIsImages)
+                // When InputIsImages, object duration is zero.
+                if (overlapMs == 0)
+                    return true;
+
             if (overlapMs <= 0)
                 return false;
 
@@ -426,6 +431,8 @@ namespace SkyCombImage.ProcessLogic
                 var elevationOK = (HeightM >= 0);
                 var elevationGood = (HeightM > 2);
                 var elevationGreat = (HeightM > 4);
+                if (ProcessAll.Drone.InputIsImages)
+                    elevationGood = true;
 
                 // Key calculation of Comb algorithm for identifying significant objects
                 Significant =
@@ -561,9 +568,9 @@ namespace SkyCombImage.ProcessLogic
             BoundingBoxAnalyzer analyzer = new(area.X, area.Y, area.X + area.Width, area.Y + area.Height);
             double thisSpinePixels = analyzer.CalcSpineLength();
             double thisGirthPixels = lastFeature.Pixels != null ? analyzer.CalcGirthLength(lastFeature.Pixels) : thisSpinePixels / 4.0f;
-            Assert(thisSpinePixels >= 0, "Calculate_SizeCM2: maxSpineM <= 0");
-            Assert(thisGirthPixels >= 0, "Calculate_SizeCM2: maxGirthM <= 0");
-            Assert(thisSpinePixels + 1 >= thisGirthPixels, "Calculate_SizeCM2: maxSpineM < maxGirthM");
+            Assert(thisSpinePixels >= 0, "Calculate_SizeCM2: spinePixels <= 0");
+            Assert(thisGirthPixels >= 0, "Calculate_SizeCM2: girthPixels <= 0");
+            Assert(thisSpinePixels + 1 >= thisGirthPixels, "Calculate_SizeCM2: spinePixels < girthPixels");
 
             MaxSpinePixels = Math.Max(MaxSpinePixels, (float)thisSpinePixels);
             MaxGirthPixels = Math.Max(MaxGirthPixels, (float)thisGirthPixels);
@@ -573,16 +580,18 @@ namespace SkyCombImage.ProcessLogic
 
             // Grab the drone input image area
             float imageAreaM2 = lastFeature.Block.FlightStep.InputImageSizeM.AreaM2();
-
             // Calculate the number of pixels in the video image
             float framePixels = ProcessAll.VideoData.ImageWidth * ProcessAll.VideoData.ImageHeight;
 
             // Calculate the size of the object in this frame in square centimeters
             float thisSizeM2 = imageAreaM2 * hotPixels / framePixels;
-
             var thisSizeCM2 = (int)(thisSizeM2 * 100 * 100);
 
             SizeCM2 = Math.Max(SizeCM2, thisSizeCM2);
+
+            float cmPerPixel = MathF.Sqrt(imageAreaM2 * 10000 / framePixels);
+            SpineCM = Math.Max(1, (int)(thisSpinePixels * cmPerPixel));
+            GirthCM = Math.Max(1, (int)(thisGirthPixels * cmPerPixel));
         }
 
 

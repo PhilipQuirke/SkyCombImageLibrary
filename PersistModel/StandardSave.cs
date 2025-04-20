@@ -20,11 +20,11 @@ namespace SkyCombImage.PersistModel
 
 
         // Create an output video file writer (if user wants MP4 output)
-        public static (VideoWriter?, string) CreateVideoWriter(
+        public static VideoWriter? CreateVideoWriter(
             RunConfig Config, string inputFileName, double Fps, Size frameSize)
         {
             if (!Config.ProcessConfig.SaveAnnotatedVideo || Fps <= 0.1 || frameSize.Width == 0 || frameSize.Height == 0)
-                return (null, "");
+                return null;
 
             return VideoData.CreateVideoWriter(inputFileName, Config.OutputElseInputDirectory, Fps, frameSize);
         }
@@ -87,7 +87,7 @@ namespace SkyCombImage.PersistModel
 
 
         // Save the Run & Model data to the dataStore
-        public void ProcessAll(RunVideoPersist runVideo, bool fullSave)
+        public void ProcessAll(RunWorkerPersist runVideo, bool fullSave)
         {
             try
             {
@@ -132,7 +132,7 @@ namespace SkyCombImage.PersistModel
                     Data.SelectWorksheet(AnimalReportTabName);
 
                     Data.HideWorksheet(BlockDataTabName);
-                    // PQR Data.HideWorksheet(SpanDataTabName);
+                    Data.HideWorksheet(SpanDataTabName);
                 }
 
                 Save();
