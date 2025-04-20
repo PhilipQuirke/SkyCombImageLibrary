@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2024. All rights reserved.
+﻿// Copyright SkyComb Limited 2025. All rights reserved.
 using Emgu.CV;
 using Emgu.CV.Structure;
 using System.Drawing;
@@ -25,6 +25,11 @@ namespace SkyCombImage.RunSpace
         public abstract void ShowRunSummary(string summary);
 
         public virtual bool UnitTestRunning() { return false; }
+
+
+        public TextBox? OutputTextBox() { return null; }
+        public bool RunTriangulate() { return true; }
+
 
 
         public abstract RunConfig? RunConfig();

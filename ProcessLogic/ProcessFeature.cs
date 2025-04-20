@@ -40,7 +40,6 @@ namespace SkyCombImage.ProcessLogic
             Block = ProcessAll.Blocks[BlockId];
         }
 
-
         // Is this feature larger than the largest allowed?
         public bool FeatureOverSized
         {
@@ -52,6 +51,7 @@ namespace SkyCombImage.ProcessLogic
             }
         }
 
+        public ProcessFeature Feature { get; }
 
         protected void CalcNumHotPixels()
         {

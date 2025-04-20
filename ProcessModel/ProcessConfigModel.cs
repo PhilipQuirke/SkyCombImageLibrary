@@ -243,7 +243,7 @@ namespace SkyCombImage.ProcessModel
             ImageHeight = imageHeight;
             Cx = imageWidth / 2; 
             Cy = imageHeight / 2;
-            Fx = focalLength * imageWidth / sensorWidth; // F * pixels per mm = focal length in mm x image width px / sensor width mm
+            Fx = -focalLength * imageWidth / sensorWidth; // F * pixels per mm = focal length in mm x image width px / sensor width mm
             Fy = focalLength * imageHeight / sensorHeight;
             K.At<double>(0, 0) = Fx;
             K.At<double>(0, 1) = 0;
