@@ -27,8 +27,8 @@ namespace SkyCombImage.RunSpace
         public virtual bool UnitTestRunning() { return false; }
 
 
-        public TextBox? OutputTextBox() { return null; }
-        public bool RunTriangulate() { return true; }
+        public virtual TextBox? OutputTextBox() { return null; }
+        public virtual bool RunTriangulate() { return true; }
 
 
 

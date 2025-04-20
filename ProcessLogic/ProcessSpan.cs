@@ -212,11 +212,6 @@ namespace SkyCombImage.ProcessLogic
                 }
                 theObjs.CalculateSettings();
             }
-            else
-            {
-                // Test if DroneTargetCalculator.DroneK contains bad data.
-                // DroneTargetCalculator.UnitTest_ScanHyperParams(theHFOVDeg, this, legSteps, theObjs);
-            }
 
             SummariseSteps(legSteps);
         }

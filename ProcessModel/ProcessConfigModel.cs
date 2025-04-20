@@ -191,21 +191,9 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        public static string AllSomeOrNone(string value)
-        {
-            string answer = CleanString(value);
-
-            return answer switch
-            {
-                "all" or "significant" or "none" => answer,
-                "" => "none",
-                _ => throw ThrowException("ModelConfig.AllSomeOrNone: Bad value: " + answer),
-            };
-        }
-
-        // Hardcode the drone camera intrinsic matrix for Lennard Sparks drone camera
-        // public static CameraIntrinsic intrinsic = new CameraIntrinsic( );
+        // Used by SpanOptimize
         public static CameraIntrinsic CameraIntrinsic = new CameraIntrinsic(
+            -1, // Negate the focal length 
             CameraIntrinsic.DefaultFocalLength,
             CameraIntrinsic.DefaultImageWidth * 2,
             CameraIntrinsic.DefaultImageHeight * 2);
@@ -231,8 +219,9 @@ namespace SkyCombImage.ProcessModel
         public Mat KInv = new Mat(3, 3, MatType.CV_64F);
 
 
-        // Drone camera intrinsic matrix constructor.
+        // Drone camera intrinsic matrix constructor. Used by SpanOptimize
         public CameraIntrinsic(
+            float focal_sign, // +1 or -1
             double focalLength = DefaultFocalLength, 
             double imageWidth = DefaultImageWidth, 
             double imageHeight = DefaultImageHeight, 
@@ -243,7 +232,7 @@ namespace SkyCombImage.ProcessModel
             ImageHeight = imageHeight;
             Cx = imageWidth / 2; 
             Cy = imageHeight / 2;
-            Fx = -focalLength * imageWidth / sensorWidth; // F * pixels per mm = focal length in mm x image width px / sensor width mm
+            Fx = focal_sign * focalLength * imageWidth / sensorWidth; // F * pixels per mm = focal length in mm x image width px / sensor width mm
             Fy = focalLength * imageHeight / sensorHeight;
             K.At<double>(0, 0) = Fx;
             K.At<double>(0, 1) = 0;
@@ -258,7 +247,7 @@ namespace SkyCombImage.ProcessModel
         }
 
 
-        // Create a drone camera intrinsic matrix.
+        // Create a drone camera intrinsic matrix. Used by DroneTargetCalculator
         public static Accord.Math.Matrix3x3 Intrinsic(double focalLength, double imageWidth, double imageHeight, double sensorWidth, double sensorHeight)
         {
             var Cx = imageWidth / 2;
@@ -278,13 +267,13 @@ namespace SkyCombImage.ProcessModel
             return K;
         }
 
-
+        // Used by DroneTargetCalculator
         public static Accord.Math.Matrix3x3 Default3x3() 
         { 
             return Intrinsic(DefaultFocalLength, DefaultImageWidth, DefaultImageHeight, DefaultSensorWidth, DefaultSensorHeight); 
         }
 
-
+        // Used by DroneTargetCalculator
         public static Accord.Math.Matrix3x3 Test3x3( double f = 1, int iw = 0, int ih = 0, double sw = 1, double sh = 1 ) 
         { 
             return Intrinsic(DefaultFocalLength * f, DefaultImageWidth + iw, DefaultImageHeight + ih, DefaultSensorWidth * sw, DefaultSensorHeight * sh);
