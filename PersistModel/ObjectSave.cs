@@ -1,10 +1,9 @@
-﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 
 using OfficeOpenXml;
 using OfficeOpenXml.Drawing.Chart;
 using OfficeOpenXml.Table.PivotTable;
 using SkyCombDrone.CommonSpace;
-using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
 using SkyCombImage.CategorySpace;
 using SkyCombImage.DrawSpace;
@@ -98,7 +97,7 @@ namespace SkyCombImage.PersistModel
             if (lastRow > 0)
             {
                 var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
-                Data.SetChart(chart, ChartTitle, 1, 0, LargeChartRows);
+                Data.SetChart(chart, ChartTitle, 1.1f, 0, LargeChartRows);
                 Data.SetAxises(chart, "Easting", "Northing", "0", "0");
 
                 Data.AddScatterSerie(chart, AnimalImageDataTabName, "Feature", ProcessFeatureModel.NorthingMSetting, ProcessFeatureModel.EastingMSetting, DroneColors.RealFeatureColor);
