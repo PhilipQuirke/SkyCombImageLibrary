@@ -23,7 +23,16 @@ namespace SkyCombImage.ProcessLogic
             SrtFiles = new();
             GpxFiles = new();
             JpgFiles = new();
-            ImageFolders = new();   
+            ImageFolders = new();
+        }
+
+
+        public List<string> InputNames(bool inputIsVideo)
+        {
+            if (inputIsVideo)
+                return SrtFiles;
+            else
+                return ImageFolders;
         }
 
 
