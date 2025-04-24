@@ -76,15 +76,11 @@ namespace SkyCombImage.ProcessLogic
         public int ImageHeight { get; set; } // Pixels
     }
 
+    // Position of an (animal) hotspot in the image
     public class ImagePosition
     {
-        // V2 approach
         public double PixelX { get; set; } // Image X position in pixels
         public double PixelY { get; set; } // Image Y position in pixels
-
-        // V1 approach
-        public double HorizontalFraction { get; set; } // -1 to +1, left to right
-        public double VerticalFraction { get; set; } // -1 to +1, bottom to top
     }
 
     public class LocationResult
@@ -96,7 +92,7 @@ namespace SkyCombImage.ProcessLogic
 
     public class DroneTargetCalculator
     {
-        public static Accord.Math.Matrix3x3 DroneK = CameraIntrinsic.Default3x3();
+        public static Accord.Math.Matrix3x3 CameraK = CameraIntrinsic.Default3x3();
 
         private readonly DroneState DroneState;
         private readonly CameraParameters CameraParams;
@@ -111,7 +107,7 @@ namespace SkyCombImage.ProcessLogic
         // X-component(origin.X) → Easting(Meters) : This represents the drone's position in the east-west direction.
         // Y-component(origin.Y) → Altitude(Meters Above Sea Level) : This represents the drone's height above the terrain.
         // Z-component(origin.Z) → Northing(Meters) : This represents the drone's position in the north-south direction.
-        private Vector3 Origin()
+        private Vector3 DroneWorldPosition()
         {
             return new Vector3(DroneState.LocationNE.EastingM, DroneState.Altitude, DroneState.LocationNE.NorthingM);
         }
@@ -133,7 +129,7 @@ namespace SkyCombImage.ProcessLogic
         /// - `targetImage` (ImagePosition): The object's location in the image (normalized -1 to +1).
         /// - `camera` (CameraParameters): The camera's horizontal and vertical field of view (FOV).
         /// - `applyDistortionCorrection`: (bool) Recommend false 
-        ///         Tests on CC\2024-04-D videos on 4/5Apr25 show ~9% differeence between true and false, with false better.
+        ///         Tests on CC\2024-04-D videos on 4/5Apr25 show ~9% difference between true and false, with false better.
         ///         The difference in calculated location is very small (~10cm)
         /// - `terrain` (TerrainGrid): The terrain model, used to determine ground elevation.
         ///
@@ -175,8 +171,8 @@ namespace SkyCombImage.ProcessLogic
                 if (applyDistortionCorrection)
                 {
                     // Normalize pixel to camera coordinates using intrinsics.
-                    double normX = (pixelX - DroneK.V02) / DroneK.V00;  // (u - cx) / fx
-                    double normY = (pixelY - DroneK.V12) / DroneK.V11;  // (v - cy) / fy
+                    double normX = (pixelX - CameraK.V02) / CameraK.V00;  // (u - cx) / fx
+                    double normY = (pixelY - CameraK.V12) / CameraK.V11;  // (v - cy) / fy
 
                     // Apply radial distortion correction using calibrated coefficients (k1, k2, etc.).
                     double r2 = normX * normX + normY * normY;
@@ -185,12 +181,12 @@ namespace SkyCombImage.ProcessLogic
                     double undistX = normX * radialFactor;
                     double undistY = normY * radialFactor;
                     // Convert undistorted normalized coords back to pixel coordinates.
-                    px = undistX * DroneK.V00 + DroneK.V02;
-                    py = undistY * DroneK.V11 + DroneK.V12;
+                    px = undistX * CameraK.V00 + CameraK.V02;
+                    py = undistY * CameraK.V11 + CameraK.V12;
                 }
                 // Compute direction in camera coordinates (pinhole model) from pixel.
-                double x_cam = (px - DroneK.V02) / DroneK.V00;
-                double y_cam = -(py - DroneK.V12) / DroneK.V11;
+                double x_cam = (px - CameraK.V02) / CameraK.V00; // (px - cx) / fx
+                double y_cam = -(py - CameraK.V12) / CameraK.V11; // - (py - cy) / fy
                 double z_cam = 1.0;  // assume a point on the image plane at z=1
                 Vector3 camDir = new Vector3((float)x_cam, (float)y_cam, (float)z_cam);
                 return Vector3.Normalize(camDir);
@@ -241,7 +237,7 @@ namespace SkyCombImage.ProcessLogic
             /// </summary>
             Vector3? FindGroundIntersection(Vector3 worldDir)
             {
-                Vector3 origin = Origin();
+                Vector3 origin = DroneWorldPosition();
 
                 // Avoid divide-by-zero or infinite intersections for horizontal/upward rays.
                 if (Math.Abs(worldDir.Y) < 1e-6f)
@@ -277,7 +273,7 @@ namespace SkyCombImage.ProcessLogic
             if (Math.Abs(DroneState.CameraDownAngle - 90.0f) < 1e-3f)
             {
                 // If camera is pointing straight down (pitch ~ 90°), set target directly below drone.
-                Vector3 dronePos2 = Origin();
+                Vector3 dronePos2 = DroneWorldPosition();
                 float groundY = terrain?.GetElevation(dronePos2.X, dronePos2.Z) ?? 0.0f;
                 targetLocation = new Vector3(dronePos2.X, groundY, dronePos2.Z);
             }
@@ -291,7 +287,7 @@ namespace SkyCombImage.ProcessLogic
                 return null;
 
             Vector3 target = targetLocation.Value;
-            Vector3 dronePos = Origin();
+            Vector3 dronePos = DroneWorldPosition();
             // Horizontal distance (ignore altitude difference).
             float horizontalDist = new Vector3(target.X - dronePos.X, 0, target.Z - dronePos.Z).Length();
             if (horizontalDist > 1000.0f)
@@ -418,8 +414,6 @@ namespace SkyCombImage.ProcessLogic
             ImagePosition imagePosition = new();
             imagePosition.PixelX = CameraParams.ImageWidth / 2.0 - 1;
             imagePosition.PixelY = CameraParams.ImageHeight / 2.0 - 1;
-            imagePosition.HorizontalFraction = 0.05;
-            imagePosition.VerticalFraction = 0.05;
 
             // Set camera to straight down 
             var old_value = DroneState.CameraDownAngle;

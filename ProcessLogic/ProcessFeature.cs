@@ -196,8 +196,7 @@ namespace SkyCombImage.ProcessLogic
                 ImagePosition imagePosition = new();
                 imagePosition.PixelX = ((PixelBox.X + PixelBox.Width / 2.0) / reduction_factor);
                 imagePosition.PixelY = ((PixelBox.Y + PixelBox.Height / 2.0) / reduction_factor);
-                imagePosition.HorizontalFraction = (xFraction01 * 2 - 1); // Range -1 to +1
-                imagePosition.VerticalFraction = (yFraction01 * 2 - 1); // Range -1 to +1
+
 
                 phase = 5;
                 // Assumes that Zoom is constant at 1
