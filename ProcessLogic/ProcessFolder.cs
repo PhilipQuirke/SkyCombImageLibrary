@@ -87,6 +87,8 @@ namespace SkyCombImage.ProcessLogic
             string regexPattern = "^" + Regex.Escape(filenamefilter).Replace("\\*", ".*") + "$";
             // List files in the current folder
             string[] files = Directory.GetFiles(folderPath);
+
+            int num_files_found = 0;
             foreach (string file in files)
             {
                 string the_file = file.ToLower();
@@ -96,6 +98,10 @@ namespace SkyCombImage.ProcessLogic
                     continue;
                 string suffix = the_file.Substring(the_file.Length - 4, 4);
                 if (suffix == ".jpg" || suffix == ".jpeg")
+                    num_files_found++;
+
+                // Folder must have 2 or more images to be added to the list
+                if (num_files_found>=2)
                 {
                     ImageFolders.Add(folderPath);
                     break;
