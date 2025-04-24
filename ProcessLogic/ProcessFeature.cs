@@ -200,14 +200,14 @@ namespace SkyCombImage.ProcessLogic
 
                 phase = 5;
                 // Assumes that Zoom is constant at 1
-                DroneTargetCalculator droneTargetCalculator = new(droneState, cameraParams);
+                DroneTargetCalculator droneTargetCalculator = new(droneState, cameraParams, terrainGrid, false);
 #if DEBUG
 /* PQR TODO
                 if( flightStep.FixAltM == 0)
-                    droneTargetCalculator.UnitTest_Centroid(Block, terrainGrid);
+                    droneTargetCalculator.UnitTest_Centroid(Block);
 */
 #endif
-                LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition, false, terrainGrid);
+                LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition);
                 if (result != null)
                 {
                     phase = 6;

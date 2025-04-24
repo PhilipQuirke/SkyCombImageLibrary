@@ -1,5 +1,4 @@
 ﻿// Copyright SkyComb Limited 2025. All rights reserved.
-using SkyCombDrone.DroneLogic;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundModel;
 using SkyCombImage.ProcessModel;
@@ -94,22 +93,209 @@ namespace SkyCombImage.ProcessLogic
     {
         public static Accord.Math.Matrix3x3 CameraK = CameraIntrinsic.Default3x3();
 
-        private readonly DroneState DroneState;
-        private readonly CameraParameters CameraParams;
+        public readonly DroneState DroneState;
+        public readonly CameraParameters CameraParams;
+        public readonly TerrainGrid Terrain;
+        public readonly bool ApplyDistortionCorrection;
 
-        public DroneTargetCalculator(DroneState droneState, CameraParameters cameraParams)
+
+        public DroneTargetCalculator(DroneState droneState, CameraParameters cameraParams, TerrainGrid terrain, bool applyDistortionCorrection)
         {
             DroneState = droneState;
             CameraParams = cameraParams;
+            Terrain = terrain;
+            ApplyDistortionCorrection = applyDistortionCorrection;
         }
+
 
         // The vector origin represents the drone's world position in a coordinate system where:
         // X-component(origin.X) → Easting(Meters) : This represents the drone's position in the east-west direction.
         // Y-component(origin.Y) → Altitude(Meters Above Sea Level) : This represents the drone's height above the terrain.
         // Z-component(origin.Z) → Northing(Meters) : This represents the drone's position in the north-south direction.
-        private Vector3 DroneWorldPosition()
+        public Vector3 DroneWorldPosition()
         {
             return new Vector3(DroneState.LocationNE.EastingM, DroneState.Altitude, DroneState.LocationNE.NorthingM);
+        }
+
+
+        /// <summary>
+        /// Converts pixel coordinates in the camera image to a normalized direction vector in **camera space**.
+        /// In **camera space**:
+        /// - The **X-axis** points **right**.
+        /// - The **Y-axis** points **down**.
+        /// - The **Z-axis** points **forward** (out of the camera).
+        /// The returned vector is normalized.
+        /// </summary>
+        public Vector3 ComputeCameraDirection(double pixelX, double pixelY)
+        {
+            // Start with the given pixel coordinates.
+            double px = pixelX;
+            double py = pixelY;
+            if (ApplyDistortionCorrection)
+            {
+                // Normalize pixel to camera coordinates using intrinsics.
+                double normX = (pixelX - CameraK.V02) / CameraK.V00;  // (u - cx) / fx
+                double normY = (pixelY - CameraK.V12) / CameraK.V11;  // (v - cy) / fy
+
+                // Apply radial distortion correction using calibrated coefficients (k1, k2, etc.).
+                double r2 = normX * normX + normY * normY;
+                double k1 = 0.1f, k2 = 0.1f;  // example distortion coefficients. TODO set from calibration.
+                double radialFactor = 1 + k1 * r2 + k2 * r2 * r2;
+                double undistX = normX * radialFactor;
+                double undistY = normY * radialFactor;
+                // Convert undistorted normalized coords back to pixel coordinates.
+                px = undistX * CameraK.V00 + CameraK.V02;
+                py = undistY * CameraK.V11 + CameraK.V12;
+            }
+            // Compute direction in camera coordinates (pinhole model) from pixel.
+            double x_cam = (px - CameraK.V02) / CameraK.V00; // (px - cx) / fx
+            double y_cam = -(py - CameraK.V12) / CameraK.V11; // - (py - cy) / fy
+            double z_cam = 1.0;  // assume a point on the image plane at z=1
+            Vector3 camDir = new Vector3((float)x_cam, (float)y_cam, (float)z_cam);
+            return Vector3.Normalize(camDir);
+        }
+
+
+        /// <summary>
+        /// Transforms a direction vector from **camera space** to **world space**.
+        /// In **world space**:
+        /// - The **X-component** represents **Easting** (meters, left to right).
+        /// - The **Y-component** represents **Altitude** (meters above sea level).
+        /// - The **Z-component** represents **Northing** (meters, forward/backward).
+        /// The function applies the drone's **yaw** and **pitch** to orient the camera-relative vector correctly in the world.
+        /// The returned vector is normalized.
+        /// </summary>
+        public Vector3 CameraToWorldDirection(Vector3 camDir)
+        {
+            // For a gimbaled camera:
+            // 1. The camera is oriented independently of the drone body
+            // 2. The yaw represents the camera's heading (0 = North, clockwise positive)
+            // 3. The pitch represents how far down the camera is pointing from horizontal
+
+            // Convert angles to radians
+            float yawRad = DroneState.Yaw * (MathF.PI / 180f);
+            float pitchRad = DroneState.CameraDownAngle * (MathF.PI / 180f);
+
+            // Create rotation matrices for yaw and pitch
+            Matrix4x4 yawMatrix = Matrix4x4.CreateRotationY(yawRad);
+            Matrix4x4 pitchMatrix = Matrix4x4.CreateRotationX(pitchRad);
+            Matrix4x4 combinedRotation = Matrix4x4.Multiply(pitchMatrix, yawMatrix); // PQR
+
+            // In camera space: 
+            // X is right, Y is down, Z is forward
+            // We need to transform this to world space
+
+            // Convert camera direction to world direction
+            Vector3 worldDir = Vector3.Transform(camDir, combinedRotation);
+
+            return Vector3.Normalize(worldDir);
+        }
+
+
+        /// <summary>
+        /// Casts a ray from the drone’s position in a given direction and finds the intersection with the terrain.
+        /// The function steps along the ray in small increments (1m) until:
+        /// - The ray reaches or crosses the ground.
+        /// - The search distance exceeds the maximum allowed range (1000m).
+        /// If an intersection is detected, it refines the hit position using **linear interpolation** for better accuracy.
+        ///
+        /// **Parameters:**
+        /// - `origin` (Vector3): The starting position of the ray (drone's world position).
+        /// - `direction` (Vector3): The direction in which the ray is cast (normalized).
+        /// - `terrain` (TerrainGrid): The terrain model used for altitude lookup.
+        ///
+        /// **Returns:**
+        /// - `Vector3?`: The world coordinates of the intersection point if found, otherwise `null`.
+        ///
+        /// **Edge Cases Handled:**
+        /// - If the ray is pointing **upward**, no intersection is found (returns `null`).
+        /// - If the drone is looking **straight down**, the function directly returns the terrain altitude.
+        /// - If the ray is **nearly horizontal**, it may return `null` if the ground is never reached.
+        /// - If the search distance exceeds **1000m**, it stops and returns `null`.
+        /// </summary>
+        public Vector3? Raycast(Vector3 origin, Vector3 direction)
+        {
+            const float stepSize = 1.0f; // Step size in meters
+            const float maxDistance = 1000.0f; // Max search range
+            float distanceTraveled = 0.0f;
+
+            Vector3 currentPos = origin;
+            float currentAltitude = origin.Y;
+            float terrainAltitude = Terrain.GetElevation(currentPos.X, currentPos.Z);
+
+            // If the ray is pointing upwards, it will never hit the ground.
+            if (direction.Y > 0)
+                return null;
+
+            // Step along the ray in increments until we reach or cross the ground
+            while (distanceTraveled < maxDistance)
+            {
+                if (currentAltitude <= terrainAltitude)
+                {
+                    // We have crossed the ground -> Perform linear interpolation for better accuracy
+                    float previousAltitude = currentAltitude + stepSize * direction.Y;
+                    float previousDistance = distanceTraveled - stepSize;
+
+                    if (previousAltitude == terrainAltitude)
+                    {
+                        // Direct hit
+                        return currentPos;
+                    }
+                    else
+                    {
+                        // Linear interpolation to estimate more accurate intersection
+                        float t = (terrainAltitude - previousAltitude) / (currentAltitude - previousAltitude);
+                        float refinedDistance = previousDistance + t * stepSize;
+                        Vector3 refinedPos = origin + direction * refinedDistance;
+                        return refinedPos;
+                    }
+                }
+
+                // Move forward along the ray
+                distanceTraveled += stepSize;
+                currentPos += direction * stepSize;
+                currentAltitude = currentPos.Y;
+                terrainAltitude = Terrain.GetElevation(currentPos.X, currentPos.Z);
+            }
+
+            // If we exceed max range without hitting the ground, return null
+            return null;
+        }
+
+
+        /// <summary>
+        /// Casts a ray from the **drone's world position** in a given direction and finds the intersection with the terrain.
+        /// The drone's position is represented as a **world space vector**:
+        /// - `origin.X` → **Easting** (meters, left/right)
+        /// - `origin.Y` → **Altitude** (meters above sea level)
+        /// - `origin.Z` → **Northing** (meters, forward/backward)
+        /// The function checks if the ray intersects the terrain and returns the ground position if found.
+        /// </summary>
+        public Vector3? FindGroundIntersection(Vector3 worldDir)
+        {
+            Vector3 origin = DroneWorldPosition();
+
+            // Avoid divide-by-zero or infinite intersections for horizontal/upward rays.
+            if (Math.Abs(worldDir.Y) < 1e-6f)
+                // Ray is almost parallel to the ground.
+                return null;
+
+            if (worldDir.Y > 0)
+                // Ray is pointing upward (above the horizon), so it will not hit the ground.
+                return null;
+
+            // Find intersection with terrain:
+            if (Terrain != null)
+                return Raycast(origin, worldDir);
+
+            // Assume flat ground at y = 0 (or known ground height).
+            float groundY = 0.0f;
+            float t = (groundY - origin.Y) / worldDir.Y;
+            if (t < 0)
+                // No valid intersection (drone below ground or ray pointing wrong direction).
+                return null;
+
+            return origin + worldDir * t;
         }
 
 
@@ -126,12 +312,12 @@ namespace SkyCombImage.ProcessLogic
         /// 5. Computes a **confidence score** based on sensitivity to small input changes.
         ///
         /// **Parameters:**
-        /// - `targetImage` (ImagePosition): The object's location in the image (normalized -1 to +1).
+        /// - `imagePosition` (ImagePosition): The object's location in the image (normalized -1 to +1).
         /// - `camera` (CameraParameters): The camera's horizontal and vertical field of view (FOV).
-        /// - `applyDistortionCorrection`: (bool) Recommend false 
+        /// - `ApplyDistortionCorrection`: (bool) Recommend false 
         ///         Tests on CC\2024-04-D videos on 4/5Apr25 show ~9% difference between true and false, with false better.
         ///         The difference in calculated location is very small (~10cm)
-        /// - `terrain` (TerrainGrid): The terrain model, used to determine ground elevation.
+        /// - `Terrain` (TerrainGrid): The terrain model, used to determine ground elevation.
         ///
         /// **Returns:**
         /// - `LocationResult?`: The estimated **real-world location** of the detected object if valid, otherwise `null`.
@@ -150,120 +336,15 @@ namespace SkyCombImage.ProcessLogic
         /// - If lens distortion is a factor, the function allows separate handling for distortion correction.
         ///
         /// </summary>
-        public LocationResult? CalculateTargetLocation(ImagePosition imagePosition, bool applyDistortionCorrection, TerrainGrid terrain)
+        public LocationResult? CalculateTargetLocation(ImagePosition imagePosition)
         {
             double px = imagePosition.PixelX;
             double py = imagePosition.PixelY;
 
-            /// <summary>
-            /// Converts pixel coordinates in the camera image to a normalized direction vector in **camera space**.
-            /// In **camera space**:
-            /// - The **X-axis** points **right**.
-            /// - The **Y-axis** points **down**.
-            /// - The **Z-axis** points **forward** (out of the camera).
-            /// The returned vector is normalized.
-            /// </summary>
-            Vector3 ComputeCameraDirection(double pixelX, double pixelY)
-            {
-                // Start with the given pixel coordinates.
-                double px = pixelX;
-                double py = pixelY;
-                if (applyDistortionCorrection)
-                {
-                    // Normalize pixel to camera coordinates using intrinsics.
-                    double normX = (pixelX - CameraK.V02) / CameraK.V00;  // (u - cx) / fx
-                    double normY = (pixelY - CameraK.V12) / CameraK.V11;  // (v - cy) / fy
-
-                    // Apply radial distortion correction using calibrated coefficients (k1, k2, etc.).
-                    double r2 = normX * normX + normY * normY;
-                    double k1 = 0.1f, k2 = 0.1f;  // example distortion coefficients. TODO set from calibration.
-                    double radialFactor = 1 + k1 * r2 + k2 * r2 * r2;
-                    double undistX = normX * radialFactor;
-                    double undistY = normY * radialFactor;
-                    // Convert undistorted normalized coords back to pixel coordinates.
-                    px = undistX * CameraK.V00 + CameraK.V02;
-                    py = undistY * CameraK.V11 + CameraK.V12;
-                }
-                // Compute direction in camera coordinates (pinhole model) from pixel.
-                double x_cam = (px - CameraK.V02) / CameraK.V00; // (px - cx) / fx
-                double y_cam = -(py - CameraK.V12) / CameraK.V11; // - (py - cy) / fy
-                double z_cam = 1.0;  // assume a point on the image plane at z=1
-                Vector3 camDir = new Vector3((float)x_cam, (float)y_cam, (float)z_cam);
-                return Vector3.Normalize(camDir);
-            }
-
-            /// <summary>
-            /// Transforms a direction vector from **camera space** to **world space**.
-            /// In **world space**:
-            /// - The **X-component** represents **Easting** (meters, left to right).
-            /// - The **Y-component** represents **Altitude** (meters above sea level).
-            /// - The **Z-component** represents **Northing** (meters, forward/backward).
-            /// The function applies the drone's **yaw** and **pitch** to orient the camera-relative vector correctly in the world.
-            /// The returned vector is normalized.
-            /// </summary>
-            Vector3 CameraToWorldDirection(Vector3 camDir)
-            {
-                // For a gimbaled camera:
-                // 1. The camera is oriented independently of the drone body
-                // 2. The yaw represents the camera's heading (0 = North, clockwise positive)
-                // 3. The pitch represents how far down the camera is pointing from horizontal
-
-                // Convert angles to radians
-                float yawRad = DroneState.Yaw * (MathF.PI / 180f);
-                float pitchRad = DroneState.CameraDownAngle * (MathF.PI / 180f);
-
-                // Create rotation matrices for yaw and pitch
-                Matrix4x4 yawMatrix = Matrix4x4.CreateRotationY(yawRad);
-                Matrix4x4 pitchMatrix = Matrix4x4.CreateRotationX(pitchRad);
-                Matrix4x4 combinedRotation = Matrix4x4.Multiply(pitchMatrix, yawMatrix); // PQR
-
-                // In camera space: 
-                // X is right, Y is down, Z is forward
-                // We need to transform this to world space
-
-                // Convert camera direction to world direction
-                Vector3 worldDir = Vector3.Transform(camDir, combinedRotation);
-
-                return Vector3.Normalize(worldDir);
-            }
-
-            /// <summary>
-            /// Casts a ray from the **drone's world position** in a given direction and finds the intersection with the terrain.
-            /// The drone's position is represented as a **world space vector**:
-            /// - `origin.X` → **Easting** (meters, left/right)
-            /// - `origin.Y` → **Altitude** (meters above sea level)
-            /// - `origin.Z` → **Northing** (meters, forward/backward)
-            /// The function checks if the ray intersects the terrain and returns the ground position if found.
-            /// </summary>
-            Vector3? FindGroundIntersection(Vector3 worldDir)
-            {
-                Vector3 origin = DroneWorldPosition();
-
-                // Avoid divide-by-zero or infinite intersections for horizontal/upward rays.
-                if (Math.Abs(worldDir.Y) < 1e-6f)
-                    // Ray is almost parallel to the ground.
-                    return null;
-
-                if (worldDir.Y > 0)
-                    // Ray is pointing upward (above the horizon), so it will not hit the ground.
-                    return null;
-
-                // Find intersection with terrain:
-                if (terrain != null)
-                    return Raycast(origin, worldDir, terrain);
-
-                // Assume flat ground at y = 0 (or known ground height).
-                float groundY = 0.0f;
-                float t = (groundY - origin.Y) / worldDir.Y;
-                if (t < 0)
-                    // No valid intersection (drone below ground or ray pointing wrong direction).
-                    return null;
-
-                return origin + worldDir * t;
-            }
-
-            // **Step 1 & 2:** Convert image position to camera direction, then to world direction.
+            // **Step 1 :** Convert image position to camera direction.
             Vector3 camDir = ComputeCameraDirection(px, py);
+
+            // **Step 2:** Convert camera direction to world direction.
             Vector3 worldDir = CameraToWorldDirection(camDir);
 
             // **Step 3:** Raycast from the drone along this direction to find ground intersection.
@@ -274,7 +355,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 // If camera is pointing straight down (pitch ~ 90°), set target directly below drone.
                 Vector3 dronePos2 = DroneWorldPosition();
-                float groundY = terrain?.GetElevation(dronePos2.X, dronePos2.Z) ?? 0.0f;
+                float groundY = Terrain?.GetElevation(dronePos2.X, dronePos2.Z) ?? 0.0f;
                 targetLocation = new Vector3(dronePos2.X, groundY, dronePos2.Z);
             }
 
@@ -294,9 +375,7 @@ namespace SkyCombImage.ProcessLogic
                 // If beyond 1000m, treat as invalid detection.
                 return null;
 
-            // **Step 6:** (Lens distortion handled via applyDistortionCorrection in ComputeCameraDirection.)
-
-            // **Step 7:** Compute a confidence metric based on sensitivity to small input changes.
+            // **Step 6:** Compute a confidence metric based on sensitivity to small input changes.
             float confidence = 0.0f;
             if (targetLocation.HasValue)
             {
@@ -335,80 +414,10 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        /// <summary>
-        /// Casts a ray from the drone’s position in a given direction and finds the intersection with the terrain.
-        /// The function steps along the ray in small increments (1m) until:
-        /// - The ray reaches or crosses the ground.
-        /// - The search distance exceeds the maximum allowed range (1000m).
-        /// If an intersection is detected, it refines the hit position using **linear interpolation** for better accuracy.
-        ///
-        /// **Parameters:**
-        /// - `origin` (Vector3): The starting position of the ray (drone's world position).
-        /// - `direction` (Vector3): The direction in which the ray is cast (normalized).
-        /// - `terrain` (TerrainGrid): The terrain model used for altitude lookup.
-        ///
-        /// **Returns:**
-        /// - `Vector3?`: The world coordinates of the intersection point if found, otherwise `null`.
-        ///
-        /// **Edge Cases Handled:**
-        /// - If the ray is pointing **upward**, no intersection is found (returns `null`).
-        /// - If the drone is looking **straight down**, the function directly returns the terrain altitude.
-        /// - If the ray is **nearly horizontal**, it may return `null` if the ground is never reached.
-        /// - If the search distance exceeds **1000m**, it stops and returns `null`.
-        /// </summary>
-        public Vector3? Raycast(Vector3 origin, Vector3 direction, TerrainGrid terrain)
-        {
-            const float stepSize = 1.0f; // Step size in meters
-            const float maxDistance = 1000.0f; // Max search range
-            float distanceTraveled = 0.0f;
-
-            Vector3 currentPos = origin;
-            float currentAltitude = origin.Y;
-            float terrainAltitude = terrain.GetElevation(currentPos.X, currentPos.Z);
-
-            // If the ray is pointing upwards, it will never hit the ground.
-            if (direction.Y > 0)
-                return null;
-
-            // Step along the ray in increments until we reach or cross the ground
-            while (distanceTraveled < maxDistance)
-            {
-                if (currentAltitude <= terrainAltitude)
-                {
-                    // We have crossed the ground -> Perform linear interpolation for better accuracy
-                    float previousAltitude = currentAltitude + stepSize * direction.Y;
-                    float previousDistance = distanceTraveled - stepSize;
-
-                    if (previousAltitude == terrainAltitude)
-                    {
-                        // Direct hit
-                        return currentPos;
-                    }
-                    else
-                    {
-                        // Linear interpolation to estimate more accurate intersection
-                        float t = (terrainAltitude - previousAltitude) / (currentAltitude - previousAltitude);
-                        float refinedDistance = previousDistance + t * stepSize;
-                        Vector3 refinedPos = origin + direction * refinedDistance;
-                        return refinedPos;
-                    }
-                }
-
-                // Move forward along the ray
-                distanceTraveled += stepSize;
-                currentPos += direction * stepSize;
-                currentAltitude = currentPos.Y;
-                terrainAltitude = terrain.GetElevation(currentPos.X, currentPos.Z);
-            }
-
-            // If we exceed max range without hitting the ground, return null
-            return null;
-        }
-
 #if DEBUG
         // Unit test: With camera almost straight down, an object near the image center
         // should be in roughly same location as the drone, and at same DEM as Block
-        public void UnitTest_Centroid(ProcessBlock block, TerrainGrid terrain)
+        public void UnitTest_Centroid(ProcessBlock block)
         {
             // Move object to very near the centre of the image
             ImagePosition imagePosition = new();
@@ -420,7 +429,7 @@ namespace SkyCombImage.ProcessLogic
             DroneState.CameraDownAngle = 89.9f;
 
 
-            LocationResult? result = CalculateTargetLocation(imagePosition, false, terrain);
+            LocationResult? result = CalculateTargetLocation(imagePosition);
             if (result != null)
             {
                 var locnDiff = block.DroneLocnM.Subtract(result.LocationNE);
@@ -436,7 +445,7 @@ namespace SkyCombImage.ProcessLogic
 
                 if (heightDiff > 4)
                 {
-                    LocationResult? result2 = CalculateTargetLocation(imagePosition, false, terrain);
+                    LocationResult? result2 = CalculateTargetLocation(imagePosition);
 
                     Debug.Print(block.FlightStep.DemM.ToString(), result.Elevation, heightDiff);
                     BaseConstants.Assert(false, "ProcessFeature3v2 bad height");
