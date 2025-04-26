@@ -6,11 +6,16 @@ namespace SkyCombImage.ProcessLogic
 {
     public class ProcessFolder
     {
-        // Lists files in the input directory
+        // List of flight logs (associated with videos) in the input directory 
         public List<string> SrtFiles;
-        public List<string> GpxFiles;
-        public List<string> JpgFiles;
+
+        // List of sub-folders and images in the input directory 
         public List<string> ImageFolders;
+        public List<string> JpgFiles;
+
+        // List of KML (Keyhole Markup Language) files are text files that store geographic data like points, lines, polygons, and images.
+        public List<string> KmlFiles;
+
 
         public ProcessFolder()
         {
@@ -18,10 +23,10 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        private void Reset()
+        public void Reset()
         {
             SrtFiles = new();
-            GpxFiles = new();
+            KmlFiles = new();
             JpgFiles = new();
             ImageFolders = new();
         }
@@ -37,9 +42,9 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Function to recursively get file names in subfolders
-        private void ListVideoFilesInSubfolders(string folderPath, string filter = "_T")
+        private void ListInputFilesInSubfolders(string folderPath)
         {
-            string filenamefilter = "*" + filter.Trim().ToLower() + "*";
+            string filenamefilter = "*_t*";
             string regexPattern = "^" + Regex.Escape(filenamefilter).Replace("\\*", ".*") + "$";
 
             // List files in the current folder
@@ -57,7 +62,6 @@ namespace SkyCombImage.ProcessLogic
                 switch (suffix)
                 {
                     case ".srt": SrtFiles.Add(file); break;
-                    case ".gpx": GpxFiles.Add(file); break;
                     case ".jpg":
                     case ".jpeg": JpgFiles.Add(file); break;
                 }
@@ -66,28 +70,25 @@ namespace SkyCombImage.ProcessLogic
             // Recursively list files in subfolders
             string[] subfolders = Directory.GetDirectories(folderPath);
             foreach (string subfolder in subfolders)
-            {
-                ListVideoFilesInSubfolders(subfolder, filter);
-            }
+                ListInputFilesInSubfolders(subfolder);
         }
 
 
         // Create a list of the video files in the input directory and subfolders
-        public void ListVideoFilesInSubfolders(RunConfig runConfig)
+        public void ListInputFilesInSubfolders(RunConfig runConfig)
         {
-            Reset();
-            ListVideoFilesInSubfolders(runConfig.InputDirectory);
+            ListInputFilesInSubfolders(runConfig.InputDirectory);
         }
 
 
         // Function to recursively get names of folders that contain multiple jpg files
-        private void ListImagesInSubfolders(string folderPath, string filter = "_T")
+        private void ListImagesInSubfolders(string folderPath)
         {
-            string filenamefilter = "*" + filter.Trim().ToLower() + "*";
+            string filenamefilter = "*_t*";
             string regexPattern = "^" + Regex.Escape(filenamefilter).Replace("\\*", ".*") + "$";
+
             // List files in the current folder
             string[] files = Directory.GetFiles(folderPath);
-
             int num_files_found = 0;
             foreach (string file in files)
             {
@@ -101,28 +102,48 @@ namespace SkyCombImage.ProcessLogic
                     num_files_found++;
 
                 // Folder must have 2 or more images to be added to the list
-                if (num_files_found>=2)
-                {
+                if (num_files_found == 2)
                     ImageFolders.Add(folderPath);
-                    break;
-                }
             }
 
             // Recursively list files in subfolders
             string[] subfolders = Directory.GetDirectories(folderPath);
             foreach (string subfolder in subfolders)
-            {
-                ListImagesInSubfolders(subfolder, filter);
-            }
+                ListImagesInSubfolders(subfolder);
         }
 
 
         // Create a list of the folders and subfolders that contain multiple jpg files
         public void ListImageFoldersAndSubfolders(RunConfig runConfig)
         {
-            Reset();
             ListImagesInSubfolders(runConfig.InputDirectory);
         }
 
+
+        // Function to recursively get names of folders that contain multiple jpg files
+        private void ListKmlsInSubfolders(string folderPath)
+        {
+            string[] files = Directory.GetFiles(folderPath);
+            foreach (string file in files)
+            {
+                if (file.Length < 5)
+                    continue;
+                string suffix = file.Substring(file.Length - 4, 4);
+                if (suffix.ToLower() == ".kml")
+                    KmlFiles.Add(file);
+            }
+
+            // Recursively list files in subfolders
+            string[] subfolders = Directory.GetDirectories(folderPath);
+            foreach (string subfolder in subfolders)
+                ListKmlsInSubfolders(subfolder);
+        }
+
+
+        // Create a list of the folders and subfolders that contain multiple jpg files
+        public void ListKmlFoldersAndSubfolders(RunConfig runConfig)
+        {
+            ListKmlsInSubfolders(runConfig.InputDirectory);
+        }
     }
 }
