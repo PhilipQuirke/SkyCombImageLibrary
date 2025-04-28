@@ -29,7 +29,7 @@ namespace SkyCombImage.DrawSpace
             DrawScope = drawScope;
 
             Values = values;
-            MaxFreq = (Values.Count == 0 ? 1 : Math.Max(1, Values.Max()));
+            MaxFreq =  (Values == null || Values.Count == 0 ? 1 : Math.Max(1, Values.Max()));
 
             VertBottomLabel = "";
             VertTopLabel = MaxFreq.ToString();
@@ -62,7 +62,7 @@ namespace SkyCombImage.DrawSpace
         {
             try
             {
-                if (Values.Count <= 2)
+                if (Values == null || Values.Count <= 2)
                     return;
 
                 // Draw series of rectangles in two passes: Out of filter range first, then in filter range (so on top).
