@@ -13,7 +13,6 @@ using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
 using System.Diagnostics;
 using System.Drawing;
-using System.Windows.Forms;
 
 
 // Namespace for processing of multiple images (frames).
@@ -74,7 +73,7 @@ namespace SkyCombImage.RunSpace
 
 
         public RunWorker(RunUserInterface parent, RunConfig config, DroneDataStore dataStore, Drone drone, ProcessAll processAll) : base(drone)
-         {
+        {
             RunUI = parent;
             RunConfig = config;
             DataStore = dataStore;
@@ -451,11 +450,11 @@ namespace SkyCombImage.RunSpace
         // from the CurrVideoFrameMs value if we seek direct to CurrVideoFrameID!
         // So at the start of each new Leg we do a direct (slow) seek.
         private bool ProcessFlightLegChange_InputIsVideo()
-        { 
+        {
             if (PSM.CurrRunLegId > 0)
                 Drone.SetAndGetCurrFrame(PSM.CurrInputFrameId);
 
-            if( ! GetCurrImage_InputIsVideo())
+            if (!GetCurrImage_InputIsVideo())
                 return false;
 
             Assert(Drone.InputVideo.CurrFrameId == PSM.CurrInputFrameId, "RunVideo.Run: Bad FrameId 1");
@@ -496,7 +495,7 @@ namespace SkyCombImage.RunSpace
 
                 // Create an output video file writer (if user wants MP4 output)
                 VideoWriter? videoWriter = null;
-                if(RunConfig.InputIsVideo)
+                if (RunConfig.InputIsVideo)
                     videoWriter = StandardSave.CreateVideoWriter(RunConfig, InputVideoFileName(), VideoBase.Fps, VideoBase.ImageSize);
 
                 var inputVideo = Drone.InputVideo;

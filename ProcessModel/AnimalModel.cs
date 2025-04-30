@@ -62,23 +62,23 @@ namespace SkyCombImage.ProcessModel
                 BestFixAltM = 0;
                 BestFixYawDeg = 0;
                 BestFixPitchDeg = 0;
-/* PQR TODO
-                if (processSpans != null)
-                {
-                    var block = theObj?.LastRealFeature?.Block;
-                    if (block != null && block.FlightLegId > 0)
-                    {
-                        var span = processSpans[block.FlightLegId];
-                        if (span != null)
-                        {
-                            BestHFOVDegs = span.BestHFOVDeg;
-                            BestFixAltM = span.BestFixAltM;
-                            BestFixYawDeg = span.BestFixYawDeg;
-                            BestFixPitchDeg = span.BestFixPitchDeg;
-                        }
-                    }
-                }
-PQR */
+                /* PQR TODO
+                                if (processSpans != null)
+                                {
+                                    var block = theObj?.LastRealFeature?.Block;
+                                    if (block != null && block.FlightLegId > 0)
+                                    {
+                                        var span = processSpans[block.FlightLegId];
+                                        if (span != null)
+                                        {
+                                            BestHFOVDegs = span.BestHFOVDeg;
+                                            BestFixAltM = span.BestFixAltM;
+                                            BestFixYawDeg = span.BestFixYawDeg;
+                                            BestFixPitchDeg = span.BestFixPitchDeg;
+                                        }
+                                    }
+                                }
+                PQR */
                 // Convert -999 to -2
                 if (LocationErrM == BaseConstants.UnknownValue) LocationErrM = -2;
                 if (HeightM == BaseConstants.UnknownValue) HeightM = -2;

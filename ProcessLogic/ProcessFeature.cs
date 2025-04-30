@@ -176,9 +176,9 @@ namespace SkyCombImage.ProcessLogic
                 DroneState droneState = new();
                 droneState.LocationNE = Block.DroneLocnM;
                 droneState.Altitude = flightStep.FixedAltitudeM; // Relies on FixAltM
-                droneState.Yaw = flightStep.YawDeg; 
+                droneState.Yaw = flightStep.YawDeg;
                 droneState.CameraDownAngle = 90 - flightStep.CameraToVerticalForwardDeg;
- 
+
                 // LOS algorithm works very inaccurately if the camera is pointing near the horizon.
                 phase = 4;
                 if (droneState.CameraDownAngle < 15)
@@ -202,10 +202,10 @@ namespace SkyCombImage.ProcessLogic
                 // Assumes that Zoom is constant at 1
                 DroneTargetCalculator droneTargetCalculator = new(droneState, cameraParams, terrainGrid, false);
 #if DEBUG
-/* PQR TODO
-                if( flightStep.FixAltM == 0)
-                    droneTargetCalculator.UnitTest_Centroid(Block);
-*/
+                /* PQR TODO
+                                if( flightStep.FixAltM == 0)
+                                    droneTargetCalculator.UnitTest_Centroid(Block);
+                */
 #endif
                 LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition);
                 if (result != null)

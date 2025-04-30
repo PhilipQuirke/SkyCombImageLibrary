@@ -111,7 +111,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Ensure each object has at least an "insignificant" name e.g. #16
-        public virtual void EnsureObjectsNamed() 
+        public virtual void EnsureObjectsNamed()
         {
             ProcessObjects.EnsureObjectsNamed(this);
         }

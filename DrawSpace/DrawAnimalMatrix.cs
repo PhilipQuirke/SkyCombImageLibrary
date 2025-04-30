@@ -21,7 +21,7 @@ namespace SkyCombImage.DrawSpace
         {
             // Define SizeClasses and HeightClasses
             string[] sizeClasses = { "XXS", "XS", "S", "M", "L", "XL", "XXL" };
-            string[] heightClasses = {"6f+", "5f", "4f", "3f", "2f", "1f", "G"  };
+            string[] heightClasses = { "6f+", "5f", "4f", "3f", "2f", "1f", "G" };
 
             // Create mappings for quick index lookup
             Dictionary<string, int> sizeClassIndices = CreateIndexMap(sizeClasses);
@@ -88,7 +88,7 @@ namespace SkyCombImage.DrawSpace
                     }
                 }
 
-                for (h = 0; h < heightClasses.Length ; h++)
+                for (h = 0; h < heightClasses.Length; h++)
                 {
                     // Draw HeightClass labels
                     y = labelHeight + h * cellHeight;
@@ -102,7 +102,7 @@ namespace SkyCombImage.DrawSpace
                         {
                             x = labelWidth + s * cellWidth;
                             y = labelHeight + h * cellHeight;
-                            g.FillRectangle(percentIndicator(100*count/categorised), x, y, cellWidth, cellHeight);
+                            g.FillRectangle(percentIndicator(100 * count / categorised), x, y, cellWidth, cellHeight);
                             g.DrawString(count.ToString(), font, brush, x + cellWidth / 2 - 10, y + cellHeight / 2 - 10);
                         }
                     }
@@ -117,7 +117,7 @@ namespace SkyCombImage.DrawSpace
                 {
                     total = sizeClassTotals[s].ToString();
                     x = labelWidth + s * cellWidth;
-                    y = labelHeight + cellHeight * heightClasses.Length + cellHeight / 2 - 10; 
+                    y = labelHeight + cellHeight * heightClasses.Length + cellHeight / 2 - 10;
                     g.DrawString(total, font, brush, x + cellWidth / 2 - 10, y);
                 }
 
@@ -136,7 +136,7 @@ namespace SkyCombImage.DrawSpace
                 total = total + (animals.Count - categorised) + " uncategorised";
             }
 
-            return ( total, bmp );
+            return (total, bmp);
         }
 
         // Returns the background colour of the rectangle by percent of animals found in it

@@ -1,11 +1,9 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved.
 using Emgu.CV;
 using Emgu.CV.Structure;
-using Emgu.CV.CvEnum;
 using SkyCombDrone.CommonSpace;
 using SkyCombDrone.DrawSpace;
 using System.Drawing;
-using System.Drawing.Imaging;
 
 namespace SkyCombImage.DrawSpace
 {
@@ -29,7 +27,7 @@ namespace SkyCombImage.DrawSpace
             DrawScope = drawScope;
 
             Values = values;
-            MaxFreq =  (Values == null || Values.Count == 0 ? 1 : Math.Max(1, Values.Max()));
+            MaxFreq = (Values == null || Values.Count == 0 ? 1 : Math.Max(1, Values.Max()));
 
             VertBottomLabel = "";
             VertTopLabel = MaxFreq.ToString();

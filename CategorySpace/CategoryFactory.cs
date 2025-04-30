@@ -3,7 +3,7 @@
 
 namespace SkyCombImage.CategorySpace
 {
-    public class ObjectCategoryFactory 
+    public class ObjectCategoryFactory
     {
         public static ObjectCategoryModel NewObjectCategoryModel(List<string> settings)
         {

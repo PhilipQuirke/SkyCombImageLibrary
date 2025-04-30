@@ -2,7 +2,6 @@
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessLogic;
-using System.Diagnostics;
 
 
 // Models are used in-memory and to persist/load data to/from the datastore
@@ -61,7 +60,7 @@ namespace SkyCombImage.ProcessModel
 
         protected void SetBest(float fixAltM, ProcessObjList objs)
         {
-            var improvementM = (BestSumLocnErrM == 9999 ? 0 : BestSumLocnErrM - objs.SumLocationErrM );
+            var improvementM = (BestSumLocnErrM == 9999 ? 0 : BestSumLocnErrM - objs.SumLocationErrM);
 
             BestFixAltM = fixAltM;
             BestSumLocnErrM = objs.SumLocationErrM;

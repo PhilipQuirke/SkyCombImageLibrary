@@ -69,7 +69,7 @@ namespace SkyCombImage.RunSpace
 
                 // Are we processing a video/flight log for the first time?
                 bool firstTime = (runSettings == null);
-                if (! firstTime)
+                if (!firstTime)
                     runConfig.LoadSettings(runSettings);
 
                 var theRunModel = runConfig.RunProcess;
@@ -77,7 +77,7 @@ namespace SkyCombImage.RunSpace
                 if (firstTime)
                     // If we are not processing the video then (by default)
                     // or we dont have a video then dont create a video output
-                    if((theRunModel == RunProcessEnum.None) || (runConfig.InputIsImages))
+                    if ((theRunModel == RunProcessEnum.None) || (runConfig.InputIsImages))
                         runConfig.ProcessConfig.SaveAnnotatedVideo = false;
 
                 return CreateRunWorker(parent, runConfig, dataStore, drone, intervals, processHook);

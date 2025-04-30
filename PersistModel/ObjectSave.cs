@@ -112,7 +112,8 @@ namespace SkyCombImage.PersistModel
         // Show grand totals.
         public void AddProcessObjectLocationPivot(ExcelWorksheet ws, int startRow, int startCol)
         {
-            try { 
+            try
+            {
 
                 const string PivotName = "AnimalLocationPivot";
                 if (ws.PivotTables[PivotName] != null)
@@ -154,7 +155,7 @@ namespace SkyCombImage.PersistModel
 
                 Data.AddConditionalFormattingToPivotTable(pivotTable);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Suppress error
             }
@@ -167,7 +168,8 @@ namespace SkyCombImage.PersistModel
         // Show grand totals.
         public void AddProcessObjectHeightPivot(ExcelWorksheet ws, int startRow, int startCol)
         {
-            try { 
+            try
+            {
                 const string PivotName = "AnimalHeightPivot";
                 if (ws.PivotTables[PivotName] != null)
                     return;
@@ -178,7 +180,7 @@ namespace SkyCombImage.PersistModel
                     return;
 
                 // Create pivot table
-                var pivotTableRange = dataWs.Cells[1, 1, lastDataRow, 34]; 
+                var pivotTableRange = dataWs.Cells[1, 1, lastDataRow, 34];
                 var pivotCell = pivotWs.Cells[startRow, startCol];
                 var pivotTable = pivotWs.PivotTables.Add(pivotCell, pivotTableRange, PivotName);
 
@@ -208,7 +210,7 @@ namespace SkyCombImage.PersistModel
 
                 Data.AddConditionalFormattingToPivotTable(pivotTable);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Suppress error
             }
@@ -269,7 +271,7 @@ namespace SkyCombImage.PersistModel
                 var drawSizeHistogram = new ProcessDrawSizeHistogram(processDrawScope, objectDrawScope, MasterSizeModelList.GetObjectCountBySizeClass(processObjects));
                 drawSizeHistogram.Initialise(new Size(350, 150));
                 var localBitmap = drawSizeHistogram.CurrBitmap(true, runVideo.SizeImages);
-                Data.SaveBitmap(localBitmap, "AnimalSizeHistogram", row-1, col-1);
+                Data.SaveBitmap(localBitmap, "AnimalSizeHistogram", row - 1, col - 1);
 
                 // Draw the matrix of animal sizes and heights
                 row = 3;
@@ -288,7 +290,7 @@ namespace SkyCombImage.PersistModel
                 drawFlightPath.BackgroundColor = DroneColors.WhiteBgr;
                 drawFlightPath.Initialise(new Size(575, 575));
                 localBitmap = drawFlightPath.CurrBitmap(true);
-                Data.SaveBitmap(localBitmap, "FlightPathWithAnimals", row-1, col-1);
+                Data.SaveBitmap(localBitmap, "FlightPathWithAnimals", row - 1, col - 1);
 
                 // Draw the elevations with objects and features
                 row = 49;
@@ -297,11 +299,11 @@ namespace SkyCombImage.PersistModel
                 var drawElevations = new ProcessDrawElevations(processAll, processDrawScope, null);
                 drawElevations.Initialise(new Size(ChartFullWidthPixels, 250));
                 localBitmap = drawElevations.CurrBitmap();
-                Data.SaveBitmap(localBitmap, "Flight and Animals Elevations", row-1, col-1);
+                Data.SaveBitmap(localBitmap, "Flight and Animals Elevations", row - 1, col - 1);
                 DroneSave.SaveElevationLegend(Data, row, 23, 1, 1);
                 ws.Cells[row, 24].Value = "Drone";
-                ws.Cells[row+1, 24].Value = "Surface";
-                ws.Cells[row+2, 24].Value = "Ground";
+                ws.Cells[row + 1, 24].Value = "Surface";
+                ws.Cells[row + 2, 24].Value = "Ground";
 
                 // Draw the object pivot
                 row = 65;

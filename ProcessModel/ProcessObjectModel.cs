@@ -197,9 +197,9 @@ namespace SkyCombImage.ProcessModel
                 { "Locn Err M", LocationErrM, LocationNdp },
                 { "Lineal M", AvgSumLinealM, LocationNdp },
                 { "Height M", (HeightM == UnknownValue ? UnknownHeight : HeightM), HeightNdp },
-                { "Min Hght M", (MinHeightM == UnknownValue ? UnknownHeight : MinHeightM), HeightNdp }, 
-                { "Max Hght M", (MaxHeightM == UnknownValue ? UnknownHeight : MaxHeightM), HeightNdp }, 
-                { "Hght Err M", (HeightErrM == UnknownValue? UnknownHeight : HeightErrM), HeightNdp }, 
+                { "Min Hght M", (MinHeightM == UnknownValue ? UnknownHeight : MinHeightM), HeightNdp },
+                { "Max Hght M", (MaxHeightM == UnknownValue ? UnknownHeight : MaxHeightM), HeightNdp },
+                { "Hght Err M", (HeightErrM == UnknownValue? UnknownHeight : HeightErrM), HeightNdp },
                 { "Hght Rnd M", (HeightM == UnknownValue ? UnknownHeight : ((int)(HeightM * 2f)) / 2f), HeightNdp },
                 { "Size CM2", SizeCM2, AreaCM2Ndp },
                 { "Size Rnd CM2", (SizeCM2 == UnknownValue ? UnknownHeight : ((int)(SizeCM2 / 100f)) * 100), AreaCM2Ndp },
@@ -233,7 +233,7 @@ namespace SkyCombImage.ProcessModel
             LocationM = new DroneLocation(settings[i++], settings[i++]);
             LocationErrM = StringToNonNegFloat(settings[i++]);
             AvgSumLinealM = StringToNonNegFloat(settings[i++]);
-            HeightM = StringToFloat(settings[i++]); 
+            HeightM = StringToFloat(settings[i++]);
             MinHeightM = StringToFloat(settings[i++]);
             MaxHeightM = StringToFloat(settings[i++]);
             HeightErrM = StringToFloat(settings[i++]);
@@ -314,7 +314,7 @@ namespace SkyCombImage.ProcessModel
             var HeightErrColor = "none";
             if (HeightM != UnknownValue)
                 // We color the Height cell is "good", "bad" or leave white for neutral.
-                HeightErrColor = (HeightErrM < ProcessConfigModel.GoodHeightErrM ? "good" : "bad" );
+                HeightErrColor = (HeightErrM < ProcessConfigModel.GoodHeightErrM ? "good" : "bad");
 
             return new object[] {
                 settings_grid[GridObjectNameSetting].Value,

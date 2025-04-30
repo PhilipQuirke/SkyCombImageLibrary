@@ -4,7 +4,6 @@ using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
 using SkyCombImage.RunSpace;
 using System.Drawing;
-using System.Windows.Forms;
 using YoloDotNet.Models;
 
 

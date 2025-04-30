@@ -18,7 +18,7 @@ namespace SkyCombImage.ProcessLogic
         readonly float IoU = UnknownValue;
         readonly string YoloPath;
 
-        Yolo ? YoloTool = null;
+        Yolo? YoloTool = null;
         public Dictionary<int, List<ObjectDetection>> Results;
 
 

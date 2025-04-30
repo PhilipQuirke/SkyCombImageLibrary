@@ -110,14 +110,14 @@ namespace SkyCombImage.ProcessLogic
 
         // Object may claim ownership of this feature extending the object's lifetime and improving its "Significant" score.
         // This code implements a feature claim. Other functions mostly decide whether the feature should be claimed.
-        public virtual bool ClaimFeature(ProcessFeature theFeature) 
+        public virtual bool ClaimFeature(ProcessFeature theFeature)
         {
             try
             {
                 Assert(theFeature.ObjectId <= 0, "ProcessObject.ClaimFeature: Feature is already owned.");
 
                 // For Yolo, each object can have at most one feature per block.
-                if( StopYoloSecondBlockClaim(theFeature) )
+                if (StopYoloSecondBlockClaim(theFeature))
                     return false;
 
                 if ((FlightLegId == 0) && (LastRealFeature != null) && (theFeature.Block.FlightLegId > 0))
@@ -199,7 +199,7 @@ namespace SkyCombImage.ProcessLogic
         // In rare cases, object can claim multiple features from a single block (e.g. a tree branch bisects a heat spot into two features) 
         public bool MaybeClaimFeature(ProcessFeature the_feature, Rectangle objectExpectedPixelBox)
         {
-            if(StopYoloSecondBlockClaim(the_feature))
+            if (StopYoloSecondBlockClaim(the_feature))
                 return false;
 
             if (the_feature.ObjectId == 0) // Not claimed yet
@@ -340,7 +340,7 @@ namespace SkyCombImage.ProcessLogic
             var firstBox = firstFeat.PixelBox;
             var lastBox = lastFeat.PixelBox;
 
-            if ((this.ObjectId==31) && (lastFeat.FeatureId==675))
+            if ((this.ObjectId == 31) && (lastFeat.FeatureId == 675))
                 answer = answer = new Rectangle(
                     lastBox.X,
                     lastBox.Y,
@@ -374,7 +374,7 @@ namespace SkyCombImage.ProcessLogic
             else
                 // With one feature we dont know the object's velocity across the image.
                 // Rely on image overlap
-                answer = new Rectangle( 
+                answer = new Rectangle(
                     lastBox.X,
                     lastBox.Y,
                     lastBox.Width,
@@ -669,7 +669,7 @@ namespace SkyCombImage.ProcessLogic
             DroneLocation prevFeatureLocationM = null;
             float prevFeatureHeightM = UnknownHeight;
 
-            foreach((var _, var feature) in ProcessFeatures)
+            foreach ((var _, var feature) in ProcessFeatures)
             {
                 if (feature.Type == FeatureTypeEnum.Real)
                 {
@@ -685,7 +685,7 @@ namespace SkyCombImage.ProcessLogic
                     else
                         fix = true;
 
-                    if(fix)
+                    if (fix)
                         feature.Set_LocationM_HeightM(prevFeatureLocationM, prevFeatureHeightM);
                 }
             }
@@ -881,10 +881,10 @@ namespace SkyCombImage.ProcessLogic
 
             foreach (var theObject in this)
                 if (theObject.Value.Significant &&
-                     // Only return objects in the RunFrom/To scope.
+                    // Only return objects in the RunFrom/To scope.
                     theObject.Value.InRunScope(scope))
-                    
-                        answer.AddObject(theObject.Value);
+
+                    answer.AddObject(theObject.Value);
 
             if (answer.Count > 0)
                 answer.CalculateSettings();
@@ -932,11 +932,11 @@ namespace SkyCombImage.ProcessLogic
 
             foreach (var theObject in selectedOjects)
             {
-                    ObjectCategoryModel? annotation = null;
-                    if (annotations != null)
-                        annotation = annotations.GetData(theObject.Value.Name);
+                ObjectCategoryModel? annotation = null;
+                if (annotations != null)
+                    annotation = annotations.GetData(theObject.Value.Name);
 
-                    answer.Add(theObject.Value.GetObjectGridData(annotation));
+                answer.Add(theObject.Value.GetObjectGridData(annotation));
             }
 
             return answer;

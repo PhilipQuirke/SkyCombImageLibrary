@@ -3,9 +3,7 @@ using Accord.Math;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
-using SkyCombGround.GroundLogic;
 using SkyCombImage.ProcessModel;
-using SkyCombImage.RunSpace;
 using System.Diagnostics;
 
 
@@ -44,7 +42,7 @@ namespace SkyCombImage.ProcessLogic
 
             if (answer != "")
                 Debug.Print(
-                    "CalculateSettings_FixValues:" + prefix + " " + answer + 
+                    "CalculateSettings_FixValues:" + prefix + " " + answer +
                     " BestSumLocnErrM=" + BestSumLocnErrM.ToString() +
                     " BestSumHeightErrM=" + BestSumHeightErrM.ToString());
         }
@@ -134,7 +132,7 @@ namespace SkyCombImage.ProcessLogic
                 {
                     ResetBest();
                     for (float fixAltM = altRangeM; fixAltM >= -altRangeM; fixAltM -= 1)
-                        if( CalculateSettings_ApplyFixValues(fixAltM, theSteps, theObjs) )
+                        if (CalculateSettings_ApplyFixValues(fixAltM, theSteps, theObjs))
                             DebugPrintBest();
                     bestAltM = BestFixAltM;
                     bestAltErr = BestSumLocnErrM;
@@ -190,11 +188,11 @@ namespace SkyCombImage.ProcessLogic
             OrgSumHeightErrM = BestSumHeightErrM;
 
             if (Process.RunUI.RunTriangulate())
-            {           
+            {
                 // nq  method. 
                 SpanOptimize triangulation = new(theObjs, Process.GroundData, Process.RunUI.OutputTextBox());
 
-                foreach ((var _,var theObj) in theObjs)
+                foreach ((var _, var theObj) in theObjs)
                 {
                     // For each real feature in the object, 
                     // if feature location and/or height are not specified,
@@ -342,7 +340,7 @@ namespace SkyCombImage.ProcessLogic
             var steps = drone.FlightSteps.Steps;
 
             foreach (var theSpan in this)
-                if (Math.Abs(theSpan.Value.BestFixAltM)  > 0)
+                if (Math.Abs(theSpan.Value.BestFixAltM) > 0)
                     for (int stepId = theSpan.Value.MinStepId; stepId <= theSpan.Value.MaxStepId; stepId++)
                     {
                         if (steps.TryGetValue(stepId, out var step))

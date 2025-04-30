@@ -17,7 +17,7 @@ namespace SkyCombImage.ProcessLogic
 
         public override ProcessFeature? NewPersistFeature()
         {
-            return new CombFeature(this, Blocks.LastBlock, FeatureTypeEnum.Unreal); 
+            return new CombFeature(this, Blocks.LastBlock, FeatureTypeEnum.Unreal);
         }
 
 
@@ -32,7 +32,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-         // Process the features found in the current block/frame, which is part of a leg,
+        // Process the features found in the current block/frame, which is part of a leg,
         // by preference adding them to existing objects (created in previous blocks/frames),
         // else creating new objects to hold the features.
         public void ProcessBlockForObjects(ProcessScope scope, ProcessFeatureList featuresInBlock)

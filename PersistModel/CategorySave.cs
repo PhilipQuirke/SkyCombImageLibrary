@@ -62,7 +62,7 @@ namespace SkyCombImage.PersistModel
             {
                 Data.Open();
 
- //               SaveMasterCategories(categoryAll.MasterCategories);
+                //               SaveMasterCategories(categoryAll.MasterCategories);
                 SaveObjectCategories(categoryAll.ObjectCategories);
 
                 Save();

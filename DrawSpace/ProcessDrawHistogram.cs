@@ -1,8 +1,5 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved.
-using MathNet.Numerics;
 using SkyCombImage.CategorySpace;
-using System.Drawing;
-using System.Windows.Forms;
 
 
 namespace SkyCombImage.DrawSpace
@@ -28,7 +25,7 @@ namespace SkyCombImage.DrawSpace
     // Code to draw histogram of object heights as ?, G, 1f to 6f+.
     public class ProcessDrawHeightHistogram : DrawHistogram
     {
-        public ProcessDrawHeightHistogram(ProcessDrawScope drawScope, ObjectDrawScope? objectDrawScope, List<int> values) : base(drawScope, values, 0, MasterHeightModelList.NumHeights-1)
+        public ProcessDrawHeightHistogram(ProcessDrawScope drawScope, ObjectDrawScope? objectDrawScope, List<int> values) : base(drawScope, values, 0, MasterHeightModelList.NumHeights - 1)
         {
             HorizLeftLabel = "?      G       1f";
             HorizRightLabel = "6f+";

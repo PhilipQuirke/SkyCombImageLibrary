@@ -222,15 +222,15 @@ namespace SkyCombImage.ProcessModel
         // Drone camera intrinsic matrix constructor. Used by SpanOptimize
         public CameraIntrinsic(
             float focal_sign, // +1 or -1
-            double focalLength = DefaultFocalLength, 
-            double imageWidth = DefaultImageWidth, 
-            double imageHeight = DefaultImageHeight, 
-            double sensorWidth = DefaultSensorWidth, 
+            double focalLength = DefaultFocalLength,
+            double imageWidth = DefaultImageWidth,
+            double imageHeight = DefaultImageHeight,
+            double sensorWidth = DefaultSensorWidth,
             double sensorHeight = DefaultSensorHeight)
         {
             ImageWidth = imageWidth;
             ImageHeight = imageHeight;
-            Cx = imageWidth / 2; 
+            Cx = imageWidth / 2;
             Cy = imageHeight / 2;
             Fx = focal_sign * focalLength * imageWidth / sensorWidth; // F * pixels per mm = focal length in mm x image width px / sensor width mm
             Fy = focalLength * imageHeight / sensorHeight;
@@ -268,14 +268,14 @@ namespace SkyCombImage.ProcessModel
         }
 
         // Used by DroneTargetCalculator
-        public static Accord.Math.Matrix3x3 Default3x3() 
-        { 
-            return Intrinsic(DefaultFocalLength, DefaultImageWidth, DefaultImageHeight, DefaultSensorWidth, DefaultSensorHeight); 
+        public static Accord.Math.Matrix3x3 Default3x3()
+        {
+            return Intrinsic(DefaultFocalLength, DefaultImageWidth, DefaultImageHeight, DefaultSensorWidth, DefaultSensorHeight);
         }
 
         // Used by DroneTargetCalculator
-        public static Accord.Math.Matrix3x3 Test3x3( double f = 1, int iw = 0, int ih = 0, double sw = 1, double sh = 1 ) 
-        { 
+        public static Accord.Math.Matrix3x3 Test3x3(double f = 1, int iw = 0, int ih = 0, double sw = 1, double sh = 1)
+        {
             return Intrinsic(DefaultFocalLength * f, DefaultImageWidth + iw, DefaultImageHeight + ih, DefaultSensorWidth * sw, DefaultSensorHeight * sh);
         }
     }

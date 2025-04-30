@@ -56,7 +56,7 @@ namespace SkyCombImage.DrawSpace
                     (thisFeature.Value.BlockId == DroneDrawScope.MaxFeatureBlockIdToDraw))
                     Draw.Cross(ref image,
                         DroneLocnMToPixelPoint(thisFeature.Value.LocationM),
-                        highlight, NormalThickness*2, NormalThickness * FeaturePixels);
+                        highlight, NormalThickness * 2, NormalThickness * FeaturePixels);
             }
         }
 
@@ -95,7 +95,7 @@ namespace SkyCombImage.DrawSpace
                     // Reduce list of objects by the user filter values.
                     if ((objList != null) && (ObjectDrawScope != null))
                     {
-                        objList = ProcessObjList.FilterByObjectScope(null, objList); 
+                        objList = ProcessObjList.FilterByObjectScope(null, objList);
                         ObjectDrawScope.NumFilteredObjects = objList.Count;
                     }
 
@@ -187,7 +187,7 @@ namespace SkyCombImage.DrawSpace
 
 
         // Generate a bitmap of the graph as per scope settings.
-        public override Bitmap CurrBitmap( bool dpiIndependent = false, List<Image>? sizeImages = null)
+        public override Bitmap CurrBitmap(bool dpiIndependent = false, List<Image>? sizeImages = null)
         {
             var answer = base.CurrBitmap();
 

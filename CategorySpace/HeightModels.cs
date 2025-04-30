@@ -24,14 +24,14 @@ namespace SkyCombImage.CategorySpace
 
     public class MasterHeightModelList
     {
-        static public int NumHeights = 8; // Number of height categories
+        public static int NumHeights = 8; // Number of height categories
 
         // Cached master list of height models
-        static private readonly List<MasterHeightModel> _heightClasses;
+        private static readonly List<MasterHeightModel> _heightClasses;
         // Dictionary for quick name-to-index lookup
-        static private readonly Dictionary<string, int> _heightClassIndices;
+        private static readonly Dictionary<string, int> _heightClassIndices;
         // List of tuples for height range lookup
-        static private readonly List<(double MinHeight, double MaxHeight, string Name, int Index)> _heightRanges;
+        private static readonly List<(double MinHeight, double MaxHeight, string Name, int Index)> _heightRanges;
 
         // Static constructor to initialize data once
         static MasterHeightModelList()
@@ -63,20 +63,20 @@ namespace SkyCombImage.CategorySpace
             }
         }
 
-        static public List<MasterHeightModel> Get() => _heightClasses;
+        public static List<MasterHeightModel> Get() => _heightClasses;
 
 
-        static public int GetHeightClassIndex(string heightClass)
+        public static int GetHeightClassIndex(string heightClass)
         {
             return _heightClassIndices.TryGetValue(heightClass, out int index) ? index : -1;
         }
 
 
         // Return the MasterHeightModel Name that best matches the height
-        static public (string, int) HeightMToClass(ProcessObjectModel processObject)
+        public static (string, int) HeightMToClass(ProcessObjectModel processObject)
         {
             // If height is too inaccurate then we ignore it.
-            if(processObject.HeightErrM > ProcessConfigModel.AbandonHeightErrM )
+            if (processObject.HeightErrM > ProcessConfigModel.AbandonHeightErrM)
                 return ("?", 0);
 
             var height = processObject.HeightM;
@@ -94,10 +94,10 @@ namespace SkyCombImage.CategorySpace
 
 
         // Return the count of objects in each height category
-        static public List<int> GetObjectCountByHeightClass(ProcessObjList objects, bool significantObjectsOnly = true)
+        public static List<int> GetObjectCountByHeightClass(ProcessObjList objects, bool significantObjectsOnly = true)
         {
             var answer = new int[NumHeights];
-            if(objects != null)
+            if (objects != null)
                 foreach (var obj in objects)
                     if (obj.Value.Significant || !significantObjectsOnly)
                     {
@@ -105,7 +105,7 @@ namespace SkyCombImage.CategorySpace
                         if (index >= 0 && index < NumHeights)
                             answer[index]++;
                     }
-                return new List<int>(answer);
+            return new List<int>(answer);
         }
     }
 

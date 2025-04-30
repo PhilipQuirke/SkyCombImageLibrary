@@ -89,7 +89,7 @@ namespace SkyCombImage.PersistModel
             if (!initialIsOpen)
                 Data.Open();
 
- //           LoadMasterCategories(categoryAll.MasterCategories);
+            //           LoadMasterCategories(categoryAll.MasterCategories);
             LoadObjectCategories(categoryAll.ObjectCategories);
 
             if (!initialIsOpen)

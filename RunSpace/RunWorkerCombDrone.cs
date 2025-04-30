@@ -6,7 +6,6 @@ using SkyCombDrone.PersistModel;
 using SkyCombImage.DrawSpace;
 using SkyCombImage.PersistModel;
 using SkyCombImage.ProcessLogic;
-using System.Windows.Forms;
 
 
 // Continuation of RunVideo.cs, contains both Skycomb-specific runners
@@ -31,7 +30,7 @@ namespace SkyCombImage.RunSpace
                   ProcessFactory.NewCombProcess(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig, runUI))
         {
         }
-        
+
 
         public CombProcess CombProcess { get { return ProcessAll as CombProcess; } }
 

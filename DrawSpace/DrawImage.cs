@@ -147,8 +147,8 @@ namespace SkyCombImage.DrawSpace
                     return;
                 }
                 // Calculate resize factors
-                var widthRatio = (double)thePicture.Width / oldWidth;
-                var heightRatio = (double)thePicture.Height / oldHeight;
+                var widthRatio = thePicture.Width / oldWidth;
+                var heightRatio = thePicture.Height / oldHeight;
                 var factor = Math.Min(widthRatio, heightRatio);
 
                 // Calculate new dimensions

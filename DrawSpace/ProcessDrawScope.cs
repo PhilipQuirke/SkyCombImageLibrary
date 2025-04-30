@@ -124,7 +124,7 @@ namespace SkyCombImage.DrawSpace
 
 
     // Code to draw images related to process object data in charts, graphs,etc.
-    public class ObjectDrawScope : ProcessDrawScope 
+    public class ObjectDrawScope : ProcessDrawScope
     {
         // First millisecond object visible
         public int FirstObjectMs;

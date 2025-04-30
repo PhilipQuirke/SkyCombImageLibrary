@@ -24,20 +24,20 @@ namespace SkyCombImage.CategorySpace
             MinAreaCM2 = minAreaCM2;
             MaxAreaCM2 = maxAreaCM2;
             Animals = animals;
-        }   
+        }
     }
 
 
     public class MasterSizeModelList
     {
-        static public int NumAreas = 7;
+        public static int NumAreas = 7;
 
         // Cached master list of area models
-        static private readonly List<MasterSizeModel> _sizeClasses;
+        private static readonly List<MasterSizeModel> _sizeClasses;
         // Dictionary for quick name-to-index lookup
-        static private readonly Dictionary<string, int> _sizeClassIndices;
+        private static readonly Dictionary<string, int> _sizeClassIndices;
         // List of tuples for area range lookup
-        static private readonly List<(int MinAreaCM2, int MaxAreaCM2, string Name, int Index)> _areaRanges;
+        private static readonly List<(int MinAreaCM2, int MaxAreaCM2, string Name, int Index)> _areaRanges;
 
         // Static constructor to initialize data once
         static MasterSizeModelList()
@@ -68,16 +68,16 @@ namespace SkyCombImage.CategorySpace
             }
         }
 
-        static public List<MasterSizeModel> Get() => _sizeClasses;
+        public static List<MasterSizeModel> Get() => _sizeClasses;
 
-        static public int GetSizeClassIndex(string sizeClass)
+        public static int GetSizeClassIndex(string sizeClass)
         {
             return _sizeClassIndices.TryGetValue(sizeClass, out int index) ? index : -1;
         }
 
 
         // Return the MasterAreaModel Name that best matches the size
-        static public (string, int) CM2ToClass(ProcessObjectModel processObject)
+        public static (string, int) CM2ToClass(ProcessObjectModel processObject)
         {
             int areaCM2 = (int)processObject.SizeCM2;
 
@@ -95,12 +95,12 @@ namespace SkyCombImage.CategorySpace
 
 
         // Return the count of objects in each size category
-        static public List<int> GetObjectCountBySizeClass(ProcessObjList objects, bool significantObjectsOnly = true)
+        public static List<int> GetObjectCountBySizeClass(ProcessObjList objects, bool significantObjectsOnly = true)
         {
             var answer = new int[NumAreas];
             if (objects != null)
                 foreach (var obj in objects)
-                    if( obj.Value.Significant || !significantObjectsOnly )
+                    if (obj.Value.Significant || !significantObjectsOnly)
                     {
                         var (_, index) = CM2ToClass(obj.Value);
                         if (index >= 0 && index < NumAreas)
