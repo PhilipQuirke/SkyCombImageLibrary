@@ -167,7 +167,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        static int EstimateClustersSilhouette(DataTable data, int maxClusters)
+        private static int EstimateClustersSilhouette(DataTable data, int maxClusters)
         {
             var X = data.AsEnumerable().Select(row => new double[] { (double)row["X"], (double)row["Y"], (double)row["Time"] }).ToArray();
             List<double> silhouetteScores = new List<double>();
@@ -185,7 +185,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        static double CalculateSilhouetteScore(double[][] X, int[] labels, int nClusters)
+        private static double CalculateSilhouetteScore(double[][] X, int[] labels, int nClusters)
         {
             double[] silhouetteScores = new double[X.Length];
 
@@ -209,7 +209,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        static double Distance(double[] point1, double[] point2)
+        private static double Distance(double[] point1, double[] point2)
         {
             double sum = 0;
             for (int i = 0; i < point1.Length; i++)
@@ -221,7 +221,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Are these two features similar enough to be associated with each other?
-        static bool IsGoodNextFeature(double yMovePerTimeSlice, double lastTime, double lastX, double lastY, DataRow nextFeature)
+        private static bool IsGoodNextFeature(double yMovePerTimeSlice, double lastTime, double lastX, double lastY, DataRow nextFeature)
         {
             double maxYPixels = ProcessConfigModel.YoloMaxYPixelsDeltaPerFrame - yMovePerTimeSlice;
 
@@ -238,13 +238,13 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Are these two features similar enough to be associated with each other?
-        static bool IsGoodNextFeature(double yMovePerTimeSlice, DataRow lastFeature, DataRow nextFeature)
+        private static bool IsGoodNextFeature(double yMovePerTimeSlice, DataRow lastFeature, DataRow nextFeature)
         {
             return IsGoodNextFeature(yMovePerTimeSlice, lastFeature.Field<double>("Time"), lastFeature.Field<double>("X"), lastFeature.Field<double>("Y"), nextFeature);
         }
 
 
-        static DataTable AdjustClusters(double yMovePerTimeSlice, DataTable orgClusters, int orgNumFeatures)
+        private static DataTable AdjustClusters(double yMovePerTimeSlice, DataTable orgClusters, int orgNumFeatures)
         {
             try
             {
@@ -361,7 +361,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        static List<string> ValidateClusters(double yMovePerTimeSlice, DataTable df)
+        private static List<string> ValidateClusters(double yMovePerTimeSlice, DataTable df)
         {
             var validationErrors = new List<string>();
             var featuresSeen = new List<int>();

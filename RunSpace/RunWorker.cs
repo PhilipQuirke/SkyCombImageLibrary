@@ -53,7 +53,7 @@ namespace SkyCombImage.RunSpace
         public bool StopRunning { get; set; } = false;
 
         // The process calculation effort (duration) in milliseconds
-        int ProcessDurationMs = 0;
+        private int ProcessDurationMs = 0;
 
         // List of "size" images from XXS to XXL
         public List<Image>? SizeImages = null;

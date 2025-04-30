@@ -11,7 +11,7 @@ namespace SkyCombImage.PersistModel
     // Save Block data to a datastore
     public class BlockSave : TardisSaveGraph
     {
-        Drone Drone { get; }
+        private Drone Drone { get; }
 
 
         public BlockSave(Drone drone, DroneDataStore data)

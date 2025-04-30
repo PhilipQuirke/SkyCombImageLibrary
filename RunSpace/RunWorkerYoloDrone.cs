@@ -13,7 +13,7 @@ using YoloDotNet.Models;
 namespace SkyCombImage.RunSpace
 {
     // YOLO (You only look once) V8 video processing.
-    class RunWorkerYoloDrone : RunWorkerPersist
+    internal class RunWorkerYoloDrone : RunWorkerPersist
     {
         public RunWorkerYoloDrone(RunUserInterface runUI, RunConfig config, DroneDataStore dataStore, Drone drone)
             : base(runUI, config, dataStore, drone, ProcessFactory.NewYoloProcess(drone.GroundData, drone.InputVideo, drone, config.ProcessConfig, runUI, config.YoloDirectory))

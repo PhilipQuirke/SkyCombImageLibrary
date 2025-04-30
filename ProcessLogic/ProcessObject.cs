@@ -99,7 +99,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // For Yolo, each object can have at most one feature per block.
-        bool StopYoloSecondBlockClaim(ProcessFeature theFeature)
+        private bool StopYoloSecondBlockClaim(ProcessFeature theFeature)
         {
             return (ProcessAll is YoloProcess) &&
                 (theFeature.Type == FeatureTypeEnum.Real) &&
