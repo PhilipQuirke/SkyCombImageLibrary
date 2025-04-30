@@ -7,28 +7,18 @@ namespace SkyCombImage.ProcessLogic
     // A significant Comb object - a logical object derived from overlapping features over successive frames. 
     public class CombObject : ProcessObject
     {
-        // Parent process model
-        private CombProcess CombProcess { get; }
-
-
         // Constructor used processing video 
         public CombObject(ProcessScope scope, CombProcess combProcess, CombFeature firstFeature) : base(combProcess, scope)
         {
-            CombProcess = combProcess;
             ResetCalcedMemberData();
 
-            if (firstFeature != null)
-            {
-                Assert(firstFeature.Type == FeatureTypeEnum.Real, "Initial feature must be Real");
-                ClaimFeature(firstFeature);
-            }
+            ClaimFeature(firstFeature);
         }
 
 
         // Constructor used when loaded objects from the datastore
         public CombObject(CombProcess combProcess, List<string> settings) : base(combProcess, null)
         {
-            CombProcess = combProcess;
             ResetCalcedMemberData();
 
             LoadSettings(settings);

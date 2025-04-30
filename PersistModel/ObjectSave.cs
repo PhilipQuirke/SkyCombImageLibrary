@@ -1,5 +1,6 @@
 ﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 
+using Emgu.CV;
 using OfficeOpenXml;
 using OfficeOpenXml.Drawing.Chart;
 using OfficeOpenXml.Table.PivotTable;
@@ -314,6 +315,31 @@ namespace SkyCombImage.PersistModel
                 col = 12;
                 Data.SetTitle(ref row, col, "Animals Height Error by Leg");
                 AddProcessObjectHeightPivot(ws, row, col);
+
+                // For each ProcessObject, if LastImage is not null,
+                // save a bitmap of the last image in the datastore
+                // with its name and location.
+                int imageRow = 85;
+                int imageCol = 1;
+                Data.SetTitle(ref imageRow, imageCol, "Individual Object Images");
+                foreach (var obj in processObjects.Values)
+                {
+                    if (obj.LastImage != null)
+                    {
+                        Data.Worksheet.Cells[imageRow, imageCol+1].Value = obj.Name;
+
+                        var imageName = $"Object_{obj.ObjectId}_Img";
+                        Data.SaveBitmap(obj.LastImage.AsBitmap(), imageName, imageRow, imageCol, 200);  // 200% scale
+
+                        imageCol += 2; 
+                        if (imageCol > 20)
+                        {
+                            imageCol = 1;
+                            imageRow += 6;
+                        }
+                    }
+                }
+
             }
         }
     }

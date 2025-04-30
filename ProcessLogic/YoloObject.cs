@@ -15,8 +15,6 @@ namespace SkyCombImage.ProcessLogic
 
         public YoloObject(YoloProcess yoloProcess, ProcessScope scope, int legId, YoloFeature firstFeature, string className, Color classColor, double classConfidence) : base(yoloProcess, scope)
         {
-            Assert(firstFeature.Type == FeatureTypeEnum.Real, "Initial feature must be Real");
-
             ResetCalcedMemberData();
             FlightLegId = legId;
             ClassName = className;

@@ -1,5 +1,6 @@
 ﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 using Emgu.CV;
+using Emgu.CV.Structure;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.CategorySpace;
@@ -67,7 +68,8 @@ namespace SkyCombImage.ProcessLogic
         // Parent process model
         protected ProcessAll ProcessAll { get; }
 
-        public ProcessConfigModel? ProcessConfig { get { return ProcessAll == null ? null : ProcessAll.ProcessConfig; } }
+        public ProcessConfigModel? ProcessConfig { get { return ProcessAll?.ProcessConfig; } }
+        public ProcessScope? ProcessScope { get; set; } = null;
 
         // Static NextObjectID shared by all objects
         public static int NextObjectId = 0;
@@ -82,17 +84,21 @@ namespace SkyCombImage.ProcessLogic
         // Last (Real or UnReal) feature claimed by this object. May be null.
         public ProcessFeature? LastFeature { get { return ProcessFeatures.LastFeature; } }
 
+        // During processing, save an image of the object in the last real feature 
+        public Image<Bgr, byte>? LastImage { get; set; } = null;
 
-        public ProcessObject(ProcessAll processAll, ProcessScope? scope) : base()
+
+        public ProcessObject(ProcessAll processAll, ProcessScope? processScope) : base()
         {
             ProcessAll = processAll;
+            ProcessScope = processScope;
             ProcessFeatures = new(ProcessAll.ProcessConfig);
 
             ObjectId = ++NextObjectId;
-            if (scope != null)
+            if (ProcessScope != null)
             {
-                FlightLegId = scope.PSM.CurrRunLegId;
-                RunFromVideoS = (float)(scope.PSM.CurrInputFrameMs / 1000.0);
+                FlightLegId = ProcessScope.PSM.CurrRunLegId;
+                RunFromVideoS = (float)(ProcessScope.PSM.CurrInputFrameMs / 1000.0);
                 RunToVideoS = RunFromVideoS;
             }
         }
@@ -108,13 +114,23 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Set the last image of this object.
+        private void SetLastImage(Image<Bgr, byte>? lastImage = null)
+        {
+            LastImage?.Dispose();
+            LastImage = lastImage;
+        }
+
+
         // Object may claim ownership of this feature extending the object's lifetime and improving its "Significant" score.
         // This code implements a feature claim. Other functions mostly decide whether the feature should be claimed.
         public virtual bool ClaimFeature(ProcessFeature theFeature)
         {
             try
             {
-                Assert(theFeature.ObjectId <= 0, "ProcessObject.ClaimFeature: Feature is already owned.");
+                Assert(theFeature.ObjectId <= 0, "ClaimFeature: Feature is already owned.");
+                if (LastRealFeature == null)
+                    Assert(theFeature.Type == FeatureTypeEnum.Real, "ClaimFeature: Initial feature must be Real");
 
                 // For Yolo, each object can have at most one feature per block.
                 if (StopYoloSecondBlockClaim(theFeature))
@@ -185,6 +201,20 @@ namespace SkyCombImage.ProcessLogic
                     // Mark all (real and unreal) features associated with this object as significant.
                     foreach (var feature in ProcessFeatures)
                         feature.Value.Significant = true;
+
+                // Save the image of the object in the last real feature
+                if ((LastFeature.Type == FeatureTypeEnum.Real) && (ProcessScope?.CurrInputImage != null))
+                {
+                    // set newImage to the portion of fullimage covered by LastFeature.PixelBox plus a 5 pixel border buffer
+                    var fullImage = ProcessScope.CurrInputImage;
+                    var border = 5;
+                    var x = Math.Max(0, LastFeature.PixelBox.X - border);
+                    var y = Math.Max(0, LastFeature.PixelBox.Y - border);
+                    var width = Math.Min(fullImage.Width - x, LastFeature.PixelBox.Width + 2 * border);
+                    var height = Math.Min(fullImage.Height - y, LastFeature.PixelBox.Height + 2 * border);
+                    var rect = new Rectangle(x, y, width, height);
+                    SetLastImage(fullImage.GetSubRect(rect));
+                }
 
                 return true;
             }

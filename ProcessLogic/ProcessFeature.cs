@@ -267,9 +267,9 @@ namespace SkyCombImage.ProcessLogic
     {
         private static ProcessConfigModel ProcessConfig;
 
-        public ProcessFeature? FirstFeature { get { return (Count == 0 ? null : Values[0]); } }
+        public ProcessFeature? FirstFeature { get { return Count == 0 ? null : Values[0]; } }
         // Last (Real or UnReal) feature claimed by this object. May be null.
-        public ProcessFeature? LastFeature { get { return (Count == 0 ? null : Values[^1]); } }
+        public ProcessFeature? LastFeature { get { return Count == 0 ? null : Values[^1]; } }
 
 
         public ProcessFeatureList(ProcessConfigModel config)

@@ -12,7 +12,7 @@ namespace SkyCombImage.ProcessLogic
     // The Video, Drone & model scope of a processing run
     public class ProcessScope : FlightStepSummaryModel
     {
-        // All drone input data: video(definitely), flight(maybe) and ground(maybe) data
+        // All drone input data: video/images(definitely), flight(maybe) and ground(maybe) data
         public Drone? Drone { get; set; }
 
         public ProcessScopeModel PSM { get; }
@@ -24,7 +24,9 @@ namespace SkyCombImage.ProcessLogic
         // Last step of flight data to process
         public int LastRunStepId { get { return MaxStepId; } }
 
-        public Image<Bgr, byte>? CurrInputImage { get; set; } = null;
+        // Transient image data storage used while processing a Block and Objects.
+        public Image<Bgr, byte>? CurrInputImage  = null;
+        public Image<Bgr, byte>? ModifiedInputImage = null;
 
 
         public ProcessScope(Drone? drone = null)
@@ -44,7 +46,7 @@ namespace SkyCombImage.ProcessLogic
         // Return the child FlightStep
         public override TardisModel? GetTardisModel(int index)
         {
-            return Drone == null ? null : Drone.FlightSteps.GetTardisModel(index);
+            return Drone?.FlightSteps?.GetTardisModel(index);
         }
 
 
@@ -76,6 +78,11 @@ namespace SkyCombImage.ProcessLogic
         {
             CurrInputImage?.Dispose();
             CurrInputImage = null;
+        }
+        public void ResetModifiedImage()
+        {
+            ModifiedInputImage?.Dispose();
+            ModifiedInputImage = null;
         }
 
 

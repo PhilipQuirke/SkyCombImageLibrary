@@ -58,9 +58,6 @@ namespace SkyCombImage.RunSpace
         // List of "size" images from XXS to XXL
         public List<Image>? SizeImages = null;
 
-        public Image<Bgr, byte>? ModifiedInputImage = null;
-
-
         // How to draw various graphs and charts
         public ProcessDrawScope ProcessDrawScope;
         public ProcessDrawPath ProcessDrawPath;
@@ -152,13 +149,6 @@ namespace SkyCombImage.RunSpace
                 RunConfig.DroneConfig.RunVideoToS);
 
             StopRunning = false;
-        }
-
-
-        public void ResetModifiedImage()
-        {
-            ModifiedInputImage?.Dispose();
-            ModifiedInputImage = null;
         }
 
 
@@ -692,6 +682,7 @@ namespace SkyCombImage.RunSpace
                 if (disposing)
                 {
                     // Dispose managed resources
+                    CurrInputImage?.Dispose();
                     ModifiedInputImage?.Dispose();
                     DataStore?.Dispose();
                 }
