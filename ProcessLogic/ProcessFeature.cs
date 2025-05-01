@@ -51,18 +51,27 @@ namespace SkyCombImage.ProcessLogic
             }
         }
 
-        public ProcessFeature Feature { get; }
 
-        protected void CalcNumHotPixels()
+        protected void CalcSumAndNumHotPixels()
         {
-            NumHotPixels = (Pixels == null ? 0 : Pixels.Count());
+            NumHotPixels = 0;
+            SumHotPixels = 0;
+
+            if (Pixels != null)
+            {
+                NumHotPixels = Pixels.Count();
+
+                var threshold = ProcessAll.ProcessConfig.HeatThresholdValue;
+                foreach(var pixel in Pixels)
+                    SumHotPixels += Math.Max(0, pixel.Heat - threshold);
+            }
         }
 
 
         public void ClearHotPixels()
         {
             Pixels = null;
-            CalcNumHotPixels();
+            CalcSumAndNumHotPixels();
         }
 
 
@@ -74,7 +83,7 @@ namespace SkyCombImage.ProcessLogic
             MaxHeat = Math.Max(MaxHeat, currHeat);
 
             Pixels.Add(new PixelHeat(BlockId, FeatureId, currY, currX, currHeat));
-            CalcNumHotPixels();
+            CalcSumAndNumHotPixels();
         }
 
 
@@ -406,17 +415,17 @@ namespace SkyCombImage.ProcessLogic
         {
             int maxHeat = 0;
             int minHeat = 255;
-            int maxPixels = 0;
+            int maxHotPixels = 0;
             foreach (var feature in this)
             {
                 var combFeature = feature.Value;
                 maxHeat = Math.Max(maxHeat, combFeature.MaxHeat);
                 if (feature.Value.MinHeat > 0)
                     minHeat = Math.Min(minHeat, combFeature.MinHeat);
-                maxPixels = Math.Max(maxPixels, combFeature.NumHotPixels);
+                maxHotPixels = Math.Max(maxHotPixels, combFeature.NumHotPixels);
             }
 
-            return (minHeat, maxHeat, maxPixels);
+            return (minHeat, maxHeat, maxHotPixels);
         }
     };
 }

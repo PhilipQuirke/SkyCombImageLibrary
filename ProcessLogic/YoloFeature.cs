@@ -42,7 +42,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Shrink the result.BoundingBox to a smaller bounding box tight around the hot pixels.
-        // Evaluate the MinHeat, MaxHeat, NumHotPixels and PixelBox of this feature
+        // Evaluate the MinHeat, MaxHeat, NumHotPixels, SumHotPixels and PixelBox of this feature
         public void CalculateHeat_ShrinkBox(
            in Image<Bgr, byte> imgOriginal,
            in Image<Gray, byte> imgThreshold)
@@ -50,6 +50,7 @@ namespace SkyCombImage.ProcessLogic
             MinHeat = 255 * 3;
             MaxHeat = 0;
             NumHotPixels = 0;
+            SumHotPixels = 0;
 
             int left = Math.Max(PixelBox.Left, 0);
             int top = Math.Max(PixelBox.Top, 0);

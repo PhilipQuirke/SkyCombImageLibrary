@@ -116,7 +116,7 @@ namespace SkyCombImage.DrawSpace
         // Draw all hot pixels for current block, bounding rectangles of the owned features
         public static void DrawRunProcess(
             DrawImageConfig drawConfig, ProcessConfigModel processConfig, ref Image<Bgr, byte> outputImg, Transform transform,
-            int focusObjectId, // Chosen object in ObjectCategoryForm (if any)
+            ProcessObject? processObject, // Chosen object in ObjectCategoryForm (if any)
             ProcessAll process, ProcessBlockModel? block) // Objects to draw
         {
             try
@@ -149,10 +149,8 @@ namespace SkyCombImage.DrawSpace
                         HotPixels(drawConfig, processConfig, ref outputImg, feature, transform);
 
                         // Draw the bounding rectangle of the owned feature
-                        ProcessObject? theObject = null;
-                        if (feature.ObjectId > 0)
-                            theObject = process.ProcessObjects[feature.ObjectId];
-                        DrawObjectFeatures(drawConfig, ref outputImg, transform, focusObjectId, feature, theObject);
+                        int objectId = processObject == null ? UnknownValue : processObject.ObjectId;
+                        DrawObjectFeatures(drawConfig, ref outputImg, transform, objectId, feature, processObject);
                     }
                 }
             }
@@ -168,7 +166,7 @@ namespace SkyCombImage.DrawSpace
             RunProcessEnum runProcess,
             ProcessConfigModel processConfig, DrawImageConfig drawConfig, Drone drone,
             in Image<Bgr, byte> inputFrame, // Read-only
-            int focusObjectId, // Chosen object in ObjectCategoryForm (if any)
+            ProcessObject? processObject, // Chosen object (if any)
             ProcessBlockModel? block, ProcessAll processAll) // Objects to draw
         {
             try
@@ -183,7 +181,7 @@ namespace SkyCombImage.DrawSpace
                         // Draw hot objects
                         DrawRunProcess(
                             drawConfig, processConfig, ref modifiedInputFrame, new(),
-                            focusObjectId, processAll, block);
+                            processObject, processAll, block);
                     else
                         // Draw Threshold or None
                         DrawImage.Draw(runProcess, processConfig, drawConfig, ref modifiedInputFrame);
@@ -194,6 +192,25 @@ namespace SkyCombImage.DrawSpace
             {
                 throw ThrowException("DrawFrameImage.Draw", ex);
             }
+        }
+
+
+        // Process a single input video frame for the specified block, returning the modified input frames to show 
+        public static Image<Bgr, byte>? Draw(
+            RunProcessEnum runProcess,
+            ProcessConfigModel processConfig, DrawImageConfig drawConfig, Drone drone,
+            in Image<Bgr, byte> inputFrame, // Read-only
+            int focusObjectId, // Chosen object (if any)
+            ProcessBlockModel? block, ProcessAll processAll) // Objects to draw
+        {
+            ProcessObject? theObject = null;
+            if (focusObjectId > 0)
+                theObject = processAll.ProcessObjects[focusObjectId];
+
+            return Draw(
+                runProcess, processConfig, drawConfig, 
+                drone, inputFrame, theObject,
+                block, processAll);
         }
 
 

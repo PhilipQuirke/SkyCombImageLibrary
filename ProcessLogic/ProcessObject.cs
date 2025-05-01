@@ -1,9 +1,11 @@
 ﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 using Emgu.CV;
 using Emgu.CV.Structure;
+using SkyCombDrone.DrawSpace;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.CategorySpace;
+using SkyCombImage.DrawSpace;
 using SkyCombImage.ProcessModel;
 using SkyCombImage.RunSpace;
 using System.Drawing;
@@ -144,12 +146,15 @@ namespace SkyCombImage.ProcessLogic
                 theFeature.ObjectId = this.ObjectId;
 
                 bool wasSignificant = Significant;
+                bool increasedMaxSumRealHotPixels = false;
 
                 // Is feature real?
                 if (theFeature.Type == FeatureTypeEnum.Real)
                 {
                     theFeature.IsTracked = true;
-                    MaxRealHotPixels = Math.Max(MaxRealHotPixels, theFeature.NumHotPixels);
+                    increasedMaxSumRealHotPixels = theFeature.SumHotPixels > MaxSumRealHotPixels;
+                    MaxNumRealHotPixels = Math.Max(MaxNumRealHotPixels, theFeature.NumHotPixels);
+                    MaxSumRealHotPixels = Math.Max(MaxSumRealHotPixels, theFeature.SumHotPixels);
 
                     var theBlock = theFeature.Block;
 
@@ -202,18 +207,29 @@ namespace SkyCombImage.ProcessLogic
                     foreach (var feature in ProcessFeatures)
                         feature.Value.Significant = true;
 
-                // Save the image of the object in the last real feature
-                if ((LastFeature.Type == FeatureTypeEnum.Real) && (ProcessScope?.CurrInputImage != null))
+                // Save the image of the object with the most hot pixels.
+                if ((theFeature.Type == FeatureTypeEnum.Real) && 
+                    (ProcessScope?.CurrInputImage != null) &&
+                    ((LastImage == null) || increasedMaxSumRealHotPixels))
                 {
-                    // set newImage to the portion of fullimage covered by LastFeature.PixelBox plus a 5 pixel border buffer
-                    var fullImage = ProcessScope.CurrInputImage;
-                    var border = 5;
-                    var x = Math.Max(0, LastFeature.PixelBox.X - border);
-                    var y = Math.Max(0, LastFeature.PixelBox.Y - border);
-                    var width = Math.Min(fullImage.Width - x, LastFeature.PixelBox.Width + 2 * border);
-                    var height = Math.Min(fullImage.Height - y, LastFeature.PixelBox.Height + 2 * border);
-                    var rect = new Rectangle(x, y, width, height);
-                    SetLastImage(fullImage.GetSubRect(rect));
+                    DrawImageConfig drawImageConfig = new DrawImageConfig();
+                    drawImageConfig.BoxExtraScale = 2;
+                    drawImageConfig.TextExtraScale = 1;
+
+                    var closeupInputImage = 
+                        DrawFrameImage.Draw(
+                            RunProcessEnum.Yolo, // Force drawing of hot pixels.
+                            ProcessAll.ProcessConfig,
+                            drawImageConfig,
+                            ProcessAll.Drone,
+                            ProcessScope.CurrInputImage,
+                            this,
+                            theFeature.Block, ProcessAll);
+
+                    var showInputBox = Transform.GetInflatedSquareBox(theFeature.PixelBox, 50);
+                    var safeShowInputBox = DrawFrameImage.MoveVisibleBoxInsideImageSize(showInputBox, ProcessScope.CurrInputImage.Size);
+                    closeupInputImage = closeupInputImage.Copy(safeShowInputBox);
+                    SetLastImage(closeupInputImage);
                 }
 
                 return true;
@@ -256,6 +272,7 @@ namespace SkyCombImage.ProcessLogic
             foreach (var feature in ProcessFeatures)
                 feature.Value.ClearHotPixels();
             // NumHotPixels is not cleared 
+            // SumHotPixels is not cleared 
         }
 
 
@@ -452,10 +469,10 @@ namespace SkyCombImage.ProcessLogic
             {
                 // PIXELS
                 // Maximum pixel count per real feature
-                var maxPixels = MaxRealHotPixels;
-                var pixelsOk = (maxPixels > ProcessConfigModel.ObjectMinPixels); // Say 5 pixels
-                var pixelsGood = (maxPixels > 2 * ProcessConfigModel.ObjectMinPixels); // Say 10 pixels 
-                var pixelsGreat = (maxPixels > 4 * ProcessConfigModel.ObjectMinPixels); // Say 20 pixels
+                var maxNumHotPixels = MaxNumRealHotPixels;
+                var pixelsOk = (maxNumHotPixels > ProcessConfigModel.ObjectMinPixels); // Say 5 pixels
+                var pixelsGood = (maxNumHotPixels > 2 * ProcessConfigModel.ObjectMinPixels); // Say 10 pixels 
+                var pixelsGreat = (maxNumHotPixels > 4 * ProcessConfigModel.ObjectMinPixels); // Say 20 pixels
 
                 // TIME
                 // Aka duration. Proxy for numRealFeatures.
@@ -505,8 +522,7 @@ namespace SkyCombImage.ProcessLogic
         // This "VaguelySignificant" object code mirrors the feature "Significant" code
         public bool VaguelySignificant()
         {
-            var maxCount = MaxRealHotPixels;
-            return (MaxRealHotPixels > ProcessConfigModel.ObjectMinPixels); // Say 5 pixels / Block
+            return (MaxNumRealHotPixels > ProcessConfigModel.ObjectMinPixels); // Say 5 pixels / Block
         }
 
 
@@ -605,7 +621,7 @@ namespace SkyCombImage.ProcessLogic
             MaxGirthPixels = Math.Max(MaxGirthPixels, (float)thisGirthPixels);
 
             // The number of hot pixels in the last (real) feature.
-            float hotPixels = lastFeature.NumHotPixels;
+            float hotPixels = lastFeature.NumHotPixels; // PQR TODO should use most heated feature
 
             // Grab the drone input image area
             float imageAreaM2 = lastFeature.Block.FlightStep.InputImageSizeM.AreaM2();
@@ -648,7 +664,7 @@ namespace SkyCombImage.ProcessLogic
             // the circular object covers 78.5 % of the rectangle, so decrease pixelArea. 
             pixelArea *= 0.785f;
 
-            return (1.0f * MaxRealHotPixels) / pixelArea;
+            return (1.0f * MaxNumRealHotPixels) / pixelArea;
         }
 
 

@@ -57,6 +57,8 @@ namespace SkyCombImage.ProcessModel
 
         // Number of image pixels in the PixelBox above the ProcessConfig min heat threshold
         public int NumHotPixels { get; set; } = 0;
+        // Sum of how much hotter than the ProcessConfig min heat threshold the hot pixels are
+        public int SumHotPixels { get; set; } = 0;
 
 
         public ProcessFeatureModel(int blockId, FeatureTypeEnum type)
@@ -66,7 +68,8 @@ namespace SkyCombImage.ProcessModel
             FeatureId = NextFeatureId;
             BlockId = blockId;
             Type = type;
-            NumHotPixels = 0; // Derived from image processing. Can't be recalced. So excldued from ResetCalcedMemberData
+            NumHotPixels = 0; // Derived from image processing. Can't be recalced. So excluded from ResetCalcedMemberData
+            SumHotPixels = 0; // Derived from image processing. Can't be recalced. So excluded from ResetCalcedMemberData
             ResetCalcedMemberData();
         }
 
@@ -98,6 +101,7 @@ namespace SkyCombImage.ProcessModel
 
             HeightAlgorithm = "";
             // NumHotPixels = 0; Derived from image processing. Can't be recalced. So excldued 
+            // SumHotPixels = 0; Derived from image processing. Can't be recalced. So excldued
         }
 
 
@@ -119,8 +123,9 @@ namespace SkyCombImage.ProcessModel
         public const int MinHeatSetting = 15;
         public const int MaxHeatSetting = 16;
         public const int NumHotPixelsSetting = 17;
-        public const int LegIdSetting = 18;
-        public const int RangeMSetting = 19;
+        public const int SumHotPixelsSetting = 18;
+        public const int LegIdSetting = 19;
+        public const int RangeMSetting = 20;
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
@@ -144,7 +149,8 @@ namespace SkyCombImage.ProcessModel
                 { "Box.Height", PixelBox.Height },
                 { "Min Heat", MinHeat },
                 { "Max Heat", MaxHeat },
-                { "# Hot Pixels", NumHotPixels },
+                { "Num Hot Pxs", NumHotPixels },
+                { "Sum Hot Pxs", SumHotPixels },
             };
         }
 
@@ -171,6 +177,7 @@ namespace SkyCombImage.ProcessModel
             MinHeat = StringToNonNegInt(settings[MinHeatSetting - 1]);
             MaxHeat = StringToNonNegInt(settings[MaxHeatSetting - 1]);
             NumHotPixels = StringToNonNegInt(settings[NumHotPixelsSetting - 1]);
+            SumHotPixels = StringToNonNegInt(settings[SumHotPixelsSetting - 1]);
         }
     }
 }

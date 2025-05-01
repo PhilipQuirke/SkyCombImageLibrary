@@ -324,7 +324,7 @@ namespace SkyCombImage.PersistModel
                 Data.SetTitle(ref imageRow, imageCol, "Individual Object Images");
                 foreach (var obj in processObjects.Values)
                 {
-                    if (obj.LastImage != null)
+                    if (obj.Significant && (obj.LastImage != null))
                     {
                         Data.Worksheet.Cells[imageRow, imageCol+1].Value = obj.Name;
 

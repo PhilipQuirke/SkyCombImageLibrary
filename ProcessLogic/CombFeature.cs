@@ -145,7 +145,7 @@ namespace SkyCombImage.ProcessLogic
             if (otherFeature.Pixels != null)
             {
                 Pixels.AddRange(otherFeature.Pixels);
-                CalcNumHotPixels();
+                CalcSumAndNumHotPixels();
 
                 otherFeature.ClearHotPixels();
             }

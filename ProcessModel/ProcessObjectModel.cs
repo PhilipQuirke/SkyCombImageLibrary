@@ -80,7 +80,9 @@ namespace SkyCombImage.ProcessModel
         public bool BeingTracked { get; set; }
 
         // Maximum NumHotPixels associated with real features claimed by this object.
-        public int MaxRealHotPixels { get; set; }
+        public int MaxNumRealHotPixels { get; set; }
+        // Maximum SumHotPixels associated with real features claimed by this object.
+        public int MaxSumRealHotPixels { get; set; }
         // Maximum Width of the object pixel box over real Features
         public int MaxRealPixelWidth { get; set; }
         // Maximum Height of the object pixel box over real Features
@@ -127,7 +129,8 @@ namespace SkyCombImage.ProcessModel
 
             LastRealFeatureId = UnknownValue;
             BeingTracked = true;
-            MaxRealHotPixels = 0;
+            MaxNumRealHotPixels = 0;
+            MaxSumRealHotPixels = 0;
             MaxRealPixelWidth = 0;
             MaxRealPixelHeight = 0;
         }
@@ -174,7 +177,8 @@ namespace SkyCombImage.ProcessModel
         public const int CenterBlockSetting = 24;
         public const int LastRealBlockSetting = 25;
         public const int LastBlockSetting = 26;
-        public const int MaxRealHotPixelsSetting = 27;
+        public const int MaxNumRealHotPixelsSetting = 27;
+        public const int MaxSumRealHotPixelsSetting = 27;
         public const int MaxRealPixelWidthSetting = 28;
         public const int MaxRealPixelHeightSetting = 29;
         public const int MaxSpinePixelsSetting = 30;
@@ -210,7 +214,8 @@ namespace SkyCombImage.ProcessModel
                 { "Attributes", Attributes },
                 { "Significant", Significant },
                 { "# Sig Blocks", NumSigBlocks },
-                { "Max Real Hot Pxs", MaxRealHotPixels },
+                { "Max Num Real Hot Pxs", MaxNumRealHotPixels },
+                { "Max Sum Real Hot Pxs", MaxNumRealHotPixels },
                 { "Max Real Px Width", MaxRealPixelWidth },
                 { "Max Real Px Height", MaxRealPixelHeight },
                 { "Max Spine Pxs", MaxSpinePixels, 2 },
@@ -247,7 +252,8 @@ namespace SkyCombImage.ProcessModel
             Attributes = settings[i++];
             Significant = (settings[i++] == "true");
             NumSigBlocks = StringToNonNegInt(settings[i++]);
-            MaxRealHotPixels = StringToInt(settings[ProcessObjectModel.MaxRealHotPixelsSetting - 1]);
+            MaxNumRealHotPixels = StringToInt(settings[ProcessObjectModel.MaxNumRealHotPixelsSetting - 1]);
+            MaxSumRealHotPixels = StringToInt(settings[ProcessObjectModel.MaxSumRealHotPixelsSetting - 1]);
             MaxRealPixelWidth = StringToInt(settings[ProcessObjectModel.MaxRealPixelWidthSetting - 1]);
             MaxRealPixelHeight = StringToInt(settings[ProcessObjectModel.MaxRealPixelHeightSetting - 1]);
             MaxSpinePixels = StringToInt(settings[ProcessObjectModel.MaxSpinePixelsSetting - 1]);
