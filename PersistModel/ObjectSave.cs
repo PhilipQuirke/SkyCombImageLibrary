@@ -98,7 +98,7 @@ namespace SkyCombImage.PersistModel
             if (lastRow > 0)
             {
                 var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
-                Data.SetChart(chart, ChartTitle, 1.1f, 0, LargeChartRows);
+                Data.SetChart(chart, ChartTitle, 0.9f, 1);
                 Data.SetAxises(chart, "Easting", "Northing", "0", "0");
 
                 Data.AddScatterSerie(chart, AnimalImageDataTabName, "Feature", ProcessFeatureModel.NorthingMSetting, ProcessFeatureModel.EastingMSetting, DroneColors.RealFeatureColor);
@@ -266,8 +266,8 @@ namespace SkyCombImage.PersistModel
                 objectDrawScope.SetObjectRange(processObjects);
 
                 // Draw the histogram of object sizes
-                row = 8;
-                int col = 1;
+                row = 3;
+                int col = 8;
                 Data.SetTitle(ref row, col, "Animal Size Histogram");
                 var drawSizeHistogram = new ProcessDrawSizeHistogram(processDrawScope, objectDrawScope, MasterSizeModelList.GetObjectCountBySizeClass(processObjects));
                 drawSizeHistogram.Initialise(new Size(350, 150));
@@ -275,67 +275,73 @@ namespace SkyCombImage.PersistModel
                 Data.SaveBitmap(localBitmap, "AnimalSizeHistogram", row - 1, col - 1);
 
                 // Draw the matrix of animal sizes and heights
-                row = 3;
-                col = 15;
-                AnimalModelList animals = new();
-                animals.AddProcessObjects(0, processAll.Drone, processObjects, processAll.ProcessSpans);
-                (var message, var matrixBitmap) = AnimalMatrixDrawer.DrawAnimalMatrix(animals, runVideo.SizeImages, true);
-                Data.SetTitle(ref row, col, "Animal Size Height Matrix: " + message);
-                Data.SaveBitmap(matrixBitmap, "AnimalMatrix", row - 1, col - 1, 67);
+                if (processAll.Drone.InputIsVideo)
+                {
+                    row = 3;
+                    col = 15;
+                    AnimalModelList animals = new();
+                    animals.AddProcessObjects(0, processAll.Drone, processObjects, processAll.ProcessSpans);
+                    (var message, var matrixBitmap) = AnimalMatrixDrawer.DrawAnimalMatrix(animals, runVideo.SizeImages, true);
+                    Data.SetTitle(ref row, col, "Animal Size Height Matrix: " + message);
+                    Data.SaveBitmap(matrixBitmap, "AnimalMatrix", row - 1, col - 1, 67);
+                }
 
                 // Draw the flight path with objects and features
-                row = 18;
-                col = 15;
+                row = 12;
+                col = 1;
                 Data.SetTitle(ref row, col, "Flight Path with Animals");
                 var drawFlightPath = new ProcessDrawPath(processDrawScope, processObjects, objectDrawScope);
                 drawFlightPath.BackgroundColor = DroneColors.WhiteBgr;
-                drawFlightPath.Initialise(new Size(575, 575));
+                drawFlightPath.Initialise(new Size(800, 800));
                 localBitmap = drawFlightPath.CurrBitmap(true);
                 Data.SaveBitmap(localBitmap, "FlightPathWithAnimals", row - 1, col - 1);
 
                 // Draw the elevations with objects and features
-                row = 49;
+                row = 56;
                 col = 1;
                 Data.SetTitle(ref row, col, "Flight and Animals Elevations");
                 var drawElevations = new ProcessDrawElevations(processAll, processDrawScope, null);
-                drawElevations.Initialise(new Size(ChartFullWidthPixels, 250));
+                drawElevations.Initialise(new Size(1250, 250));
                 localBitmap = drawElevations.CurrBitmap();
                 Data.SaveBitmap(localBitmap, "Flight and Animals Elevations", row - 1, col - 1);
-                DroneSave.SaveElevationLegend(Data, row, 23, 1, 1);
-                ws.Cells[row, 24].Value = "Drone";
-                ws.Cells[row + 1, 24].Value = "Surface";
-                ws.Cells[row + 2, 24].Value = "Ground";
+                DroneSave.SaveElevationLegend(Data, row, 21, 1, 1);
+                ws.Cells[row, 22].Value = "Drone";
+                ws.Cells[row + 1, 22].Value = "Surface";
+                ws.Cells[row + 2, 22].Value = "Ground";
 
-                // Draw the object pivot
-                row = 65;
-                col = 1;
-                Data.SetTitle(ref row, col, "Animals Location Error by Leg");
-                AddProcessObjectLocationPivot(ws, row, col);
-                row = 65;
-                col = 12;
-                Data.SetTitle(ref row, col, "Animals Height Error by Leg");
-                AddProcessObjectHeightPivot(ws, row, col);
+                // Draw the object location and height error pivots
+                if (false)
+                {
+                    row = 65;
+                    col = 1;
+                    Data.SetTitle(ref row, col, "Animals Location Error by Leg");
+                    AddProcessObjectLocationPivot(ws, row, col);
+                    row = 65;
+                    col = 12;
+                    Data.SetTitle(ref row, col, "Animals Height Error by Leg");
+                    AddProcessObjectHeightPivot(ws, row, col);
+                }
 
                 // For each ProcessObject, if LastImage is not null,
                 // save a bitmap of the last image in the datastore
                 // with its name and location.
-                int imageRow = 85;
-                int imageCol = 1;
-                Data.SetTitle(ref imageRow, imageCol, "Individual Object Images");
+                row = 72;
+                col = 1;
+                Data.SetTitle(ref row, col, "Individual Object Images");
                 foreach (var obj in processObjects.Values)
                 {
                     if (obj.Significant && (obj.LastImage != null))
                     {
-                        Data.Worksheet.Cells[imageRow, imageCol+1].Value = obj.Name;
+                        Data.Worksheet.Cells[row, col].Value = obj.Name;
 
                         var imageName = $"Object_{obj.ObjectId}_Img";
-                        Data.SaveBitmap(obj.LastImage.AsBitmap(), imageName, imageRow, imageCol, 200);  // 200% scale
+                        Data.SaveBitmap(obj.LastImage.AsBitmap(), imageName, row, col-1, 200);  // 200% scale
 
-                        imageCol += 2; 
-                        if (imageCol > 20)
+                        col += 2; 
+                        if (col > 20)
                         {
-                            imageCol = 1;
-                            imageRow += 6;
+                            col = 1;
+                            row += 6;
                         }
                     }
                 }
