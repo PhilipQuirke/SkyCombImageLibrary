@@ -224,7 +224,8 @@ namespace SkyCombImage.ProcessLogic
                             ProcessAll.Drone,
                             ProcessScope.CurrInputImage,
                             this,
-                            theFeature.Block, ProcessAll);
+                            theFeature.Block, ProcessAll,
+                            false);
 
                     var showInputBox = Transform.GetInflatedSquareBox(theFeature.PixelBox, 50);
                     var safeShowInputBox = DrawFrameImage.MoveVisibleBoxInsideImageSize(showInputBox, ProcessScope.CurrInputImage.Size);

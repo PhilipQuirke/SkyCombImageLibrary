@@ -64,8 +64,9 @@ namespace SkyCombImage.DrawSpace
         // Draw the bounding rectangles of the owned features
         public static void DrawObjectFeatures(
             DrawImageConfig config, ref Image<Bgr, byte> image, Transform transform,
-            int focusObjectId, // Chosen object in ObjectCategoryForm (if any)
-            ProcessFeature feature, ProcessObject? processObject) // Current object being drawn
+            ProcessFeature drawFeature,
+            string drawObjectName, 
+            ProcessObject? focusObject)  
         {
             if (config.DrawRealFeatureColor == Color.White &&
                 config.DrawUnrealFeatureColor == Color.White &&
@@ -73,41 +74,39 @@ namespace SkyCombImage.DrawSpace
                 DroneColors.OutScopeObjectColor == Color.White)
                 return;
 
-            if (feature.ObjectId > 0)
+            int drawObjectId = drawFeature.ObjectId;
+            int focusObjectId = focusObject != null ? focusObject.ObjectId : UnknownValue;
+            var isFocusObject = (drawObjectId == focusObjectId);
+
+            if (drawObjectId > 0)
             {
                 var theColor = Color.White;
                 if (focusObjectId > 0)
-                    theColor = (feature.ObjectId == focusObjectId ? DroneColors.InScopeObjectColor : DroneColors.RealFeatureColor);
-                else if (feature.Type == FeatureTypeEnum.Unreal)
+                    theColor = (isFocusObject ? DroneColors.InScopeObjectColor : DroneColors.RealFeatureColor);
+                else if (drawFeature.Type == FeatureTypeEnum.Unreal)
                     theColor = config.DrawUnrealFeatureColor;
-                else if (feature.Type == FeatureTypeEnum.Real)
-                    theColor = feature.Significant ? DroneColors.InScopeObjectColor : config.DrawRealFeatureColor;
+                else if (drawFeature.Type == FeatureTypeEnum.Real)
+                    theColor = drawFeature.Significant ? DroneColors.InScopeObjectColor : config.DrawRealFeatureColor;
 
                 if (theColor != Color.White)
                 {
-                    var isFocusObject = (focusObjectId == feature.ObjectId);
                     int thickness = (int)transform.Scale * config.TextExtraScale / 2;
-                    var scaledRect = transform.CalcRect(feature.PixelBox);
+                    var scaledRect = transform.CalcRect(drawFeature.PixelBox);
 
                     BoundingRectangle(config, ref image, scaledRect, theColor, thickness, config.AreaPadding * config.BoxExtraScale);
 
-                    // Helps identify points visually on image to facilitate mapping to xls data.
-                    // Combined with a very small video time span to process, can be very useful.
-                    if (feature.Significant || isFocusObject ||
-                        (focusObjectId == -1)) // Draw object # for all objects if focusObjectId is -1
-                    {
-                        string name;
-                        if (processObject != null)
-                            name = processObject.Name;
-                        else
-                            name = feature.ObjectId.ToString();
-
-                        // Draw the object name to right of the rectangle.
-                        int separation_pixels = 8;
-                        image.Draw(name,
-                            new Point(scaledRect.X + scaledRect.Width + separation_pixels, scaledRect.Y + separation_pixels),
-                            FontFace.HersheyPlain, transform.Scale * config.TextExtraScale, DroneColors.ColorToBgr(theColor), thickness);
-                    }
+                    if (drawObjectName != "")
+                        // Helps identify points visually on image to facilitate mapping to xls data.
+                        // Combined with a very small video time span to process, can be very useful.
+                        if (drawFeature.Significant || isFocusObject ||
+                            (focusObjectId < 0)) // Draw object # for all objects?
+                        {
+                            // Draw the object name to right of the rectangle.
+                            int separation_pixels = 8;
+                            image.Draw(drawObjectName,
+                                new Point(scaledRect.X + scaledRect.Width + separation_pixels, scaledRect.Y + separation_pixels),
+                                FontFace.HersheyPlain, transform.Scale * config.TextExtraScale, DroneColors.ColorToBgr(theColor), thickness);
+                        }
                 }
             }
         }
@@ -115,9 +114,12 @@ namespace SkyCombImage.DrawSpace
 
         // Draw all hot pixels for current block, bounding rectangles of the owned features
         public static void DrawRunProcess(
-            DrawImageConfig drawConfig, ProcessConfigModel processConfig, ref Image<Bgr, byte> outputImg, Transform transform,
-            ProcessObject? processObject, // Chosen object in ObjectCategoryForm (if any)
-            ProcessAll process, ProcessBlockModel? block) // Objects to draw
+            DrawImageConfig drawConfig, ProcessConfigModel processConfig, 
+            ref Image<Bgr, byte> outputImg, Transform transform,
+            ProcessObject? focusObject, // Chosen object (if any)
+            ProcessBlockModel? block,
+            ProcessAll processAll,
+            bool drawObjectNames)
         {
             try
             {
@@ -125,9 +127,9 @@ namespace SkyCombImage.DrawSpace
                     return;
 
                 // Draw the leg name on the image (if any) at bottom right
-                if (block.FlightLegId > 0)
+                if (drawObjectNames && (block.FlightLegId > 0))
                 {
-                    var video = process.Drone.InputVideo;
+                    var video = processAll.Drone.InputVideo;
                     if (video != null)
                     {
                         int theY = video.ImageHeight * 98 / 100; // pixels
@@ -140,17 +142,25 @@ namespace SkyCombImage.DrawSpace
 
                 for (int featureId = block.MinFeatureId; featureId <= block.MaxFeatureId; featureId++)
                 {
-                    if (process.ProcessFeatures.ContainsKey(featureId))
+                    if (processAll.ProcessFeatures.ContainsKey(featureId))
                     {
-                        var feature = process.ProcessFeatures[featureId];
-                        Assert(feature.BlockId == block.BlockId, "ProcessedImage: Bad logic");
+                        var drawFeature = processAll.ProcessFeatures[featureId];
+                        Assert(drawFeature.BlockId == block.BlockId, "ProcessedImage: Bad logic");
 
                         // Draw all hot pixels for the current block 
-                        HotPixels(drawConfig, processConfig, ref outputImg, feature, transform);
+                        HotPixels(drawConfig, processConfig, ref outputImg, drawFeature, transform);
 
-                        // Draw the bounding rectangle of the owned feature
-                        int objectId = processObject == null ? UnknownValue : processObject.ObjectId;
-                        DrawObjectFeatures(drawConfig, ref outputImg, transform, objectId, feature, processObject);
+                        // Draw the bounding rectangle of the owned feature & object name
+                        var drawObjectName = "";
+                        if (drawObjectNames)
+                        {
+                            var drawObjectId = drawFeature.ObjectId;
+                            if (drawObjectId > 0)
+                                drawObjectName = processAll.ProcessObjects[drawObjectId].Name;
+                            if (drawObjectName == "")
+                                drawObjectName = "#" + drawObjectId;
+                        }
+                        DrawObjectFeatures(drawConfig, ref outputImg, transform, drawFeature, drawObjectName, focusObject);
                     }
                 }
             }
@@ -166,8 +176,10 @@ namespace SkyCombImage.DrawSpace
             RunProcessEnum runProcess,
             ProcessConfigModel processConfig, DrawImageConfig drawConfig, Drone drone,
             in Image<Bgr, byte> inputFrame, // Read-only
-            ProcessObject? processObject, // Chosen object (if any)
-            ProcessBlockModel? block, ProcessAll processAll) // Objects to draw
+            ProcessObject? focusObject, // Chosen object (if any)
+            ProcessBlockModel? block, 
+            ProcessAll processAll,
+            bool drawObjectNames = true) 
         {
             try
             {
@@ -181,7 +193,7 @@ namespace SkyCombImage.DrawSpace
                         // Draw hot objects
                         DrawRunProcess(
                             drawConfig, processConfig, ref modifiedInputFrame, new(),
-                            processObject, processAll, block);
+                            focusObject, block, processAll, drawObjectNames);
                     else
                         // Draw Threshold or None
                         DrawImage.Draw(runProcess, processConfig, drawConfig, ref modifiedInputFrame);
@@ -201,15 +213,16 @@ namespace SkyCombImage.DrawSpace
             ProcessConfigModel processConfig, DrawImageConfig drawConfig, Drone drone,
             in Image<Bgr, byte> inputFrame, // Read-only
             int focusObjectId, // Chosen object (if any)
-            ProcessBlockModel? block, ProcessAll processAll) // Objects to draw
+            ProcessBlockModel? block, 
+            ProcessAll processAll)  
         {
-            ProcessObject? theObject = null;
+            ProcessObject? focusObject = null;
             if (focusObjectId > 0)
-                theObject = processAll.ProcessObjects[focusObjectId];
+                focusObject = processAll.ProcessObjects[focusObjectId];
 
             return Draw(
                 runProcess, processConfig, drawConfig, 
-                drone, inputFrame, theObject,
+                drone, inputFrame, focusObject,
                 block, processAll);
         }
 

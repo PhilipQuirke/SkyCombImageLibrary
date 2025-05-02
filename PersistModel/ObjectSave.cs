@@ -98,7 +98,7 @@ namespace SkyCombImage.PersistModel
             if (lastRow > 0)
             {
                 var chart = chartWs.Drawings.AddScatterChart(ChartName, eScatterChartType.XYScatter);
-                Data.SetChart(chart, ChartTitle, 0.9f, 1);
+                Data.SetChart(chart, ChartTitle, 1.1f, 1);
                 Data.SetAxises(chart, "Easting", "Northing", "0", "0");
 
                 Data.AddScatterSerie(chart, AnimalImageDataTabName, "Feature", ProcessFeatureModel.NorthingMSetting, ProcessFeatureModel.EastingMSetting, DroneColors.RealFeatureColor);
@@ -341,7 +341,7 @@ namespace SkyCombImage.PersistModel
                         if (col > 20)
                         {
                             col = 1;
-                            row += 6;
+                            row += 7;
                         }
                     }
                 }
