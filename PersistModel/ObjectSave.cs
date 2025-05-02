@@ -252,7 +252,7 @@ namespace SkyCombImage.PersistModel
             Data.SetLargeTitle(AnimalReportTitle);
 
             int numAnimals = processAll.ProcessObjects.NumSignificantObjects;
-            int swatheM2 = processAll.GroundData.SwatheModel.M2Seen;
+            int swatheM2 = processAll.GroundData.SwatheModel?.M2Seen ?? 0;
 
             int row = 3;
             Data.SetTitle(ref row, 1, "Metrics");
