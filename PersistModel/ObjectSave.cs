@@ -236,12 +236,39 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // Add object summary with charts and graphs
-        public void SaveObjectReport(int maxBlockId, RunWorkerPersist runVideo)
+        // For each ProcessObject, if LastImage is not null,
+        // save a bitmap of the last image in the datastore with its name.
+        public static void SaveObjectMatrix(ImageDataStore data, ProcessObjList processObjects, int row)
         {
-            var processAll = runVideo.ProcessAll;
-            var processScope = runVideo;
-            var processDrawScope = runVideo.ProcessDrawScope;
+            int col = 1;
+            data.SetTitle(ref row, col, "Individual Object Images");
+            foreach (var obj in processObjects.Values)
+            {
+                if (obj.Significant && (obj.LastImage != null))
+                {
+                    data.Worksheet.Cells[row, col].Value = obj.Name;
+
+                    var imageName = $"Object_{obj.ObjectId}_Img";
+                    data.SaveBitmap(obj.LastImage.AsBitmap(), imageName, row, col - 1, 200);  // 200% scale
+
+                    col += 2;
+                    if (col > 20)
+                    {
+                        col = 1;
+                        row += 7;
+                    }
+                }
+            }
+        }
+
+
+
+        // Add object summary with charts and graphs
+        public void SaveObjectReport(int maxBlockId, RunWorkerPersist runWorker)
+        {
+            var processAll = runWorker.ProcessAll;
+            var processScope = runWorker;
+            var processDrawScope = runWorker.ProcessDrawScope;
             var processObjects = processAll.ProcessObjects;
 
             Data.SelectOrAddWorksheet(AnimalReportTabName);
@@ -271,7 +298,7 @@ namespace SkyCombImage.PersistModel
                 Data.SetTitle(ref row, col, "Animal Size Histogram");
                 var drawSizeHistogram = new ProcessDrawSizeHistogram(processDrawScope, objectDrawScope, MasterSizeModelList.GetObjectCountBySizeClass(processObjects));
                 drawSizeHistogram.Initialise(new Size(350, 150));
-                var localBitmap = drawSizeHistogram.CurrBitmap(true, runVideo.SizeImages);
+                var localBitmap = drawSizeHistogram.CurrBitmap(true, runWorker.SizeImages);
                 Data.SaveBitmap(localBitmap, "AnimalSizeHistogram", row - 1, col - 1);
 
                 // Draw the matrix of animal sizes and heights
@@ -281,7 +308,7 @@ namespace SkyCombImage.PersistModel
                     col = 15;
                     AnimalModelList animals = new();
                     animals.AddProcessObjects(0, processAll.Drone, processObjects, processAll.ProcessSpans);
-                    (var message, var matrixBitmap) = AnimalMatrixDrawer.DrawAnimalMatrix(animals, runVideo.SizeImages, true);
+                    (var message, var matrixBitmap) = AnimalMatrixDrawer.DrawAnimalMatrix(animals, runWorker.SizeImages, true);
                     Data.SetTitle(ref row, col, "Animal Size Height Matrix: " + message);
                     Data.SaveBitmap(matrixBitmap, "AnimalMatrix", row - 1, col - 1, 67);
                 }
@@ -323,29 +350,8 @@ namespace SkyCombImage.PersistModel
                 }
 
                 // For each ProcessObject, if LastImage is not null,
-                // save a bitmap of the last image in the datastore
-                // with its name and location.
-                row = 72;
-                col = 1;
-                Data.SetTitle(ref row, col, "Individual Object Images");
-                foreach (var obj in processObjects.Values)
-                {
-                    if (obj.Significant && (obj.LastImage != null))
-                    {
-                        Data.Worksheet.Cells[row, col].Value = obj.Name;
-
-                        var imageName = $"Object_{obj.ObjectId}_Img";
-                        Data.SaveBitmap(obj.LastImage.AsBitmap(), imageName, row, col-1, 200);  // 200% scale
-
-                        col += 2; 
-                        if (col > 20)
-                        {
-                            col = 1;
-                            row += 7;
-                        }
-                    }
-                }
-
+                // save a bitmap of the last image in the datastore with its name.
+                SaveObjectMatrix(Data, processObjects, 72);
             }
         }
     }

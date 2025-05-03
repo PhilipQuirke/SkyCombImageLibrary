@@ -14,13 +14,13 @@ namespace SkyCombImage.RunSpace
 
         public abstract void RefreshAll();
 
-        public abstract void DrawUI(RunWorker runVideo);
+        public abstract void DrawUI(RunWorker runWorker);
 
-        public abstract void DrawObjectGrid(RunWorker runVideo, bool showObjectGrid);
+        public abstract void DrawObjectGrid(RunWorker runWorker, bool showObjectGrid);
 
-        public abstract void ShowStepProgress(RunWorker runVideo, int intervalCount, int stepCount);
+        public abstract void ShowStepProgress(RunWorker runWorker, int intervalCount, int stepCount);
 
-        public abstract void BadDuration(RunWorker runVideo);
+        public abstract void BadDuration(RunWorker runWorker);
 
         public abstract void ShowRunSummary(string summary);
 

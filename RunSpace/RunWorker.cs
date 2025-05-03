@@ -447,7 +447,7 @@ namespace SkyCombImage.RunSpace
             if (!GetCurrImage_InputIsVideo())
                 return false;
 
-            Assert(Drone.InputVideo.CurrFrameId == PSM.CurrInputFrameId, "RunVideo.Run: Bad FrameId 1");
+            Assert(Drone.InputVideo.CurrFrameId == PSM.CurrInputFrameId, "RunWorker.Run: Bad FrameId 1");
             return true;
         }
 
@@ -569,7 +569,7 @@ namespace SkyCombImage.RunSpace
                         // Apply process model to this new frame
                         var thisBlock = AddBlockAndProcessInputRunFrame();
 
-                        Assert(inputVideo.CurrFrameId == thisBlock.InputFrameId, "RunVideo.Run: Bad FrameId 2");
+                        Assert(inputVideo.CurrFrameId == thisBlock.InputFrameId, "RunWorker.Run: Bad FrameId 2");
 
                         // If we need it, draw the output for this new frame
                         if ((videoWriter != null) || (!suppressUiUpdate))

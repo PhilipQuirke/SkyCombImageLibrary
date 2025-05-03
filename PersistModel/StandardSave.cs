@@ -87,15 +87,15 @@ namespace SkyCombImage.PersistModel
 
 
         // Save the Run & Model data to the dataStore
-        public void ProcessAll(RunWorkerPersist runVideo, bool fullSave)
+        public void ProcessAll(RunWorkerPersist runWorker, bool fullSave)
         {
             try
             {
-                var process = runVideo.ProcessAll;
-                var runConfig = runVideo.RunConfig;
-                var effort = runVideo.GetEffort();
-                var settings = runVideo.GetSettings();
-                var data = runVideo.DataStore;
+                var process = runWorker.ProcessAll;
+                var runConfig = runWorker.RunConfig;
+                var effort = runWorker.GetEffort();
+                var settings = runWorker.GetSettings();
+                var data = runWorker.DataStore;
 
                 SaveProcessSettingsAndClearDetail(runConfig, effort, settings);
 
@@ -121,10 +121,10 @@ namespace SkyCombImage.PersistModel
                     // Save the Feature data 
                     var saveFeatures = ((runConfig.ProcessConfig.SaveObjectData != SaveObjectDataEnum.None) && (process.ProcessFeatures.Count > 0));
                     if (saveFeatures)
-                        SaveProcess.SaveFeatureList(runVideo.ProcessAll, saveAllObjects);
+                        SaveProcess.SaveFeatureList(runWorker.ProcessAll, saveAllObjects);
 
                     // Add the Object/Feature charts
-                    SaveProcess.SaveObjectReport(MaxDatumId, runVideo);
+                    SaveProcess.SaveObjectReport(MaxDatumId, runWorker);
 
                     // Save the ProcessSpan data 
                     SaveProcess.SaveSpanList(process);

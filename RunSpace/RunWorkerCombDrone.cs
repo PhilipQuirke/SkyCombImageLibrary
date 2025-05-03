@@ -8,7 +8,7 @@ using SkyCombImage.PersistModel;
 using SkyCombImage.ProcessLogic;
 
 
-// Continuation of RunVideo.cs, contains both Skycomb-specific runners
+// Continuation of RunWorker.cs, contains both Skycomb-specific runners
 namespace SkyCombImage.RunSpace
 {
     // The RunCombDual takes as input 1 to 4 files. For example, the DJI M2E Dual drone:
