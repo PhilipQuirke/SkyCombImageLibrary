@@ -238,7 +238,7 @@ namespace SkyCombImage.PersistModel
 
         // For each ProcessObject, if LastImage is not null,
         // save a bitmap of the last image in the datastore with its name.
-        public static void SaveObjectMatrix(ImageDataStore data, ProcessObjList processObjects, int row)
+        public static void SaveObjectMatrix(ImageDataStore data, ProcessObjList processObjects, int row, int scale = 200)
         {
             int col = 1;
             data.SetTitle(ref row, col, "Individual Object Images");
@@ -249,7 +249,7 @@ namespace SkyCombImage.PersistModel
                     data.Worksheet.Cells[row, col].Value = obj.Name;
 
                     var imageName = $"Object_{obj.ObjectId}_Img";
-                    data.SaveBitmap(obj.LastImage.AsBitmap(), imageName, row, col - 1, 200);  // 200% scale
+                    data.SaveBitmap(obj.LastImage.AsBitmap(), imageName, row, col - 1, scale);
 
                     col += 2;
                     if (col > 20)
