@@ -69,10 +69,13 @@ namespace SkyCombImage.ProcessLogic
 
     public class CameraParameters
     {
-        public float HorizontalFOV { get; set; } // Degrees
-        public float VerticalFOV { get; set; } // Degrees
+        public double FocalLength { get; set; } // mm
         public int ImageWidth { get; set; }  // Pixels
         public int ImageHeight { get; set; } // Pixels
+        public double SensorWidth { get; set; }  // mm
+        public double SensorHeight { get; set; } // mm
+        public float HorizontalFOV { get; set; } // Degrees
+        public float VerticalFOV { get; set; } // Degrees
     }
 
     // Position of an (animal) hotspot in the image
@@ -91,8 +94,7 @@ namespace SkyCombImage.ProcessLogic
 
     public class DroneTargetCalculator
     {
-        public static Accord.Math.Matrix3x3 CameraK = CameraIntrinsic.Default3x3();
-
+        public readonly Accord.Math.Matrix3x3 CameraK;
         public readonly DroneState DroneState;
         public readonly CameraParameters CameraParams;
         public readonly TerrainGrid Terrain;
@@ -105,6 +107,7 @@ namespace SkyCombImage.ProcessLogic
             CameraParams = cameraParams;
             Terrain = terrain;
             ApplyDistortionCorrection = applyDistortionCorrection;
+            CameraK = CameraIntrinsic.Intrinsic(cameraParams.FocalLength, cameraParams.ImageWidth, cameraParams.ImageHeight, cameraParams.SensorWidth, cameraParams.SensorHeight);
         }
 
 

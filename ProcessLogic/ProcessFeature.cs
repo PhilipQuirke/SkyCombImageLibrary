@@ -193,13 +193,16 @@ namespace SkyCombImage.ProcessLogic
                 if (droneState.CameraDownAngle < 15)
                     return;
 
-                int reduction_factor = 2;
+                int reduction_factor = 1;
 
                 CameraParameters cameraParams = new();
-                cameraParams.HorizontalFOV = ProcessAll.VideoData.HFOVDeg;
-                cameraParams.VerticalFOV = (float)ProcessAll.VideoData.VFOVDeg;
+                cameraParams.FocalLength = ProcessAll.VideoData.FocalLength;
                 cameraParams.ImageWidth = ProcessAll.VideoData.ImageWidth / reduction_factor;
                 cameraParams.ImageHeight = ProcessAll.VideoData.ImageHeight / reduction_factor;
+                cameraParams.SensorWidth = ProcessAll.VideoData.SensorWidth;
+                cameraParams.SensorHeight = ProcessAll.VideoData.SensorHeight;
+                cameraParams.HorizontalFOV = ProcessAll.VideoData.HFOVDeg;
+                cameraParams.VerticalFOV = ProcessAll.VideoData.VFOVDeg;
 
                 (double xFraction01, double yFraction01) = CentroidImageFractions(); // Range 0 to 1
                 ImagePosition imagePosition = new();
@@ -211,10 +214,8 @@ namespace SkyCombImage.ProcessLogic
                 // Assumes that Zoom is constant at 1
                 DroneTargetCalculator droneTargetCalculator = new(droneState, cameraParams, terrainGrid, false);
 #if DEBUG
-                /* PQR TODO
-                                if( flightStep.FixAltM == 0)
-                                    droneTargetCalculator.UnitTest_Centroid(Block);
-                */
+                if( flightStep.FixAltM == 0)
+                    droneTargetCalculator.UnitTest_Centroid(Block);
 #endif
                 LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition);
                 if (result != null)

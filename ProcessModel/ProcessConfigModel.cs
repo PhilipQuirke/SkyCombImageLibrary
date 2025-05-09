@@ -202,6 +202,7 @@ namespace SkyCombImage.ProcessModel
 
     public class CameraIntrinsic
     {
+        // These are default values from a single specific camera. Only use if nothing else is available.
         public const double DefaultFocalLength = 9.1; // mm
         public const double DefaultImageWidth = 640; // px
         public const double DefaultImageHeight = 512; // px
@@ -248,8 +249,19 @@ namespace SkyCombImage.ProcessModel
 
 
         // Create a drone camera intrinsic matrix. Used by DroneTargetCalculator
-        public static Accord.Math.Matrix3x3 Intrinsic(double focalLength, double imageWidth, double imageHeight, double sensorWidth, double sensorHeight)
+        public static Accord.Math.Matrix3x3 Intrinsic(
+            double rawFocalLength = BaseConstants.UnknownValue, 
+            double rawImageWidth = BaseConstants.UnknownValue, 
+            double rawImageHeight = BaseConstants.UnknownValue, 
+            double rawSensorWidth = BaseConstants.UnknownValue, 
+            double rawSensorHeight = BaseConstants.UnknownValue)
         {
+            double focalLength = rawFocalLength > 0 ? rawFocalLength : DefaultFocalLength;
+            double imageWidth = rawImageWidth > 0 ? rawImageWidth : DefaultImageWidth;
+            double imageHeight = rawImageHeight > 0 ? rawImageHeight : DefaultImageHeight;
+            double sensorWidth = rawSensorWidth > 0 ? rawSensorWidth : DefaultSensorWidth;
+            double sensorHeight = rawSensorHeight > 0 ? rawSensorHeight : DefaultSensorHeight;
+
             var Cx = imageWidth / 2;
             var Cy = imageHeight / 2;
             var Fx = focalLength * imageWidth / sensorWidth; // F * pixels per mm = focal length in mm x image width px / sensor width mm
@@ -267,16 +279,10 @@ namespace SkyCombImage.ProcessModel
             return K;
         }
 
-        // Used by DroneTargetCalculator
+        // Returns default values from a single specific camera. Try not to use this.
         public static Accord.Math.Matrix3x3 Default3x3()
         {
-            return Intrinsic(DefaultFocalLength, DefaultImageWidth, DefaultImageHeight, DefaultSensorWidth, DefaultSensorHeight);
-        }
-
-        // Used by DroneTargetCalculator
-        public static Accord.Math.Matrix3x3 Test3x3(double f = 1, int iw = 0, int ih = 0, double sw = 1, double sh = 1)
-        {
-            return Intrinsic(DefaultFocalLength * f, DefaultImageWidth + iw, DefaultImageHeight + ih, DefaultSensorWidth * sw, DefaultSensorHeight * sh);
+            return Intrinsic();
         }
     }
 }
