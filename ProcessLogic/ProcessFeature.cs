@@ -193,12 +193,15 @@ namespace SkyCombImage.ProcessLogic
                 if (droneState.CameraDownAngle < 15)
                     return;
 
-                int reduction_factor = 1;
+                // LOS algorithm works is not useful if the drone is less than 10m above the ground.
+                // This also catches the very rare case where the DEM data is bad (very large) and so FixedDistanceDown goes negative.
+                if (flightStep.FixedDistanceDown < 10)
+                    return;
 
                 CameraParameters cameraParams = new();
                 cameraParams.FocalLength = ProcessAll.VideoData.FocalLength;
-                cameraParams.ImageWidth = ProcessAll.VideoData.ImageWidth / reduction_factor;
-                cameraParams.ImageHeight = ProcessAll.VideoData.ImageHeight / reduction_factor;
+                cameraParams.ImageWidth = ProcessAll.VideoData.ImageWidth;
+                cameraParams.ImageHeight = ProcessAll.VideoData.ImageHeight;
                 cameraParams.SensorWidth = ProcessAll.VideoData.SensorWidth;
                 cameraParams.SensorHeight = ProcessAll.VideoData.SensorHeight;
                 cameraParams.HorizontalFOV = ProcessAll.VideoData.HFOVDeg;
@@ -206,15 +209,14 @@ namespace SkyCombImage.ProcessLogic
 
                 (double xFraction01, double yFraction01) = CentroidImageFractions(); // Range 0 to 1
                 ImagePosition imagePosition = new();
-                imagePosition.PixelX = ((PixelBox.X + PixelBox.Width / 2.0) / reduction_factor);
-                imagePosition.PixelY = ((PixelBox.Y + PixelBox.Height / 2.0) / reduction_factor);
+                imagePosition.PixelX = (PixelBox.X + PixelBox.Width / 2.0);
+                imagePosition.PixelY = (PixelBox.Y + PixelBox.Height / 2.0);
 
 
                 phase = 5;
-                // Assumes that Zoom is constant at 1
                 DroneTargetCalculator droneTargetCalculator = new(droneState, cameraParams, terrainGrid, false);
 #if DEBUG
-                if( flightStep.FixAltM == 0)
+                if(flightStep.FixAltM == 0) 
                     droneTargetCalculator.UnitTest_Centroid(Block);
 #endif
                 LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition);

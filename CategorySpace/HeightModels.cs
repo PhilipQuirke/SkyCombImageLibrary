@@ -1,6 +1,7 @@
 ﻿// Copyright SkyComb Limited 2024. All rights reserved. 
 using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
+using SkyCombGround.CommonSpace;
 
 
 // Models are used in-memory and to persist/load data to/from the datastore
@@ -38,7 +39,7 @@ namespace SkyCombImage.CategorySpace
         {
             _heightClasses = new List<MasterHeightModel>
             {
-                new("?", -9999, -2, "Unknown height"),
+                new("?", BaseConstants.UnknownValue, -2, "Unknown height"),
                 new("G", -1.9, 2, "Ground level"),
                 new("1f", 2.01, 5, "First floor"),
                 new("2f", 5.01, 8, "Second floor"),
