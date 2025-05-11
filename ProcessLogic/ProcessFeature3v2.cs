@@ -353,15 +353,6 @@ namespace SkyCombImage.ProcessLogic
             // **Step 3:** Raycast from the drone along this direction to find ground intersection.
             Vector3? targetLocation = FindGroundIntersection(worldDir);
 
-            // **Step 4:** Handle edge cases for camera orientation.
-            if (Math.Abs(DroneState.CameraDownAngle - 90.0f) < 1e-3f)
-            {
-                // If camera is pointing straight down (pitch ~ 90°), set target directly below drone.
-                Vector3 dronePos2 = DroneWorldPosition();
-                float groundY = Terrain?.GetElevation(dronePos2.X, dronePos2.Z) ?? 0.0f;
-                targetLocation = new Vector3(dronePos2.X, groundY, dronePos2.Z);
-            }
-
             // (If the ray is nearly horizontal, FindGroundIntersection will return null or a very distant point,
             // which is handled by the range check next.)
 
