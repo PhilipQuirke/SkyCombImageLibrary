@@ -186,7 +186,6 @@ namespace SkyCombImage.DrawSpace
         }
 
 
-        // Generate a bitmap of the graph as per scope settings.
         public override Bitmap CurrBitmap(bool dpiIndependent = false, List<Image>? sizeImages = null)
         {
             var answer = base.CurrBitmap();
@@ -204,6 +203,11 @@ namespace SkyCombImage.DrawSpace
                 int vertStep = 20;
                 int horizStep = 80;
 
+                // Calculate total text height and width
+                int numLines = 6; // Object, Height, Size, Heat, Range, At
+                int totalTextHeight = numLines * vertStep;
+                int totalTextWidth = horizStep + 120; // Approximate width of data text
+
                 using (Graphics graphics = Graphics.FromImage(answer))
                 {
                     // Define a font and brush for the text
@@ -213,8 +217,25 @@ namespace SkyCombImage.DrawSpace
                     // Define the position where you want to draw the text
                     Rectangle objectRect = DroneLocnMToPixelSquare(
                         HoverObject.LocationM, ObjectPixels);
+
+                    // Start positions (default to right of the object)
                     PointF leftPosition = new PointF(objectRect.Right, objectRect.Bottom);
-                    PointF rightPosition = new PointF(objectRect.Right + horizStep, objectRect.Bottom);
+
+                    // Check if text would extend beyond right edge
+                    if (leftPosition.X + totalTextWidth > answer.Width)
+                    {
+                        // Move text to the left of the object
+                        leftPosition.X = Math.Max(10, objectRect.Left - totalTextWidth);
+                    }
+
+                    // Check if text would extend beyond bottom edge
+                    if (leftPosition.Y + totalTextHeight > answer.Height)
+                    {
+                        // Move text above the object
+                        leftPosition.Y = Math.Max(10, objectRect.Top - totalTextHeight);
+                    }
+
+                    PointF rightPosition = new PointF(leftPosition.X + horizStep, leftPosition.Y);
 
                     // Draw the text titles on the bitmap
                     graphics.DrawString("Object", font, brush, leftPosition); leftPosition.Y += vertStep;
