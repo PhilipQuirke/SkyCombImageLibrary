@@ -21,7 +21,7 @@ namespace SkyCombImage.ProcessLogic
 
         public YoloProcess(GroundData ground, VideoData video, Drone drone, ProcessConfigModel config, RunUserInterface runUI, string yoloPath) : base(ground, video, drone, config, runUI)
         {
-            YoloDetect = new YoloDetect(yoloPath, config.YoloDetectConfidence, config.YoloIoU);
+            YoloDetect = YoloDetect.GetInstance(yoloPath, config.YoloDetectConfidence, config.YoloIoU);
             LegFrameFeatures = new();
         }
 
