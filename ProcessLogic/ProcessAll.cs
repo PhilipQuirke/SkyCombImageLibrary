@@ -63,7 +63,7 @@ namespace SkyCombImage.ProcessLogic
         public ProcessFeatureList ProcessFeatures { get; private set; }
         // List of logical objects found - derived from overlapping features over successive frames. 
         public ProcessObjList ProcessObjects { get; private set; }
-        // List of ProcessSpans that analsyse ProcessObjects to generate FixAltM/FixYawDeg/FixPitchDeg data
+        // List of ProcessSpans that analyse ProcessObjects to generate FixAltM/FixYawDeg/FixPitchDeg data
         public ProcessSpanList ProcessSpans { get; set; }
 
 

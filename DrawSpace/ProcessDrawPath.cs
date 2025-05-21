@@ -237,6 +237,26 @@ namespace SkyCombImage.DrawSpace
 
                     PointF rightPosition = new PointF(leftPosition.X + horizStep, leftPosition.Y);
 
+                    // Create a semi-transparent background for the text
+                    Rectangle textBackgroundRect = new Rectangle(
+                        (int)leftPosition.X - 10,
+                        (int)leftPosition.Y - 5,
+                        totalTextWidth + 5,
+                        totalTextHeight + 10
+                    );
+
+                    // Draw semi-transparent black background
+                    using (SolidBrush backgroundBrush = new SolidBrush(Color.FromArgb(180, 0, 0, 0)))
+                    {
+                        graphics.FillRectangle(backgroundBrush, textBackgroundRect);
+                    }
+
+                    // Draw a border around the text background for better definition
+                    using (Pen borderPen = new Pen(Color.FromArgb(220, 255, 255, 255), 1))
+                    {
+                        graphics.DrawRectangle(borderPen, textBackgroundRect);
+                    }
+
                     // Draw the text titles on the bitmap
                     graphics.DrawString("Object", font, brush, leftPosition); leftPosition.Y += vertStep;
                     graphics.DrawString("Height", font, brush, leftPosition); leftPosition.Y += vertStep;
