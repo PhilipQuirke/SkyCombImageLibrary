@@ -236,31 +236,49 @@ namespace SkyCombImage.PersistModel
         }
 
 
-        // For each ProcessObject, if LastImage is not null,
-        // save a bitmap of the last image in the datastore with its name.
-        public static void SaveObjectMatrix(ImageDataStore data, ProcessObjList processObjects, int row, int scale = 200)
+        // Persist (save) the last images of each ProcessObject to the datastore in a matrix of images
+        public static void SaveObjectMatrix(ImageDataStore data, ProcessObjList processObjects, int startRow)
         {
+            //var title = $"Individual Object Images: ColumnWidth={data.Worksheet.DefaultColWidth}, RowHeight={data.Worksheet.DefaultRowHeight}, Column1Width={data.Worksheet.Column(1).Width}, Row1Height={data.Worksheet.Row(1).Height}, ZoomLevel={data.Worksheet.View.ZoomScale}";
+            var title = "Individual Object Images";
+
             int col = 1;
-            data.SetTitle(ref row, col, "Individual Object Images");
+            int row = startRow;
+            data.SetTitle(ref row, col, title);
+            data.Worksheet.Cells[startRow, 5].Value = "With object name and max heat (0-255)";
+
+            const int maxCol = 20;
+            const int colSpacing = 2;
+            const int rowSpacing = 7;
+            const int fixedWidth = 120;
+
+            var imageHandler = new ExcelImageHandler(data.Worksheet);
+
             foreach (var obj in processObjects.Values)
             {
                 if (obj.Significant && (obj.LastImage != null))
                 {
-                    data.Worksheet.Cells[row, col].Value = obj.Name;
-
-                    var imageName = $"Object_{obj.ObjectId}_Img";
-                    data.SaveBitmap(obj.LastImage.AsBitmap(), imageName, row, col - 1, scale);
-
-                    col += 2;
-                    if (col > 20)
+                    var originalBitmap = obj.LastImage.AsBitmap();
+                    if (originalBitmap != null)
                     {
-                        col = 1;
-                        row += 7;
+                        //data.Worksheet.Cells[row, col].Value = $"{obj.Name} ({originalBitmap.Width}x{originalBitmap.Height} @{originalBitmap.HorizontalResolution}dpi)";
+                        data.Worksheet.Cells[row, col].Value = $"{obj.Name} ({obj.MaxHeat})";
+
+                        var imageName = $"Object_{obj.ObjectId}_Img";
+                        int imageHeight = (int)((double)originalBitmap.Height * fixedWidth / Math.Max(originalBitmap.Width, 1));
+
+                        imageHandler.SaveBitmapSized(originalBitmap, imageName, row, col - 1, fixedWidth, imageHeight);
+
+                        col += colSpacing;
+                        if (col > maxCol)
+                        {
+                            col = 1;
+                            row += rowSpacing;
+                        }
                     }
                 }
             }
         }
-
 
 
         // Add object summary with charts and graphs
@@ -351,7 +369,7 @@ namespace SkyCombImage.PersistModel
 
                 // For each ProcessObject, if LastImage is not null,
                 // save a bitmap of the last image in the datastore with its name.
-                SaveObjectMatrix(Data, processObjects, 72);
+                ObjectSave.SaveObjectMatrix(Data, processObjects, 72);
             }
         }
     }

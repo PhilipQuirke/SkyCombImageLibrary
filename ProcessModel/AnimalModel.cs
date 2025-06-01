@@ -24,10 +24,7 @@ namespace SkyCombImage.ProcessModel
         // Debugging information
         public int CameraDownDegs { get; }
         public float AvgRangeM { get; }
-        public float BestHFOVDegs { get; }
-        public float BestFixAltM { get; }
-        public float BestFixYawDeg { get; }
-        public float BestFixPitchDeg { get; }
+        public float MaxHeat { get; }
 
 
         public AnimalModel(int flightNum, Drone drone, ProcessSpanList? processSpans, ProcessObject theObj)
@@ -58,27 +55,8 @@ namespace SkyCombImage.ProcessModel
 
                 AvgRangeM = theObj.AvgRangeM; // Small if CameraDownAngle is 80. Larger if CameraDownAngle is 30 degrees
 
-                BestHFOVDegs = 0;
-                BestFixAltM = 0;
-                BestFixYawDeg = 0;
-                BestFixPitchDeg = 0;
-                /* PQR TODO
-                                if (processSpans != null)
-                                {
-                                    var block = theObj?.LastRealFeature?.Block;
-                                    if (block != null && block.FlightLegId > 0)
-                                    {
-                                        var span = processSpans[block.FlightLegId];
-                                        if (span != null)
-                                        {
-                                            BestHFOVDegs = span.BestHFOVDeg;
-                                            BestFixAltM = span.BestFixAltM;
-                                            BestFixYawDeg = span.BestFixYawDeg;
-                                            BestFixPitchDeg = span.BestFixPitchDeg;
-                                        }
-                                    }
-                                }
-                PQR */
+                MaxHeat = theObj.MaxHeat; // This is the maximum heat value for this object, used for debugging
+
                 // Convert -999 to -2
                 if (LocationErrM == BaseConstants.UnknownValue) LocationErrM = -2;
                 if (HeightM == BaseConstants.UnknownValue) HeightM = -2;
@@ -106,10 +84,8 @@ namespace SkyCombImage.ProcessModel
         public const int ColGirthM = 10;
         public const int ColCameraDownDegs = 11;
         public const int ColAvgRangeM = 12;
-        public const int ColFixHFOVDegs = 13;
-        public const int ColFixAltM = 14;
-        public const int ColFixYawDeg = 15;
-        public const int ColFixPitchDeg = 16;
+        public const int ColMaxHeat = 13;
+
 
         public DataPairList GetSettings()
         {
@@ -128,10 +104,7 @@ namespace SkyCombImage.ProcessModel
                 { "Girth M", GirthM, 2 },
                 { "Camera Down Degs", CameraDownDegs },
                 { "Avg Range M", AvgRangeM, 0 },
-                { "Fix HFOV Degs", BestHFOVDegs, 1 },
-                { "Fix Alt M", BestFixAltM, 1 },
-                { "Fix Yaw Deg", BestFixYawDeg, 1 },
-                { "Fix Pitch Deg", BestFixPitchDeg, 1 },
+                { "Max Heat", MaxHeat, 1 },
             };
         }
     }
