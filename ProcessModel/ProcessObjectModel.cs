@@ -230,36 +230,71 @@ namespace SkyCombImage.ProcessModel
         // This function must align to the above GetSettings function.
         protected virtual void LoadSettings(List<string> settings)
         {
-            int i = 0;
-            ObjectId = StringToNonNegInt(settings[i++]);
-            Name = settings[i++];
-            RunFromVideoS = StringToNonNegFloat(settings[i++]);
-            RunToVideoS = StringToNonNegFloat(settings[i++]);
-            LocationM = new DroneLocation(settings[i++], settings[i++]);
-            LocationErrM = StringToNonNegFloat(settings[i++]);
-            AvgSumLinealM = StringToNonNegFloat(settings[i++]);
-            HeightM = StringToFloat(settings[i++]);
-            MinHeightM = StringToFloat(settings[i++]);
-            MaxHeightM = StringToFloat(settings[i++]);
-            HeightErrM = StringToFloat(settings[i++]);
-            i++; // HghtRndM
-            SizeCM2 = StringToNonNegInt(settings[i++]);
-            i++; // SizeRndCM2
-            AvgRangeM = StringToInt(settings[i++]);
-            MaxHeat = StringToNonNegInt(settings[i++]);
-            DemM = StringToFloat(settings[i++]);
-            FlightLegId = StringToNonNegInt(settings[i++]);
-            Attributes = settings[i++];
-            Significant = (settings[i++] == "true");
-            NumSigBlocks = StringToNonNegInt(settings[i++]);
-            MaxNumRealHotPixels = StringToInt(settings[ProcessObjectModel.MaxNumRealHotPixelsSetting - 1]);
-            MaxSumRealHotPixels = StringToInt(settings[ProcessObjectModel.MaxSumRealHotPixelsSetting - 1]);
-            MaxRealPixelWidth = StringToInt(settings[ProcessObjectModel.MaxRealPixelWidthSetting - 1]);
-            MaxRealPixelHeight = StringToInt(settings[ProcessObjectModel.MaxRealPixelHeightSetting - 1]);
-            MaxSpinePixels = StringToInt(settings[ProcessObjectModel.MaxSpinePixelsSetting - 1]);
-            MaxGirthPixels = StringToInt(settings[ProcessObjectModel.MaxGirthPixelsSetting - 1]);
-            SpineCM = StringToInt(settings[ProcessObjectModel.SpineCMSetting - 1]);
-            GirthCM = StringToInt(settings[ProcessObjectModel.GirthCMSetting - 1]);
+            // Convert int settings in batch for speed  
+            var intSettings = new int[14];
+            var intIndices = new[] {
+                ObjectIdSetting - 1,
+                SizeCM2Setting - 1,
+                AvgRangeMSetting - 1,
+                MaxHeatSetting - 1,
+                LegIdSetting - 1,
+                NumSigBlocksSetting - 1,
+                MaxNumRealHotPixelsSetting - 1,
+                MaxSumRealHotPixelsSetting - 1,
+                MaxRealPixelWidthSetting - 1,
+                MaxRealPixelHeightSetting - 1,
+                MaxSpinePixelsSetting - 1,
+                MaxGirthPixelsSetting - 1,
+                SpineCMSetting - 1,
+                GirthCMSetting - 1 };
+            var intInputs = intIndices.Select(i => settings[i]).ToArray();
+            ConfigBase.ConvertStringBatch(intInputs, intSettings);
+
+            // Convert float settings in batch for speed  
+            var floatSettings = new float[11];
+            var floatIndices = new[] {
+                FromSecSetting - 1,
+                ToSecSetting - 1,
+                NorthingMSetting - 1,
+                EastingMSetting - 1,
+                LocationErrMSetting - 1,
+                AvgSumLinealMSetting - 1,
+                HeightMSetting - 1,
+                MinHeightMSetting - 1,
+                MaxHeightMSetting - 1,
+                HeightErrMSetting - 1,
+                DemMSetting - 1 };
+            var floatInputs = floatIndices.Select(i => settings[i]).ToArray();
+            ConfigBase.ConvertStringBatch(floatInputs, floatSettings);
+
+
+            ObjectId = intSettings[0];
+            Name = settings[NameSetting-1];
+            RunFromVideoS = floatSettings[0];
+            RunToVideoS = floatSettings[1];
+            LocationM = new DroneLocation(floatSettings[2], floatSettings[3]);
+            LocationErrM = floatSettings[4];
+            AvgSumLinealM = floatSettings[5];
+            HeightM = floatSettings[6];
+            MinHeightM = floatSettings[7];
+            MaxHeightM = floatSettings[8];
+            HeightErrM = floatSettings[9];
+            SizeCM2 = intSettings[1];
+            AvgRangeM = intSettings[2];
+            MaxHeat = intSettings[3];
+            DemM = floatSettings[10];
+            FlightLegId = intSettings[4];
+            Attributes = settings[AttributesSetting-1];
+            Significant = (settings[SignificantSetting-1] == "true");
+            NumSigBlocks = intSettings[5];
+            MaxNumRealHotPixels = intSettings[6];
+            MaxSumRealHotPixels = intSettings[7];
+            MaxRealPixelWidth = intSettings[8];
+            MaxRealPixelHeight = intSettings[9];
+            MaxSpinePixels = intSettings[10];
+            MaxGirthPixels = intSettings[11];
+            SpineCM = intSettings[12];
+            GirthCM = intSettings[13];
 
             if (HeightM == UnknownHeight) HeightM = UnknownValue;
             if (MinHeightM == UnknownHeight) MinHeightM = UnknownValue;

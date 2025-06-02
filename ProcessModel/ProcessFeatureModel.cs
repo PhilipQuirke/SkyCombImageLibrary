@@ -157,27 +157,38 @@ namespace SkyCombImage.ProcessModel
 
         public void LoadSettings(List<string> settings)
         {
-            FeatureId = StringToNonNegInt(settings[FeatureIdSetting - 1]);
+            // Convert int settings in batch for speed  
+            var intSettings = new int[11];
+            var intIndices = new[] {
+                FeatureIdSetting - 1,
+                ObjectIdSetting - 1,
+                BlockIdSetting - 1,
+                PixelBoxXSetting - 1,
+                PixelBoxYSetting - 1,
+                PixelBoxWidthSetting - 1,
+                PixelBoxHeightSetting - 1,
+                MinHeatSetting - 1,
+                MaxHeatSetting - 1,
+                NumHotPixelsSetting - 1,
+                SumHotPixelsSetting - 1 };
+            var intInputs = intIndices.Select(i => settings[i]).ToArray();
+            ConfigBase.ConvertStringBatch(intInputs, intSettings);
+
+
+            FeatureId = intSettings[0];
             IsTracked = settings[IsTrackedSetting - 1] == "true";
             Significant = settings[SignificantSetting - 1] == "true";
-            ObjectId = StringToNonNegInt(settings[ObjectIdSetting - 1]);
-
-            BlockId = StringToNonNegInt(settings[BlockIdSetting - 1]);
+            ObjectId = intSettings[1];
+            BlockId = intSettings[2];
             Type = (FeatureTypeEnum)Enum.Parse(typeof(FeatureTypeEnum), settings[TypeSetting - 1]);
             LocationM = new DroneLocation(settings[NorthingMSetting - 1], settings[EastingMSetting - 1]);
-
             HeightM = StringToFloat(settings[HeightMSetting - 1]);
             HeightAlgorithm = settings[ObjectIdSetting - 1];
-
-            PixelBox = new Rectangle(
-                StringToInt(settings[PixelBoxXSetting - 1]),
-                StringToInt(settings[PixelBoxYSetting - 1]),
-                StringToInt(settings[PixelBoxWidthSetting - 1]),
-                StringToInt(settings[PixelBoxHeightSetting - 1]));
-            MinHeat = StringToNonNegInt(settings[MinHeatSetting - 1]);
-            MaxHeat = StringToNonNegInt(settings[MaxHeatSetting - 1]);
-            NumHotPixels = StringToNonNegInt(settings[NumHotPixelsSetting - 1]);
-            SumHotPixels = StringToNonNegInt(settings[SumHotPixelsSetting - 1]);
+            PixelBox = new Rectangle(intSettings[3], intSettings[4], intSettings[5], intSettings[6]);
+            MinHeat = intSettings[7];
+            MaxHeat = intSettings[8];
+            NumHotPixels = intSettings[9];
+            SumHotPixels = intSettings[10];
         }
     }
 }

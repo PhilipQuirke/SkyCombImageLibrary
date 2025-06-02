@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessLogic;
@@ -82,7 +82,7 @@ namespace SkyCombImage.ProcessModel
             Assert(SumTimeMs == UnknownValue || SumTimeMs >= 0, "AssertGood: Logic 2");
             Assert(LinealM == UnknownValue || LinealM >= 0, "AssertGood: Logic 3");
 
-            // Some drone operators halt their drone to look at intersting objects => SumLinealM == 0
+            // Some drone operators halt their drone to look at interesting objects => SumLinealM == 0
             // if (BlockId > 1)
             //    Assert(SumLinealM == UnknownValue || SumLinealM > 0, "AssertGood: Logic 4");
         }
