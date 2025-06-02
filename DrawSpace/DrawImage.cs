@@ -130,9 +130,10 @@ namespace SkyCombImage.DrawSpace
 
 
         // Store a bitmap in a PictureBox with proper resizing
-        public static void StoreBitmapInPicture(Bitmap theImage, PictureBox thePicture)
+        public static void StoreBitmapInPicture(Bitmap? theImage, PictureBox? thePicture)
         {
-            if (thePicture == null) return;
+            if (thePicture == null) 
+                return;
 
             if (theImage != null)
             {
