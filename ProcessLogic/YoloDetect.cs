@@ -56,7 +56,7 @@ namespace SkyCombImage.ProcessLogic
                     }
                 }
             }
-            else 
+            else
             {
                 YoloDetect.Confidence = confidence;
                 YoloDetect.IoU = iou;

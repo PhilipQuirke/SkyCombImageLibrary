@@ -208,7 +208,7 @@ namespace SkyCombImage.ProcessLogic
                         feature.Value.Significant = true;
 
                 // Save the image of the object with the most hot pixels.
-                if ((theFeature.Type == FeatureTypeEnum.Real) && 
+                if ((theFeature.Type == FeatureTypeEnum.Real) &&
                     (ProcessScope?.CurrInputImage != null) &&
                     ((LastImage == null) || increasedMaxSumRealHotPixels))
                 {
@@ -216,7 +216,7 @@ namespace SkyCombImage.ProcessLogic
                     drawImageConfig.BoxExtraScale = 2;
                     drawImageConfig.TextExtraScale = 1;
 
-                    var closeupInputImage = 
+                    var closeupInputImage =
                         DrawFrameImage.Draw(
                             RunProcessEnum.Yolo, // Force drawing of hot pixels.
                             ProcessAll.ProcessConfig,

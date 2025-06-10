@@ -62,7 +62,7 @@ namespace SkyCombImage.ProcessLogic
                 NumHotPixels = Pixels.Count();
 
                 var threshold = ProcessAll.ProcessConfig.HeatThresholdValue;
-                foreach(var pixel in Pixels)
+                foreach (var pixel in Pixels)
                     SumHotPixels += Math.Max(0, pixel.Heat - threshold);
             }
         }
@@ -217,7 +217,7 @@ namespace SkyCombImage.ProcessLogic
                 DroneTargetCalculator droneTargetCalculator = new(droneState, cameraParams, terrainGrid, false);
 #if DEBUG
                 // Do a sanity test once per run
-                if((flightStep.FixAltM == 0) && (Block.BlockId == 13))
+                if ((flightStep.FixAltM == 0) && (Block.BlockId == 13))
                     droneTargetCalculator.UnitTest_Centroid(Block);
 #endif
                 LocationResult? result = droneTargetCalculator.CalculateTargetLocation(imagePosition);

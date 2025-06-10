@@ -1,6 +1,5 @@
 ﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 using Emgu.CV;
-using Emgu.CV.Structure;
 using SkyCombDrone.DrawSpace;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;

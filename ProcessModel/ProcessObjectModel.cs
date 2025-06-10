@@ -269,7 +269,7 @@ namespace SkyCombImage.ProcessModel
 
 
             ObjectId = intSettings[0];
-            Name = settings[NameSetting-1];
+            Name = settings[NameSetting - 1];
             RunFromVideoS = floatSettings[0];
             RunToVideoS = floatSettings[1];
             LocationM = new DroneLocation(floatSettings[2], floatSettings[3]);
@@ -284,8 +284,8 @@ namespace SkyCombImage.ProcessModel
             MaxHeat = intSettings[3];
             DemM = floatSettings[10];
             FlightLegId = intSettings[4];
-            Attributes = settings[AttributesSetting-1];
-            Significant = (settings[SignificantSetting-1] == "true");
+            Attributes = settings[AttributesSetting - 1];
+            Significant = (settings[SignificantSetting - 1] == "true");
             NumSigBlocks = intSettings[5];
             MaxNumRealHotPixels = intSettings[6];
             MaxSumRealHotPixels = intSettings[7];

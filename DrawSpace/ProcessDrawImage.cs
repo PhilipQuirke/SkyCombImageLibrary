@@ -65,8 +65,8 @@ namespace SkyCombImage.DrawSpace
         public static void DrawObjectFeatures(
             DrawImageConfig config, ref Image<Bgr, byte> image, Transform transform,
             ProcessFeature drawFeature,
-            string drawObjectName, 
-            ProcessObject? focusObject)  
+            string drawObjectName,
+            ProcessObject? focusObject)
         {
             if (config.DrawRealFeatureColor == Color.White &&
                 config.DrawUnrealFeatureColor == Color.White &&
@@ -114,7 +114,7 @@ namespace SkyCombImage.DrawSpace
 
         // Draw all hot pixels for current block, bounding rectangles of the owned features
         public static void DrawRunProcess(
-            DrawImageConfig drawConfig, ProcessConfigModel processConfig, 
+            DrawImageConfig drawConfig, ProcessConfigModel processConfig,
             ref Image<Bgr, byte> outputImg, Transform transform,
             ProcessObject? focusObject, // Chosen object (if any)
             ProcessBlockModel? block,
@@ -177,9 +177,9 @@ namespace SkyCombImage.DrawSpace
             ProcessConfigModel processConfig, DrawImageConfig drawConfig, Drone drone,
             in Image<Bgr, byte> inputFrame, // Read-only
             ProcessObject? focusObject, // Chosen object (if any)
-            ProcessBlockModel? block, 
+            ProcessBlockModel? block,
             ProcessAll processAll,
-            bool drawObjectNames = true) 
+            bool drawObjectNames = true)
         {
             try
             {
@@ -213,15 +213,15 @@ namespace SkyCombImage.DrawSpace
             ProcessConfigModel processConfig, DrawImageConfig drawConfig, Drone drone,
             in Image<Bgr, byte> inputFrame, // Read-only
             int focusObjectId, // Chosen object (if any)
-            ProcessBlockModel? block, 
-            ProcessAll processAll)  
+            ProcessBlockModel? block,
+            ProcessAll processAll)
         {
             ProcessObject? focusObject = null;
             if (focusObjectId > 0)
                 focusObject = processAll.ProcessObjects[focusObjectId];
 
             return Draw(
-                runProcess, processConfig, drawConfig, 
+                runProcess, processConfig, drawConfig,
                 drone, inputFrame, focusObject,
                 block, processAll);
         }

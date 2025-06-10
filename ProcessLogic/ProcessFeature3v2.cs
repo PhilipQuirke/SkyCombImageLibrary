@@ -434,7 +434,7 @@ namespace SkyCombImage.ProcessLogic
                 if (locnDist > 2)
                 {
                     Debug.Print(block.DroneLocnM.ToString(), result.LocationNE.ToString(), locnDist);
-                    Debug.Print( "ProcessFeature3v2 bad location");
+                    Debug.Print("ProcessFeature3v2 bad location");
                 }
 
                 if (heightDiff > 4)
@@ -442,7 +442,7 @@ namespace SkyCombImage.ProcessLogic
                     LocationResult? result2 = CalculateTargetLocation(imagePosition);
 
                     Debug.Print(block.FlightStep.DemM.ToString(), result.Elevation, heightDiff);
-                    Debug.Print( "ProcessFeature3v2 bad height");
+                    Debug.Print("ProcessFeature3v2 bad height");
                 }
             }
 

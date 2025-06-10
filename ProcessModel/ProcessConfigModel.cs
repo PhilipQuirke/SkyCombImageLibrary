@@ -250,10 +250,10 @@ namespace SkyCombImage.ProcessModel
 
         // Create a drone camera intrinsic matrix. Used by DroneTargetCalculator
         public static Accord.Math.Matrix3x3 Intrinsic(
-            double rawFocalLength = BaseConstants.UnknownValue, 
-            double rawImageWidth = BaseConstants.UnknownValue, 
-            double rawImageHeight = BaseConstants.UnknownValue, 
-            double rawSensorWidth = BaseConstants.UnknownValue, 
+            double rawFocalLength = BaseConstants.UnknownValue,
+            double rawImageWidth = BaseConstants.UnknownValue,
+            double rawImageHeight = BaseConstants.UnknownValue,
+            double rawSensorWidth = BaseConstants.UnknownValue,
             double rawSensorHeight = BaseConstants.UnknownValue)
         {
             double focalLength = rawFocalLength > 0 ? rawFocalLength : DefaultFocalLength;
