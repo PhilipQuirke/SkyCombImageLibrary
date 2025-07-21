@@ -207,7 +207,7 @@ namespace SkyCombImage.DrawSpace
         }
 
 
-        // Process a single input video frame for the specified block, returning the modified input frames to show 
+        // Process a single input video frame for the specified block, returning the modified input frames 
         public static Image<Bgr, byte>? Draw(
             RunProcessEnum runProcess,
             ProcessConfigModel processConfig, DrawImageConfig drawConfig, Drone drone,

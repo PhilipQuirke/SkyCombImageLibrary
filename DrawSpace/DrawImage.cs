@@ -31,24 +31,20 @@ namespace SkyCombImage.DrawSpace
         }
 
 
-        // Return altered input image using a OpenCV Threshold feature.
-        public static Image<Gray, byte> DrawThreshold(ProcessConfigModel config, ref Image<Bgr, byte> imgInput)
-        {
-            var answer = ToGrayScale(imgInput);
-
-            Threshold(config, ref answer);
-
-            return answer;
-        }
-
-
         // Process a single image and returns an image.
         public static void Draw(
-            RunProcessEnum runProcess, ProcessConfigModel processConfig, DrawImageConfig drawConfig,
+            RunProcessEnum runProcess, ProcessConfigModel config, DrawImageConfig drawConfig,
             ref Image<Bgr, byte> imgInput)
         {
             if (runProcess == RunProcessEnum.Threshold)
-                DrawThreshold(processConfig, ref imgInput);
+            {
+                var answer = ToGrayScale(imgInput);
+
+                Threshold(config, ref answer);
+
+                // Convert the thresholded grayscale image back to BGR
+                imgInput = answer.Convert<Bgr, byte>();
+            }
         }
 
 

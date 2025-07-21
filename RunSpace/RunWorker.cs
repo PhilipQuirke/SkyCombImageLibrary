@@ -336,6 +336,7 @@ namespace SkyCombImage.RunSpace
                 case RunSpeedEnum.Fast: CvInvoke.WaitKey(5); break;
                 case RunSpeedEnum.Medium: CvInvoke.WaitKey(50); break;
                 case RunSpeedEnum.Slow: CvInvoke.WaitKey(500); break;
+                case RunSpeedEnum.VerySlow: CvInvoke.WaitKey(1000); break;
             }
         }
 

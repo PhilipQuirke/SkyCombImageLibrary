@@ -11,7 +11,7 @@ namespace SkyCombImage.RunSpace
 {
     public enum RunProcessEnum { Comb, Yolo, Threshold, None };
 
-    public enum RunSpeedEnum { Max, Fast, Medium, Slow };
+    public enum RunSpeedEnum { Max, Fast, Medium, Slow, VerySlow };
 
 
     // Configuration settings related to running processing models.
