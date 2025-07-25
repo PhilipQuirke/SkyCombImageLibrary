@@ -108,7 +108,7 @@ namespace SkyCombImage.ProcessLogic
         // Lock in the legSteps.Fix* value that reduces the error most.
         public void CalculateSettings_FixValues(FlightStepList theSteps, ProcessObjList theObjs)
         {
-            bool optimiseFixAltM = true;
+            bool optimiseFixAltM = false;
 
             try
             {
