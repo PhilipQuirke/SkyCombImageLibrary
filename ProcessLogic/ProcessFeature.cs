@@ -75,7 +75,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        protected void AddHotPixel(int currY, int currX, Bgr currColor)
+        public void AddHotPixel(int currY, int currX, Bgr currColor)
         {
             int currHeat = (int)((currColor.Blue + currColor.Green + currColor.Red) / 3);
 

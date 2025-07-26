@@ -29,6 +29,7 @@ namespace SkyCombImage.RunSpace
                     answer = yoloRunner;
                     break;
                 case RunProcessEnum.Comb:
+                case RunProcessEnum.Threshold:
                     var combRunner = new RunWorkerCombDrone(parent, runConfig, dataStore, drone);
                     combRunner.ProcessDrawScope.Process = combRunner.ProcessAll;
                     if (processHook != null)

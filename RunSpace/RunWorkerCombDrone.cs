@@ -63,15 +63,13 @@ namespace SkyCombImage.RunSpace
                 DrawImage.Threshold(RunConfig.ProcessConfig, ref currThreshold);
 
                 ProcessFeatureList featuresInBlock = ProcessFactory.NewProcessFeatureList(CombProcess.ProcessConfig);
-                CombFeatureLogic.CreateFeaturesFromImage(
-                    CombProcess, featuresInBlock, currBlock,
-                    CurrInputImage, currThreshold); // read-only images
+                if (RunConfig.RunProcess == RunProcessEnum.Threshold)
+                    ThresholdFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, currBlock, CurrInputImage, currThreshold);
+                else
+                    CombFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, currBlock, CurrInputImage, currThreshold);
 
                 foreach (var feature in featuresInBlock)
-                {
-                    // Old code feature.Value.CalculateSettings_LocationM_GroundImageFlat(null);
                     feature.Value.CalculateSettings_LocationM_HeightM_LOS(ProcessAll.GroundData);
-                }
 
                 // If legs are used, we only do comb processing during "legs". 
                 if ((!Drone.UseFlightLegs) || (PSM.CurrRunLegId > 0))

@@ -6,7 +6,6 @@ using SkyCombImage.ProcessModel;
 using System.Drawing;
 
 
-
 namespace SkyCombImage.ProcessLogic
 {
     // A Comb feature, is a dense cluster of hot pixels, associated 1-1 with a Block
@@ -154,8 +153,6 @@ namespace SkyCombImage.ProcessLogic
         }
     }
 
-
-    // A list of Comb features bound to a specific Block
     public class CombFeatureLogic
     {
         // Analyse input image using Comb specific approach:
@@ -213,11 +210,8 @@ namespace SkyCombImage.ProcessLogic
             }
             catch (Exception ex)
             {
-                throw BaseConstants.ThrowException("CombFeatureList.Process: " +
-                    "y=" + y + " x=" + x,
-                    ex);
+                throw BaseConstants.ThrowException("CombFeatureList.Process: y=" + y + " x=" + x, ex);
             }
         }
-
-    };
+    }
 }

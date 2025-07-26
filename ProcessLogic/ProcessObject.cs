@@ -167,7 +167,7 @@ namespace SkyCombImage.ProcessLogic
                         MaxRealPixelWidth = Math.Max(MaxRealPixelWidth, theFeature.PixelBox.Width);
                         MaxRealPixelHeight = Math.Max(MaxRealPixelHeight, theFeature.PixelBox.Height);
                     }
-                    else
+                    else // if( RunConfig.RunProcess == RunProcessEnum.Comb) 
                     {
                         // Comb Process: This object is claiming a second or third feature for this block.
                         // Use case is a large rectangle in previous block, getting replaced by 2 or 3 smaller rectangles in this block.
