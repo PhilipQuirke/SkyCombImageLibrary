@@ -189,14 +189,10 @@ namespace SkyCombImage.DrawSpace
                 {
                     modifiedInputFrame = inputFrame.Clone();
 
-                    if ((runProcess == RunProcessEnum.Comb) || (runProcess == RunProcessEnum.Yolo))
-                        // Draw hot objects
-                        DrawRunProcess(
-                            drawConfig, processConfig, ref modifiedInputFrame, new(),
-                            focusObject, block, processAll, drawObjectNames);
-                    else
-                        // Draw Threshold or None
-                        DrawImage.Draw(runProcess, processConfig, drawConfig, ref modifiedInputFrame);
+                    // Draw hot objects
+                    DrawRunProcess(
+                        drawConfig, processConfig, ref modifiedInputFrame, new(),
+                        focusObject, block, processAll, drawObjectNames);
                 }
                 return modifiedInputFrame;
             }

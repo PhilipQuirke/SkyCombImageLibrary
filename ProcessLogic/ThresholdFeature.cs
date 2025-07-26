@@ -18,19 +18,17 @@ namespace SkyCombImage.ProcessLogic
     }
 
 
-    public class ProcessConfigModelC
+    static public class ThresholdFeatureLogic
     {
-        public byte HeatThresholdValue { get; set; }
-        public int MinPixels { get; set; }
-    }
+        static byte HeatThresholdValue = 180;
+        static int MinPixels = 8;
 
-    public static class ImageAnalyzerC
-    {
+
         // Enhanced threshold method that also performs clustering analysis
-        public static List<ClusterInfoC> AnalyzeWithClustering(ProcessConfigModelC config, Image<Gray, byte> imgInput)
+        public static List<ClusterInfoC> AnalyzeWithClustering(Image<Gray, byte> imgInput)
         {
             // First, find all hot pixels
-            var hotPixels = FindHotPixels(imgInput, config.HeatThresholdValue);
+            var hotPixels = FindHotPixels(imgInput);
 
             // Cluster adjacent hot pixels
             var clusters = ClusterAdjacentPixels(hotPixels, imgInput);
@@ -39,18 +37,13 @@ namespace SkyCombImage.ProcessLogic
             var mergedClusters = MergeContainedClusters(clusters);
 
             // Mark significance and finalize cluster info
-            var clusterInfos = GenerateClusterInfo(mergedClusters, imgInput, config.MinPixels);
+            var clusterInfos = GenerateClusterInfo(mergedClusters, imgInput);
 
             return clusterInfos;
         }
 
-        // Original threshold method (modified to work with clustering)
-        public static void Threshold(ProcessConfigModelC config, ref Image<Gray, byte> imgInput)
-        {
-            imgInput = imgInput.ThresholdBinary(new Gray(config.HeatThresholdValue), new Gray(255));
-        }
 
-        private static HashSet<Point> FindHotPixels(Image<Gray, byte> image, byte threshold)
+        private static HashSet<Point> FindHotPixels(Image<Gray, byte> image)
         {
             var hotPixels = new HashSet<Point>();
             var data = image.Data;
@@ -59,7 +52,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 for (int x = 0; x < image.Width; x++)
                 {
-                    if (data[y, x, 0] >= threshold)
+                    if (data[y, x, 0] >= HeatThresholdValue)
                     {
                         hotPixels.Add(new Point(x, y));
                     }
@@ -186,7 +179,7 @@ namespace SkyCombImage.ProcessLogic
                    outer.Bottom >= inner.Bottom;
         }
 
-        private static List<ClusterInfoC> GenerateClusterInfo(List<List<Point>> clusters, Image<Gray, byte> image, int minPixels)
+        private static List<ClusterInfoC> GenerateClusterInfo(List<List<Point>> clusters, Image<Gray, byte> image)
         {
             var clusterInfos = new List<ClusterInfoC>();
             var data = image.Data;
@@ -221,18 +214,15 @@ namespace SkyCombImage.ProcessLogic
 
                 info.MinHeat = minHeat;
                 info.MaxHeat = maxHeat;
-                info.IsSignificant = info.HotPixelCount >= minPixels;
+                info.IsSignificant = info.HotPixelCount >= MinPixels;
 
                 clusterInfos.Add(info);
             }
 
             return clusterInfos.OrderByDescending(c => c.HotPixelCount).ToList();
         }
-    }
+    
 
-
-    public class ThresholdFeatureLogic
-    {
         public static void CreateFeaturesFromImage(
             CombProcess combProcess,
             ProcessFeatureList featuresInBlock,
@@ -240,24 +230,18 @@ namespace SkyCombImage.ProcessLogic
             in Image<Bgr, byte> imgOriginal,    // read-only
             in Image<Gray, byte> imgThreshold)  // read-only
         {
+            HeatThresholdValue = (byte) combProcess.ProcessConfig.HeatThresholdValue;
+            MinPixels = ProcessConfigModel.FeatureMinPixels;
 
-            var config = new ProcessConfigModelC
-            {
-                HeatThresholdValue = (byte)combProcess.ProcessConfig.HeatThresholdValue,
-                MinPixels = ProcessConfigModel.FeatureMinPixels
-            };
-
-            // Analyze with clustering
-            var clusters = ImageAnalyzerC.AnalyzeWithClustering(config, imgThreshold);
+            var clusters = AnalyzeWithClustering(imgThreshold);
 
             foreach (var cluster in clusters)
             {
                 var feature = new CombFeature(combProcess, block, FeatureTypeEnum.Real);
 
                 foreach (var hotPixel in cluster.HotPixels)
-                {
                     feature.AddHotPixel(hotPixel.Y, hotPixel.X, imgOriginal[hotPixel.Y, hotPixel.X]);
-                }
+                
                 feature.PixelBox = cluster.BoundingBox;
                 feature.NumHotPixels = cluster.HotPixelCount;
                 feature.MinHeat = cluster.MinHeat;
@@ -267,7 +251,6 @@ namespace SkyCombImage.ProcessLogic
 
                 featuresInBlock.AddFeature(feature);
             }
-
         }
     }
 }
