@@ -47,11 +47,11 @@ namespace SkyCombImage.ProcessLogic
             int imageHeight = imgOriginal.Height;
             int imageWidth = imgOriginal.Width;
 
+            ClearHotPixelData();
+            Pixels = new();
+
             try
             {
-                MinHeat = 255 + 255 + 255;
-                MaxHeat = 0;
-
                 // Start with 3 pixels wide. This width will vary row by row
                 int fromX = 0;
                 int toX = 3;
@@ -126,8 +126,8 @@ namespace SkyCombImage.ProcessLogic
                         break;
                 }
 
-                // Is this feature significant?
-                Significant = (NumHotPixels >= ProcessConfigModel.FeatureMinPixels);
+                Calculate_HotPixelData();
+                Calculate_Significant();
                 IsTracked = Significant;
             }
             catch (Exception ex)
@@ -146,9 +146,10 @@ namespace SkyCombImage.ProcessLogic
             if (otherFeature.Pixels != null)
             {
                 Pixels.AddRange(otherFeature.Pixels);
-                CalcSumAndNumHotPixels();
+                Calculate_HotPixelData();
+                Calculate_Significant();
 
-                otherFeature.ClearHotPixels();
+                otherFeature.ClearHotPixelArray();
             }
 
             base.Consume(otherFeature);

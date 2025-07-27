@@ -239,15 +239,16 @@ namespace SkyCombImage.ProcessLogic
             {
                 var feature = new CombFeature(combProcess, block, FeatureTypeEnum.Real);
 
+                feature.ClearHotPixelData();
+                feature.Pixels = new();
+
                 foreach (var hotPixel in cluster.HotPixels)
                     feature.AddHotPixel(hotPixel.Y, hotPixel.X, imgOriginal[hotPixel.Y, hotPixel.X]);
                 
                 feature.PixelBox = cluster.BoundingBox;
-                feature.NumHotPixels = cluster.HotPixelCount;
-                feature.MinHeat = cluster.MinHeat;
-                feature.MaxHeat = cluster.MaxHeat;
-                feature.Significant = cluster.IsSignificant;
-                feature.IsTracked = cluster.IsSignificant;
+                feature.Calculate_HotPixelData();
+                feature.Calculate_Significant();
+                feature.IsTracked = feature.Significant;
 
                 featuresInBlock.AddFeature(feature);
             }

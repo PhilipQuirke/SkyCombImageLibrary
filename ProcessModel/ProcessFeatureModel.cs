@@ -29,16 +29,13 @@ namespace SkyCombImage.ProcessModel
         // Is this feature actively being tracked now
         public bool IsTracked { get; set; }
         // Is this feature significant?
-        public bool Significant { get; set; }
+        public bool Significant { get; set; } = false;
         // A feature can be associated with an object
         public int ObjectId { get; set; }
 
 
         // A Comb feature is associated 1-1 with a Block
         public int BlockId { get; set; } = UnknownValue;
-
-        public int MinHeat { get; set; } = 0;
-        public int MaxHeat { get; set; } = 0;
 
         // Is the feature Real, Unreal or Consumed.
         public FeatureTypeEnum Type { get; set; }
@@ -55,6 +52,8 @@ namespace SkyCombImage.ProcessModel
         // Technique used to calculate HeightM 
         public string HeightAlgorithm { get; set; } = "";
 
+        public int MinHeat { get; set; } = UnknownValue;
+        public int MaxHeat { get; set; } = UnknownValue;
         // Number of image pixels in the PixelBox above the ProcessConfig min heat threshold
         public int NumHotPixels { get; set; } = 0;
         // Sum of how much hotter than the ProcessConfig min heat threshold the hot pixels are
@@ -68,8 +67,7 @@ namespace SkyCombImage.ProcessModel
             FeatureId = NextFeatureId;
             BlockId = blockId;
             Type = type;
-            NumHotPixels = 0; // Derived from image processing. Can't be recalced. So excluded from ResetCalcedMemberData
-            SumHotPixels = 0; // Derived from image processing. Can't be recalced. So excluded from ResetCalcedMemberData
+
             ResetCalcedMemberData();
         }
 
@@ -94,14 +92,23 @@ namespace SkyCombImage.ProcessModel
         public void ResetCalcedMemberData()
         {
             IsTracked = true;
-            Significant = false;
             ObjectId = 0;
 
             Set_LocationM_HeightM();
 
             HeightAlgorithm = "";
+            // MinHeat
+            // MaxHeat
             // NumHotPixels = 0; Derived from image processing. Can't be recalced. So excluded 
             // SumHotPixels = 0; Derived from image processing. Can't be recalced. So excluded
+            // Significant = false; Derived from NumHotPixels. Can't be recalced. So excluded
+        }
+
+
+        // Is this feature significant?
+        public void Calculate_Significant()
+        {
+            Significant = (NumHotPixels >= ProcessConfigModel.FeatureMinPixels);
         }
 
 

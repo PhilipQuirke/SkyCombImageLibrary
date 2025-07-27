@@ -27,7 +27,7 @@ namespace SkyCombImage.ProcessLogic
             foreach (var theObject in ProcessObjects)
             {
                 var combObject = theObject.Value;
-                combObject.ClearHotPixels();
+                combObject.ClearHotPixelArray();
             }
         }
 

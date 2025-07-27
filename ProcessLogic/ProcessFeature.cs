@@ -28,8 +28,6 @@ namespace SkyCombImage.ProcessLogic
 
             ProcessAll = processAll;
             Block = processAll.Blocks[blockId];
-            if (type != FeatureTypeEnum.Unreal)
-                Pixels = new();
         }
 
 
@@ -52,38 +50,45 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        protected void CalcSumAndNumHotPixels()
+        public void ClearHotPixelArray()
+        {
+            Pixels = null;
+        }
+
+        public void ClearHotPixelData()
         {
             NumHotPixels = 0;
             SumHotPixels = 0;
-
-            if (Pixels != null)
-            {
-                NumHotPixels = Pixels.Count();
-
-                var threshold = ProcessAll.ProcessConfig.HeatThresholdValue;
-                foreach (var pixel in Pixels)
-                    SumHotPixels += Math.Max(0, pixel.Heat - threshold);
-            }
+            MinHeat = UnknownValue;
+            MaxHeat = UnknownValue;
         }
-
-
-        public void ClearHotPixels()
-        {
-            Pixels = null;
-            CalcSumAndNumHotPixels();
-        }
-
 
         public void AddHotPixel(int currY, int currX, Bgr currColor)
         {
             int currHeat = (int)((currColor.Blue + currColor.Green + currColor.Red) / 3);
 
-            MinHeat = Math.Min(MinHeat, currHeat);
-            MaxHeat = Math.Max(MaxHeat, currHeat);
-
             Pixels.Add(new PixelHeat(BlockId, FeatureId, currY, currX, currHeat));
-            CalcSumAndNumHotPixels();
+        }
+
+        public void Calculate_HotPixelData()
+        {
+            if ((Pixels != null) && (Pixels.Count() > 0))
+            {
+                ClearHotPixelData();
+
+                NumHotPixels = Pixels.Count();
+                SumHotPixels = 0;
+                MinHeat = Pixels[0].Heat;
+                MaxHeat = MinHeat;
+
+                var threshold = ProcessAll.ProcessConfig.HeatThresholdValue;
+                foreach (var pixel in Pixels)
+                {
+                    SumHotPixels += Math.Max(0, pixel.Heat - threshold);
+                    MinHeat = Math.Min(MinHeat, pixel.Heat);
+                    MaxHeat = Math.Max(MaxHeat, pixel.Heat);
+                }
+            }
         }
 
 

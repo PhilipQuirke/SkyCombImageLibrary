@@ -64,7 +64,7 @@ namespace SkyCombImage.ProcessLogic
     }
 
 
-    // A significant object - a logical object derived from overlapping features over successive frames. 
+    // A logical object derived from overlapping features over successive frames. 
     public class ProcessObject : ProcessObjectModel
     {
         // Parent process model
@@ -195,7 +195,7 @@ namespace SkyCombImage.ProcessLogic
                     LastFeature.HeightAlgorithm = CombFeature.UnrealCopyHeightAlgorithm;
                 }
 
-
+/*
                 // Copy these details to the feature to be saved in the DataStore.
                 // Useful for understanding the feature by feature progression of values that are refined over time.
                 LastFeature.Significant = Significant & (LastFeature.Type == FeatureTypeEnum.Real);
@@ -206,6 +206,7 @@ namespace SkyCombImage.ProcessLogic
                     // Mark all (real and unreal) features associated with this object as significant.
                     foreach (var feature in ProcessFeatures)
                         feature.Value.Significant = true;
+*/
 
                 // Save the image of the object with the most hot pixels.
                 if ((theFeature.Type == FeatureTypeEnum.Real) &&
@@ -267,13 +268,10 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Save memory (if compatible with Config settings) by deleting pixel data
-        // For Comb, we only care about pixel data for objects / features in legs
-        public void ClearHotPixels()
+        public void ClearHotPixelArray()
         {
             foreach (var feature in ProcessFeatures)
-                feature.Value.ClearHotPixels();
-            // NumHotPixels is not cleared 
-            // SumHotPixels is not cleared 
+                feature.Value.ClearHotPixelArray();
         }
 
 
@@ -475,6 +473,9 @@ namespace SkyCombImage.ProcessLogic
                 var pixelsGood = (maxNumHotPixels > 2 * ProcessConfigModel.ObjectMinPixels); // Say 10 pixels 
                 var pixelsGreat = (maxNumHotPixels > 4 * ProcessConfigModel.ObjectMinPixels); // Say 20 pixels
 
+                // DENSITY
+                var densityOK =  (RealDensityPx() >= ProcessConfigModel.ObjectMinHotDensity);
+
                 // TIME
                 // Aka duration. Proxy for numRealFeatures.
                 var seenForMinDurations = SeenForMinDurations();
@@ -488,18 +489,12 @@ namespace SkyCombImage.ProcessLogic
                 var elevationGood = (HeightM > 2);
                 var elevationGreat = (HeightM > 4);
 
-                if (ProcessAll.Drone.InputIsImages || ProcessAll is YoloProcess)
-                    // With image input or when using the Yolo process we assume object is significant.
-                    Significant = true;
-                else
-                    // Key calculation of Comb algorithm for identifying significant objects
-                    Significant =
-                        pixelsOk &&
-                        timeOk &&
-                        (
-                            elevationGood ||
-                            pixelsGood
-                        );
+                Significant =
+                   pixelsOk &&
+                   densityOK &&
+                   (ProcessAll.Drone.InputIsImages || 
+                    // Key video calculation for identifying significant objects
+                    (timeOk && ( elevationGood || pixelsGood )));
 
                 if (Significant)
                     NumSigBlocks++;

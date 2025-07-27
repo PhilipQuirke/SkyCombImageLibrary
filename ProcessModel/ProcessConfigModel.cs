@@ -36,14 +36,6 @@ namespace SkyCombImage.ProcessModel
         // Succcessive features in an object can't be more than 5 frames apart.
         public const int YoloMaxTimeGap = 5;
 
-
-        // --------------------- Process Techniques --------------------- 
-
-        // Theshold:
-        // Pixel gray-scale value that ThresholdProcess uses. Takes values from 50 to 255
-        public int HeatThresholdValue { get; set; } = 180;
-
-        // Comb:
         // SkyComb-specific detection method "Comb".
         // Minimum number of hot pixels required inside a bounding rectangle, to draw a red rect in output
         public const int FeatureMinPixels = 8;
@@ -54,18 +46,19 @@ namespace SkyCombImage.ProcessModel
         // Minimum overlap percentage between two features that is considered significant
         public const int FeatureMinOverlapPerc = 5;
 
-        // Object characteristics:
         // Duration (in milliseconds) that object must be tracked for before it is highlighted
         public const int ObjectMinDurationMs = 500;
         // Maximum number of "unreal" features after a real feature. Applies to videos only.
         public const int ObjectMaxUnrealBlocks = 5;
-        // To be highlighted, an object must have this many hot pixels in at least one real step
+        // To be significant, an object must have this many hot pixels in at least one real step
         public const int ObjectMinPixels = 5;
         // An object detected at long-range must be large and so is not of interest to us.
         public const int ObjectMaxRangeM = 350;
+        // Minimum fraction of pixels in a feature that must be "hot" to be considered significant
+        public const float ObjectMinHotDensity = 0.1f;
 
-
-        // YOLO
+        // Pixel gray-scale value for hot pixel thresholding. Takes values from 50 to 255
+        public int HeatThresholdValue { get; set; } = 180;
         // Single frame Yolo detection confidence
         public float YoloDetectConfidence { get; set; } = ProcessConfigModel.YoloDetectConfidenceDefault;
         // Successive frame Yolo overlap threshold

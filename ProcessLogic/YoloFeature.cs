@@ -19,7 +19,6 @@ namespace SkyCombImage.ProcessLogic
         public YoloFeature(YoloProcess yoloProcess, int blockId, ObjectDetection? result, FeatureTypeEnum type = FeatureTypeEnum.Real) : base(yoloProcess, blockId, type)
         {
             ResetCalcedMemberData();
-            Significant = true;
 
             if (result != null)
             {
@@ -30,6 +29,8 @@ namespace SkyCombImage.ProcessLogic
             else
                 PixelBox = new System.Drawing.Rectangle(0, 0, 0, 0);
 
+            // Is this feature significant?
+            Calculate_Significant();
         }
 
 
@@ -47,10 +48,8 @@ namespace SkyCombImage.ProcessLogic
            in Image<Bgr, byte> imgOriginal,
            in Image<Gray, byte> imgThreshold)
         {
-            MinHeat = 255 * 3;
-            MaxHeat = 0;
-            NumHotPixels = 0;
-            SumHotPixels = 0;
+            ClearHotPixelData();
+            Pixels = new();
 
             int left = Math.Max(PixelBox.Left, 0);
             int top = Math.Max(PixelBox.Top, 0);
@@ -86,7 +85,8 @@ namespace SkyCombImage.ProcessLogic
                 // Set (shrink) PixelBox to the tight bounding box around hot pixels
                 PixelBox = new Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
 
-            Significant = (NumHotPixels >= ProcessConfigModel.FeatureMinPixels);
+            Calculate_HotPixelData();
+            Calculate_Significant();
             IsTracked = Significant;
         }
     };
