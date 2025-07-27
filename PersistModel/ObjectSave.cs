@@ -245,12 +245,14 @@ namespace SkyCombImage.PersistModel
             int col = 1;
             int row = startRow;
             data.SetTitle(ref row, col, title);
-            data.Worksheet.Cells[startRow, 5].Value = "With object name and max heat (0-255)";
+
+            int imageWidth = 50;
+            int imageHeight = 50;
 
             const int maxCol = 20;
             const int colSpacing = 2;
             const int rowSpacing = 7;
-            const int fixedWidth = 120;
+            const int fixedXlsWidth = 120;
 
             var imageHandler = new ExcelImageHandler(data.Worksheet);
 
@@ -261,13 +263,16 @@ namespace SkyCombImage.PersistModel
                     var originalBitmap = obj.LastImage.AsBitmap();
                     if (originalBitmap != null)
                     {
-                        //data.Worksheet.Cells[row, col].Value = $"{obj.Name} ({originalBitmap.Width}x{originalBitmap.Height} @{originalBitmap.HorizontalResolution}dpi)";
+                        imageWidth = originalBitmap.Width;
+                        imageHeight = originalBitmap.Height;
+
+                        //data.Worksheet.Cells[row, col].Value = $"{obj.Name} ({imageWidth}x{imageHeight} @{originalBitmap.HorizontalResolution}dpi)";
                         data.Worksheet.Cells[row, col].Value = $"{obj.Name} ({obj.MaxHeat})";
 
                         var imageName = $"Object_{obj.ObjectId}_Img";
-                        int imageHeight = (int)((double)originalBitmap.Height * fixedWidth / Math.Max(originalBitmap.Width, 1));
+                        int imageXlsHeight = (int)((double)originalBitmap.Height * fixedXlsWidth / Math.Max(originalBitmap.Width, 1));
 
-                        imageHandler.SaveBitmapSized(originalBitmap, imageName, row, col - 1, fixedWidth, imageHeight);
+                        imageHandler.SaveBitmapSized(originalBitmap, imageName, row, col - 1, fixedXlsWidth, imageXlsHeight);
 
                         col += colSpacing;
                         if (col > maxCol)
@@ -278,6 +283,8 @@ namespace SkyCombImage.PersistModel
                     }
                 }
             }
+
+            data.Worksheet.Cells[startRow, 5].Value = $"With object name and max pixel heat (0-255). All images are {imageWidth} by {imageHeight} pixels";
         }
 
 
