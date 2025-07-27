@@ -44,6 +44,8 @@ namespace SkyCombImage.ProcessLogic
         {
             int currY = 0;
             int currX = 0;
+            int imageHeight = imgOriginal.Height;
+            int imageWidth = imgOriginal.Width;
 
             try
             {
@@ -58,7 +60,7 @@ namespace SkyCombImage.ProcessLogic
                 int rectRight = startX + toX - 1;
 
                 // Search down the image
-                for (currY = startY; currY < ProcessAll.VideoData.ImageHeight; currY++)
+                for (currY = startY; currY < imageHeight; currY++)
                 {
                     int hotPixelsInRow = 0;
 
@@ -69,10 +71,10 @@ namespace SkyCombImage.ProcessLogic
                     while ((imgThreshold.Data[currY, startX + fromX, 0] != 0) && (startX + fromX > 0))
                         fromX--;
 
-                    for (currX = startX + fromX; (currX < startX + toX) && (currX < ProcessAll.VideoData.ImageWidth); currX++)
+                    for (currX = startX + fromX; (currX < startX + toX) && (currX < imageWidth); currX++)
                     {
                         // Set inputSearched[y,x] = true
-                        inputSearched[currY * ProcessAll.VideoData.ImageWidth + currX] = true;
+                        inputSearched[currY * imageWidth + currX] = true;
 
                         // If imgInputGray[y,x] is a hot pixel
                         var currPixelIsHot = (imgThreshold.Data[currY, currX, 0] != 0);
@@ -174,14 +176,13 @@ namespace SkyCombImage.ProcessLogic
         {
             int y = 0;
             int x = 0;
+            int imageHeight = imgOriginal.Height; 
+            int imageWidth = imgOriginal.Width; 
+            // Create an Array[y, x] of bools. Booleans default to false
+            bool[] inputSearched = new bool[imageHeight * imageWidth];
 
             try
             {
-                // Create an Array[y, x] of bools. Booleans default to false
-                int imageHeight = combProcess.VideoData.ImageHeight;
-                int imageWidth = combProcess.VideoData.ImageWidth;
-                bool[] inputSearched = new bool[imageHeight * imageWidth];
-
                 // For each location where inputSearched[y,x] = false
                 for (y = 0; y < imageHeight; y++)
                     for (x = 0; x < imageWidth; x++)

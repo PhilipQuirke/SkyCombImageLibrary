@@ -100,8 +100,8 @@ namespace SkyCombImage.ProcessModel
             Set_LocationM_HeightM();
 
             HeightAlgorithm = "";
-            // NumHotPixels = 0; Derived from image processing. Can't be recalced. So excldued 
-            // SumHotPixels = 0; Derived from image processing. Can't be recalced. So excldued
+            // NumHotPixels = 0; Derived from image processing. Can't be recalced. So excluded 
+            // SumHotPixels = 0; Derived from image processing. Can't be recalced. So excluded
         }
 
 
