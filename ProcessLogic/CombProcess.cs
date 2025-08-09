@@ -21,17 +21,6 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        // Save memory by deleting pixel data
-        public void DeleteFeaturePixelsForObjects()
-        {
-            foreach (var theObject in ProcessObjects)
-            {
-                var combObject = theObject.Value;
-                combObject.ClearHotPixelArray();
-            }
-        }
-
-
         // Process the features found in the current block/frame, which is part of a leg,
         // by preference adding them to existing objects (created in previous blocks/frames),
         // else creating new objects to hold the features.

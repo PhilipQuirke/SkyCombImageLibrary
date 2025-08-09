@@ -40,7 +40,7 @@ namespace SkyCombImage.RunSpace
         {
             ProcessAll.ProcessFlightLegStartAndEnd(scope, prevLegId, currLegId);
 
-            CombProcess.DeleteFeaturePixelsForObjects();
+            ProcessAll.DeleteFeaturePixelsForObjects();
         }
 
 

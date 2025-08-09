@@ -26,7 +26,10 @@ namespace SkyCombImage.DrawSpace
                 return;
 
             if (feature.Pixels == null)
+            {
+                // Pixel data has been cleared - perhaps for memory management.
                 return;
+            }
 
             // Color the hotspots using 8 colors from yellow to red
             int numColors = 8;

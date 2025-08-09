@@ -487,6 +487,13 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        // Save memory by deleting pixel data
+        public void DeleteFeaturePixelsForObjects()
+        {
+            foreach (var theObject in ProcessObjects)
+                theObject.Value.ClearHotPixelArray();
+        }
+
         public virtual DataPairList GetSettings()
         {
             int numHotPixels = 0;

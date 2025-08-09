@@ -1,4 +1,5 @@
 ﻿// Copyright SkyComb Limited 2025. All rights reserved. 
+using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombGround.CommonSpace;
 using SkyCombGround.GroundLogic;
@@ -61,6 +62,17 @@ namespace SkyCombImage.ProcessLogic
             SumHotPixels = 0;
             MinHeat = UnknownValue;
             MaxHeat = UnknownValue;
+        }
+
+        // Regenerate pixel data from the original and threshold images when needed
+        // This is used when pixel data was cleared for memory management but is now needed for display
+        public virtual void RegeneratePixelData(in Image<Bgr, byte> imgOriginal, in Image<Gray, byte> imgThreshold)
+        {
+            if (Pixels != null)
+                return; // Already have pixel data
+
+            // For base ProcessFeature, use the common threshold-based approach
+            ImageProcessingUtils.RegeneratePixelsInBoundingBox(this, imgOriginal, imgThreshold, ProcessAll.ProcessConfig);
         }
 
         public void AddHotPixel(int currY, int currX, Bgr currColor)
