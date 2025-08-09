@@ -38,13 +38,101 @@ namespace SkyCombImage.DrawSpace
         {
             if (runProcess == RunProcessEnum.Threshold)
             {
-                var answer = ToGrayScale(imgInput);
-
-                Threshold(config, ref answer);
-
-                // Convert the thresholded grayscale image back to BGR
-                imgInput = answer.Convert<Bgr, byte>();
+                // For Threshold processing, we want to show the original thermal image 
+                // with hot pixels highlighted in thermal colors (orange/red)
+                // This should NOT show bounding rectangles - those are handled by DrawRunProcess in ProcessDrawImage
+                ApplyThresholdVisualization(config, ref imgInput);
             }
+        }
+
+        
+        // Apply threshold visualization while preserving the original thermal image
+        private static void ApplyThresholdVisualization(ProcessConfigModel config, ref Image<Bgr, byte> imgInput)
+        {
+            // Convert to grayscale for threshold analysis
+            var grayImage = ToGrayScale(imgInput);
+            
+            // Apply threshold to identify hot pixels
+            var thresholdImage = grayImage.ThresholdBinary(new Gray(config.HeatThresholdValue), new Gray(255));
+            
+            int imageWidth = imgInput.Width;
+            int imageHeight = imgInput.Height;
+
+            // Color the hot pixels with thermal colors (8 colors from yellow to red)
+            int numColors = 8;
+            var theShades = GetColorShades(
+                Color.FromArgb(255, 255, 255, 0),  // Yellow
+                Color.FromArgb(255, 255, 0, 0),    // Red
+                numColors);
+
+            // Use a linear threshold from the config.HeatThresholdValue to 255
+            int thresholdStep = Math.Max(1, (255 - config.HeatThresholdValue) / numColors);
+            int[] thresholds = new int[numColors];
+            for (int i = 0; i < numColors; i++)
+                thresholds[i] = config.HeatThresholdValue + i * thresholdStep;
+
+            // Apply thermal coloring to hot pixels
+            for (int y = 0; y < imageHeight; y++)
+            {
+                for (int x = 0; x < imageWidth; x++)
+                {
+                    // Check if pixel should be processed (not in exclusion zone)
+                    if (!config.ShouldProcessPixel(x, y, imageWidth, imageHeight))
+                        continue; // Skip pixels in exclusion zone
+
+                    // If this pixel is above threshold (hot)
+                    if (thresholdImage.Data[y, x, 0] > 0)
+                    {
+                        // Get the original pixel heat value
+                        byte originalHeat = grayImage.Data[y, x, 0];
+                        
+                        // Determine which thermal color to use based on heat intensity
+                        int colorIndex = 0;
+                        for (int i = 0; i < numColors; i++)
+                        {
+                            if (originalHeat >= thresholds[i])
+                                colorIndex = i;
+                        }
+
+                        // Apply the thermal color to this hot pixel
+                        var thermalColor = theShades[colorIndex];
+                        imgInput.Data[y, x, 0] = thermalColor.B; // Blue
+                        imgInput.Data[y, x, 1] = thermalColor.G; // Green
+                        imgInput.Data[y, x, 2] = thermalColor.R; // Red
+                    }
+                    // If not a hot pixel, leave the original thermal image unchanged
+                }
+            }
+
+            // Clean up temporary images
+            grayImage.Dispose();
+            thresholdImage.Dispose();
+        }
+
+        
+        // Helper method to get color shades from one color to another
+        private static List<Color> GetColorShades(Color startColor, Color endColor, int numShades)
+        {
+            var colors = new List<Color>();
+            
+            if (numShades <= 1)
+            {
+                colors.Add(startColor);
+                return colors;
+            }
+
+            for (int i = 0; i < numShades; i++)
+            {
+                float ratio = (float)i / (numShades - 1);
+                
+                int r = (int)(startColor.R + ratio * (endColor.R - startColor.R));
+                int g = (int)(startColor.G + ratio * (endColor.G - startColor.G));
+                int b = (int)(startColor.B + ratio * (endColor.B - startColor.B));
+                
+                colors.Add(Color.FromArgb(255, r, g, b));
+            }
+            
+            return colors;
         }
 
 

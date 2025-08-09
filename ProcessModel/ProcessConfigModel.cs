@@ -64,6 +64,13 @@ namespace SkyCombImage.ProcessModel
         // Successive frame Yolo overlap threshold
         public float YoloIoU { get; set; } = ProcessConfigModel.YoloIoUDefault; // Typically 0.2 to 0.4
 
+        // --------------------- Image Exclusion Zones --------------------- 
+        // Exclude bottom right corner from processing (used when image includes text overlays e.g. location, altitude)
+        public bool ExcludeBottomRightCorner { get; set; } = true;
+        // Width of exclusion zone from right edge (in pixels if > 1 else as percentage)
+        public float ExclusionZoneRightWidth { get; set; } = 0.4f;
+        // Height of exclusion zone from bottom edge  (in pixels if > 1 else as percentage)
+        public float ExclusionZoneBottomHeight { get; set; } = 0.1f;
 
 
         // --------------------- Saving Output --------------------- 
@@ -83,6 +90,44 @@ namespace SkyCombImage.ProcessModel
 
 
         // --------------------- Processing Limits --------------------- 
+
+        // Calculate exclusion zone boundaries based on image dimensions
+        public (int rightBoundary, int bottomBoundary) GetExclusionBoundaries(int imageWidth, int imageHeight)
+        {
+            if (!ExcludeBottomRightCorner)
+                return (imageWidth, imageHeight);
+
+            // Calculate right boundary (exclude from right edge)
+            int excludeWidth = ExclusionZoneRightWidth <= 1.0f 
+                ? (int)(imageWidth * ExclusionZoneRightWidth) 
+                : (int)ExclusionZoneRightWidth;
+            int rightBoundary = Math.Max(0, imageWidth - excludeWidth);
+
+            // Calculate bottom boundary (exclude from bottom edge)
+            int excludeHeight = ExclusionZoneBottomHeight <= 1.0f 
+                ? (int)(imageHeight * ExclusionZoneBottomHeight) 
+                : (int)ExclusionZoneBottomHeight;
+            int bottomBoundary = Math.Max(0, imageHeight - excludeHeight);
+
+            return (rightBoundary, bottomBoundary);
+        }
+
+        // Check if a pixel coordinate should be processed (not in exclusion zone)
+        public bool ShouldProcessPixel(int x, int y, int imageWidth, int imageHeight)
+        {
+            if (!ExcludeBottomRightCorner)
+                return true;
+
+            var (rightBoundary, bottomBoundary) = GetExclusionBoundaries(imageWidth, imageHeight);
+            
+            // Exclude only the bottom-right corner (intersection of right area AND bottom area)
+            // Return FALSE only if pixel is BOTH in right area AND bottom area
+            bool inRightArea = x >= rightBoundary;
+            bool inBottomArea = y >= bottomBoundary;
+            bool inExclusionZone = inRightArea && inBottomArea;
+            
+            return !inExclusionZone; // Process all pixels EXCEPT those in the exclusion zone
+        }
 
         // The ThresholdValue should be in range 50 to 255.
         // A user may mistake the range for 0.0 to 1.0, so we set the min value to 50
@@ -140,6 +185,9 @@ namespace SkyCombImage.ProcessModel
                 { "Object Max Range M", ObjectMaxRangeM },
                 { "Yolo Confidence", YoloDetectConfidence, 2 },
                 { "Yolo IoU", YoloIoU, 2 },
+                { "Exclude Bottom Right", ExcludeBottomRightCorner },
+                { "Exclusion Right Width", ExclusionZoneRightWidth, 1 },
+                { "Exclusion Bottom Height", ExclusionZoneBottomHeight, 1 },
             };
         }
 
@@ -159,6 +207,14 @@ namespace SkyCombImage.ProcessModel
             i++; // ObjectMaxRangeM  
             YoloDetectConfidence = StringToFloat(settings[i++]);
             YoloIoU = StringToFloat(settings[i++]);
+            
+            // Handle new exclusion zone settings (backwards compatible)
+            if (i < settings.Count)
+                ExcludeBottomRightCorner = Convert.ToBoolean(settings[i++]);
+            if (i < settings.Count)
+                ExclusionZoneRightWidth = StringToFloat(settings[i++]);
+            if (i < settings.Count)
+                ExclusionZoneBottomHeight = StringToFloat(settings[i++]);
         }
 
 

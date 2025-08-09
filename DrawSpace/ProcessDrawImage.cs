@@ -126,14 +126,14 @@ namespace SkyCombImage.DrawSpace
                 if (block == null)
                     return;
 
-                // Draw the leg name on the image (if any) at bottom right
+                // Draw the leg name on the image (if any) 
                 if (drawObjectNames && (block.FlightLegId > 0))
                 {
                     var video = processAll.Drone.InputVideo;
                     if (video != null)
                     {
-                        int theY = video.ImageHeight * 98 / 100; // pixels
-                        int theX = video.ImageWidth * 92 / 100; // pixels
+                        int theY = video.ImageHeight * 99 / 100; // pixels 
+                        int theX = video.ImageWidth * 88 / 100; // pixels
                         var fontScale = video.FontScale;
                         Text(ref outputImg, "Leg " + block.FlightLegName,
                                 new Point(theX, theY), fontScale / 2.0f, DroneColors.LegNameBgr, fontScale);
@@ -189,10 +189,20 @@ namespace SkyCombImage.DrawSpace
                 {
                     modifiedInputFrame = inputFrame.Clone();
 
-                    // Draw hot objects
-                    DrawRunProcess(
-                        drawConfig, processConfig, ref modifiedInputFrame, new(),
-                        focusObject, block, processAll, drawObjectNames);
+                    if ((runProcess == RunProcessEnum.Comb) || (runProcess == RunProcessEnum.Yolo) || (runProcess == RunProcessEnum.Threshold))
+                    {
+                        // For Threshold, first apply the thermal coloring
+                        if (runProcess == RunProcessEnum.Threshold)
+                            DrawImage.Draw(runProcess, processConfig, drawConfig, ref modifiedInputFrame);
+
+                        // Then draw bounding rectangles and object names for all three methods
+                        DrawRunProcess(
+                            drawConfig, processConfig, ref modifiedInputFrame, new(),
+                            focusObject, block, processAll, drawObjectNames);
+                    }
+                    else
+                        // Draw None - no processing
+                        { /* Do nothing - just return original image */ }
                 }
                 return modifiedInputFrame;
             }
@@ -200,26 +210,6 @@ namespace SkyCombImage.DrawSpace
             {
                 throw ThrowException("DrawFrameImage.Draw", ex);
             }
-        }
-
-
-        // Process a single input video frame for the specified block, returning the modified input frames 
-        public static Image<Bgr, byte>? Draw(
-            RunProcessEnum runProcess,
-            ProcessConfigModel processConfig, DrawImageConfig drawConfig, Drone drone,
-            in Image<Bgr, byte> inputFrame, // Read-only
-            int focusObjectId, // Chosen object (if any)
-            ProcessBlockModel? block,
-            ProcessAll processAll)
-        {
-            ProcessObject? focusObject = null;
-            if (focusObjectId > 0)
-                focusObject = processAll.ProcessObjects[focusObjectId];
-
-            return Draw(
-                runProcess, processConfig, drawConfig,
-                drone, inputFrame, focusObject,
-                block, processAll);
         }
 
 
@@ -277,7 +267,8 @@ namespace SkyCombImage.DrawSpace
                     foreach (var thisObject in Process.ProcessObjects)
                         if (thisObject.Value.Significant &&
                             (thisObject.Value.HeightM > UnknownHeight) &&
-                            ((RunConfig == null) || RunConfig.InRange(thisObject.Value)))
+                            ((RunConfig == null) || RunConfig.InRange(thisObject.Value))
+                        )
                         {
                             var avgHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.HeightM - MinVertRaw, VertRangeRaw));
                             var minHeight = TrimHeight(RawDataToHeightPixels(thisObject.Value.DemM + thisObject.Value.MinHeightM - MinVertRaw, VertRangeRaw));
@@ -362,7 +353,6 @@ namespace SkyCombImage.DrawSpace
                 Bgr highlight = new Bgr(170, 205, 102);
 
                 var objHeightPxs = TrimHeight(RawDataToHeightPixels(thisObject.HeightM - MinVertRaw, VertRangeRaw));
-
                 var firstMs = DroneDrawScope.FirstDrawMs;
                 var lastMs = DroneDrawScope.LastDrawMs;
                 var objWidthPxs = StepToWidth(firstMs + (lastMs - firstMs) * 0.9f, firstMs);

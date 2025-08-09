@@ -25,10 +25,10 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Enhanced threshold method that also performs clustering analysis
-        public static List<ClusterInfoC> AnalyzeWithClustering(Image<Gray, byte> imgInput)
+        public static List<ClusterInfoC> AnalyzeWithClustering(Image<Gray, byte> imgInput, ProcessConfigModel config)
         {
-            // First, find all hot pixels
-            var hotPixels = FindHotPixels(imgInput);
+            // First, find all hot pixels (excluding those in exclusion zones)
+            var hotPixels = FindHotPixels(imgInput, config);
 
             // Cluster adjacent hot pixels
             var clusters = ClusterAdjacentPixels(hotPixels, imgInput);
@@ -43,15 +43,21 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        private static HashSet<Point> FindHotPixels(Image<Gray, byte> image)
+        private static HashSet<Point> FindHotPixels(Image<Gray, byte> image, ProcessConfigModel config)
         {
             var hotPixels = new HashSet<Point>();
             var data = image.Data;
+            int imageWidth = image.Width;
+            int imageHeight = image.Height;
 
-            for (int y = 0; y < image.Height; y++)
+            for (int y = 0; y < imageHeight; y++)
             {
-                for (int x = 0; x < image.Width; x++)
+                for (int x = 0; x < imageWidth; x++)
                 {
+                    // Check if pixel should be processed (not in exclusion zone)
+                    if (!config.ShouldProcessPixel(x, y, imageWidth, imageHeight))
+                        continue;
+
                     if (data[y, x, 0] >= HeatThresholdValue)
                     {
                         hotPixels.Add(new Point(x, y));
@@ -233,7 +239,7 @@ namespace SkyCombImage.ProcessLogic
             HeatThresholdValue = (byte) combProcess.ProcessConfig.HeatThresholdValue;
             MinPixels = ProcessConfigModel.FeatureMinPixels;
 
-            var clusters = AnalyzeWithClustering(imgThreshold);
+            var clusters = AnalyzeWithClustering(imgThreshold, combProcess.ProcessConfig);
 
             foreach (var cluster in clusters)
             {

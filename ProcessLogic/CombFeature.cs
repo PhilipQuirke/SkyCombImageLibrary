@@ -52,6 +52,8 @@ namespace SkyCombImage.ProcessLogic
 
             try
             {
+                var processConfig = ProcessAll.ProcessConfig;
+                
                 // Start with 3 pixels wide. This width will vary row by row
                 int fromX = 0;
                 int toX = 3;
@@ -73,6 +75,14 @@ namespace SkyCombImage.ProcessLogic
 
                     for (currX = startX + fromX; (currX < startX + toX) && (currX < imageWidth); currX++)
                     {
+                        // Check if pixel should be processed (not in exclusion zone)
+                        if (!processConfig.ShouldProcessPixel(currX, currY, imageWidth, imageHeight))
+                        {
+                            // Mark as searched but don't process
+                            inputSearched[currY * imageWidth + currX] = true;
+                            continue;
+                        }
+
                         // Set inputSearched[y,x] = true
                         inputSearched[currY * imageWidth + currX] = true;
 
@@ -184,6 +194,8 @@ namespace SkyCombImage.ProcessLogic
 
             try
             {
+                var processConfig = combProcess.ProcessConfig;
+
                 // For each location where inputSearched[y,x] = false
                 for (y = 0; y < imageHeight; y++)
                     for (x = 0; x < imageWidth; x++)
@@ -191,6 +203,14 @@ namespace SkyCombImage.ProcessLogic
                         var index = y * imageWidth + x;
                         if (!inputSearched[index])
                         {
+                            // Check if pixel should be processed (not in exclusion zone)
+                            if (!processConfig.ShouldProcessPixel(x, y, imageWidth, imageHeight))
+                            {
+                                // Mark as searched but don't process
+                                inputSearched[index] = true;
+                                continue;
+                            }
+
                             // Set inputSearched[y,x] = true
                             inputSearched[index] = true;
 

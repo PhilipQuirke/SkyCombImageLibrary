@@ -25,6 +25,30 @@ namespace SkyCombImage.ProcessLogic
                 PixelBox = new System.Drawing.Rectangle(result.BoundingBox.Left, result.BoundingBox.Top, result.BoundingBox.Width, result.BoundingBox.Height);
                 Label = result.Label;
                 Confidence = result.Confidence;
+
+                // Check if this feature overlaps with exclusion zones
+                var processConfig = yoloProcess.ProcessConfig;
+                if (processConfig.ExcludeBottomRightCorner)
+                {
+                    // Get image dimensions from the process (we'll need to get this from the block or video data)
+                    var block = yoloProcess.Blocks[blockId];
+                    var imageWidth = yoloProcess.VideoData.ImageWidth;
+                    var imageHeight = yoloProcess.VideoData.ImageHeight;
+
+                    var (rightBoundary, bottomBoundary) = 
+                        processConfig.GetExclusionBoundaries(imageWidth, imageHeight);
+
+                    // Check if feature overlaps with excluded area
+                    var excludedArea = new Rectangle(rightBoundary, bottomBoundary, 
+                        imageWidth - rightBoundary, imageHeight - bottomBoundary);
+                    
+                    if (PixelBox.IntersectsWith(excludedArea))
+                    {
+                        // Feature overlaps with exclusion zone - mark as insignificant
+                        Significant = false;
+                        IsTracked = false;
+                    }
+                }
             }
             else
                 PixelBox = new System.Drawing.Rectangle(0, 0, 0, 0);
@@ -51,6 +75,10 @@ namespace SkyCombImage.ProcessLogic
             ClearHotPixelData();
             Pixels = new();
 
+            var processConfig = ProcessAll.ProcessConfig;
+            int imageWidth = imgOriginal.Width;
+            int imageHeight = imgOriginal.Height;
+
             int left = Math.Max(PixelBox.Left, 0);
             int top = Math.Max(PixelBox.Top, 0);
             int right = Math.Min(PixelBox.Right, imgOriginal.Width);
@@ -66,6 +94,10 @@ namespace SkyCombImage.ProcessLogic
             {
                 for (int x = left; x < right; x++)
                 {
+                    // Check if pixel should be processed (not in exclusion zone)
+                    if (!processConfig.ShouldProcessPixel(x, y, imageWidth, imageHeight))
+                        continue;
+
                     if (imgThreshold[y, x].Intensity > 0)
                     {
                         // Update the tight bounding box coordinates
