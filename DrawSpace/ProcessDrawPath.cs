@@ -4,6 +4,7 @@ using Emgu.CV.Structure;
 using SkyCombDrone.CommonSpace;
 using SkyCombDrone.DrawSpace;
 using SkyCombDrone.DroneLogic;
+using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
 using System.Drawing;
@@ -140,7 +141,7 @@ namespace SkyCombImage.DrawSpace
             }
             catch (Exception ex)
             {
-                throw ThrowException("ProcessDrawPath.CurrImage", ex);
+                throw BaseConstants.ThrowException("ProcessDrawPath.CurrImage", ex);
             }
         }
 
