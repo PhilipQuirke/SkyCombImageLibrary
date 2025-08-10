@@ -44,10 +44,11 @@ Add to the Windows System variables entries like:
 - CUDA_PATH_V12_6 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6
 - CUDA_VISIBLE_DEVICES 0
 
-This project imports these libraries related to GPU and YOLO computing:
-- Accord.MachineLearning (3.8.0)
-- MathNet.Numerics (5.0.0)
-- Microsoft.ML.OnnxRuntime.Gpu (1.19.2)
-- Microsoft.ML.OnnxRuntime.Gpu.Windows (1.19.2)
-- SkiaSharp (2.88.8)
-- YoloDotNet (2.2.0)
+
+## Key Dependencies
+This project uses these main libraries:
+- **YoloDotNet (2.2.0)** - YOLO v8 object detection framework
+- **SkiaSharp (2.88.8)** - Cross-platform 2D graphics API for image processing
+- **OpenCvSharp4 (4.10.0.*)** - Computer vision and image processing operations
+- **Accord.MachineLearning (3.8.0)** - Mathematical optimization algorithms
+- **alglib404gpl_net5.dll** - Advanced mathematical computation library

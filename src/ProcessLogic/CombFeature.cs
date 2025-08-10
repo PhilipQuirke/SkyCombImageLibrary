@@ -166,7 +166,7 @@ namespace SkyCombImage.ProcessLogic
         }
     }
 
-    public class CombFeatureLogic
+    internal class CombFeatureLogic
     {
         // Analyse input image using Comb specific approach:
         // - PreReq: Convert image to gray scale, smooth and threshold => imgThreshold

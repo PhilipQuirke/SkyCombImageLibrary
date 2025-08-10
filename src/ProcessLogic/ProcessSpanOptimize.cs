@@ -14,7 +14,7 @@ namespace SkyCombImage.ProcessLogic
     // ProcessSpanOptimize relates to either the steps in a FlightLeg OR a sequence of FlightSteps (not related to a FlightLeg).
     // Either way, ProcessSpanOptimize analyses ProcessObjects to find their location based on a triangulation of the drone's position and the object's image location in two images.
 
-    public class SpanOptimize
+    internal class SpanOptimize
     {
         // Parent process
         // Camera information
@@ -121,7 +121,7 @@ namespace SkyCombImage.ProcessLogic
                 mat.At<double>(i) = values[i];
             }
         }
-        public class SetSolve
+        internal class SetSolve
         {
             private double[][]? Direction;
             private double[]? CamPosn;
@@ -349,6 +349,7 @@ namespace SkyCombImage.ProcessLogic
     }
 
 }
+
 
 
 

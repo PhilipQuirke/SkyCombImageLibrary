@@ -9,7 +9,7 @@ using System.Drawing;
 
 namespace SkyCombImage.ProcessLogic
 {
-    public class ProcessFactory : BaseConstants
+    internal class ProcessFactory : BaseConstants
     {
         public static ProcessBlock NewBlock(ProcessScope scope)
         {
