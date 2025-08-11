@@ -21,7 +21,7 @@
 		</Reference>
 	</ItemGroup>
 	<ItemGroup>
-		<None Update="libs/alglib404gpl_net5.dll">
+		<None Update="libs\alglib404gpl_net5.dll">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
