@@ -254,7 +254,6 @@ namespace SkyCombImage.Examples
             // Custom drone data loading options
             var droneOptions = new DroneDataOptions
             {
-                EnableCaching = true,
                 FullDataLoad = true,
                 AutoDetectLegs = true,
                 BufferDistanceM = 100  // Larger buffer for ground data
