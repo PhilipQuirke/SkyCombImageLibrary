@@ -1,17 +1,17 @@
 # SkyCombImageLibrary
 
-SkyComb Image Library is a modern .NET library for processing drone thermal and optical video to detect and track objects of interest. It provides a clean, user-friendly API for integrating computer vision capabilities into drone analysis applications.
+SkyComb Image Library is a modern .NET library for processing drone thermal video to detect and track objects of interest. It provides a clean, user-friendly API for integrating computer vision capabilities into drone analysis applications.
 
 ## Features
 
-- ?? **Multiple Detection Algorithms** - Comb (thermal-optimized), YOLO v8 (deep learning), and threshold-based detection
-- ?? **Drone Integration** - Seamless integration with SkyComb Drone Library for flight data
-- ??? **Thermal Processing** - Specialized algorithms for thermal imagery analysis
-- ?? **YOLO Support** - GPU-accelerated YOLO v8 object detection with CUDA support
-- ?? **Rich Results** - Detailed object information including location, size, duration, and confidence
-- ?? **Video Annotation** - Generate annotated videos showing detected objects
-- ?? **Progress Reporting** - Real-time progress updates during processing
-- ?? **Extensible Design** - Clean interfaces for custom algorithm implementations
+- **Multiple Detection Algorithms** - Comb (thermal-optimized), YOLO v8 (deep learning), and threshold-based detection
+- **Drone Integration** - Seamless integration with SkyComb Drone Library for flight data
+- **Thermal Processing** - Specialized algorithms for thermal imagery analysis
+- **YOLO Support** - GPU-accelerated YOLO v8 object detection on hardware with CUDA support
+- **Rich Results** - Detailed object information including location, size, duration, and confidence
+- **Video Annotation** - Generate annotated videos showing detected objects
+- **Progress Reporting** - Real-time progress updates during processing
+- **Extensible Design** - Clean interfaces for custom algorithm implementations
 
 ## Quick Start
 
@@ -36,7 +36,7 @@ using SkyCombDrone.Services;
 var droneService = DroneDataService.Create();
 using var droneData = await droneService.LoadVideoDataAsync(
     @"C:\DroneVideos\thermal_flight.mp4", 
-    @"C:\ElevationData"
+    @"C:\GroundData"
 );
 
 // Step 2: Configure image processing
@@ -281,10 +281,9 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Support
 
-- ?? **Documentation**: See [Examples](Examples/) directory
-- ?? **Issues**: Report via GitHub Issues
-- ?? **Discussions**: Use GitHub Discussions for questions
-- ?? **Contact**: Through GitHub
+- **Documentation**: See [Examples](Examples/) directory
+- **Issues**: Report via GitHub Issues
+- **Contact**: Through GitHub
 
 ---
 

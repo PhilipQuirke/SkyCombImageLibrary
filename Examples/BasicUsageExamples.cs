@@ -22,7 +22,7 @@ namespace SkyCombImage.Examples
             // Step 1: Load drone data (video with flight log)
             var droneService = DroneDataService.Create();
             string videoPath = @"C:\DroneVideos\thermal_flight.mp4";
-            string groundDataPath = @"C:\ElevationData";
+            string groundDataPath = @"C:\GroundData";
 
             using var droneData = await droneService.LoadVideoDataAsync(videoPath, groundDataPath);
             Console.WriteLine($"Loaded flight: Duration {droneData.FlightSummary.Duration:hh\\:mm\\:ss}, Camera: {droneData.FlightSummary.CameraType}");
@@ -71,7 +71,7 @@ namespace SkyCombImage.Examples
             var imageService = ImageProcessingService.Create();
 
             string videoPath = @"C:\DroneVideos\optical_survey.mp4";
-            string groundDataPath = @"C:\ElevationData";
+            string groundDataPath = @"C:\GroundData";
             string yoloModelsPath = @"C:\YoloModels";
 
             try
@@ -135,7 +135,7 @@ namespace SkyCombImage.Examples
                 @"C:\DroneVideos\flight_003.mp4"
             };
 
-            string groundDataPath = @"C:\ElevationData";
+            string groundDataPath = @"C:\GroundData";
 
             var options = new ImageProcessingOptions
             {
@@ -196,7 +196,7 @@ namespace SkyCombImage.Examples
             var imageService = ImageProcessingService.Create();
 
             string videoPath = @"C:\DroneVideos\test_flight.mp4";
-            string groundDataPath = @"C:\ElevationData";
+            string groundDataPath = @"C:\GroundData";
 
             try
             {
@@ -263,7 +263,7 @@ namespace SkyCombImage.Examples
             var imageService = ImageProcessingService.Create();
 
             string videoPath = @"C:\DroneVideos\complex_flight.mp4";
-            string groundDataPath = @"C:\ElevationData";
+            string groundDataPath = @"C:\GroundData";
 
             using var droneData = await droneService.LoadVideoDataAsync(videoPath, groundDataPath);
 
