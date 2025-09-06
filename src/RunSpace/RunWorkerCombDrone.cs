@@ -71,8 +71,9 @@ namespace SkyCombImage.RunSpace
                 foreach (var feature in featuresInBlock)
                     feature.Value.CalculateSettings_LocationM_HeightM_LOS(ProcessAll.GroundData);
 
+                // If input is images, we always do comb processing, as each image is independent and scarce.
                 // If legs are used, we only do comb processing during "legs". 
-                if ((!Drone.UseFlightLegs) || (PSM.CurrRunLegId > 0))
+                if (Drone.InputIsImages || (!Drone.UseFlightLegs) || (PSM.CurrRunLegId > 0))
                     // Process the features, by preference associated them with existing CombObjects, else creating new objects.
                     CombProcess.ProcessBlockForObjects(this, featuresInBlock);
                 else

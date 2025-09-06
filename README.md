@@ -98,8 +98,9 @@ using var result = await imageService.ProcessVideoAsync(droneData, options, prog
 SkyComb Image Library supports three detection algorithms:
 
 **Threshold**
-The **threshold** algorithm simply covert all pixels below a certain threshold (HeatThresholdValue, e.g. 235) to black (i.e. 0).
-There is a default threshold, this can be manually adjusted per input set to better segment the animals from the background. 
+The **threshold** algorithm (recommended) ignores all pixels below a given heat threshold (HeatThresholdValue).
+It then looks for small, compact clusters of hot pixels. 
+There is a default threshold (220), which can be manually adjusted per input set to better segment the animals from the background. 
 
 Background: Thermal images are grey-scale with pixels in the range 0 to 255.
 The interpretation of 0 to 255 depends on the temperature range chosen (out of 3 say 3 predefined options) in the drone and to a lesser degree the environment (e.g. with too much light a thermal can be swamped and become inaccurate).  
@@ -110,9 +111,10 @@ But a range of trees, rocks, sap, water may score say 0 to 100 on the 0-255 scal
 **YOLO**
 The **YOLO** (You Only Look Once) algorithm is an AI-based, state-of-the-art object detection system. 
 Starting with images of known objects (e.g. possums and birds) manually annotated by humans, a neural network is trained to recognize those objects in new images.
-The model is best at detecting those objects it has been trained on, but can also detect other objects with similar attributes (e.g. size, heat, shape).
-One such model is available for free with this library, trained on possums and birds in thermal imagery.
 To run this algorithm, your laptop must have a CUDA-capable GPU chip and the YOLO model stored on your hard-disk.
+
+The trained model is best at detecting objects like those it has been trained on, but can also detect other objects with similar attributes (e.g. size, heat, shape).
+A model is provided with this library. It was trained on annotated possums and birds in thermal imagery. It is somewhat specific to the training data. Use with care.
 
 **Comb**
 The **Comb** algorithm is a custom object detection algorithm optimized for thermal imagery.
@@ -182,20 +184,6 @@ catch (ObjectDetectionException ex)
 
 ## Advanced Usage
 
-### Batch Processing
-
-```csharp
-var videoPaths = Directory.GetFiles(@"C:\DroneVideos", "*.mp4");
-
-foreach (var videoPath in videoPaths)
-{
-    using var droneData = await droneService.LoadVideoDataAsync(videoPath, groundDataPath);
-    using var result = await imageService.ProcessVideoAsync(droneData, options);
-    
-    Console.WriteLine($"{Path.GetFileName(videoPath)}: {result.SignificantObjectsDetected} objects");
-}
-```
-
 ### Custom Progress Reporting
 
 ```csharp
@@ -263,7 +251,7 @@ SkyCombImageLibrary/
     src/
         ProcessLogic/  # Object detection algorithms
         ProcessModel/  # Data models for detected objects
-        PersistModel/  # Data persistence and export
+        PersistModel/  # Data persistence to datastore (xls)
         DrawSpace/     # Video annotation and visualization
         RunSpace/      # Processing workflow coordination
         CategorySpace/ # Object classification system
@@ -271,7 +259,7 @@ SkyCombImageLibrary/
 
 ## Performance Considerations
 
-- **Memory Usage**: Large videos require substantial RAM (2-4GB recommended)
+- **Memory Usage**: Large videos require substantial RAM (>12GB)
 - **Processing Speed**: YOLO ~0.8x video duration, Comb ~0.4x, Threshold ~0.2x
 - **GPU Requirements**: YOLO requires CUDA-compatible GPU for optimal performance
 - **Storage**: Annotated videos and Excel data files are generated during processing

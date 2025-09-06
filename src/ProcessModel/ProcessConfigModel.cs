@@ -58,7 +58,7 @@ namespace SkyCombImage.ProcessModel
         public const float ObjectMinHotDensity = 0.1f;
 
         // Pixel gray-scale value for hot pixel thresholding. Takes values from 50 to 255
-        public int HeatThresholdValue { get; set; } = 180;
+        public int HeatThresholdValue { get; set; } = 220;
         // Single frame Yolo detection confidence
         public float YoloDetectConfidence { get; set; } = ProcessConfigModel.YoloDetectConfidenceDefault;
         // Successive frame Yolo overlap threshold
@@ -225,7 +225,6 @@ namespace SkyCombImage.ProcessModel
             {
                 { "Save Annotated Video", SaveAnnotatedVideo },
                 { "Save Object Data", SaveObjectData.ToString() },
-
             };
         }
 

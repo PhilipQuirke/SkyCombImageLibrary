@@ -44,10 +44,6 @@ namespace SkyCombImage.ProcessLogic
                     {
                         var theObject = ProcessFactory.NewCombObject(scope, this, feature.Value as CombFeature);
                         ProcessObjects.AddObject(theObject);
-                        if (blockID >= 2)
-                        {
-                            // TODO: Consider claiming overship of overlapping inactive features from the previous Block(s).
-                        }
                     }
 
 

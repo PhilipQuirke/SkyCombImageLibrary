@@ -15,7 +15,6 @@ using System.Drawing;
 
 
 // Namespace for processing of multiple images (frames).
-// Some classes contain code that persists information between frames
 namespace SkyCombImage.RunSpace
 {
     public class DroneIntervalList : List<DroneIntervalModel>
