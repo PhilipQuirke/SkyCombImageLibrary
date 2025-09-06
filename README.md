@@ -9,7 +9,8 @@ SkyComb Image Library is a modern .NET library for processing drone thermal vide
 - **Thermal Processing** - Specialized algorithms for thermal imagery analysis
 - **YOLO Support** - GPU-accelerated YOLO v8 object detection on hardware with CUDA support
 - **Rich Results** - Detailed object information including location, size, duration, and confidence
-- **Video Annotation** - Generate annotated videos showing detected objects
+- **Image and Videos** - Per run processes either a folder of images or a single video file
+- **Video Annotation** - When processing vidoes, generates annotated videos showing detected objects
 - **Progress Reporting** - Real-time progress updates during processing
 - **Extensible Design** - Clean interfaces for custom algorithm implementations
 
@@ -45,7 +46,6 @@ var options = new ImageProcessingOptions
 {
     Algorithm = DetectionAlgorithm.Comb,
     HeatThreshold = 235,
-    SaveAnnotatedVideo = true,
     SaveObjectData = ObjectDataSaveMode.Significant
 };
 
@@ -95,12 +95,28 @@ using var result = await imageService.ProcessVideoAsync(droneData, options, prog
 - **`DetectedObject`** - Information about individual detected objects
 
 ### Detection Algorithms
+SkyComb Image Library supports three detection algorithms:
 
-| Algorithm | Best For | Speed | Accuracy |
-|-----------|----------|-------|----------|
-| **Comb** | Thermal imagery, animals | Fast | High for thermal |
-| **YOLO** | Optical imagery, general objects | Medium | Very high |
-| **Threshold** | Simple heat detection | Very fast | Basic |
+**Threshold**
+The **threshold** algorithm simply covert all pixels below a certain threshold (HeatThresholdValue, e.g. 235) to black (i.e. 0).
+There is a default threshold, this can be manually adjusted per input set to better segment the animals from the background. 
+
+Background: Thermal images are grey-scale with pixels in the range 0 to 255.
+The interpretation of 0 to 255 depends on the temperature range chosen (out of 3 say 3 predefined options) in the drone and to a lesser degree the environment (e.g. with too much light a thermal can be swamped and become inaccurate).  
+For images taken during the day (not recommended) rocks can be the hottest objects.
+For images taken at night, after rocks have had time to cool, animals are the generally the hotest objects.
+But a range of trees, rocks, sap, water may score say 0 to 100 on the 0-255 scale.
+
+**YOLO**
+The **YOLO** (You Only Look Once) algorithm is an AI-based, state-of-the-art object detection system. 
+Starting with images of known objects (e.g. possums and birds) manually annotated by humans, a neural network is trained to recognize those objects in new images.
+The model is best at detecting those objects it has been trained on, but can also detect other objects with similar attributes (e.g. size, heat, shape).
+One such model is available for free with this library, trained on possums and birds in thermal imagery.
+To run this algorithm, your laptop must have a CUDA-capable GPU chip and the YOLO model stored on your hard-disk.
+
+**Comb**
+The **Comb** algorithm is a custom object detection algorithm optimized for thermal imagery.
+It combines the thresholding approach with "hot pixel" clustering techniques, to detect small hot objects in thermal images.
 
 ### Processing Options
 
@@ -110,7 +126,7 @@ var options = new ImageProcessingOptions
     Algorithm = DetectionAlgorithm.Comb,       // Detection method
     HeatThreshold = 235,                       // Thermal threshold (0-255)
     YoloConfidence = 0.25f,                    // YOLO confidence (0.0-1.0)
-    YoloIoU = 0.45f,                          // YOLO IoU threshold
+    YoloIoU = 0.45f,                           // YOLO IoU threshold
     SaveAnnotatedVideo = true,                 // Generate annotated MP4
     SaveObjectData = ObjectDataSaveMode.Significant, // What to save
     YoloModelDirectory = @"C:\YoloModels"      // YOLO model path
@@ -234,29 +250,23 @@ if (droneData.HasFlightLegs)
 
 ## Examples
 
-See the [Examples](Examples/) directory for comprehensive usage examples:
-
-- `BasicUsageExamples.cs` - Getting started with different algorithms
-- Batch processing workflows
-- Advanced configuration options
-- Error handling patterns
-- Custom progress reporting
+See the [Examples](Examples/) directory for usage examples.
 
 ## Architecture
 
 ```
 SkyCombImageLibrary/
-??? Interfaces/         # Public API contracts
-??? Services/          # Service implementations  
-??? Examples/          # Usage examples and documentation
-??? Exceptions/        # Custom exception types
-??? NativeLibraries/   # Third-party native libraries
-??? src/
-    ??? ProcessLogic/  # Object detection algorithms
-    ??? ProcessModel/  # Data models for detected objects
-    ??? DrawSpace/     # Video annotation and visualization
-    ??? RunSpace/      # Processing workflow coordination
-    ??? CategorySpace/ # Object classification system
+    Interfaces/        # Public API contracts
+    Services/          # Service implementations  
+    Examples/          # Usage examples and documentation
+    Exceptions/        # Custom exception types
+    src/
+        ProcessLogic/  # Object detection algorithms
+        ProcessModel/  # Data models for detected objects
+        PersistModel/  # Data persistence and export
+        DrawSpace/     # Video annotation and visualization
+        RunSpace/      # Processing workflow coordination
+        CategorySpace/ # Object classification system
 ```
 
 ## Performance Considerations

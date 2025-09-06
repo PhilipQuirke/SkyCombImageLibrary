@@ -70,7 +70,7 @@ namespace SkyCombImage.Examples
             var droneService = DroneDataService.Create();
             var imageService = ImageProcessingService.Create();
 
-            string videoPath = @"C:\DroneVideos\optical_survey.mp4";
+            string videoPath = @"C:\DroneVideos\thermal_survey.mp4";
             string groundDataPath = @"C:\GroundData";
             string yoloModelsPath = @"C:\YoloModels";
 
