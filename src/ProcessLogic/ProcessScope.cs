@@ -118,8 +118,12 @@ namespace SkyCombImage.ProcessLogic
         public void CalculateInputScope(float inputVideoFromS, float inputVideoToS)
         {
             if (Drone.InputIsVideo)
+            {
                 (PSM.FirstInputFrameId, PSM.LastInputFrameId, PSM.FirstVideoFrameMs, PSM.LastVideoFrameMs) =
                     Drone.InputVideo.CalculateFromToS(inputVideoFromS, inputVideoToS);
+                PSM.FirstInputFrameId = Math.Max(1, PSM.FirstInputFrameId);
+                PSM.LastInputFrameId = Math.Max(1, PSM.LastInputFrameId);
+            }
             else
             {
                 var fromSection = Drone.FlightSections.SecondToFlightSection(inputVideoFromS);
