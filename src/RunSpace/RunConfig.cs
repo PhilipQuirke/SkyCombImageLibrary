@@ -65,11 +65,11 @@ namespace SkyCombImage.RunSpace
         {
             get
             {
-                if (InputFileName.Length < 5)
+                if (string.IsNullOrEmpty(InputFileName) || InputFileName.Length < 4)
                     return false;
 
-                string suffix = InputFileName.Substring(InputFileName.Length - 4, 4).ToLower();
-                return suffix == ".mp4" || suffix == ".avi" || suffix == ".srt";
+                string ext = System.IO.Path.GetExtension(InputFileName).ToLowerInvariant();
+                return ext == ".mp4" || ext == ".avi" || ext == ".ts" || ext == ".srt";
             }
         }
 
