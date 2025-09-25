@@ -734,6 +734,34 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+
+        public int AvgRealHotPixelHeat
+        {
+            get
+            {
+                // For each real feature, calculate the average heat per hot pixel
+                // Then calculate the average of these averages.
+                if (MaxNumRealHotPixels <= 0) return 0;
+
+                int numFeatures = 0;
+                double sumfeatureAvg = 0;
+
+                foreach (var feature in ProcessFeatures)
+                {
+                    if (feature.Value.Type == FeatureTypeEnum.Real && feature.Value.NumHotPixels > 0)
+                    {
+                        double featureAvg = 1.0 * feature.Value.SumHotPixels / feature.Value.NumHotPixels;
+
+                        numFeatures++;
+                        sumfeatureAvg += featureAvg;
+                    }
+                }
+
+                return (int)(numFeatures > 0 ? sumfeatureAvg / numFeatures : 0.0);
+            }
+        }
+
+
         // Get the class's settings as datapairs (e.g. for saving to the datastore)
         public override DataPairList GetSettings()
         {

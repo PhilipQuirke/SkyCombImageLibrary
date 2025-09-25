@@ -239,22 +239,33 @@ namespace SkyCombImage.PersistModel
         // Persist (save) the last images of each ProcessObject to the datastore in a matrix of images
         public static void SaveObjectMatrix(ImageDataStore data, ProcessObjList processObjects, int startRow)
         {
-            //var title = $"Individual Object Images: ColumnWidth={data.Worksheet.DefaultColWidth}, RowHeight={data.Worksheet.DefaultRowHeight}, Column1Width={data.Worksheet.Column(1).Width}, Row1Height={data.Worksheet.Row(1).Height}, ZoomLevel={data.Worksheet.View.ZoomScale}";
             var title = "Individual Object Images";
+            var ws = data.Worksheet;
 
             int col = 1;
             int row = startRow;
+            int detailRow = row + 1;
             data.SetTitle(ref row, col, title);
 
             int imageWidth = 50;
             int imageHeight = 50;
 
-            const int maxCol = 20;
+            const int maxCol = 15;
             const int colSpacing = 2;
             const int rowSpacing = 7;
             const int fixedXlsWidth = 120;
 
-            var imageHandler = new ExcelImageHandler(data.Worksheet);
+            ws.Cells[startRow, maxCol + 3].Value = "Name";
+            ws.Cells[startRow, maxCol + 4].Value = "Seen (s)";
+            ws.Cells[startRow, maxCol + 5].Value = "Size (cm2)";
+            ws.Cells[startRow, maxCol + 6].Value = "# Hot Pxs";
+            ws.Cells[startRow, maxCol + 7].Value = "Avg Heat";
+            ws.Cells[startRow, maxCol + 8].Value = "Max Heat";
+            ws.Cells[startRow, maxCol + 9].Value = "N/E Locn";
+            //ws.Cells[startRow, maxCol + 9].Value = "Long/Lat"; PQR TODO
+            ws.Cells[startRow, 1, startRow, maxCol + 10].Style.Font.Bold = true;
+
+            var imageHandler = new ExcelImageHandler(ws);
 
             foreach (var obj in processObjects.Values)
             {
@@ -266,8 +277,16 @@ namespace SkyCombImage.PersistModel
                         imageWidth = originalBitmap.Width;
                         imageHeight = originalBitmap.Height;
 
-                        //data.Worksheet.Cells[row, col].Value = $"{obj.Name} ({imageWidth}x{imageHeight} @{originalBitmap.HorizontalResolution}dpi)";
-                        data.Worksheet.Cells[row, col].Value = $"{obj.Name} ({obj.MaxHeat})";
+                        ws.Cells[detailRow, maxCol + 3].Value = obj.Name;
+                        ws.Cells[detailRow, maxCol + 4].Value = obj.RunFromVideoS;
+                        ws.Cells[detailRow, maxCol + 5].Value = obj.SizeCM2;
+                        ws.Cells[detailRow, maxCol + 6].Value = obj.MaxNumRealHotPixels;
+                        ws.Cells[detailRow, maxCol + 7].Value = obj.AvgRealHotPixelHeat;
+                        ws.Cells[detailRow, maxCol + 8].Value = obj.MaxHeat;
+                        ws.Cells[detailRow, maxCol + 9].Value = obj.LocationM.ToString();
+                        detailRow++;
+
+                        ws.Cells[row, col].Value = $"{obj.Name}";
 
                         var imageName = $"Object_{obj.ObjectId}_Img";
                         int imageXlsHeight = (int)((double)originalBitmap.Height * fixedXlsWidth / Math.Max(originalBitmap.Width, 1));
@@ -279,12 +298,13 @@ namespace SkyCombImage.PersistModel
                         {
                             col = 1;
                             row += rowSpacing;
+                            detailRow = row;
                         }
                     }
                 }
             }
 
-            data.Worksheet.Cells[startRow, 5].Value = $"With object name and max pixel heat (0-255). All images are {imageWidth} by {imageHeight} pixels";
+            data.Worksheet.Cells[startRow, 5].Value = $"Images are {imageWidth}x{imageHeight} pixels";
         }
 
 
