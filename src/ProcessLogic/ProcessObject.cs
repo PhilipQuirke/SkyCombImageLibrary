@@ -467,11 +467,11 @@ namespace SkyCombImage.ProcessLogic
             try
             {
                 // PIXELS
-                // Maximum pixel count per real feature
-                var maxNumHotPixels = MaxNumRealHotPixels;
-                var pixelsOk = (maxNumHotPixels > ProcessConfigModel.ObjectMinPixels); // Say 5 pixels
-                var pixelsGood = (maxNumHotPixels > 2 * ProcessConfigModel.ObjectMinPixels); // Say 10 pixels 
-                var pixelsGreat = (maxNumHotPixels > 4 * ProcessConfigModel.ObjectMinPixels); // Say 20 pixels
+                var maxNumHotPixels = MaxNumRealHotPixels;// Maximum pixel count per real feature
+                var notTooLarge = (ProcessConfig.ObjectMaxPixels <= 0) || (maxNumHotPixels <= ProcessConfig.ObjectMaxPixels);
+                var pixelsOk = notTooLarge && (maxNumHotPixels > ProcessConfig.ObjectMinPixels); // Say 5 pixels
+                var pixelsGood = notTooLarge && (maxNumHotPixels > 2 * ProcessConfig.ObjectMinPixels); // Say 10 pixels 
+                var pixelsGreat = notTooLarge && (maxNumHotPixels > 4 * ProcessConfig.ObjectMinPixels); // Say 20 pixels
 
                 // DENSITY
                 var densityOK =  (RealDensityPx() >= ProcessConfigModel.ObjectMinHotDensity);
@@ -518,7 +518,13 @@ namespace SkyCombImage.ProcessLogic
         // This "VaguelySignificant" object code mirrors the feature "Significant" code
         public bool VaguelySignificant()
         {
-            return (MaxNumRealHotPixels > ProcessConfigModel.ObjectMinPixels); // Say 5 pixels / Block
+            if ((ProcessConfig.ObjectMinPixels > 0) && (MaxNumRealHotPixels < ProcessConfig.ObjectMinPixels)) // Say 5 pixels / Block
+                return false;
+
+            if ((ProcessConfig.ObjectMaxPixels > 0) && (MaxNumRealHotPixels > ProcessConfig.ObjectMaxPixels)) // Say 1000 pixels / Block
+                return false;
+
+            return true;
         }
 
 

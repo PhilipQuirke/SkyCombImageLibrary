@@ -46,19 +46,27 @@ namespace SkyCombImage.ProcessModel
         // Minimum overlap percentage between two features that is considered significant
         public const int FeatureMinOverlapPerc = 5;
 
+
+        // Pixel gray-scale value for hot pixel thresholding. Takes values from 50 to 255
+        public int HeatThresholdValue { get; set; } = 220;
         // Duration (in milliseconds) that object must be tracked for before it is highlighted
         public const int ObjectMinDurationMs = 500;
         // Maximum number of "unreal" features after a real feature. Applies to videos only.
         public const int ObjectMaxUnrealBlocks = 5;
         // To be significant, an object must have this many hot pixels in at least one real step
-        public const int ObjectMinPixels = 5;
+        public int ObjectMinPixels { get; set; } = 5;
+        // Maximum number of hot pixels in an object
+        public int ObjectMaxPixels { get; set; } = 1000; 
+        // Minimum number of max-heat pixels in an object
+        public int ObjectMinMaxHeatPixels { get; set; } = 0; // PQR TODO. Implement this
+
         // An object detected at long-range must be large and so is not of interest to us.
         public const int ObjectMaxRangeM = 350;
         // Minimum fraction of pixels in a feature that must be "hot" to be considered significant
         public const float ObjectMinHotDensity = 0.1f;
 
-        // Pixel gray-scale value for hot pixel thresholding. Takes values from 50 to 255
-        public int HeatThresholdValue { get; set; } = 220;
+
+
         // Single frame Yolo detection confidence
         public float YoloDetectConfidence { get; set; } = ProcessConfigModel.YoloDetectConfidenceDefault;
         // Successive frame Yolo overlap threshold
@@ -68,9 +76,9 @@ namespace SkyCombImage.ProcessModel
         // Exclude bottom right corner from processing (used when image includes text overlays e.g. location, altitude)
         public bool ExcludeBottomRightCorner { get; set; } = true;
         // Width of exclusion zone from right edge (in pixels if > 1 else as percentage)
-        public float ExclusionZoneRightWidth { get; set; } = 0.4f;
+        public float ExclusionZoneRightWidth { get; set; } = 0.0f;
         // Height of exclusion zone from bottom edge  (in pixels if > 1 else as percentage)
-        public float ExclusionZoneBottomHeight { get; set; } = 0.1f;
+        public float ExclusionZoneBottomHeight { get; set; } = 0.0f;
 
 
         // --------------------- Saving Output --------------------- 
@@ -182,6 +190,8 @@ namespace SkyCombImage.ProcessModel
                 { "Object Min Duration Ms", ObjectMinDurationMs },
                 { "Object Max Unreal Blocks", ObjectMaxUnrealBlocks },
                 { "Object Min Pixels", ObjectMinPixels },
+                { "Object Max Pixels", ObjectMaxPixels },
+                { "Object Min Max-Heat Pixels", ObjectMinMaxHeatPixels },
                 { "Object Max Range M", ObjectMaxRangeM },
                 { "Yolo Confidence", YoloDetectConfidence, 2 },
                 { "Yolo IoU", YoloIoU, 2 },
@@ -203,7 +213,9 @@ namespace SkyCombImage.ProcessModel
             i++; // FeatureMinOverlapPerc  
             i++; // ObjectMinDurationMs  
             i++; // ObjectMaxUnrealBlocks  
-            i++; // ObjectMinPixels  
+            ObjectMinPixels = StringToNonNegInt(settings[i++]);
+            ObjectMaxPixels = StringToNonNegInt(settings[i++]);
+            ObjectMinMaxHeatPixels = StringToNonNegInt(settings[i++]);
             i++; // ObjectMaxRangeM  
             YoloDetectConfidence = StringToFloat(settings[i++]);
             YoloIoU = StringToFloat(settings[i++]);
