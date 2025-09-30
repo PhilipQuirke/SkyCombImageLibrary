@@ -155,6 +155,7 @@ namespace SkyCombImage.ProcessLogic
                     increasedMaxSumRealHotPixels = theFeature.SumHotPixels > MaxSumRealHotPixels;
                     MaxNumRealHotPixels = Math.Max(MaxNumRealHotPixels, theFeature.NumHotPixels);
                     MaxSumRealHotPixels = Math.Max(MaxSumRealHotPixels, theFeature.SumHotPixels);
+                    MaxNumMaxHeatPixels = Math.Max(MaxNumMaxHeatPixels, theFeature.NumMaxHeatPixels);
 
                     var theBlock = theFeature.Block;
 
@@ -1214,7 +1215,7 @@ namespace SkyCombImage.ProcessLogic
 
         // Load this object's settings from strings (loaded from a datastore)
         // This function must align to the above GetSettings function.
-        public void LoadSettings(List<string> settings)
+        public virtual void LoadSettings(List<string> settings)
         {
             int index = 0;
             index++; // # Objects = settings[0]

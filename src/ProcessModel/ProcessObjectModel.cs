@@ -57,10 +57,6 @@ namespace SkyCombImage.ProcessModel
         public int AvgRangeM { get; set; }
 
 
-        // Maximum heat value of any pixel in this object in any frame
-        public int MaxHeat { get; set; }
-
-
         // Average height of the ground below the object (in meters above sea level)
         public float DemM { get; set; }
         // Significance attributes about this object
@@ -79,10 +75,15 @@ namespace SkyCombImage.ProcessModel
         // Is this object still being actively tracked?
         public bool BeingTracked { get; set; }
 
+
+        // Maximum heat value of any pixel in this object in any frame
+        public int MaxHeat { get; set; }
         // Maximum NumHotPixels associated with real features claimed by this object.
         public int MaxNumRealHotPixels { get; set; }
         // Maximum SumHotPixels associated with real features claimed by this object.
         public int MaxSumRealHotPixels { get; set; }
+        // Maximum number of pixels with heat 255 (max possible) associated with real features claimed by this object.
+        public int MaxNumMaxHeatPixels { get; set; }
         // Maximum Width of the object pixel box over real Features
         public int MaxRealPixelWidth { get; set; }
         // Maximum Height of the object pixel box over real Features
@@ -120,7 +121,6 @@ namespace SkyCombImage.ProcessModel
             SpineCM = 0;
             GirthCM = 0;
             AvgRangeM = UnknownValue;
-            MaxHeat = 0;
             DemM = 0;
             Attributes = "";
             Significant = false;
@@ -129,8 +129,10 @@ namespace SkyCombImage.ProcessModel
 
             LastRealFeatureId = UnknownValue;
             BeingTracked = true;
+            MaxHeat = 0;
             MaxNumRealHotPixels = 0;
             MaxSumRealHotPixels = 0;
+            MaxNumMaxHeatPixels = 0;
             MaxRealPixelWidth = 0;
             MaxRealPixelHeight = 0;
         }
@@ -167,24 +169,21 @@ namespace SkyCombImage.ProcessModel
         public const int SizeCM2Setting = 14;
         public const int SizeRndCM2Setting = 15;
         public const int AvgRangeMSetting = 16;
-        public const int MaxHeatSetting = 17;
-        public const int DemMSetting = 18;
-        public const int LegIdSetting = 19;
-        public const int AttributesSetting = 20;
-        public const int SignificantSetting = 21;
-        public const int NumSigBlocksSetting = 22;
-        public const int FirstBlockSetting = 23;
-        public const int CenterBlockSetting = 24;
-        public const int LastRealBlockSetting = 25;
-        public const int LastBlockSetting = 26;
-        public const int MaxNumRealHotPixelsSetting = 27;
-        public const int MaxSumRealHotPixelsSetting = 27;
-        public const int MaxRealPixelWidthSetting = 28;
-        public const int MaxRealPixelHeightSetting = 29;
-        public const int MaxSpinePixelsSetting = 30;
-        public const int MaxGirthPixelsSetting = 31;
-        public const int SpineCMSetting = 32;
-        public const int GirthCMSetting = 33;
+        public const int DemMSetting = 17;
+        public const int LegIdSetting = 18;
+        public const int AttributesSetting = 19;
+        public const int SignificantSetting = 20;
+        public const int NumSigBlocksSetting = 21;
+        public const int MaxHeatSetting = 22;
+        public const int MaxNumRealHotPixelsSetting = 23;
+        public const int MaxSumRealHotPixelsSetting = 24;
+        public const int MaxNumMaxHeatPixelsSetting = 25;
+        public const int MaxRealPixelWidthSetting = 26;
+        public const int MaxRealPixelHeightSetting = 27;
+        public const int MaxSpinePixelsSetting = 28;
+        public const int MaxGirthPixelsSetting = 29;
+        public const int SpineCMSetting = 30;
+        public const int GirthCMSetting = 31;
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
@@ -208,14 +207,15 @@ namespace SkyCombImage.ProcessModel
                 { "Size CM2", SizeCM2, AreaCM2Ndp },
                 { "Size Rnd CM2", (SizeCM2 == UnknownValue ? UnknownHeight : ((int)(SizeCM2 / 100f)) * 100), AreaCM2Ndp },
                 { "Avg Range M", AvgRangeM },
-                { "Max Heat", MaxHeat},
                 { "Dem M", DemM, ElevationNdp },
                 { "Leg", (FlightLegId == UnknownValue ? 0 : FlightLegId) },
                 { "Attributes", Attributes },
                 { "Significant", Significant },
                 { "# Sig Blocks", NumSigBlocks },
+                { "Max Heat", MaxHeat},
                 { "Max Num Real Hot Pxs", MaxNumRealHotPixels },
-                { "Max Sum Real Hot Pxs", MaxNumRealHotPixels },
+                { "Max Sum Real Hot Pxs", MaxSumRealHotPixels },
+                { "Max Num MaxHeat Pxs", MaxNumMaxHeatPixels },
                 { "Max Real Px Width", MaxRealPixelWidth },
                 { "Max Real Px Height", MaxRealPixelHeight },
                 { "Max Spine Pxs", MaxSpinePixels, 2 },
@@ -231,27 +231,26 @@ namespace SkyCombImage.ProcessModel
         protected virtual void LoadSettings(List<string> settings)
         {
             // Convert int settings in batch for speed  
-            var intSettings = new int[14];
+            var intSettings = new int[15];
             var intIndices = new[] {
                 ObjectIdSetting - 1,
                 SizeCM2Setting - 1,
                 AvgRangeMSetting - 1,
-                MaxHeatSetting - 1,
                 LegIdSetting - 1,
                 NumSigBlocksSetting - 1,
+                MaxHeatSetting - 1,
                 MaxNumRealHotPixelsSetting - 1,
                 MaxSumRealHotPixelsSetting - 1,
+                MaxNumMaxHeatPixelsSetting - 1,
                 MaxRealPixelWidthSetting - 1,
                 MaxRealPixelHeightSetting - 1,
-                MaxSpinePixelsSetting - 1,
-                MaxGirthPixelsSetting - 1,
                 SpineCMSetting - 1,
                 GirthCMSetting - 1 };
             var intInputs = intIndices.Select(i => settings[i]).ToArray();
             ConfigBase.ConvertStringBatch(intInputs, intSettings);
 
             // Convert float settings in batch for speed  
-            var floatSettings = new float[11];
+            var floatSettings = new float[13];
             var floatIndices = new[] {
                 FromSecSetting - 1,
                 ToSecSetting - 1,
@@ -263,7 +262,9 @@ namespace SkyCombImage.ProcessModel
                 MinHeightMSetting - 1,
                 MaxHeightMSetting - 1,
                 HeightErrMSetting - 1,
-                DemMSetting - 1 };
+                DemMSetting - 1,
+                MaxSpinePixelsSetting - 1,
+                MaxGirthPixelsSetting - 1 };
             var floatInputs = floatIndices.Select(i => settings[i]).ToArray();
             ConfigBase.ConvertStringBatch(floatInputs, floatSettings);
 
@@ -281,25 +282,101 @@ namespace SkyCombImage.ProcessModel
             HeightErrM = floatSettings[9];
             SizeCM2 = intSettings[1];
             AvgRangeM = intSettings[2];
-            MaxHeat = intSettings[3];
             DemM = floatSettings[10];
-            FlightLegId = intSettings[4];
+            FlightLegId = intSettings[3];
             Attributes = settings[AttributesSetting - 1];
             Significant = (settings[SignificantSetting - 1] == "true");
-            NumSigBlocks = intSettings[5];
+            NumSigBlocks = intSettings[4];
+            MaxHeat = intSettings[5];
             MaxNumRealHotPixels = intSettings[6];
             MaxSumRealHotPixels = intSettings[7];
-            MaxRealPixelWidth = intSettings[8];
-            MaxRealPixelHeight = intSettings[9];
-            MaxSpinePixels = intSettings[10];
-            MaxGirthPixels = intSettings[11];
-            SpineCM = intSettings[12];
-            GirthCM = intSettings[13];
+            MaxNumMaxHeatPixels = intSettings[8];
+            MaxRealPixelWidth = intSettings[9];
+            MaxRealPixelHeight = intSettings[10];
+            MaxSpinePixels = floatSettings[11];
+            MaxGirthPixels = floatSettings[12];
+            SpineCM = intSettings[11];
+            GirthCM = intSettings[12];
 
             if (HeightM == UnknownHeight) HeightM = UnknownValue;
             if (MinHeightM == UnknownHeight) MinHeightM = UnknownValue;
             if (MaxHeightM == UnknownHeight) MaxHeightM = UnknownValue;
             if (HeightErrM == UnknownHeight) HeightErrM = UnknownValue;
+        }
+
+
+        // Unit test to ensure that GetSettings and LoadSettings form a consistent pair.
+        public static void TestSettingsPair()
+        {
+            var rand = new Random();
+            var obj = new ProcessObjectModel
+            {
+                ObjectId = rand.Next(1, 10000),
+                Name = "TestObj" + rand.Next(1, 10000),
+                RunFromVideoS = (float)rand.NextDouble() * 1000,
+                RunToVideoS = (float)rand.NextDouble() * 1000,
+                LocationM = new DroneLocation(rand.Next(-1000, 1000), rand.Next(-1000, 1000)),
+                LocationErrM = (float)rand.NextDouble() * 100,
+                AvgSumLinealM = (float)rand.NextDouble() * 100,
+                HeightM = (float)rand.NextDouble() * 100,
+                MinHeightM = (float)rand.NextDouble() * 100,
+                MaxHeightM = (float)rand.NextDouble() * 100,
+                HeightErrM = (float)rand.NextDouble() * 10,
+                SizeCM2 = rand.Next(1, 10000),
+                MaxSpinePixels = (float)rand.NextDouble() * 100,
+                MaxGirthPixels = (float)rand.NextDouble() * 100,
+                SpineCM = rand.Next(1, 1000),
+                GirthCM = rand.Next(1, 1000),
+                AvgRangeM = rand.Next(1, 10000),
+                DemM = (float)rand.NextDouble() * 1000,
+                Attributes = "Attr" + rand.Next(1, 10000),
+                Significant = rand.Next(0, 2) == 1,
+                NumSigBlocks = rand.Next(0, 100),
+                FlightLegId = rand.Next(0, 52),
+                LastRealFeatureId = rand.Next(0, 10000),
+                BeingTracked = rand.Next(0, 2) == 1,
+                MaxHeat = rand.Next(0, 255),
+                MaxNumRealHotPixels = rand.Next(0, 10000),
+                MaxSumRealHotPixels = rand.Next(0, 100000),
+                MaxNumMaxHeatPixels = rand.Next(0, 10000),
+                MaxRealPixelWidth = rand.Next(0, 1000),
+                MaxRealPixelHeight = rand.Next(0, 1000)
+            };
+            // Save settings to list
+            var settings = obj.GetSettings().Select(dp => dp.Value.ToString()).ToList();
+            // Create a new object and load settings
+            var obj2 = new ProcessObjectModel();
+            obj2.LoadSettings(settings);
+            // Compare all relevant properties
+            Assert(obj.ObjectId == obj2.ObjectId, "ObjectId mismatch");
+            Assert(obj.Name == obj2.Name, "Name mismatch");
+            Assert(Math.Abs(obj.RunFromVideoS - obj2.RunFromVideoS) < 0.05, "RunFromVideoS mismatch");
+            Assert(Math.Abs(obj.RunToVideoS - obj2.RunToVideoS) < 0.05, "RunToVideoS mismatch");
+            Assert(Math.Abs(obj.LocationM.NorthingM - obj2.LocationM.NorthingM) < 0.05, "LocationM.NorthingM mismatch");
+            Assert(Math.Abs(obj.LocationM.EastingM - obj2.LocationM.EastingM) < 0.05, "LocationM.EastingM mismatch");
+            Assert(Math.Abs(obj.LocationErrM - obj2.LocationErrM) < 0.05, "LocationErrM mismatch");
+            Assert(Math.Abs(obj.AvgSumLinealM - obj2.AvgSumLinealM) < 0.05, "AvgSumLinealM mismatch");
+            Assert(Math.Abs(obj.HeightM - obj2.HeightM) < 0.05, "HeightM mismatch");
+            Assert(Math.Abs(obj.MinHeightM - obj2.MinHeightM) < 0.05, "MinHeightM mismatch");
+            Assert(Math.Abs(obj.MaxHeightM - obj2.MaxHeightM) < 0.05, "MaxHeightM mismatch");
+            Assert(Math.Abs(obj.HeightErrM - obj2.HeightErrM) < 0.05, "HeightErrM mismatch");
+            Assert(Math.Abs(obj.SizeCM2 - obj2.SizeCM2) < 0.05, "SizeCM2 mismatch");
+            Assert(Math.Abs(obj.AvgRangeM - obj2.AvgRangeM) < 0.05, "AvgRangeM mismatch");
+            Assert(Math.Abs(obj.DemM - obj2.DemM) < 0.05, "DemM mismatch");
+            Assert(obj.FlightLegId == obj2.FlightLegId, "FlightLegId mismatch");
+            Assert(obj.Attributes == obj2.Attributes, "Attributes mismatch");
+            Assert(obj.Significant == obj2.Significant, "Significant mismatch");
+            Assert(obj.NumSigBlocks == obj2.NumSigBlocks, "NumSigBlocks mismatch");
+            Assert(obj.MaxHeat == obj2.MaxHeat, "MaxHeat mismatch");
+            Assert(obj.MaxNumRealHotPixels == obj2.MaxNumRealHotPixels, "MaxNumRealHotPixels mismatch");
+            Assert(obj.MaxSumRealHotPixels == obj2.MaxSumRealHotPixels, "MaxSumRealHotPixels mismatch");
+            Assert(obj.MaxNumMaxHeatPixels == obj2.MaxNumMaxHeatPixels, "MaxNumMaxHeatPixels mismatch");
+            Assert(obj.MaxRealPixelWidth == obj2.MaxRealPixelWidth, "MaxRealPixelWidth mismatch");
+            Assert(obj.MaxRealPixelHeight == obj2.MaxRealPixelHeight, "MaxRealPixelHeight mismatch");
+            Assert(Math.Abs(obj.MaxSpinePixels - obj2.MaxSpinePixels) < 0.05, "MaxSpinePixels mismatch");
+            Assert(Math.Abs(obj.MaxGirthPixels - obj2.MaxGirthPixels) < 0.05, "MaxGirthPixels mismatch");
+            Assert(obj.SpineCM == obj2.SpineCM, "SpineCM mismatch");
+            Assert(obj.GirthCM == obj2.GirthCM, "GirthCM mismatch");
         }
 
 

@@ -56,7 +56,7 @@ namespace SkyCombImage.ProcessModel
         // To be significant, an object must have this many hot pixels in at least one real step
         public int ObjectMinPixels { get; set; } = 5;
         // Maximum number of hot pixels in an object
-        public int ObjectMaxPixels { get; set; } = 1000; 
+        public int ObjectMaxPixels { get; set; } = 1000;
         // Minimum number of max-heat pixels in an object
         public int ObjectMinMaxHeatPixels { get; set; } = 0; // PQR TODO. Implement this
 
@@ -106,14 +106,14 @@ namespace SkyCombImage.ProcessModel
                 return (imageWidth, imageHeight);
 
             // Calculate right boundary (exclude from right edge)
-            int excludeWidth = ExclusionZoneRightWidth <= 1.0f 
-                ? (int)(imageWidth * ExclusionZoneRightWidth) 
+            int excludeWidth = ExclusionZoneRightWidth <= 1.0f
+                ? (int)(imageWidth * ExclusionZoneRightWidth)
                 : (int)ExclusionZoneRightWidth;
             int rightBoundary = Math.Max(0, imageWidth - excludeWidth);
 
             // Calculate bottom boundary (exclude from bottom edge)
-            int excludeHeight = ExclusionZoneBottomHeight <= 1.0f 
-                ? (int)(imageHeight * ExclusionZoneBottomHeight) 
+            int excludeHeight = ExclusionZoneBottomHeight <= 1.0f
+                ? (int)(imageHeight * ExclusionZoneBottomHeight)
                 : (int)ExclusionZoneBottomHeight;
             int bottomBoundary = Math.Max(0, imageHeight - excludeHeight);
 
@@ -127,13 +127,13 @@ namespace SkyCombImage.ProcessModel
                 return true;
 
             var (rightBoundary, bottomBoundary) = GetExclusionBoundaries(imageWidth, imageHeight);
-            
+
             // Exclude only the bottom-right corner (intersection of right area AND bottom area)
             // Return FALSE only if pixel is BOTH in right area AND bottom area
             bool inRightArea = x >= rightBoundary;
             bool inBottomArea = y >= bottomBoundary;
             bool inExclusionZone = inRightArea && inBottomArea;
-            
+
             return !inExclusionZone; // Process all pixels EXCEPT those in the exclusion zone
         }
 
@@ -219,7 +219,7 @@ namespace SkyCombImage.ProcessModel
             i++; // ObjectMaxRangeM  
             YoloDetectConfidence = StringToFloat(settings[i++]);
             YoloIoU = StringToFloat(settings[i++]);
-            
+
             // Handle new exclusion zone settings (backwards compatible)
             if (i < settings.Count)
                 ExcludeBottomRightCorner = Convert.ToBoolean(settings[i++]);
@@ -248,6 +248,42 @@ namespace SkyCombImage.ProcessModel
             int i = 0;
             SaveAnnotatedVideo = Convert.ToBoolean(settings[i++]);
             SaveObjectData = (SaveObjectDataEnum)Enum.Parse(typeof(SaveObjectDataEnum), settings[i++]);
+        }
+
+
+        // Unit test to ensure that GetModelSettings and LoadModelSettings form a consistent pair.
+        public static void TestSettingsPair()
+        {
+            var rand = new Random();
+            var obj = new ProcessConfigModel
+            {
+                HeatThresholdValue = rand.Next(50, 255),
+                ObjectMinPixels = rand.Next(1, 1000),
+                ObjectMaxPixels = rand.Next(1, 10000),
+                ObjectMinMaxHeatPixels = rand.Next(0, 1000),
+                YoloDetectConfidence = (float)(rand.NextDouble() * 0.8 + 0.1),
+                YoloIoU = (float)(rand.NextDouble() * 0.8 + 0.1),
+                ExcludeBottomRightCorner = rand.Next(0, 2) == 1,
+                ExclusionZoneRightWidth = (float)rand.NextDouble(),
+                ExclusionZoneBottomHeight = (float)rand.NextDouble(),
+                SaveAnnotatedVideo = rand.Next(0, 2) == 1,
+                SaveObjectData = (SaveObjectDataEnum)rand.Next(0, 3)
+            };
+            // Save settings to list
+            var settings = obj.GetModelSettings().Select(dp => dp.Value.ToString()).ToList();
+            // Create a new object and load settings
+            var obj2 = new ProcessConfigModel();
+            obj2.LoadModelSettings(settings);
+            // Compare all relevant properties
+            Assert(obj.HeatThresholdValue == obj2.HeatThresholdValue, "HeatThresholdValue mismatch");
+            Assert(obj.ObjectMinPixels == obj2.ObjectMinPixels, "ObjectMinPixels mismatch");
+            Assert(obj.ObjectMaxPixels == obj2.ObjectMaxPixels, "ObjectMaxPixels mismatch");
+            Assert(obj.ObjectMinMaxHeatPixels == obj2.ObjectMinMaxHeatPixels, "ObjectMinMaxHeatPixels mismatch");
+            Assert(Math.Abs(obj.YoloDetectConfidence - obj2.YoloDetectConfidence) < 0.005f, "YoloDetectConfidence mismatch");
+            Assert(Math.Abs(obj.YoloIoU - obj2.YoloIoU) < 0.005f, "YoloIoU mismatch");
+            Assert(obj.ExcludeBottomRightCorner == obj2.ExcludeBottomRightCorner, "ExcludeBottomRightCorner mismatch");
+            Assert(Math.Abs(obj.ExclusionZoneRightWidth - obj2.ExclusionZoneRightWidth) < 0.05f, "ExclusionZoneRightWidth mismatch");
+            Assert(Math.Abs(obj.ExclusionZoneBottomHeight - obj2.ExclusionZoneBottomHeight) < 0.05f, "ExclusionZoneBottomHeight mismatch");
         }
 
 
@@ -345,4 +381,5 @@ namespace SkyCombImage.ProcessModel
             return Intrinsic();
         }
     }
+
 }

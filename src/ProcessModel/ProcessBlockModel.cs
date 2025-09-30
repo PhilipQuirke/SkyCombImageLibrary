@@ -134,5 +134,34 @@ namespace SkyCombImage.ProcessModel
             if (FlightLegId == 0)
                 FlightLegId = UnknownValue;
         }
+
+
+        // Unit test to ensure that GetSettings and LoadSettings form a consistent pair.
+        public static void TestSettingsPair()
+        {
+            var rand = new Random();
+            var obj = new ProcessBlockModel( new ProcessScopeModel() )
+            {
+                FlightStepId = rand.Next(1, 10000),
+                FlightLegId = rand.Next(1, 100),
+                InputFrameId = rand.Next(0, 10000),
+                InputFrameMs = rand.Next(0, 1000000),
+                MinFeatureId = rand.Next(0, 10000),
+                MaxFeatureId = rand.Next(0, 10000),
+                NumSig = rand.Next(0, 10000),
+            };
+
+            // Save settings to list
+            var settings = obj.GetSettings().Select(dp => dp.Value.ToString()).ToList();
+            // Create a new object and load settings
+            var obj2 = new ProcessBlockModel(1234, settings);
+            // Compare all relevant properties
+            Assert(obj.FlightStepId == obj2.FlightStepId, "FlightStepId mismatch");
+            Assert(obj.FlightLegId == obj2.FlightLegId, "FlightLegId mismatch");
+            Assert(obj.InputFrameMs == obj2.InputFrameMs, "InputFrameMs mismatch");
+            Assert(obj.InputFrameId == obj2.InputFrameId, "InputFrameId mismatch");
+            Assert(obj.MinFeatureId == obj2.MinFeatureId, "MinFeatureId mismatch");
+            Assert(obj.MaxFeatureId == obj2.MaxFeatureId, "MaxFeatureId mismatch");
+        }
     };
 }

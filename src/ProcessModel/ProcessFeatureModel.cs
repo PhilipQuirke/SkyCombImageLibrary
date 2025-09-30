@@ -58,6 +58,8 @@ namespace SkyCombImage.ProcessModel
         public int NumHotPixels { get; set; } = 0;
         // Sum of how much hotter than the ProcessConfig min heat threshold the hot pixels are
         public int SumHotPixels { get; set; } = 0;
+        // Number of feature pixels with heat 255 (max possible)
+        public int NumMaxHeatPixels { get; set; } = 0;
 
 
         public ProcessFeatureModel(int blockId, FeatureTypeEnum type)
@@ -131,8 +133,9 @@ namespace SkyCombImage.ProcessModel
         public const int MaxHeatSetting = 16;
         public const int NumHotPixelsSetting = 17;
         public const int SumHotPixelsSetting = 18;
-        public const int LegIdSetting = 19;
-        public const int RangeMSetting = 20;
+        public const int NumMaxHotPixelsSetting = 19;
+        public const int LegIdSetting = 20;
+        public const int RangeMSetting = 21;
 
 
         // Get the class's settings as datapairs (e.g. for saving to the datastore). Must align with above index values.
@@ -158,14 +161,15 @@ namespace SkyCombImage.ProcessModel
                 { "Max Heat", MaxHeat },
                 { "Num Hot Pxs", NumHotPixels },
                 { "Sum Hot Pxs", SumHotPixels },
+                { "Num MaxHot Pxs", NumMaxHeatPixels },
             };
         }
 
 
-        public void LoadSettings(List<string> settings)
+        public virtual void LoadSettings(List<string> settings)
         {
             // Convert int settings in batch for speed  
-            var intSettings = new int[11];
+            var intSettings = new int[12];
             var intIndices = new[] {
                 FeatureIdSetting - 1,
                 ObjectIdSetting - 1,
@@ -177,7 +181,8 @@ namespace SkyCombImage.ProcessModel
                 MinHeatSetting - 1,
                 MaxHeatSetting - 1,
                 NumHotPixelsSetting - 1,
-                SumHotPixelsSetting - 1 };
+                SumHotPixelsSetting - 1,
+                NumMaxHotPixelsSetting - 1 };
             var intInputs = intIndices.Select(i => settings[i]).ToArray();
             ConfigBase.ConvertStringBatch(intInputs, intSettings);
 
@@ -190,12 +195,58 @@ namespace SkyCombImage.ProcessModel
             Type = (FeatureTypeEnum)Enum.Parse(typeof(FeatureTypeEnum), settings[TypeSetting - 1]);
             LocationM = new DroneLocation(settings[NorthingMSetting - 1], settings[EastingMSetting - 1]);
             HeightM = StringToFloat(settings[HeightMSetting - 1]);
-            HeightAlgorithm = settings[ObjectIdSetting - 1];
+            HeightAlgorithm = settings[HeightAlgorithmSetting - 1];
             PixelBox = new Rectangle(intSettings[3], intSettings[4], intSettings[5], intSettings[6]);
             MinHeat = intSettings[7];
             MaxHeat = intSettings[8];
             NumHotPixels = intSettings[9];
             SumHotPixels = intSettings[10];
+            NumMaxHeatPixels = intSettings[11];
+        }
+
+        // Unit test to ensure that GetSettings and LoadSettings form a consistent pair.
+        public static void TestSettingsPair()
+        {
+            var rand = new Random();
+            var obj = new ProcessFeatureModel(rand.Next(1, 10000), FeatureTypeEnum.Real)
+            {
+                FeatureId = rand.Next(1, 10000),
+                IsTracked = rand.Next(0, 2) == 1,
+                Significant = rand.Next(0, 2) == 1,
+                ObjectId = rand.Next(1, 10000),
+                BlockId = rand.Next(1, 10000),
+                Type = FeatureTypeEnum.Real,
+                PixelBox = new Rectangle(rand.Next(0, 1000), rand.Next(0, 1000), rand.Next(1, 1000), rand.Next(1, 1000)),
+                LocationM = new DroneLocation(rand.Next(-1000, 1000), rand.Next(-1000, 1000)),
+                HeightM = (float)rand.NextDouble() * 100,
+                HeightAlgorithm = "ALG" + rand.Next(1, 10000),
+                MinHeat = rand.Next(0, 255),
+                MaxHeat = rand.Next(0, 255),
+                NumHotPixels = rand.Next(0, 10000),
+                SumHotPixels = rand.Next(0, 100000),
+                NumMaxHeatPixels = rand.Next(0, 10000)
+            };
+            // Save settings to list
+            var settings = obj.GetSettings().Select(dp => dp.Value.ToString()).ToList();
+            // Create a new object and load settings
+            var obj2 = new ProcessFeatureModel(settings);
+            // Compare all relevant properties
+            Assert(obj.FeatureId == obj2.FeatureId, "FeatureId mismatch");
+            Assert(obj.IsTracked == obj2.IsTracked, "IsTracked mismatch");
+            Assert(obj.Significant == obj2.Significant, "Significant mismatch");
+            Assert(obj.ObjectId == obj2.ObjectId, "ObjectId mismatch");
+            Assert(obj.BlockId == obj2.BlockId, "BlockId mismatch");
+            Assert(obj.Type == obj2.Type, "Type mismatch");
+            Assert(obj.PixelBox == obj2.PixelBox, "PixelBox mismatch");
+            Assert(Math.Abs(obj.LocationM.NorthingM - obj2.LocationM.NorthingM) < 0.005f, "LocationM.NorthingM mismatch");
+            Assert(Math.Abs(obj.LocationM.EastingM - obj2.LocationM.EastingM) < 0.005f, "LocationM.EastingM mismatch");
+            Assert(Math.Abs(obj.HeightM - obj2.HeightM) < 0.005f, "HeightM mismatch");
+            Assert(obj.HeightAlgorithm == obj2.HeightAlgorithm, "HeightAlgorithm mismatch");
+            Assert(obj.MinHeat == obj2.MinHeat, "MinHeat mismatch");
+            Assert(obj.MaxHeat == obj2.MaxHeat, "MaxHeat mismatch");
+            Assert(obj.NumHotPixels == obj2.NumHotPixels, "NumHotPixels mismatch");
+            Assert(obj.SumHotPixels == obj2.SumHotPixels, "SumHotPixels mismatch");
+            Assert(obj.NumMaxHeatPixels == obj2.NumMaxHeatPixels, "NumMaxHeatPixels mismatch");
         }
     }
 }

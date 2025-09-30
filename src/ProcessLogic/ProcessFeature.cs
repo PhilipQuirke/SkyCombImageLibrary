@@ -92,6 +92,7 @@ namespace SkyCombImage.ProcessLogic
                 SumHotPixels = 0;
                 MinHeat = Pixels[0].Heat;
                 MaxHeat = MinHeat;
+                NumMaxHeatPixels = 0;
 
                 var threshold = ProcessAll.ProcessConfig.HeatThresholdValue;
                 foreach (var pixel in Pixels)
@@ -99,10 +100,11 @@ namespace SkyCombImage.ProcessLogic
                     SumHotPixels += Math.Max(0, pixel.Heat - threshold);
                     MinHeat = Math.Min(MinHeat, pixel.Heat);
                     MaxHeat = Math.Max(MaxHeat, pixel.Heat);
+                    if (pixel.Heat == 255)
+                        NumMaxHeatPixels++;
                 }
             }
         }
-
 
         // Does this Feature's PixelBox and the specified object's rectangle overlap significantly?
         public bool SignificantPixelBoxIntersection(Rectangle objectExpectedLocation)
