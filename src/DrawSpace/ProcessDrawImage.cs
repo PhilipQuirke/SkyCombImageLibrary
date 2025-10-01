@@ -158,7 +158,7 @@ namespace SkyCombImage.DrawSpace
                         if (drawObjectNames)
                         {
                             var drawObjectId = drawFeature.ObjectId;
-                            if (drawObjectId > 0)
+                            if ((drawObjectId > 0) && processAll.ProcessObjects.ContainsKey(drawObjectId))
                                 drawObjectName = processAll.ProcessObjects[drawObjectId].Name;
                             if (drawObjectName == "")
                                 drawObjectName = "#" + drawObjectId;

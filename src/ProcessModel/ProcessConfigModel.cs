@@ -58,7 +58,7 @@ namespace SkyCombImage.ProcessModel
         // Maximum number of hot pixels in an object
         public int ObjectMaxPixels { get; set; } = 1000;
         // Minimum number of max-heat pixels in an object
-        public int ObjectMinMaxHeatPixels { get; set; } = 0; // PQR TODO. Implement this
+        public int ObjectMinMaxHeatPixels { get; set; } = 0; 
 
         // An object detected at long-range must be large and so is not of interest to us.
         public const int ObjectMaxRangeM = 350;
@@ -137,15 +137,30 @@ namespace SkyCombImage.ProcessModel
             return !inExclusionZone; // Process all pixels EXCEPT those in the exclusion zone
         }
 
-        // The ThresholdValue should be in range 50 to 255.
-        // A user may mistake the range for 0.0 to 1.0, so we set the min value to 50
-        public void ValidateHeatThresholdValue()
+
+        public void ValidateHeatSettings()
         {
+            // The ThresholdValue should be in range 50 to 255.
+            // A user may mistake the range for 0.0 to 1.0, so we set the min value to 50
             if (HeatThresholdValue < 50)
                 HeatThresholdValue = 50;
-
             if (HeatThresholdValue > 255)
                 HeatThresholdValue = 255;
+
+            if (ObjectMinPixels < 1)
+                ObjectMinPixels = 1;
+            if (ObjectMinPixels > 1000)
+                ObjectMinPixels = 1000;
+
+            if (ObjectMaxPixels < 10)
+                ObjectMaxPixels = 10;
+            if (ObjectMaxPixels > 100000)
+                ObjectMaxPixels = 100000;
+
+            if (ObjectMinMaxHeatPixels < 0)
+                ObjectMinMaxHeatPixels = 0;
+            if (ObjectMinMaxHeatPixels > 100)
+                ObjectMinMaxHeatPixels = 100;
         }
 
 

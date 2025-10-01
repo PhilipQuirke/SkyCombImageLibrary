@@ -261,9 +261,10 @@ namespace SkyCombImage.PersistModel
             ws.Cells[startRow, maxCol + 6].Value = "# Hot Pxs";
             ws.Cells[startRow, maxCol + 7].Value = "Avg Heat";
             ws.Cells[startRow, maxCol + 8].Value = "Max Heat";
-            ws.Cells[startRow, maxCol + 9].Value = "N/E Locn";
-            //ws.Cells[startRow, maxCol + 9].Value = "Long/Lat"; PQR TODO
-            ws.Cells[startRow, 1, startRow, maxCol + 10].Style.Font.Bold = true;
+            ws.Cells[startRow, maxCol + 9].Value = "# Max Hot";
+            ws.Cells[startRow, maxCol + 10].Value = "N/E Locn";
+            //ws.Cells[startRow, maxCol + 11].Value = "Long/Lat"; PQR TODO
+            ws.Cells[startRow, 1, startRow, maxCol + 12].Style.Font.Bold = true;
 
             var imageHandler = new ExcelImageHandler(ws);
 
@@ -283,7 +284,9 @@ namespace SkyCombImage.PersistModel
                         ws.Cells[detailRow, maxCol + 6].Value = obj.MaxNumRealHotPixels;
                         ws.Cells[detailRow, maxCol + 7].Value = obj.AvgRealHotPixelHeat;
                         ws.Cells[detailRow, maxCol + 8].Value = obj.MaxHeat;
-                        ws.Cells[detailRow, maxCol + 9].Value = obj.LocationM.ToString();
+                        if(obj.MaxNumMaxHeatPixels > 0)
+                            ws.Cells[detailRow, maxCol + 9].Value = obj.MaxNumMaxHeatPixels;
+                        ws.Cells[detailRow, maxCol + 10].Value = obj.LocationM.ToString();
                         detailRow++;
 
                         ws.Cells[row, col].Value = $"{obj.Name}";

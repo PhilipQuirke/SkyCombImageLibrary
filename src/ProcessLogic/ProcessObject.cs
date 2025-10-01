@@ -469,10 +469,13 @@ namespace SkyCombImage.ProcessLogic
             {
                 // PIXELS
                 var maxNumHotPixels = MaxNumRealHotPixels;// Maximum pixel count per real feature
-                var notTooLarge = (ProcessConfig.ObjectMaxPixels <= 0) || (maxNumHotPixels <= ProcessConfig.ObjectMaxPixels);
-                var pixelsOk = notTooLarge && (maxNumHotPixels > ProcessConfig.ObjectMinPixels); // Say 5 pixels
-                var pixelsGood = notTooLarge && (maxNumHotPixels > 2 * ProcessConfig.ObjectMinPixels); // Say 10 pixels 
-                var pixelsGreat = notTooLarge && (maxNumHotPixels > 4 * ProcessConfig.ObjectMinPixels); // Say 20 pixels
+                var pixelBasics = 
+                    (MaxNumMaxHeatPixels >= ProcessConfig.ObjectMinMaxHeatPixels) &&
+                    ((ProcessConfig.ObjectMaxPixels <= 0) || (maxNumHotPixels <= ProcessConfig.ObjectMaxPixels));
+
+                var pixelsOk = pixelBasics && (maxNumHotPixels > ProcessConfig.ObjectMinPixels); // Say 5 pixels
+                var pixelsGood = pixelBasics && (maxNumHotPixels > 2 * ProcessConfig.ObjectMinPixels); // Say 10 pixels 
+                var pixelsGreat = pixelBasics && (maxNumHotPixels > 4 * ProcessConfig.ObjectMinPixels); // Say 20 pixels
 
                 // DENSITY
                 var densityOK =  (RealDensityPx() >= ProcessConfigModel.ObjectMinHotDensity);
