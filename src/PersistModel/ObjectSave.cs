@@ -5,6 +5,8 @@ using OfficeOpenXml;
 using OfficeOpenXml.Drawing.Chart;
 using OfficeOpenXml.Table.PivotTable;
 using SkyCombDrone.CommonSpace;
+using SkyCombDrone.DroneLogic;
+using SkyCombDrone.DroneModel;
 using SkyCombDrone.PersistModel;
 using SkyCombImage.CategorySpace;
 using SkyCombImage.DrawSpace;
@@ -237,7 +239,7 @@ namespace SkyCombImage.PersistModel
 
 
         // Persist (save) the last images of each ProcessObject to the datastore in a matrix of images
-        public static void SaveObjectMatrix(ImageDataStore data, ProcessObjList processObjects, int startRow)
+        public static void SaveObjectMatrix(ImageDataStore data, ProcessObjList processObjects, ProcessBlockList blocks, Drone drone, int startRow)
         {
             var title = "Individual Object Images";
             var ws = data.Worksheet;
@@ -263,10 +265,12 @@ namespace SkyCombImage.PersistModel
             ws.Cells[startRow, maxCol + 8].Value = "Max Heat";
             ws.Cells[startRow, maxCol + 9].Value = "# Max Hot";
             ws.Cells[startRow, maxCol + 10].Value = "N/E Locn";
-            //ws.Cells[startRow, maxCol + 11].Value = "Long/Lat"; PQR TODO
+            ws.Cells[startRow, maxCol + 11].Value = "Image File Name"; // New column
             ws.Cells[startRow, 1, startRow, maxCol + 12].Style.Font.Bold = true;
 
             var imageHandler = new ExcelImageHandler(ws);
+            var sectionsWs = data.ReferWorksheet(SectionDataTabName);
+            int sectionColumn = FlightSectionModel.ImageFileNameSetting;
 
             foreach (var obj in processObjects.Values)
             {
@@ -287,7 +291,26 @@ namespace SkyCombImage.PersistModel
                         if(obj.MaxNumMaxHeatPixels > 0)
                             ws.Cells[detailRow, maxCol + 9].Value = obj.MaxNumMaxHeatPixels;
                         ws.Cells[detailRow, maxCol + 10].Value = obj.LocationM.ToString();
+
+                        // Lookup image file name
+                        string imageFileName = "";
+                        if (sectionsWs != null && obj.FirstFeature != null)
+                        {
+                            int objBlockId = obj.FirstFeature.BlockId;
+                            if (objBlockId > 0 && blocks != null)
+                            {
+                                var block = blocks[objBlockId];
+                                if (block != null && block.FlightStepId > 0)
+                                { 
+                                    var flightStepId = block.FlightStepId;
+                                    imageFileName = drone.FlightSections.Sections[flightStepId].ImageFileName;
+                                }
+                            }
+                        }
+                        ws.Cells[detailRow, maxCol + 11].Value = imageFileName;
+
                         detailRow++;
+
 
                         ws.Cells[row, col].Value = $"{obj.Name}";
 
@@ -399,7 +422,7 @@ namespace SkyCombImage.PersistModel
 
                 // For each ProcessObject, if LastImage is not null,
                 // save a bitmap of the last image in the datastore with its name.
-                ObjectSave.SaveObjectMatrix(Data, processObjects, 72);
+                ObjectSave.SaveObjectMatrix(Data, processObjects, processAll.Blocks, processAll.Drone, 72);
             }
         }
     }
