@@ -316,6 +316,27 @@ namespace SkyCombImage.RunSpace
                 RunEnd();
                 DataStore.FreeResources();
 
+                // Save animal waypoint data to separate CSV and JSON files
+                if (ProcessAll.ProcessObjects != null)
+                {
+                    var animals = new AnimalModelList();
+                    animals.AddProcessObjects(1, Drone, ProcessAll.ProcessObjects, ProcessAll.ProcessSpans);
+                    if(animals.Count > 0)
+                    {
+                        var waypoints = AnimalSave.GetWaypoints(animals);
+
+                        var filePathCsv = DataStoreFactory.OutputFileName(
+                            RunConfig.InputDirectory, RunConfig.InputFileName,
+                            RunConfig.OutputElseInputDirectory, DataStoreFactory.WaypointCsvSuffix);
+                        UgcsWaypointExporter.ExportToCsvWithHeaders(waypoints, filePathCsv);
+
+                        var filePathJson = DataStoreFactory.OutputFileName(
+                            RunConfig.InputDirectory, RunConfig.InputFileName,
+                            RunConfig.OutputElseInputDirectory, DataStoreFactory.WaypointJsonSuffix);
+                        UgcsWaypointExporter.ExportToJson(waypoints, filePathJson);
+                    }
+                }
+
                 ProcessAll.OnObservation(ProcessEventEnum.RunEnd);
             }
             catch (Exception ex)
@@ -738,6 +759,8 @@ namespace SkyCombImage.RunSpace
             StandardSave dataWriter = new(Drone, DataStore);
             dataWriter.StandardProcess(RunConfig, GetEffort(), GetSettings(), this, ProcessAll);
             base.RunEnd();
+
+
         }
 
 

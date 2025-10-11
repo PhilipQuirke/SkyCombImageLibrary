@@ -2,9 +2,6 @@
 
 using SkyCombDrone.PersistModel;
 using SkyCombImage.ProcessModel;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -12,40 +9,6 @@ using System.Text.Json.Serialization;
 
 namespace SkyCombImage.PersistModel
 {
-    // Save animal data to a datastore
-    public class AnimalSave : DataStoreAccessor
-    {
-        public AnimalSave(DroneDataStore data) : base(data)
-        {
-        }
-
-        // Create an animals tab and save the animal data
-        public static void SaveDetail(ImageDataStore dataStore, AnimalModelList animals, string tabName)
-        {
-            (var newTab, var ws) = dataStore.SelectOrAddWorksheet(tabName);
-            if (ws != null)
-            {
-                int row = 0;
-                foreach (var animal in animals)
-                    dataStore.SetDataListRowKeysAndValues(ref row, animal.GetSettings());
-
-                dataStore.SetColumnWidth(1, 12);
-                dataStore.SetColumnWidth(2, 10);
-                dataStore.SetColumnWidth(3, 25);
-                dataStore.SetColumnWidth(4, 18);
-                dataStore.SetColumnWidth(5, 12);
-                dataStore.SetColumnWidth(6, 12);
-                dataStore.SetColumnWidth(7, 15);
-                dataStore.SetColumnWidth(8, 12);
-                dataStore.SetColumnWidth(9, 15);
-                dataStore.SetColumnWidth(10, 15);
-                dataStore.SetColumnWidth(11, 12);
-                dataStore.SetColumnWidth(12, 12);
-                dataStore.SetColumnWidth(13, 15);
-            }
-        }
-    }
-
     /// <summary>
     /// Represents a waypoint location of interest
     /// </summary>
@@ -194,5 +157,63 @@ namespace SkyCombImage.PersistModel
     {
         public double Speed { get; set; }
         public string AltitudeType { get; set; }
+    }
+
+    // Save animal data to a datastore
+    public class AnimalSave : DataStoreAccessor
+    {
+        public AnimalSave(DroneDataStore data) : base(data)
+        {
+        }
+
+        // Create an animals tab and save the animal data
+        public static void SaveDetail(ImageDataStore dataStore, AnimalModelList animals, string tabName)
+        {
+            (var newTab, var ws) = dataStore.SelectOrAddWorksheet(tabName);
+            if (ws != null)
+            {
+                int row = 0;
+                foreach (var animal in animals)
+                    dataStore.SetDataListRowKeysAndValues(ref row, animal.GetSettings());
+
+                dataStore.SetColumnWidth(1, 12);
+                dataStore.SetColumnWidth(2, 10);
+                dataStore.SetColumnWidth(3, 25);
+                dataStore.SetColumnWidth(4, 18);
+                dataStore.SetColumnWidth(5, 12);
+                dataStore.SetColumnWidth(6, 12);
+                dataStore.SetColumnWidth(7, 15);
+                dataStore.SetColumnWidth(8, 12);
+                dataStore.SetColumnWidth(9, 15);
+                dataStore.SetColumnWidth(10, 15);
+                dataStore.SetColumnWidth(11, 12);
+                dataStore.SetColumnWidth(12, 12);
+                dataStore.SetColumnWidth(13, 15);
+            }
+        }
+
+        public static List<Waypoint> GetWaypoints(AnimalModelList animals, double altitudeAgl = 100, double speed = 5, double waitTime = 2)
+        {
+            List<Waypoint> waypoints = new();
+
+            foreach (var animal in animals)
+                if (animal.GlobalLocation != null)
+                {
+                    waypoints.Add(new Waypoint
+                    {
+                        Latitude = animal.GlobalLocation.Latitude,
+                        Longitude = animal.GlobalLocation.Longitude,
+                        AltitudeAgl = altitudeAgl, // Default altitude above ground level in meters
+                        Speed = speed, // Default speed in m/s
+                        TakePicture = true,
+                        CameraTilt = 90.0, // Point camera straight down
+                        UavYaw = null, // No specific yaw
+                        WaitTime = waitTime, // Wait 2 seconds at waypoint
+                        WaypointNumber = null // Let UGCS assign waypoint numbers
+                    });
+                }
+
+            return waypoints;
+        }
     }
 }
