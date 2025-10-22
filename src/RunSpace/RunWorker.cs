@@ -316,7 +316,7 @@ namespace SkyCombImage.RunSpace
                 RunEnd();
                 DataStore.FreeResources();
 
-                // Save animal waypoint data to separate CSV and JSON files
+                // Save animal waypoint data to CSV and JSON files
                 if (ProcessAll.ProcessObjects != null)
                 {
                     var animals = new AnimalModelList();
