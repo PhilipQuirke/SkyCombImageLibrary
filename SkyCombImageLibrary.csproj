@@ -16,14 +16,6 @@
 		<PlatformTarget>x64</PlatformTarget>
 	</PropertyGroup>
 	<ItemGroup>
-	  <None Remove="Native\x64\alglib404gpl_net5.dll" />
-	  <None Remove="Native\x64\libdirp.dll" />
-	  <None Remove="Native\x64\libv_dirp.dll" />
-	  <None Remove="Native\x64\libv_girp.dll" />
-	  <None Remove="Native\x64\libv_iirp.dll" />
-	  <None Remove="Native\x64\libv_list.ini" />
-	</ItemGroup>
-	<ItemGroup>
 		<None Include=".github\dependabot.yml" />
 	</ItemGroup>
 	<ItemGroup>
@@ -53,6 +45,13 @@
 		</None>
 	</ItemGroup>
 	<ItemGroup>
+	  <None Include="Native\x64\libv_list.ini">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		  <Link>%(Filename)%(Extension)</Link>
+		  <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+	  </None>
+	</ItemGroup>	
+	<ItemGroup>
 		<Compile Update="Properties\Resources.Designer.cs">
 			<DesignTime>True</DesignTime>
 			<AutoGen>True</AutoGen>
@@ -79,10 +78,5 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <Content Remove="C:\Users\phili\.nuget\packages\accord\3.8.0\build\Accord.dll.config" />
-	  <Content Remove="Native\x64\alglib404gpl_net5.dll" />
-	  <Content Remove="Native\x64\libdirp.dll" />
-	  <Content Remove="Native\x64\libv_dirp.dll" />
-	  <Content Remove="Native\x64\libv_girp.dll" />
-	  <Content Remove="Native\x64\libv_iirp.dll" />
 	</ItemGroup>
 </Project>
