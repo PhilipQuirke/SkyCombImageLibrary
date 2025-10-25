@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Reflection.Metadata;
+using System.Runtime.InteropServices;
 
 namespace SkyCombImageLibrary.ProcessLogic.DJI
 {
@@ -46,8 +47,8 @@ namespace SkyCombImageLibrary.ProcessLogic.DJI
         /// Loads the raw radiometric data from a DJI R-JPEG file.
         /// </summary>
         /// <param name="jpgPath">Path to the R-JPEG file.</param>
-        /// <returns>Raw radiometric data as a ushort array.</returns>
-        public static ushort[] GetRawRadiometricData(string jpgPath)
+        /// <returns>Raw radiometric data as a ushort array, with image resolution.</returns>
+        public static (ushort[] data, int width, int height) GetRawRadiometricData(string jpgPath)
         {
             if (string.IsNullOrWhiteSpace(jpgPath))
                 throw new ArgumentException("JPG path must not be null or empty.", nameof(jpgPath));
@@ -74,7 +75,7 @@ namespace SkyCombImageLibrary.ProcessLogic.DJI
                 if (dirp_get_original_raw(handle, rawData, rawData.Length * sizeof(ushort)) != 0)
                     throw new InvalidOperationException("Failed to get original RAW data.");
 
-                return rawData;
+                return (rawData, resolution.width, resolution.height);
             }
         }
     }
