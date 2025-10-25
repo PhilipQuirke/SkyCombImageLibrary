@@ -124,6 +124,21 @@ namespace SkyCombImage.RunSpace
         }
 
 
+        public void CopyProcessSettings(RunConfig other)
+        {
+            this.RunProcess = other.RunProcess;
+            this.RunSpeed = other.RunSpeed;
+            this.ProcessConfig.YoloDetectConfidence = other.ProcessConfig.YoloDetectConfidence;
+            this.ProcessConfig.YoloIoU = other.ProcessConfig.YoloIoU;
+            this.ProcessConfig.SaveAnnotatedVideo = other.ProcessConfig.SaveAnnotatedVideo;
+            this.ProcessConfig.SaveObjectData = other.ProcessConfig.SaveObjectData;
+            this.ProcessConfig.HeatThresholdValue = other.ProcessConfig.HeatThresholdValue;
+            this.ProcessConfig.ObjectMinPixels = other.ProcessConfig.ObjectMinPixels; 
+            this.ProcessConfig.ObjectMaxPixels = other.ProcessConfig.ObjectMaxPixels;
+            this.ProcessConfig.ObjectMinMaxHeatPixels = other.ProcessConfig.ObjectMinMaxHeatPixels;
+        }
+
+
         // Get the class's settings as datapairs (e.g. for saving to a spreadsheet)
         public DataPairList GetSettings()
         {
