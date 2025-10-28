@@ -70,7 +70,9 @@ namespace SkyCombImageLibrary.ProcessLogic.DJI
         private static Mat ConvertToMat(ushort[] data, int width, int height)
         {
             Mat mat = new Mat(height, width, DepthType.Cv16U, 1);
-            Marshal.Copy(data.Select(x => (short)x).ToArray(), 0, mat.DataPointer, data.Length);
+            byte[] byteData = new byte[data.Length * sizeof(ushort)];
+            Buffer.BlockCopy(data, 0, byteData, 0, byteData.Length);
+            Marshal.Copy(byteData, 0, mat.DataPointer, byteData.Length);
             return mat;
         }
 

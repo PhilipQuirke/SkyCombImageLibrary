@@ -1,4 +1,5 @@
-﻿using System.Reflection.Metadata;
+﻿using Emgu.CV;
+using Emgu.CV.Structure;
 using System.Runtime.InteropServices;
 
 namespace SkyCombImageLibrary.ProcessLogic.DJI
@@ -77,6 +78,29 @@ namespace SkyCombImageLibrary.ProcessLogic.DJI
 
                 return (rawData, resolution.width, resolution.height);
             }
+        }
+
+
+        public static Image<Gray, byte> GetRawRadiometricData_Normalised(string input)
+        {
+            (ushort[] rawData, int w, int h) = DirpApiWrapper.GetRawRadiometricData(input);
+
+            // Normalize rawData to 0-255
+            ushort min = rawData.Min();
+            ushort max = rawData.Max();
+            byte[] normalized = rawData.Select(v => (byte)((v - min) * 255 / Math.Max(1, max - min))).ToArray();
+
+            // Create grayscale image
+            Image<Gray, byte> grayImage = new Image<Gray, byte>(w, h);
+            System.Buffer.BlockCopy(normalized, 0, grayImage.Data, 0, normalized.Length);
+
+            return grayImage;
+        }
+
+
+        public static Image<Bgr, byte> GetRawRadiometricData_UnitTest(string input)
+        {
+            return GetRawRadiometricData_Normalised(input).Convert<Bgr, byte>();
         }
     }
 }

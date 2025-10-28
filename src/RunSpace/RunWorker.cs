@@ -1,5 +1,6 @@
 ﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 using Emgu.CV;
+using Emgu.CV.Structure;
 using SkyCombDrone.DrawSpace;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
@@ -10,6 +11,7 @@ using SkyCombImage.DrawSpace;
 using SkyCombImage.PersistModel;
 using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
+using SkyCombImageLibrary.ProcessLogic.DJI;
 using System.Diagnostics;
 using System.Drawing;
 
@@ -437,6 +439,41 @@ namespace SkyCombImage.RunSpace
 
 
         // Given PSM.CurrInputFrameId, get the file name from the corresponding FlightStep, load the image and convert to 
+        public Image<Bgr, byte>? GetCurrImage_InputIsImages(string inputDirectory, int frameId)
+        {
+            // Read the image from the input directory into memory
+            ResetCurrImage();
+            CurrInputImage = Drone.GetCurrImage_InputIsImages(inputDirectory, frameId);
+
+            // If image contains DJI Radiometric Data use that
+            var imageFileName = Drone.GetCurrImage_InputIsImages_FileName(inputDirectory, frameId);
+            Image<Bgr, byte> currInputRadiometric =
+                DirpApiWrapper.GetRawRadiometricData_UnitTest(imageFileName);
+            if (currInputRadiometric != null)
+            {
+                // If currInputRadiometric is half the size of currInput
+                // then double currInputRadiometric
+                if ((currInputRadiometric.Width * 2 == CurrInputImage.Width) &&
+                    (currInputRadiometric.Height * 2 == CurrInputImage.Height))
+                {
+                    ResetCurrImage();
+                    Image<Bgr, byte> resizedRadiometric =
+                        DrawImage.ResizeImage(currInputRadiometric, 2.0).ToImage<Bgr, byte>();
+                    currInputRadiometric.Dispose();
+                    CurrInputImage = resizedRadiometric;
+                }
+                else
+                {
+                    ResetCurrImage();
+                    CurrInputImage = currInputRadiometric;
+                }
+            }
+
+            return CurrInputImage;
+        }
+
+
+        // Given PSM.CurrInputFrameId, get the file name from the corresponding FlightStep, load the image and convert to 
         public bool GetCurrImage_InputIsImages()
         {
             var frameId = PSM.CurrRunStepId;
@@ -448,8 +485,7 @@ namespace SkyCombImage.RunSpace
             SetCurrRunStepAndLeg(Drone?.FlightSteps?.Steps[frameId]);
 
             // Read the image from the input directory into memory
-            ResetCurrImage();
-            CurrInputImage = Drone.GetCurrImage_InputIsImages(RunConfig.InputDirectory, frameId);
+            GetCurrImage_InputIsImages(RunConfig.InputDirectory, frameId);
 
             return true;
         }
