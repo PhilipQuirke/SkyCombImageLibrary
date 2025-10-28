@@ -66,11 +66,14 @@ namespace SkyCombImage.DrawSpace
 
         // Draw the bounding rectangles of the owned features
         public static void DrawObjectFeatures(
-            DrawImageConfig config, ref Image<Bgr, byte> image, Transform transform,
+            DrawImageConfig config, ref Image<Bgr, byte> image, Transform transform, // NQ can we use a single scale value?
             ProcessFeature drawFeature,
             string drawObjectName,
-            ProcessObject? focusObject)
+            ProcessObject? focusObject,
+            bool optical = false)
         {
+            transform.ScaleX = config.expandX;
+            transform.ScaleY = config.expandY;
             if (config.DrawRealFeatureColor == Color.White &&
                 config.DrawUnrealFeatureColor == Color.White &&
                 DroneColors.InScopeObjectColor == Color.White &&
@@ -122,7 +125,8 @@ namespace SkyCombImage.DrawSpace
             ProcessObject? focusObject, // Chosen object (if any)
             ProcessBlockModel? block,
             ProcessAll processAll,
-            bool drawObjectNames)
+            bool drawObjectNames,
+            bool optical = false)
         {
             try
             {
@@ -163,7 +167,7 @@ namespace SkyCombImage.DrawSpace
                             if (drawObjectName == "")
                                 drawObjectName = "#" + drawObjectId;
                         }
-                        DrawObjectFeatures(drawConfig, ref outputImg, transform, drawFeature, drawObjectName, focusObject);
+                        DrawObjectFeatures(drawConfig, ref outputImg, transform, drawFeature, drawObjectName, focusObject, optical);
                     }
                 }
             }
@@ -182,7 +186,8 @@ namespace SkyCombImage.DrawSpace
             ProcessObject? focusObject, // Chosen object (if any)
             ProcessBlockModel? block,
             ProcessAll processAll,
-            bool drawObjectNames = true)
+            bool drawObjectNames = true,
+            bool optical = false)
         {
             try
             {
@@ -195,13 +200,13 @@ namespace SkyCombImage.DrawSpace
                     if ((runProcess == RunProcessEnum.Comb) || (runProcess == RunProcessEnum.Yolo) || (runProcess == RunProcessEnum.Threshold))
                     {
                         // For Threshold, first apply the thermal coloring
-                        if (runProcess == RunProcessEnum.Threshold)
+                        if (runProcess == RunProcessEnum.Threshold && !optical)
                             DrawImage.Draw(runProcess, processConfig, drawConfig, ref modifiedInputFrame);
 
                         // Then draw bounding rectangles and object names for all three methods
                         DrawRunProcess(
                             drawConfig, processConfig, ref modifiedInputFrame, new(),
-                            focusObject, block, processAll, drawObjectNames);
+                            focusObject, block, processAll, drawObjectNames, optical);
                     }
                     else
                         // Draw None - no processing

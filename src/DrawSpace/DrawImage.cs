@@ -12,6 +12,151 @@ using System.Windows.Forms;
 
 namespace SkyCombImage.DrawSpace
 {
+    /// Written by ChatGPT for NQ 25/10/25
+    public static class ImageCropper
+    {
+        // ---- BAKED-IN CAMERA PARAMETERS ----
+        // Thermal: DJI M4T approx
+        private const double ThermalFovDeg = 45.0;           // Horizontal DFOV (thermal)
+        private const int ThermalWidthPx = 1280;          // Thermal native width
+        private const int ThermalHeightPx = 1024;          // Thermal native height
+        private static double ThermalAspect => (double)ThermalWidthPx / ThermalHeightPx; // 1.25 (5:4)
+
+        // Optical wide FOV at "zoom = 1×"
+        private const double OpticalWideFovDeg = 82.0;       // Horizontal DFOV for the wide lens at 1×
+
+        // Simple inverse model; good up to moderate zooms and for cropping alignment.
+        // If later you want a more precise mapping, replace OpticalFovFromZoom with:
+        // (a) geometric model using sensor width & base focal length, or
+        // (b) piecewise interpolation using a DJI zoom→FOV table.
+        private static double OpticalFovFromZoom(double zoom) => OpticalWideFovDeg / zoom;
+
+        /// <summary>
+        /// Crop the optical image to match the thermal camera's ground coverage at a given zoom,
+        /// and enforce the thermal aspect ratio (width/height). Center-cropped.
+        /// </summary>
+        /// <typeparam name="TColor">e.g., Bgr</typeparam>
+        /// <typeparam name="TDepth">e.g., byte</typeparam>
+        /// <param name="optical">Input optical image.</param>
+        /// <param name="zoom">Optical zoom factor (e.g., 1.13, 2, 4...).</param>
+        /// <param name="offsetXpx">Optional horizontal pixel offset (+right, -left) to account for boresight.</param>
+        /// <param name="offsetYpx">Optional vertical pixel offset (+down, -up) to account for boresight.</param>
+        /// <returns>New Image cropped to thermal FOV and aspect.</returns>
+        public static Image<TColor, TDepth> CropOpticalToThermal<TColor, TDepth>(
+            Image<TColor, TDepth> optical,
+            double zoom,
+            int offsetXpx = 0,
+            int offsetYpx = 0
+        )
+            where TColor : struct, IColor
+            where TDepth : new()
+        {
+            if (optical == null) throw new ArgumentNullException(nameof(optical));
+            if (zoom <= 0) throw new ArgumentOutOfRangeException(nameof(zoom), "Zoom must be > 0.");
+
+            // --- 1) Estimate optical horizontal FOV at this zoom ---
+            // Simple, robust model: FOV ≈ FOV_wide / zoom
+            double opticalFovDeg = OpticalFovFromZoom(zoom);
+
+            // --- 2) FOV scale needed so optical matches thermal coverage ---
+            // scale = fraction of optical width/height to keep (assuming same projection)
+            double scaleFov = Math.Tan(DegToRad(ThermalFovDeg / 2.0)) / Math.Tan(DegToRad(opticalFovDeg / 2.0));
+            // If thermal FOV were wider than optical (rare here), bail out with a clone.
+            if (scaleFov >= 1.0)
+                return optical.Clone();
+
+            int W = optical.Width;
+            int H = optical.Height;
+
+            // Limits imposed by the FOV: cannot exceed these
+            double wLimit = W * scaleFov;
+            double hLimit = H * scaleFov;
+
+            // --- 3) Enforce thermal aspect WHILE staying within the FOV limits ---
+            // Two candidates:
+            //   A) Height-limited: height = hLimit, width = hLimit * aspect
+            //   B) Width-limited : width  = wLimit, height = wLimit / aspect
+            double aspect = ThermalAspect;
+
+            double candW_A = hLimit * aspect;
+            double candH_A = hLimit;
+
+            double candW_B = wLimit;
+            double candH_B = wLimit / aspect;
+
+            double finalW, finalH;
+
+            // Choose the largest rectangle that fits inside BOTH FOV limits and target aspect
+            if (candW_A <= wLimit)
+            {
+                // Height-limited fits
+                finalW = candW_A;
+                finalH = candH_A;
+            }
+            else
+            {
+                // Fall back to width-limited
+                finalW = candW_B;
+                finalH = candH_B;
+            }
+
+            int newW = Math.Max(1, (int)Math.Round(finalW));
+            int newH = Math.Max(1, (int)Math.Round(finalH));
+
+            // --- 4) Center crop (with optional boresight offsets), clamped to bounds ---
+            int x = (W - newW) / 2 + offsetXpx;
+            int y = (H - newH) / 2 + offsetYpx;
+
+            // Clamp to image bounds
+            x = Math.Max(0, Math.Min(x, W - newW));
+            y = Math.Max(0, Math.Min(y, H - newH));
+
+            Rectangle roi = new Rectangle(x, y, newW, newH);
+            return optical.Copy(roi);
+        }
+
+        /// <summary>
+        /// Crop optical Image<TColor,TDepth> to match the thermal camera's FOV.
+        /// Returns a new Image with the central crop.
+        /// </summary>
+        /// <typeparam name="TColor">e.g., Bgr</typeparam>
+        /// <typeparam name="TDepth">e.g., byte</typeparam>
+        /// <param name="optical">Optical image (Emgu.CV.Image).</param>
+        /// <param name="opticalFovDeg">Optical horizontal FOV in degrees at current zoom.</param>
+        /// <param name="thermalFovDeg">Thermal horizontal FOV in degrees (≈45° on M4T).</param>
+        public static Image<TColor, TDepth> CropToThermalFovPQ<TColor, TDepth>(
+            Image<TColor, TDepth> optical,
+            double opticalFovDeg,
+            double thermalFovDeg = 45.0
+        )
+            where TColor : struct, IColor
+            where TDepth : new()
+        {
+            // Scale = fraction of optical width/height that matches thermal coverage
+            double scale = Math.Tan(DegToRad(thermalFovDeg / 2.0)) / Math.Tan(DegToRad(opticalFovDeg / 2.0));
+
+            // If thermal FOV is wider than optical (scale >= 1), no crop needed.
+            if (scale >= 1.0)
+                return optical.Clone();
+
+            int newW = Math.Max(1, (int)Math.Round(optical.Width * scale));
+            int newH = Math.Max(1, (int)Math.Round(optical.Height * scale));
+
+            int x = Math.Max(0, (optical.Width - newW) / 2);
+            int y = Math.Max(0, (optical.Height - newH) / 2);
+
+            // Ensure ROI stays inside bounds (paranoia)
+            if (x + newW > optical.Width) newW = optical.Width - x;
+            if (y + newH > optical.Height) newH = optical.Height - y;
+
+            Rectangle roi = new Rectangle(x, y, newW, newH);
+
+            // Image<TColor,TDepth>.Copy(Rectangle) returns a new cropped Image
+            return optical.Copy(roi);
+        }
+
+        private static double DegToRad(double deg) => deg * Math.PI / 180.0;
+    }
     // Static class to perform image manipulation
     public class DrawImage
     {

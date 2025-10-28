@@ -27,6 +27,8 @@ namespace SkyCombImage.ProcessLogic
         // Transient image data storage used while processing a Block and Objects.
         public Image<Bgr, byte>? CurrInputImage = null;
         public Image<Bgr, byte>? ModifiedInputImage = null;
+        public Image<Bgr, byte>? CurrInputImageC = null;
+        public Image<Bgr, byte>? ModifiedInputImageC = null;
 
 
         public ProcessScope(Drone? drone = null)

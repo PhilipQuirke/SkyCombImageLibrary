@@ -447,9 +447,11 @@ namespace SkyCombImage.RunSpace
 
             SetCurrRunStepAndLeg(Drone?.FlightSteps?.Steps[frameId]);
 
-            // Read the image from the input directory into memory
+            // Read the image from the input directory into memory, ProcessScope
             ResetCurrImage();
             CurrInputImage = Drone.GetCurrImage_InputIsImages(RunConfig.InputDirectory, frameId);
+            if (Drone.HasOptical)
+                CurrInputImageC = Drone.GetOpticalImage(RunConfig.InputDirectory, frameId);
 
             return true;
         }
@@ -558,7 +560,7 @@ namespace SkyCombImage.RunSpace
                             if (!GetCurrImage_InputIsVideo())           // Sets PSM.CurrRunLegId
                                 break;
                         }
-                        else
+                        else 
                         {
                             if (!GetCurrImage_InputIsImages())           // Sets PSM.CurrRunLegId
                                 break;
@@ -704,6 +706,8 @@ namespace SkyCombImage.RunSpace
                     // Dispose managed resources
                     CurrInputImage?.Dispose();
                     ModifiedInputImage?.Dispose();
+                    CurrInputImageC?.Dispose();
+                    ModifiedInputImageC?.Dispose();
                     DataStore?.Dispose();
                 }
 
