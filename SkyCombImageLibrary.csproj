@@ -1,38 +1,77 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>net8.0-windows7.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Accord.MachineLearning" Version="3.8.0" />
-    <PackageReference Include="OpenCvSharp4" Version="4.10.0.20241108" />
-    <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.10.0.20241108" />
-    <PackageReference Include="SkiaSharp" Version="2.88.8" />
-    <PackageReference Include="YoloDotNet" Version="2.2.0" />
-  </ItemGroup>
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net8.0-windows7.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>12.0</LangVersion>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<Description>SkyComb Drone Library for processing drone flight data, video files, flight logs, and thermal imaging data.</Description>
+		<Copyright>Copyright SkyComb Limited 2025. All rights reserved.</Copyright>
+		<Version>10.3.0</Version>
+		<Platforms>x64</Platforms>
+		<!-- CRITICAL: Enable unsafe blocks for P/Invoke -->
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<!-- Force x64 to match DJI DLLs -->
+		<PlatformTarget>x64</PlatformTarget>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Include=".github\dependabot.yml" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="SkiaSharp" Version="3.119.1" />
+		<PackageReference Include="YoloDotNet" Version="3.1.1" />
+		<PackageReference Include="Accord.MachineLearning" Version="3.8.0" />
+		<PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" />
+		<PackageReference Include="OpenCvSharp4.runtime.win" Version="4.11.0.20250507" />		
+	</ItemGroup>
 	<ItemGroup>
 		<Reference Include="alglib404gpl_net5.dll">
 			<HintPath>libs/alglib404gpl_net5.dll</HintPath>
 			<Private>True</Private>
 		</Reference>
 	</ItemGroup>
+	<!-- Native DJI Thermal SDK libraries -->
 	<ItemGroup>
-		<None Update="libs\alglib404gpl_net5.dll">
+		<None Include="Native\x64\*.dll">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Link>%(Filename)%(Extension)</Link>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
 		</None>
 	</ItemGroup>
-
-
 	<ItemGroup>
-    <ProjectReference Include="..\SkyCombDroneLibrary\SkyCombDroneLibrary.csproj" />
-  </ItemGroup>
+	  <None Include="Native\x64\libv_list.ini">
+		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		  <Link>%(Filename)%(Extension)</Link>
+		  <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+	  </None>
+	</ItemGroup>	
+	<ItemGroup>
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+	</ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Update="Properties\Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Include=".github\dependabot.yml" />
-  </ItemGroup>
-
+	<!-- Public API folders -->
+	<ItemGroup>
+		<Folder Include="Interfaces\" />
+		<Folder Include="Native\x64\" />
+		<Folder Include="Services\" />
+		<Folder Include="Examples\" />
+		<Folder Include="Exceptions\" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\SkyCombDroneLibrary\SkyCombDroneLibrary.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Content Remove="C:\Users\phili\.nuget\packages\accord\3.8.0\build\Accord.dll.config" />
+	</ItemGroup>
 </Project>

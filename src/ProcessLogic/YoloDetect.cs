@@ -4,7 +4,6 @@
 using SkiaSharp;
 using SkyCombGround.CommonSpace;
 using YoloDotNet;
-using YoloDotNet.Enums;
 using YoloDotNet.Models;
 
 
@@ -76,10 +75,11 @@ namespace SkyCombImage.ProcessLogic
                     YoloTool = new Yolo(new YoloOptions
                     {
                         OnnxModel = YoloPath,                   // Your Yolov8 or Yolov10 model in onnx format
-                        ModelType = ModelType.ObjectDetection,  // Model type
-                        Cuda = true,                            // Use CPU or CUDA for GPU accelerated inference. Default = true
-                        GpuId = 0,                              // Select Gpu by id. Default = 0
-                        PrimeGpu = false,                       // Pre-allocate GPU before first. Default = false
+                        // These stopped compiling when I upgraded from YoloDotNet 2.2.0 to 3.1.1
+                        // ModelType = ModelType.ObjectDetection,  // Model type
+                        // Cuda = true,                            // Use CPU or CUDA for GPU accelerated inference. Default = true
+                        // GpuId = 0,                              // Select Gpu by id. Default = 0
+                        // PrimeGpu = false,                       // Pre-allocate GPU before first. Default = false
                     });
                 }
                 catch (Exception ex)
