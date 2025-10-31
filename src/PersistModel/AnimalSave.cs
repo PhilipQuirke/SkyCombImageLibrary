@@ -54,7 +54,7 @@ namespace SkyCombImage.PersistModel
             using (var writer = new StreamWriter(filePath, false, Encoding.UTF8))
             {
                 // Write header
-                writer.WriteLine("Latitude,Longitude,AltitudeAGL,Speed,Picture,WP,CameraTilt,UavYaw,WaitTime");
+                writer.WriteLine("LATITUDE,LONGITUDE,ALTITUDEAGL,SPEED,PICTURE,WP,CAMERATILT,UAVYAW,WAITTIME");
 
                 // Write data
                 foreach (var wp in waypoints)
