@@ -450,8 +450,7 @@ namespace SkyCombImage.RunSpace
                 // If image contains DJI Radiometric Data use that
                 var imageFileName = Drone.GetCurrImage_InputIsImages_FileName(inputDirectory, frameId);
 
-                Image<Gray, byte> currInputRadiometric_gray = null;
-                (CurrMinRawHeat, CurrMaxRawHeat, currInputRadiometric_gray) =
+                (_, _, var currInputRadiometric_gray) =
                     DirpApiWrapper.GetRawRadiometricDataNormalised(imageFileName);
                 if (currInputRadiometric_gray != null)
                 {
@@ -585,8 +584,6 @@ namespace SkyCombImage.RunSpace
                     while (true)
                     {
                         CurrBlock = null;
-                        CurrMinRawHeat = 0;
-                        CurrMaxRawHeat = 0;
 
                         int prevLegId = PSM.CurrRunLegId;
 
@@ -640,8 +637,6 @@ namespace SkyCombImage.RunSpace
 
                         // Apply process model to this new frame
                         AddBlockAndProcessInputRunFrame();
-                        CurrBlock.MinRawHeat = CurrMinRawHeat;
-                        CurrBlock.MaxRawHeat = CurrMaxRawHeat;
 
                         Assert(inputVideo.CurrFrameId == CurrBlock.InputFrameId, "RunWorker.Run: Bad FrameId 2");
 

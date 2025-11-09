@@ -140,7 +140,7 @@ namespace SkyCombImage.Examples
             var options = new ImageProcessingOptions
             {
                 Algorithm = DetectionAlgorithm.Comb,
-                HeatThreshold = 220,
+                HeatThreshold = 250,
                 SaveObjectData = ObjectDataSaveMode.Significant
             };
 

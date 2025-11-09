@@ -48,7 +48,7 @@ namespace SkyCombImage.ProcessModel
 
 
         // Pixel gray-scale value for hot pixel thresholding. Takes values from 50 to 255
-        public int HeatThresholdValue { get; set; } = 220;
+        public int HeatThresholdValue { get; set; } = 250;
         // Duration (in milliseconds) that object must be tracked for before it is highlighted
         public const int ObjectMinDurationMs = 500;
         // Maximum number of "unreal" features after a real feature. Applies to videos only.

@@ -37,11 +37,6 @@ namespace SkyCombImage.ProcessModel
         public int MaxFeatureId { get; set; }
 
 
-        // ------ Min / Max raw radiometric heat values for this block's image  -----
-        public int MinRawHeat { get; set; }
-        public int MaxRawHeat { get; set; }
-
-
         // Number of significant objects in the block. 
         public int NumSig { get; set; }
 
@@ -54,8 +49,6 @@ namespace SkyCombImage.ProcessModel
             InputFrameMs = scope.CurrInputFrameMs;
             MinFeatureId = UnknownValue;
             MaxFeatureId = UnknownValue;
-            MinRawHeat = UnknownValue;
-            MaxRawHeat = UnknownValue;
             NumSig = 0;
         }
 
@@ -121,8 +114,6 @@ namespace SkyCombImage.ProcessModel
             answer.Add("Input Frame Ms", InputFrameMs);
             answer.AddInt_UnknownIsBlank("Min Feat Id", MinFeatureId);
             answer.AddInt_UnknownIsBlank("Max Feat Id", MaxFeatureId);
-            answer.AddInt_UnknownIsBlank("Min Raw Heat", MinRawHeat);
-            answer.AddInt_UnknownIsBlank("Max Raw Heat", MaxRawHeat);
 
             return answer;
         }
@@ -141,8 +132,6 @@ namespace SkyCombImage.ProcessModel
             InputFrameMs = StringToNonNegInt(settings[i++]);
             MinFeatureId = StringToInt_BlankIsUnknown(settings[i++]);
             MaxFeatureId = StringToInt_BlankIsUnknown(settings[i++]);
-            MinRawHeat = StringToInt_BlankIsUnknown(settings[i++]);
-            MaxRawHeat = StringToInt_BlankIsUnknown(settings[i++]);
 
             if (FlightLegId == 0)
                 FlightLegId = UnknownValue;
@@ -161,8 +150,6 @@ namespace SkyCombImage.ProcessModel
                 InputFrameMs = rand.Next(0, 1000000),
                 MinFeatureId = rand.Next(0, 10000),
                 MaxFeatureId = rand.Next(0, 10000),
-                MinRawHeat = rand.Next(0, 10000),
-                MaxRawHeat = rand.Next(0, 10000),
                 NumSig = rand.Next(0, 10000),
             };
 
@@ -177,8 +164,6 @@ namespace SkyCombImage.ProcessModel
             Assert(obj.InputFrameId == obj2.InputFrameId, "InputFrameId mismatch");
             Assert(obj.MinFeatureId == obj2.MinFeatureId, "MinFeatureId mismatch");
             Assert(obj.MaxFeatureId == obj2.MaxFeatureId, "MaxFeatureId mismatch");
-            Assert(obj.MinRawHeat == obj2.MinRawHeat, "MinRawHeat mismatch");
-            Assert(obj.MaxRawHeat == obj2.MaxRawHeat, "MaxRawHeat mismatch");
         }
     };
 }
