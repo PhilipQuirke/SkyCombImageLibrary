@@ -5,13 +5,13 @@ using SkyCombDrone.DrawSpace;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombDrone.PersistModel;
+using SkyCombDroneLibrary.DroneLogic.DJI;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.CategorySpace;
 using SkyCombImage.DrawSpace;
 using SkyCombImage.PersistModel;
 using SkyCombImage.ProcessLogic;
 using SkyCombImage.ProcessModel;
-using SkyCombImageLibrary.ProcessLogic.DJI;
 using System.Diagnostics;
 using System.Drawing;
 

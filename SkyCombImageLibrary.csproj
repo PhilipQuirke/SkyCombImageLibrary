@@ -8,7 +8,7 @@
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<Description>SkyComb Drone Library for processing drone flight data, video files, flight logs, and thermal imaging data.</Description>
 		<Copyright>Copyright SkyComb Limited 2025. All rights reserved.</Copyright>
-		<Version>11.0.0</Version>
+		<Version>11.2.0</Version>
 		<Platforms>x64</Platforms>
 		<!-- CRITICAL: Enable unsafe blocks for P/Invoke -->
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -31,21 +31,7 @@
 			<Private>True</Private>
 		</Reference>
 	</ItemGroup>
-	<!-- Native DJI Thermal SDK libraries -->
-	<ItemGroup>
-		<None Include="Native\x64\*.dll">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-			<Link>%(Filename)%(Extension)</Link>
-			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-		</None>
-	</ItemGroup>
-	<ItemGroup>
-	  <None Include="Native\x64\libv_list.ini">
-		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		  <Link>%(Filename)%(Extension)</Link>
-		  <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-	  </None>
-	</ItemGroup>	
+	<!-- Native DJI Thermal SDK libraries -->	
 	<ItemGroup>
 		<Compile Update="Properties\Resources.Designer.cs">
 			<DesignTime>True</DesignTime>
@@ -63,7 +49,6 @@
 	<!-- Public API folders -->
 	<ItemGroup>
 		<Folder Include="Interfaces\" />
-		<Folder Include="Native\x64\" />
 		<Folder Include="Services\" />
 		<Folder Include="Examples\" />
 		<Folder Include="Exceptions\" />

@@ -1,10 +1,11 @@
 ﻿using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
+using SkyCombDroneLibrary.DroneLogic.DJI;
 using System.Runtime.InteropServices;
 
 
-namespace SkyCombImageLibrary.ProcessLogic.DJI
+namespace SkyCombImageLibrary.ProcessLogic
 {
     public static class ThermalImageProcessor
     {
