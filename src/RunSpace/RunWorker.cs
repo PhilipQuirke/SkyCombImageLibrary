@@ -450,8 +450,13 @@ namespace SkyCombImage.RunSpace
                 // If image contains DJI Radiometric Data use that
                 var imageFileName = Drone.GetCurrImage_InputIsImages_FileName(inputDirectory, frameId);
 
-                (_, _, var currInputRadiometric_gray) =
-                    DirpApiWrapper.GetRawRadiometricDataNormalised(imageFileName);
+                // Normalize raw radiometric data to 0-255 grayscale image
+                // using "all images" min/max raw heat values.
+                var currInputRadiometric_gray =
+                    DirpApiWrapper.GetRawRadiometricNormalised(
+                        imageFileName,
+                        Drone.FlightSections.MinRawHeat,
+                        Drone.FlightSections.MaxRawHeat);
                 if (currInputRadiometric_gray != null)
                 {
                     var currInputRadiometric_bgr = currInputRadiometric_gray.Convert<Bgr, byte>();
@@ -474,9 +479,7 @@ namespace SkyCombImage.RunSpace
                     }
                 }
             }
-            catch { 
-                // Swallow exception.
-            }
+            catch { }
 
             return CurrInputImage;
         }
