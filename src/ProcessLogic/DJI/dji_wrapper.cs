@@ -81,7 +81,7 @@ namespace SkyCombImageLibrary.ProcessLogic.DJI
         }
 
 
-        public static Image<Gray, byte> GetRawRadiometricData_Normalised(string input)
+        public static (ushort min, ushort max, Image<Gray, byte> image) GetRawRadiometricDataNormalised(string input)
         {
             (ushort[] rawData, int w, int h) = DirpApiWrapper.GetRawRadiometricData(input);
 
@@ -94,13 +94,14 @@ namespace SkyCombImageLibrary.ProcessLogic.DJI
             Image<Gray, byte> grayImage = new Image<Gray, byte>(w, h);
             System.Buffer.BlockCopy(normalized, 0, grayImage.Data, 0, normalized.Length);
 
-            return grayImage;
+            return (min, max, grayImage);
         }
 
 
-        public static Image<Bgr, byte> GetRawRadiometricData_UnitTest(string input)
+        public static Image<Bgr, byte> GetRawRadiometricDataUnitTest(string input)
         {
-            return GetRawRadiometricData_Normalised(input).Convert<Bgr, byte>();
+            var (min, max, grayImage) = GetRawRadiometricDataNormalised(input);
+            return grayImage.Convert<Bgr, byte>();
         }
     }
 }

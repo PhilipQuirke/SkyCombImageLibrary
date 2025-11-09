@@ -29,7 +29,10 @@ namespace SkyCombImage.ProcessLogic
         public Image<Bgr, byte>? ModifiedInputImage = null;
         public Image<Bgr, byte>? CurrInputImageC = null;
         public Image<Bgr, byte>? ModifiedInputImageC = null;
-
+        // Transient values used while processing a Block and Objects.
+        public ProcessBlock? CurrBlock = null;
+        public ushort CurrMinRawHeat = 0;
+        public ushort CurrMaxRawHeat = 0;
 
         public ProcessScope(Drone? drone = null)
         {

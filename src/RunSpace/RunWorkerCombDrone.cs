@@ -45,17 +45,17 @@ namespace SkyCombImage.RunSpace
 
 
         // Process/analyse a single frame
-        public override ProcessBlock AddBlockAndProcessInputRunFrame()
+        public override void AddBlockAndProcessInputRunFrame()
         {
             try
             {
-                var currBlock = ProcessAll.AddBlock(this);
+                CurrBlock = ProcessAll.AddBlock(this);
 
                 // If camera is too near the horizon, skip this frame.
-                if ((currBlock != null) && (currBlock.FlightStep != null) &&
-                    !Drone.FlightStepInRunScope(currBlock.FlightStep))
+                if ((CurrBlock != null) && (CurrBlock.FlightStep != null) &&
+                    !Drone.FlightStepInRunScope(CurrBlock.FlightStep))
                     // Don't create features. Don't update objects.
-                    return currBlock;
+                    return;
 
                 Image<Bgr, byte> currInput = CurrInputImage.Clone();
 
@@ -64,9 +64,9 @@ namespace SkyCombImage.RunSpace
 
                 ProcessFeatureList featuresInBlock = ProcessFactory.NewProcessFeatureList(CombProcess.ProcessConfig);
                 if (RunConfig.RunProcess == RunProcessEnum.Threshold)
-                    ThresholdFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, currBlock, CurrInputImage, currThreshold);
+                    ThresholdFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, CurrBlock, CurrInputImage, currThreshold);
                 else
-                    CombFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, currBlock, CurrInputImage, currThreshold);
+                    CombFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, CurrBlock, CurrInputImage, currThreshold);
 
                 foreach (var feature in featuresInBlock)
                     feature.Value.CalculateSettings_LocationM_HeightM_LOS(ProcessAll.GroundData);
@@ -82,8 +82,6 @@ namespace SkyCombImage.RunSpace
 
                 currInput.Dispose();
                 currThreshold.Dispose();
-
-                return currBlock;
             }
             catch (Exception ex)
             {

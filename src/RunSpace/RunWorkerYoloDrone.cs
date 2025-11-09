@@ -44,29 +44,29 @@ namespace SkyCombImage.RunSpace
 
 
         // Process/analyse a single frame
-        public override ProcessBlock AddBlockAndProcessInputRunFrame()
+        public override void AddBlockAndProcessInputRunFrame()
         {
             try
             {
-                var currBlock = ProcessAll.AddBlock(this);
+                CurrBlock = ProcessAll.AddBlock(this);
 
                 // If camera is too near the horizon, skip this frame.
-                if ((currBlock != null) && (currBlock.FlightStep != null) &&
-                    !Drone.FlightStepInRunScope(currBlock.FlightStep))
+                if ((CurrBlock != null) && (CurrBlock.FlightStep != null) &&
+                    !Drone.FlightStepInRunScope(CurrBlock.FlightStep))
                     // Don't create features. Don't update objects.
-                    return currBlock;
+                    return;
 
                 List<ObjectDetection>? results = null;
                 ProcessFeatureList featuresInBlock = new(RunConfig.ProcessConfig);
 
                 {
-                    int blockID = currBlock.BlockId;
+                    int blockID = CurrBlock.BlockId;
                     var currGray = DrawImage.ToGrayScale(CurrInputImage);
                     var currBmp = currGray.ToBitmap();
 
                     DrawImage.Threshold(RunConfig.ProcessConfig, ref currGray);
 
-                    results = YoloProcess.YoloDetectImage(currBmp, currBlock);
+                    results = YoloProcess.YoloDetectImage(currBmp, CurrBlock);
                     if (results != null)
                         foreach (var result in results)
                         {
@@ -87,8 +87,6 @@ namespace SkyCombImage.RunSpace
 
                 // Deprecated thisBlock.NumSig = YoloProcess.ProcessBlock(this, CurrInputImage, imgThreshold, results);
                 YoloProcess.ProcessBlockForObjects(this, featuresInBlock);
-
-                return currBlock;
             }
             catch (Exception ex)
             {

@@ -207,7 +207,7 @@ namespace SkyCombImage.RunSpace
 
 
         // Process/analyse a single input frame/image
-        public abstract ProcessBlock AddBlockAndProcessInputRunFrame();
+        public abstract void AddBlockAndProcessInputRunFrame();
 
 
         // Process a single input frame/image for the specified block, returning the modified input frame to show 
@@ -445,28 +445,38 @@ namespace SkyCombImage.RunSpace
             ResetCurrImage();
             CurrInputImage = Drone.GetCurrImage_InputIsImages(inputDirectory, frameId);
 
-            // If image contains DJI Radiometric Data use that
-            var imageFileName = Drone.GetCurrImage_InputIsImages_FileName(inputDirectory, frameId);
-            Image<Bgr, byte> currInputRadiometric =
-                DirpApiWrapper.GetRawRadiometricData_UnitTest(imageFileName);
-            if (currInputRadiometric != null)
+            try
             {
-                // If currInputRadiometric is half the size of currInput
-                // then double currInputRadiometric
-                if ((currInputRadiometric.Width * 2 == CurrInputImage.Width) &&
-                    (currInputRadiometric.Height * 2 == CurrInputImage.Height))
+                // If image contains DJI Radiometric Data use that
+                var imageFileName = Drone.GetCurrImage_InputIsImages_FileName(inputDirectory, frameId);
+
+                Image<Gray, byte> currInputRadiometric_gray = null;
+                (CurrMinRawHeat, CurrMaxRawHeat, currInputRadiometric_gray) =
+                    DirpApiWrapper.GetRawRadiometricDataNormalised(imageFileName);
+                if (currInputRadiometric_gray != null)
                 {
-                    ResetCurrImage();
-                    Image<Bgr, byte> resizedRadiometric =
-                        DrawImage.ResizeImage(currInputRadiometric, 2.0).ToImage<Bgr, byte>();
-                    currInputRadiometric.Dispose();
-                    CurrInputImage = resizedRadiometric;
+                    var currInputRadiometric_bgr = currInputRadiometric_gray.Convert<Bgr, byte>();
+
+                    // If currInputRadiometric is half the size of currInput
+                    // then double currInputRadiometric
+                    if ((currInputRadiometric_bgr.Width * 2 == CurrInputImage.Width) &&
+                        (currInputRadiometric_bgr.Height * 2 == CurrInputImage.Height))
+                    {
+                        ResetCurrImage();
+                        Image<Bgr, byte> resizedRadiometric =
+                            DrawImage.ResizeImage(currInputRadiometric_bgr, 2.0).ToImage<Bgr, byte>();
+                        currInputRadiometric_bgr.Dispose();
+                        CurrInputImage = resizedRadiometric;
+                    }
+                    else
+                    {
+                        ResetCurrImage();
+                        CurrInputImage = currInputRadiometric_bgr;
+                    }
                 }
-                else
-                {
-                    ResetCurrImage();
-                    CurrInputImage = currInputRadiometric;
-                }
+            }
+            catch { 
+                // Swallow exception.
             }
 
             return CurrInputImage;
@@ -574,6 +584,10 @@ namespace SkyCombImage.RunSpace
 
                     while (true)
                     {
+                        CurrBlock = null;
+                        CurrMinRawHeat = 0;
+                        CurrMaxRawHeat = 0;
+
                         int prevLegId = PSM.CurrRunLegId;
 
                         // Move to the next video frame, processing block, and maybe flight section
@@ -625,13 +639,15 @@ namespace SkyCombImage.RunSpace
                             break;
 
                         // Apply process model to this new frame
-                        var thisBlock = AddBlockAndProcessInputRunFrame();
+                        AddBlockAndProcessInputRunFrame();
+                        CurrBlock.MinRawHeat = CurrMinRawHeat;
+                        CurrBlock.MaxRawHeat = CurrMaxRawHeat;
 
-                        Assert(inputVideo.CurrFrameId == thisBlock.InputFrameId, "RunWorker.Run: Bad FrameId 2");
+                        Assert(inputVideo.CurrFrameId == CurrBlock.InputFrameId, "RunWorker.Run: Bad FrameId 2");
 
                         // If we need it, draw the output for this new frame
                         if ((videoWriter != null) || (!suppressUiUpdate))
-                            DrawFrameImage(thisBlock);
+                            DrawFrameImage(CurrBlock);
 
                         // Save the output frame to disk. 
                         if ((videoWriter != null) && (ModifiedInputImage != null))
@@ -772,19 +788,17 @@ namespace SkyCombImage.RunSpace
 
 
         // Process/analyse a single frame at a time.
-        public override ProcessBlock AddBlockAndProcessInputRunFrame()
+        public override void AddBlockAndProcessInputRunFrame()
         {
             try
             {
-                var thisBlock = ProcessFactory.NewBlock(this);
-                ProcessAll.Blocks.AddBlock(thisBlock, this, Drone);
+                CurrBlock = ProcessFactory.NewBlock(this);
+                ProcessAll.Blocks.AddBlock(CurrBlock, this, Drone);
 
                 var inputImage = CurrInputImage.Clone();
 
                 // Process (analyse) a single image (using any one ProcessName) and returns an image.
                 DrawImage.Draw(RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, ref inputImage);
-
-                return thisBlock;
             }
             catch (Exception ex)
             {
