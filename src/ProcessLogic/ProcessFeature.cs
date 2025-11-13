@@ -284,11 +284,11 @@ namespace SkyCombImage.ProcessLogic
                 { "DepthPixels", PixelBox.Height },
                 { "#HotPixels", NumHotPixels },
                 { "centroid", "(" + centroidx + ", " + centroidy + ")"},
-                { "location", ( LocationM != null ? "(" + LocationM.EastingM + ", " + LocationM.NorthingM + ", " + HeightM + ")":"")},
+                { "location", ( LocationM != null ? "(" + LocationM.ToString() + ", " + HeightM + ")":"")},
                 { "NorthingDiffM", ( LocationM != null ? (LocationM.NorthingM - objectLocation.NorthingM ) : 0.0), 1},
                 { "EastingDiffM", ( LocationM != null ? (LocationM.EastingM - objectLocation.EastingM) : 0.0), 1},
                 { "HeightDiff", ( LocationM != null ? (HeightM - objectHeight) : 0), 1},
-                { "DroneLocation", "(" + Block.DroneLocnM.EastingM + ", " + Block.DroneLocnM.NorthingM + ", " + Block.AltitudeM + ")" },
+                { "DroneLocation", "(" + Block.DroneLocnM.ToString() + ", " + Block.AltitudeM + ")" },
             };
         }
     }
