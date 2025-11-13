@@ -282,7 +282,14 @@ namespace SkyCombImage.DrawSpace
 
 
         // We need to resize the theImage by a factor
-        public static Mat ResizeImage(Image<Bgr, byte> theImage, double factor, Inter inter = Inter.Linear)
+        public static Mat ResizeImageBgr(Image<Bgr, byte> theImage, double factor, Inter inter = Inter.Linear)
+        {
+            var frameResized = new Mat();
+            CvInvoke.Resize(theImage, frameResized, new Size(0, 0), factor, factor, inter);
+
+            return frameResized;
+        }
+        public static Mat ResizeImageGray(Image<Gray, byte> theImage, double factor, Inter inter = Inter.Linear)
         {
             var frameResized = new Mat();
             CvInvoke.Resize(theImage, frameResized, new Size(0, 0), factor, factor, inter);
@@ -338,7 +345,7 @@ namespace SkyCombImage.DrawSpace
                 else
                 {
                     // We need to resize the image to match PictureBox dimensions
-                    using (var resizedImage = DrawImage.ResizeImage(theImage, factor))
+                    using (var resizedImage = DrawImage.ResizeImageBgr(theImage, factor))
                     {
                         thePicture.Image = resizedImage.ToBitmap();
                     }

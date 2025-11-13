@@ -469,9 +469,15 @@ namespace SkyCombImage.RunSpace
                     {
                         ResetCurrImage();
                         Image<Bgr, byte> resizedRadiometric =
-                            DrawImage.ResizeImage(currInputRadiometric_bgr, 2.0, Inter.Nearest).ToImage<Bgr, byte>();
-                        currInputRadiometric_bgr.Dispose();
+                            DrawImage.ResizeImageBgr(currInputRadiometric_bgr, 2.0, Inter.Nearest).ToImage<Bgr, byte>();
                         CurrInputImage = resizedRadiometric;
+
+                        // Assert that the maximum pixel heat has not been decreased by this change
+                        var origMax = currInputRadiometric_bgr.Data.Cast<byte>().Max();
+                        var resizedMax = CurrInputImage.Data.Cast<byte>().Max();
+                        Debug.Assert(resizedMax >= origMax, "Resizing radiometric image reduced the maximum pixel value.");
+
+                        currInputRadiometric_bgr.Dispose();
                     }
                     else
                     {
