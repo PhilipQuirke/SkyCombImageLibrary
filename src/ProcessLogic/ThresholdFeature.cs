@@ -230,20 +230,20 @@ namespace SkyCombImage.ProcessLogic
     
 
         public static void CreateFeaturesFromImage(
-            CombProcess combProcess,
+            CombProcess theProcess,
             ProcessFeatureList featuresInBlock,
             ProcessBlock block,
             in Image<Bgr, byte> imgOriginal,    // read-only
             in Image<Gray, byte> imgThreshold)  // read-only
         {
-            HeatThresholdValue = (byte) combProcess.ProcessConfig.HeatThresholdValue;
-            MinPixels = ProcessConfigModel.FeatureMinPixels;
+            HeatThresholdValue = (byte) theProcess.ProcessConfig.HeatThresholdValue;
+            MinPixels = theProcess.ProcessConfig.FeatureMinPixels;
 
-            var clusters = AnalyzeWithClustering(imgThreshold, combProcess.ProcessConfig);
+            var clusters = AnalyzeWithClustering(imgThreshold, theProcess.ProcessConfig);
 
             foreach (var cluster in clusters)
             {
-                var feature = new CombFeature(combProcess, block, FeatureTypeEnum.Real);
+                var feature = new CombFeature(theProcess, block, FeatureTypeEnum.Real);
 
                 feature.ClearHotPixelData();
                 feature.Pixels = new();
@@ -253,7 +253,7 @@ namespace SkyCombImage.ProcessLogic
                 
                 feature.PixelBox = cluster.BoundingBox;
                 feature.Calculate_HotPixelData();
-                feature.Calculate_Significant();
+                feature.Calculate_Significant(theProcess.ProcessConfig);
                 feature.IsTracked = feature.Significant;
 
                 featuresInBlock.AddFeature(feature);

@@ -137,7 +137,7 @@ namespace SkyCombImage.ProcessLogic
                 }
 
                 Calculate_HotPixelData();
-                Calculate_Significant();
+                Calculate_Significant(ProcessAll.ProcessConfig);
                 IsTracked = Significant;
             }
             catch (Exception ex)
@@ -157,7 +157,7 @@ namespace SkyCombImage.ProcessLogic
             {
                 Pixels.AddRange(otherFeature.Pixels);
                 Calculate_HotPixelData();
-                Calculate_Significant();
+                Calculate_Significant(ProcessAll.ProcessConfig);
 
                 otherFeature.ClearHotPixelArray();
             }

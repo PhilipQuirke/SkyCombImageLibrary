@@ -108,9 +108,9 @@ namespace SkyCombImage.ProcessModel
 
 
         // Is this feature significant?
-        public void Calculate_Significant()
+        public void Calculate_Significant(ProcessConfigModel config)
         {
-            Significant = (NumHotPixels >= ProcessConfigModel.FeatureMinPixels);
+            Significant = (NumHotPixels >= config.FeatureMinPixels);
         }
 
 

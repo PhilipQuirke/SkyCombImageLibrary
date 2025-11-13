@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2024. All rights reserved.
+﻿// Copyright SkyComb Limited 2025. All rights reserved.
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
@@ -192,7 +192,7 @@ namespace SkyCombImage.DrawSpace
 
         
         // Apply threshold visualization while preserving the original thermal image
-        private static void ApplyThresholdVisualization(ProcessConfigModel config, ref Image<Bgr, byte> imgInput)
+        public static void ApplyThresholdVisualization(ProcessConfigModel config, ref Image<Bgr, byte> imgInput)
         {
             // Convert to grayscale for threshold analysis
             var grayImage = ToGrayScale(imgInput);

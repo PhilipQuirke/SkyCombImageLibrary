@@ -54,7 +54,7 @@ namespace SkyCombImage.ProcessLogic
                 PixelBox = new System.Drawing.Rectangle(0, 0, 0, 0);
 
             // Is this feature significant?
-            Calculate_Significant();
+            Calculate_Significant(ProcessAll.ProcessConfig);
         }
 
 
@@ -129,7 +129,7 @@ namespace SkyCombImage.ProcessLogic
                 PixelBox = new Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
 
             Calculate_HotPixelData();
-            Calculate_Significant();
+            Calculate_Significant(ProcessAll.ProcessConfig);
             IsTracked = Significant;
         }
     };

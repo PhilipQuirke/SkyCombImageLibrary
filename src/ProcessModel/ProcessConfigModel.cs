@@ -38,7 +38,7 @@ namespace SkyCombImage.ProcessModel
 
         // SkyComb-specific detection method "Comb".
         // Minimum number of hot pixels required inside a bounding rectangle, to draw a red rect in output
-        public const int FeatureMinPixels = 8;
+        public int FeatureMinPixels = 8;
         // Maximum feature size (aka length or width) in pixels
         // Sometimes the algorithm generates absurdly large features e.g. 100. This reduces this issue.
         // ToDo: Value should be based on physically realities e.g. the maximum mammal size given standard drone altitude 
@@ -223,7 +223,7 @@ namespace SkyCombImage.ProcessModel
         {
             int i = 0;
             HeatThresholdValue = StringToNonNegInt(settings[i++]);
-            i++; // FeatureMinPixels  
+            FeatureMinPixels = StringToNonNegInt(settings[i++]);
             i++; // FeatureMaxSize  
             i++; // FeatureMinOverlapPerc  
             i++; // ObjectMinDurationMs  
