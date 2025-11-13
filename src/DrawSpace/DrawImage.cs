@@ -282,10 +282,10 @@ namespace SkyCombImage.DrawSpace
 
 
         // We need to resize the theImage by a factor
-        public static Mat ResizeImage(Image<Bgr, byte> theImage, double factor)
+        public static Mat ResizeImage(Image<Bgr, byte> theImage, double factor, Inter inter = Inter.Linear)
         {
             var frameResized = new Mat();
-            CvInvoke.Resize(theImage, frameResized, new Size(0, 0), factor, factor, Inter.Linear);
+            CvInvoke.Resize(theImage, frameResized, new Size(0, 0), factor, factor, inter);
 
             return frameResized;
         }

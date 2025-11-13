@@ -7,7 +7,7 @@ using System.Drawing;
 
 namespace SkyCombImage.ProcessLogic
 {
-    internal class ClusterInfoC
+    public class ClusterInfoC
     {
         public Rectangle BoundingBox { get; set; }
         public int HotPixelCount { get; set; }
@@ -18,7 +18,7 @@ namespace SkyCombImage.ProcessLogic
     }
 
 
-    internal static class ThresholdFeatureLogic
+    public static class ThresholdFeatureLogic
     {
         static byte HeatThresholdValue = 180;
         static int MinPixels = 8;

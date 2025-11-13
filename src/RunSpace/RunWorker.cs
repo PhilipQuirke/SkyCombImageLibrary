@@ -1,5 +1,6 @@
 ﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 using Emgu.CV;
+using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
 using SkyCombDrone.DrawSpace;
 using SkyCombDrone.DroneLogic;
@@ -468,7 +469,7 @@ namespace SkyCombImage.RunSpace
                     {
                         ResetCurrImage();
                         Image<Bgr, byte> resizedRadiometric =
-                            DrawImage.ResizeImage(currInputRadiometric_bgr, 2.0).ToImage<Bgr, byte>();
+                            DrawImage.ResizeImage(currInputRadiometric_bgr, 2.0, Inter.Nearest).ToImage<Bgr, byte>();
                         currInputRadiometric_bgr.Dispose();
                         CurrInputImage = resizedRadiometric;
                     }
