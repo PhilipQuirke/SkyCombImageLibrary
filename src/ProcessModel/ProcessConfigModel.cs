@@ -58,7 +58,9 @@ namespace SkyCombImage.ProcessModel
         // Maximum number of hot pixels in an object
         public int ObjectMaxPixels { get; set; } = 1000;
         // Minimum number of max-heat pixels in an object
-        public int ObjectMinMaxHeatPixels { get; set; } = 0; 
+        public int ObjectMinMaxHeatPixels { get; set; } = 0;
+        // Lower heat threshold value for radiometric data. Takes values from 4000 to 5000
+        public int LowerRadiometricThreshold { get; set; } = 4575;
 
         // An object detected at long-range must be large and so is not of interest to us.
         public const int ObjectMaxRangeM = 350;
@@ -161,6 +163,11 @@ namespace SkyCombImage.ProcessModel
                 ObjectMinMaxHeatPixels = 0;
             if (ObjectMinMaxHeatPixels > 100)
                 ObjectMinMaxHeatPixels = 100;
+
+            if(LowerRadiometricThreshold < 4000)
+                LowerRadiometricThreshold = 4000;
+            if (LowerRadiometricThreshold > 5000)
+                LowerRadiometricThreshold = 5000;
         }
 
 
@@ -198,7 +205,8 @@ namespace SkyCombImage.ProcessModel
         {
             return new DataPairList
             {
-                { "Threshold Value", HeatThresholdValue },
+                { "Hot Pixel Threshold", HeatThresholdValue },
+                { "Radiometric Threshold", LowerRadiometricThreshold },
                 { "Feature Min Pixels", FeatureMinPixels },
                 { "Feature Max Size", FeatureMaxSize },
                 { "Feature Min Overlap Perc", FeatureMinOverlapPerc },
@@ -223,6 +231,7 @@ namespace SkyCombImage.ProcessModel
         {
             int i = 0;
             HeatThresholdValue = StringToNonNegInt(settings[i++]);
+            LowerRadiometricThreshold = StringToNonNegInt(settings[i++]);
             FeatureMinPixels = StringToNonNegInt(settings[i++]);
             i++; // FeatureMaxSize  
             i++; // FeatureMinOverlapPerc  
@@ -273,6 +282,7 @@ namespace SkyCombImage.ProcessModel
             var obj = new ProcessConfigModel
             {
                 HeatThresholdValue = rand.Next(50, 255),
+                LowerRadiometricThreshold = rand.Next(4000, 5000),
                 ObjectMinPixels = rand.Next(1, 1000),
                 ObjectMaxPixels = rand.Next(1, 10000),
                 ObjectMinMaxHeatPixels = rand.Next(0, 1000),
@@ -291,6 +301,7 @@ namespace SkyCombImage.ProcessModel
             obj2.LoadModelSettings(settings);
             // Compare all relevant properties
             Assert(obj.HeatThresholdValue == obj2.HeatThresholdValue, "HeatThresholdValue mismatch");
+            Assert(obj.LowerRadiometricThreshold == obj2.LowerRadiometricThreshold, "RadiometricThreshold mismatch");
             Assert(obj.ObjectMinPixels == obj2.ObjectMinPixels, "ObjectMinPixels mismatch");
             Assert(obj.ObjectMaxPixels == obj2.ObjectMaxPixels, "ObjectMaxPixels mismatch");
             Assert(obj.ObjectMinMaxHeatPixels == obj2.ObjectMinMaxHeatPixels, "ObjectMinMaxHeatPixels mismatch");

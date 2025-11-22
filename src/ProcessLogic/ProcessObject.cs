@@ -196,19 +196,6 @@ namespace SkyCombImage.ProcessLogic
                     LastFeature.HeightAlgorithm = CombFeature.UnrealCopyHeightAlgorithm;
                 }
 
-/*
-                // Copy these details to the feature to be saved in the DataStore.
-                // Useful for understanding the feature by feature progression of values that are refined over time.
-                LastFeature.Significant = Significant & (LastFeature.Type == FeatureTypeEnum.Real);
-                if (Significant && !wasSignificant)
-                    // This object has just become significant. Two use cases:
-                    // - After 5 real features, enough time has based for object to become significant on 6th real feature.
-                    // - Object had 20 real features, then 5 unreal features, then another 1 real features.
-                    // Mark all (real and unreal) features associated with this object as significant.
-                    foreach (var feature in ProcessFeatures)
-                        feature.Value.Significant = true;
-*/
-
                 // Save the image of the object with the most hot pixels.
                 if ((theFeature.Type == FeatureTypeEnum.Real) &&
                     (ProcessScope?.CurrInputImage != null) &&
@@ -224,7 +211,7 @@ namespace SkyCombImage.ProcessLogic
                             ProcessAll.ProcessConfig,
                             drawImageConfig,
                             ProcessAll.Drone,
-                            ProcessScope.CurrInputImage,
+                            ProcessScope.CurrInputImage.Convert<Bgr,byte>(), // May need to scale by 2.
                             this,
                             theFeature.Block, ProcessAll,
                             false);

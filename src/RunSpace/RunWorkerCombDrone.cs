@@ -57,9 +57,7 @@ namespace SkyCombImage.RunSpace
                     // Don't create features. Don't update objects.
                     return;
 
-                Image<Bgr, byte> currInput = CurrInputImage.Clone();
-
-                Image<Gray, byte> currThreshold = DrawImage.ToGrayScale(currInput);
+                Image<Gray, byte> currThreshold = CurrInputImage.Clone();
                 DrawImage.Threshold(RunConfig.ProcessConfig, ref currThreshold);
 
                 ProcessFeatureList featuresInBlock = ProcessFactory.NewProcessFeatureList(CombProcess.ProcessConfig);
@@ -80,7 +78,6 @@ namespace SkyCombImage.RunSpace
                     // Outside legs, we store the features so we can draw them on the video frame later.
                     CombProcess.ProcessBlockForFeatures(featuresInBlock);
 
-                currInput.Dispose();
                 currThreshold.Dispose();
             }
             catch (Exception ex)

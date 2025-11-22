@@ -37,7 +37,7 @@ namespace SkyCombImage.ProcessLogic
         //      - The search can SHRINK horizontally (left or right) one pixel on one row
         public void PixelNeighborSearch(
             ref bool[] inputSearched,
-            in Image<Bgr, byte> imgOriginal,        // read-only
+            in Image<Gray, byte> imgOriginal,        // read-only
             in Image<Gray, byte> imgThreshold,      // read-only
             int startY,
             int startX)
@@ -93,7 +93,7 @@ namespace SkyCombImage.ProcessLogic
                             hotPixelsInRow++;
 
                             // Evaluate the heat from the original image (not the threshold image)
-                            Bgr orgColor = imgOriginal[currY, currX];
+                            var orgColor = imgOriginal[currY, currX];
                             AddHotPixel(currY, currX, orgColor);
 
                             // Expand rectangle to include the hot pixel.
@@ -182,7 +182,7 @@ namespace SkyCombImage.ProcessLogic
             CombProcess combProcess,
             ProcessFeatureList featuresInBlock,
             ProcessBlock block,
-            in Image<Bgr, byte> imgOriginal,    // read-only
+            in Image<Gray, byte> imgOriginal,    // read-only
             in Image<Gray, byte> imgThreshold)  // read-only
         {
             int y = 0;

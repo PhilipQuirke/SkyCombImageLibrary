@@ -21,14 +21,13 @@ namespace SkyCombImage.ProcessLogic
         /// <param name="originalImage">The original color image</param>
         /// <param name="processConfig">Configuration containing threshold value</param>
         /// <returns>A binary threshold image where hot pixels are white (255) and others are black (0)</returns>
-        public static Image<Gray, byte> CreateThresholdImage(in Image<Bgr, byte> originalImage, ProcessConfigModel processConfig)
+        public static Image<Gray, byte> CreateThresholdImage(in Image<Gray, byte> originalImage, ProcessConfigModel processConfig)
         {
             // Create a threshold image from the current frame using the same process as during detection
-            using var grayImage = originalImage.Convert<Gray, byte>();
-            using var smoothedImage = new Image<Gray, byte>(grayImage.Size);
+            using var smoothedImage = new Image<Gray, byte>(originalImage.Size);
             
             // Apply the same smoothing as in the original processing
-            CvInvoke.GaussianBlur(grayImage, smoothedImage, new Size(3, 3), 0);
+            CvInvoke.GaussianBlur(originalImage, smoothedImage, new Size(3, 3), 0);
             
             // Apply threshold
             var thresholdImage = new Image<Gray, byte>(smoothedImage.Size);
@@ -46,7 +45,7 @@ namespace SkyCombImage.ProcessLogic
         /// <param name="originalImage">The original color image</param>
         /// <param name="processAll">The process data containing features</param>
         /// <param name="processConfig">Configuration containing threshold value</param>
-        public static void RegeneratePixelDataForBlock(ProcessBlock block, Image<Bgr, byte> originalImage, ProcessAll processAll, ProcessConfigModel processConfig)
+        public static void RegeneratePixelDataForBlock(ProcessBlock block, Image<Gray, byte> originalImage, ProcessAll processAll, ProcessConfigModel processConfig)
         {
             if (block == null || originalImage == null)
                 return;
@@ -78,7 +77,7 @@ namespace SkyCombImage.ProcessLogic
         /// <param name="imgOriginal">The original color image</param>
         /// <param name="imgThreshold">The binary threshold image</param>
         /// <param name="processConfig">Configuration for exclusion zones</param>
-        public static void RegeneratePixelsInBoundingBox(ProcessFeature feature, in Image<Bgr, byte> imgOriginal, in Image<Gray, byte> imgThreshold, ProcessConfigModel processConfig)
+        public static void RegeneratePixelsInBoundingBox(ProcessFeature feature, in Image<Gray, byte> imgOriginal, in Image<Gray, byte> imgThreshold, ProcessConfigModel processConfig)
         {
             feature.ClearHotPixelData();
             feature.Pixels = new();
@@ -104,7 +103,7 @@ namespace SkyCombImage.ProcessLogic
                     if (imgThreshold.Data[y, x, 0] >= processConfig.HeatThresholdValue)
                     {
                         // Add this hot pixel back to our collection
-                        Bgr orgColor = imgOriginal[y, x];
+                        var orgColor = imgOriginal[y, x];
                         feature.AddHotPixel(y, x, orgColor);
                     }
                 }

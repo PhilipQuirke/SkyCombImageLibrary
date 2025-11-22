@@ -67,7 +67,7 @@ namespace SkyCombImage.ProcessLogic
 
 
         // Override pixel regeneration for YOLO features to use the existing CalculateHeat_ShrinkBox method
-        public override void RegeneratePixelData(in Image<Bgr, byte> imgOriginal, in Image<Gray, byte> imgThreshold)
+        public override void RegeneratePixelData(in Image<Gray, byte> imgOriginal, in Image<Gray, byte> imgThreshold)
         {
             if (Pixels != null)
                 return; // Already have pixel data
@@ -80,8 +80,8 @@ namespace SkyCombImage.ProcessLogic
         // Shrink the result.BoundingBox to a smaller bounding box tight around the hot pixels.
         // Evaluate the MinHeat, MaxHeat, NumHotPixels, SumHotPixels and PixelBox of this feature
         public void CalculateHeat_ShrinkBox(
-           in Image<Bgr, byte> imgOriginal,
-           in Image<Gray, byte> imgThreshold)
+            in Image<Gray, byte> imgOriginal,
+            in Image<Gray, byte> imgThreshold)
         {
             ClearHotPixelData();
             Pixels = new();
@@ -118,7 +118,7 @@ namespace SkyCombImage.ProcessLogic
                         if (y > maxY) maxY = y;
 
                         // Evaluate the heat from the original image (not the threshold image)
-                        Bgr orgColor = imgOriginal[y, x];
+                        var orgColor = imgOriginal[y, x];
                         AddHotPixel(y, x, orgColor);
                     }
                 }

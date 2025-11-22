@@ -177,31 +177,30 @@ namespace SkyCombImage.DrawSpace
 
 
         // Process a single image and returns an image.
-        public static void Draw(
+        public static Image<Bgr, byte> Draw(
             RunProcessEnum runProcess, ProcessConfigModel config, DrawImageConfig drawConfig,
-            ref Image<Bgr, byte> imgInput)
+            Image<Gray, byte> imgInput)
         {
             if (runProcess == RunProcessEnum.Threshold)
-            {
                 // For Threshold processing, we want to show the original thermal image 
                 // with hot pixels highlighted in thermal colors (orange/red)
                 // This should NOT show bounding rectangles - those are handled by DrawRunProcess in ProcessDrawImage
-                ApplyThresholdVisualization(config, ref imgInput);
-            }
+                return ApplyThresholdVisualization(config, imgInput);
+
+            return imgInput.Convert<Bgr, byte>();
         }
 
         
         // Apply threshold visualization while preserving the original thermal image
-        public static void ApplyThresholdVisualization(ProcessConfigModel config, ref Image<Bgr, byte> imgInput)
+        public static Image<Bgr, byte> ApplyThresholdVisualization(ProcessConfigModel config, Image<Gray, byte> impInput)
         {
-            // Convert to grayscale for threshold analysis
-            var grayImage = ToGrayScale(imgInput);
-            
             // Apply threshold to identify hot pixels
-            var thresholdImage = grayImage.ThresholdBinary(new Gray(config.HeatThresholdValue), new Gray(255));
-            
-            int imageWidth = imgInput.Width;
-            int imageHeight = imgInput.Height;
+            var thresholdImage = impInput.ThresholdBinary(new Gray(config.HeatThresholdValue), new Gray(255));
+
+            int imageWidth = impInput.Width;
+            int imageHeight = impInput.Height;
+
+            var outputImage = impInput.Convert<Bgr, byte>();
 
             // Color the hot pixels with thermal colors (8 colors from yellow to red)
             int numColors = 8;
@@ -229,7 +228,7 @@ namespace SkyCombImage.DrawSpace
                     if (thresholdImage.Data[y, x, 0] > 0)
                     {
                         // Get the original pixel heat value
-                        byte originalHeat = grayImage.Data[y, x, 0];
+                        byte originalHeat = impInput.Data[y, x, 0];
                         
                         // Determine which thermal color to use based on heat intensity
                         int colorIndex = 0;
@@ -241,17 +240,18 @@ namespace SkyCombImage.DrawSpace
 
                         // Apply the thermal color to this hot pixel
                         var thermalColor = theShades[colorIndex];
-                        imgInput.Data[y, x, 0] = thermalColor.B; // Blue
-                        imgInput.Data[y, x, 1] = thermalColor.G; // Green
-                        imgInput.Data[y, x, 2] = thermalColor.R; // Red
+                        outputImage.Data[y, x, 0] = thermalColor.B; // Blue
+                        outputImage.Data[y, x, 1] = thermalColor.G; // Green
+                        outputImage.Data[y, x, 2] = thermalColor.R; // Red
                     }
                     // If not a hot pixel, leave the original thermal image unchanged
                 }
             }
 
             // Clean up temporary images
-            grayImage.Dispose();
             thresholdImage.Dispose();
+
+            return outputImage;
         }
 
         
@@ -363,7 +363,13 @@ namespace SkyCombImage.DrawSpace
                 throw new Exception("Error processing image", ex);
             }
         }
+        public static void StoreImageInPicture(Image<Gray, byte> theImage, PictureBox thePicture)
+        {
+            if (thePicture == null || theImage == null)
+                return;
 
+            StoreImageInPicture(theImage.Convert<Bgr,byte>(), thePicture);
+        }
 
         // Store a bitmap in a PictureBox with proper resizing
         public static void StoreBitmapInPicture(Bitmap? theImage, PictureBox? thePicture)

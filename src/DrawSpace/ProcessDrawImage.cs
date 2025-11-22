@@ -26,40 +26,59 @@ namespace SkyCombImage.DrawSpace
                 return;
 
             if (feature.Pixels == null)
-            {
                 // Pixel data has been cleared - perhaps for memory management.
                 return;
-            }
 
-            // Color the hotspots using 8 colors from yellow to red
-            int numColors = 8;
-            var theShades = GetColorShades(
-                Color.FromArgb(255, 255, 255, 0),
-                Color.FromArgb(255, 255, 0, 0), numColors);
-
-            // Use a linear threshold from the processConfig.ThresholdValue to 255
-            int thresholdStep = (255 - processConfig.HeatThresholdValue) / numColors;
+            const int numColors = 8;
+            int thresholdStep = 0;
             int[] threshold = new int[numColors];
-            for (int i = 0; i < numColors; i++)
-                threshold[i] = processConfig.HeatThresholdValue + i * thresholdStep;
 
-            foreach (var pixel in feature.Pixels)
+            try
             {
-                int num = 0;
+                // Color the hotspots using 8 colors from yellow to red
+                var theShades = GetColorShades(
+                    Color.FromArgb(255, 255, 255, 0),
+                    Color.FromArgb(255, 255, 0, 0), numColors);
+
+                // Use a linear threshold from the processConfig.ThresholdValue to 255
+                thresholdStep = (255 - processConfig.HeatThresholdValue) / numColors;
                 for (int i = 0; i < numColors; i++)
-                    if (pixel.Heat >= threshold[i])
-                        num = i;
+                    threshold[i] = processConfig.HeatThresholdValue + i * thresholdStep;
 
-                var x = transform.CalcX(pixel.X);
-                var y = transform.CalcY(pixel.Y);
+                var maxY = image.Data.GetLength(0);
+                var maxX = image.Data.GetLength(1);
 
-                for (int deltaX = 0; deltaX < transform.Scale; deltaX++)
-                    for (int deltaY = 0; deltaY < transform.Scale; deltaY++)
-                    {
-                        image.Data[y + deltaY, x + deltaX, 0] = theShades[num].B;
-                        image.Data[y + deltaY, x + deltaX, 1] = theShades[num].G;
-                        image.Data[y + deltaY, x + deltaX, 2] = theShades[num].R;
-                    }
+                foreach (var pixel in feature.Pixels)
+                {
+                    int num = 0;
+                    for (int i = 0; i < numColors; i++)
+                        if (pixel.Heat >= threshold[i])
+                            num = i;
+
+                    var y = transform.CalcY(pixel.Y);
+                    var x = transform.CalcX(pixel.X);
+
+                    System.Diagnostics.Debug.Assert(y >= 0 && y < maxY, "y out of range");
+                    System.Diagnostics.Debug.Assert(x >= 0 && x < maxX, "x out of range");
+
+                    for (int deltaX = 0; deltaX < transform.Scale; deltaX++)
+                        for (int deltaY = 0; deltaY < transform.Scale; deltaY++)
+                        {
+                            var thisY = y + deltaY;
+                            var thisX = x + deltaX;
+
+                            if (thisY < maxY && thisX < maxX)
+                            {
+                                image.Data[thisY, thisX, 0] = theShades[num].B;
+                                image.Data[thisY, thisX, 1] = theShades[num].G;
+                                image.Data[thisY, thisX, 2] = theShades[num].R;
+                            }
+                        }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ThrowException("DrawFrameImage.HotPixels", ex);
             }
         }
 
@@ -83,37 +102,43 @@ namespace SkyCombImage.DrawSpace
             int drawObjectId = drawFeature.ObjectId;
             int focusObjectId = focusObject != null ? focusObject.ObjectId : UnknownValue;
             var isFocusObject = (drawObjectId == focusObjectId);
-
-            if (drawObjectId > 0)
-            {
-                var theColor = Color.White;
-                if (focusObjectId > 0)
-                    theColor = (isFocusObject ? DroneColors.InScopeObjectColor : DroneColors.RealFeatureColor);
-                else if (drawFeature.Type == FeatureTypeEnum.Unreal)
-                    theColor = config.DrawUnrealFeatureColor;
-                else if (drawFeature.Type == FeatureTypeEnum.Real)
-                    theColor = drawFeature.Significant ? DroneColors.InScopeObjectColor : config.DrawRealFeatureColor;
-
-                if (theColor != Color.White)
+            
+            try { 
+                if (drawObjectId > 0)
                 {
-                    int thickness = (int)transform.Scale * config.TextExtraScale / 2;
-                    var scaledRect = transform.CalcRect(drawFeature.PixelBox);
+                    var theColor = Color.White;
+                    if (focusObjectId > 0)
+                        theColor = (isFocusObject ? DroneColors.InScopeObjectColor : DroneColors.RealFeatureColor);
+                    else if (drawFeature.Type == FeatureTypeEnum.Unreal)
+                        theColor = config.DrawUnrealFeatureColor;
+                    else if (drawFeature.Type == FeatureTypeEnum.Real)
+                        theColor = drawFeature.Significant ? DroneColors.InScopeObjectColor : config.DrawRealFeatureColor;
 
-                    BoundingRectangle(config, ref image, scaledRect, theColor, thickness, config.AreaPadding * config.BoxExtraScale);
+                    if (theColor != Color.White)
+                    {
+                        int thickness = (int)transform.Scale * config.TextExtraScale / 2;
+                        var scaledRect = transform.CalcRect(drawFeature.PixelBox);
 
-                    if (drawObjectName != "")
-                        // Helps identify points visually on image to facilitate mapping to xls data.
-                        // Combined with a very small video time span to process, can be very useful.
-                        if (drawFeature.Significant || isFocusObject ||
-                            (focusObjectId < 0)) // Draw object # for all objects?
-                        {
-                            // Draw the object name to right of the rectangle.
-                            int separation_pixels = 8;
-                            image.Draw(drawObjectName,
-                                new Point(scaledRect.X + scaledRect.Width + separation_pixels, scaledRect.Y + separation_pixels),
-                                FontFace.HersheyPlain, transform.Scale * config.TextExtraScale, DroneColors.ColorToBgr(theColor), thickness);
-                        }
+                        BoundingRectangle(config, ref image, scaledRect, theColor, thickness, config.AreaPadding * config.BoxExtraScale);
+
+                        if (drawObjectName != "")
+                            // Helps identify points visually on image to facilitate mapping to xls data.
+                            // Combined with a very small video time span to process, can be very useful.
+                            if (drawFeature.Significant || isFocusObject ||
+                                (focusObjectId < 0)) // Draw object # for all objects?
+                            {
+                                // Draw the object name to right of the rectangle.
+                                int separation_pixels = 8;
+                                image.Draw(drawObjectName,
+                                    new Point(scaledRect.X + scaledRect.Width + separation_pixels, scaledRect.Y + separation_pixels),
+                                    FontFace.HersheyPlain, transform.Scale * config.TextExtraScale, DroneColors.ColorToBgr(theColor), thickness);
+                            }
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                throw ThrowException("DrawFrameImage.DrawObjectFeatures", ex);
             }
         }
 
@@ -201,7 +226,7 @@ namespace SkyCombImage.DrawSpace
                     {
                         // For Threshold, first apply the thermal coloring
                         if (runProcess == RunProcessEnum.Threshold && !optical)
-                            DrawImage.Draw(runProcess, processConfig, drawConfig, ref modifiedInputFrame);
+                            modifiedInputFrame = DrawImage.Draw(runProcess, processConfig, drawConfig, modifiedInputFrame.Convert<Gray, byte>());
 
                         // Then draw bounding rectangles and object names for all three methods
                         DrawRunProcess(

@@ -66,7 +66,7 @@ namespace SkyCombImage.ProcessLogic
 
         // Regenerate pixel data from the original and threshold images when needed
         // This is used when pixel data was cleared for memory management but is now needed for display
-        public virtual void RegeneratePixelData(in Image<Bgr, byte> imgOriginal, in Image<Gray, byte> imgThreshold)
+        public virtual void RegeneratePixelData(in Image<Gray, byte> imgOriginal, in Image<Gray, byte> imgThreshold)
         {
             if (Pixels != null)
                 return; // Already have pixel data
@@ -75,11 +75,9 @@ namespace SkyCombImage.ProcessLogic
             ImageProcessingUtils.RegeneratePixelsInBoundingBox(this, imgOriginal, imgThreshold, ProcessAll.ProcessConfig);
         }
 
-        public void AddHotPixel(int currY, int currX, Bgr currColor)
+        public void AddHotPixel(int currY, int currX, Gray currHeat)
         {
-            int currHeat = (int)((currColor.Blue + currColor.Green + currColor.Red) / 3);
-
-            Pixels.Add(new PixelHeat(BlockId, FeatureId, currY, currX, currHeat));
+            Pixels.Add(new PixelHeat(BlockId, FeatureId, currY, currX, currHeat.GetHashCode()));
         }
 
         public void Calculate_HotPixelData()

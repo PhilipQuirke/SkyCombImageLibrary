@@ -25,8 +25,8 @@ namespace SkyCombImage.ProcessLogic
         public int LastRunStepId { get { return MaxStepId; } }
 
         // Transient image data storage used while processing a Block and Objects.
-        public Image<Bgr, byte>? CurrInputImage = null;
-        public Image<Bgr, byte>? ModifiedInputImage = null;
+        public Image<Gray, byte>? CurrInputImage = null;
+        public Image<Gray, byte>? ModifiedInputImage = null;
         public Image<Bgr, byte>? CurrInputImageC = null;
         public Image<Bgr, byte>? ModifiedInputImageC = null;
         // Transient values used while processing a Block and Objects.
@@ -196,7 +196,7 @@ namespace SkyCombImage.ProcessLogic
 
                 CalculateSettings();
 
-                CurrInputImage = inputMat.ToImage<Bgr, byte>();
+                CurrInputImage = inputMat.ToImage<Gray, byte>();
             }
         }
     }

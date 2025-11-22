@@ -221,11 +221,15 @@ namespace SkyCombImage.RunSpace
 
             ModifiedInputImage =
                 DrawSpace.DrawFrameImage.Draw(
-                    RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, Drone, CurrInputImage,
-                    null, block, ProcessAll);  
+                    RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, Drone, CurrInputImage.Convert<Bgr,byte>(),
+                    null, block, ProcessAll).Convert<Gray, byte>();
 
             if (ModifiedInputImage != null)
-                DrawYawPitchZoom.Draw(ref ModifiedInputImage, Drone, CurrRunFlightStep);
+            {
+                var bgrImage = ModifiedInputImage.Convert<Bgr, byte>();
+                DrawYawPitchZoom.Draw(ref bgrImage, Drone, CurrRunFlightStep);
+                ModifiedInputImage = bgrImage.Convert<Gray, byte>();
+            }
         }
 
 
@@ -440,7 +444,7 @@ namespace SkyCombImage.RunSpace
 
 
         // Given PSM.CurrInputFrameId, get the file name from the corresponding FlightStep, load the image and convert to 
-        public Image<Bgr, byte>? GetCurrImage_InputIsImages(string inputDirectory, int frameId)
+        public Image<Gray, byte>? GetCurrImage_InputIsImages(string inputDirectory, int frameId)
         {
             // Read the image from the input directory into memory
             ResetCurrImage();
@@ -452,38 +456,29 @@ namespace SkyCombImage.RunSpace
                 var imageFileName = Drone.GetCurrImage_InputIsImages_FileName(inputDirectory, frameId);
 
                 // Normalize raw radiometric data to 0-255 grayscale image
-                // using "all images" min/max raw heat values.
                 var currInputRadiometric_gray =
                     DirpApiWrapper.GetRawRadiometricNormalised(
                         imageFileName,
-                        Drone.FlightSections.MinRawHeat,
-                        Drone.FlightSections.MaxRawHeat);
+
+                        // Using "all images" min/max raw heat values is not good. Refer 5Nov25Bitten data & comments in Worklog.
+                        //Drone.FlightSections.MinRawHeat,
+                        //Drone.FlightSections.MaxRawHeat);
+
+                        // Using a fixed threshold is better for consistency between images. Refer Nov25TempRefs data & comments in Worklog.
+                        // CurrRunFlightStep.FlightSection.MinRawHeat,
+                        RunConfig.ProcessConfig.LowerRadiometricThreshold, // Defaults to 4575
+
+                        // PQR TODO. This is not great. For images with a small temp range we get poor contrast.
+                        // CurrRunFlightStep.FlightSection.MaxRawHeat);
+                        4620);
+
                 if (currInputRadiometric_gray != null)
                 {
-                    var currInputRadiometric_bgr = currInputRadiometric_gray.Convert<Bgr, byte>();
+                    ResetCurrImage();
 
-                    // If currInputRadiometric is half the size of currInput
-                    // then double currInputRadiometric
-                    if ((currInputRadiometric_bgr.Width * 2 == CurrInputImage.Width) &&
-                        (currInputRadiometric_bgr.Height * 2 == CurrInputImage.Height))
-                    {
-                        ResetCurrImage();
-                        Image<Bgr, byte> resizedRadiometric =
-                            DrawImage.ResizeImageBgr(currInputRadiometric_bgr, 2.0, Inter.Nearest).ToImage<Bgr, byte>();
-                        CurrInputImage = resizedRadiometric;
-
-                        // Assert that the maximum pixel heat has not been decreased by this change
-                        var origMax = currInputRadiometric_bgr.Data.Cast<byte>().Max();
-                        var resizedMax = CurrInputImage.Data.Cast<byte>().Max();
-                        Debug.Assert(resizedMax >= origMax, "Resizing radiometric image reduced the maximum pixel value.");
-
-                        currInputRadiometric_bgr.Dispose();
-                    }
-                    else
-                    {
-                        ResetCurrImage();
-                        CurrInputImage = currInputRadiometric_bgr;
-                    }
+                    // WARNING: CurrInputImage changes dimension in the new line of code.
+                    // currInputRadiometric_gray is often half the size of the greyscale JPG! Despite these two coming from the same file!
+                    CurrInputImage = currInputRadiometric_gray;
                 }
             }
             catch { }
@@ -800,10 +795,10 @@ namespace SkyCombImage.RunSpace
                 CurrBlock = ProcessFactory.NewBlock(this);
                 ProcessAll.Blocks.AddBlock(CurrBlock, this, Drone);
 
-                var inputImage = CurrInputImage.Clone();
-
                 // Process (analyse) a single image (using any one ProcessName) and returns an image.
-                DrawImage.Draw(RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, ref inputImage);
+                // PQR TODO
+                CurrInputImage = 
+                    DrawImage.Draw(RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, CurrInputImage).Convert<Gray,byte>();
             }
             catch (Exception ex)
             {

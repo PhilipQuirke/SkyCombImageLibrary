@@ -2,6 +2,7 @@
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombImage.ProcessModel;
+using System.Diagnostics;
 using System.Drawing;
 
 
@@ -21,7 +22,7 @@ namespace SkyCombImage.ProcessLogic
     public static class ThresholdFeatureLogic
     {
         static byte HeatThresholdValue = 180;
-        static int MinPixels = 8;
+        static int MinPixels = 3;
 
 
         // Enhanced threshold method that also performs clustering analysis
@@ -233,7 +234,7 @@ namespace SkyCombImage.ProcessLogic
             CombProcess theProcess,
             ProcessFeatureList featuresInBlock,
             ProcessBlock block,
-            in Image<Bgr, byte> imgOriginal,    // read-only
+            in Image<Gray, byte> imgOriginal,    // read-only
             in Image<Gray, byte> imgThreshold)  // read-only
         {
             HeatThresholdValue = (byte) theProcess.ProcessConfig.HeatThresholdValue;
@@ -248,6 +249,7 @@ namespace SkyCombImage.ProcessLogic
                 feature.ClearHotPixelData();
                 feature.Pixels = new();
 
+                Debug.Assert((!cluster.IsSignificant) || (cluster.HotPixels.Count >= MinPixels), "To few hot pixels");
                 foreach (var hotPixel in cluster.HotPixels)
                     feature.AddHotPixel(hotPixel.Y, hotPixel.X, imgOriginal[hotPixel.Y, hotPixel.X]);
                 
