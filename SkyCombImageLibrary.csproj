@@ -8,7 +8,7 @@
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<Description>SkyComb Drone Library for processing drone flight data, video files, flight logs, and thermal imaging data.</Description>
 		<Copyright>Copyright SkyComb Limited 2025. All rights reserved.</Copyright>
-		<Version>11.2.0</Version>
+		<Version>11.3.0</Version>
 		<Platforms>x64</Platforms>
 		<!-- CRITICAL: Enable unsafe blocks for P/Invoke -->
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
