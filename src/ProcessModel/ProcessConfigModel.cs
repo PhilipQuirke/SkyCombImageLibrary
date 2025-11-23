@@ -46,21 +46,27 @@ namespace SkyCombImage.ProcessModel
         // Minimum overlap percentage between two features that is considered significant
         public const int FeatureMinOverlapPerc = 5;
 
+        // Lower heat threshold value for radiometric data. Any value under this is uninteresting.
+        // Takes values from 4000 to 5000. Default from HK\5Nov25TempRefs data.
+        public int LowerRadiometricThreshold { get; set; } = 4575;
+        // Upper heat threshold value for radiometric data. Any value over this is 1) definitely interesting and 2) set to this value. 
+        // Takes values from 4000 to 5000. Default from HK\5Nov25TempRefs data.
+        public int UpperRadiometricThreshold { get; set; } = 4620;
+        // NOTE: For images with a small radiometric range (say 4620 - 4575 = 45) we get poorer contrast when mapping to 0-255 for display purposes.
 
         // Pixel gray-scale value for hot pixel thresholding. Takes values from 50 to 255
-        public int HeatThresholdValue { get; set; } = 250;
+        public int HeatThresholdValue { get; set; } = 200;
         // Duration (in milliseconds) that object must be tracked for before it is highlighted
         public const int ObjectMinDurationMs = 500;
         // Maximum number of "unreal" features after a real feature. Applies to videos only.
         public const int ObjectMaxUnrealBlocks = 5;
         // To be significant, an object must have this many hot pixels in at least one real step
-        public int ObjectMinPixels { get; set; } = 5;
+        public int ObjectMinPixels { get; set; } = 2;
         // Maximum number of hot pixels in an object
         public int ObjectMaxPixels { get; set; } = 1000;
         // Minimum number of max-heat pixels in an object
         public int ObjectMinMaxHeatPixels { get; set; } = 0;
-        // Lower heat threshold value for radiometric data. Takes values from 4000 to 5000
-        public int LowerRadiometricThreshold { get; set; } = 4575;
+
 
         // An object detected at long-range must be large and so is not of interest to us.
         public const int ObjectMaxRangeM = 350;
@@ -168,6 +174,11 @@ namespace SkyCombImage.ProcessModel
                 LowerRadiometricThreshold = 4000;
             if (LowerRadiometricThreshold > 5000)
                 LowerRadiometricThreshold = 5000;
+
+            if (UpperRadiometricThreshold < 4000)
+                UpperRadiometricThreshold = 4000;
+            if (UpperRadiometricThreshold > 5000)
+                UpperRadiometricThreshold = 5000;
         }
 
 
@@ -206,7 +217,8 @@ namespace SkyCombImage.ProcessModel
             return new DataPairList
             {
                 { "Hot Pixel Threshold", HeatThresholdValue },
-                { "Radiometric Threshold", LowerRadiometricThreshold },
+                { "Lower Radiometric Threshold", LowerRadiometricThreshold },
+                { "Upper Radiometric Threshold", UpperRadiometricThreshold },
                 { "Feature Min Pixels", FeatureMinPixels },
                 { "Feature Max Size", FeatureMaxSize },
                 { "Feature Min Overlap Perc", FeatureMinOverlapPerc },
@@ -232,6 +244,7 @@ namespace SkyCombImage.ProcessModel
             int i = 0;
             HeatThresholdValue = StringToNonNegInt(settings[i++]);
             LowerRadiometricThreshold = StringToNonNegInt(settings[i++]);
+            UpperRadiometricThreshold = StringToNonNegInt(settings[i++]);
             FeatureMinPixels = StringToNonNegInt(settings[i++]);
             i++; // FeatureMaxSize  
             i++; // FeatureMinOverlapPerc  
@@ -283,6 +296,7 @@ namespace SkyCombImage.ProcessModel
             {
                 HeatThresholdValue = rand.Next(50, 255),
                 LowerRadiometricThreshold = rand.Next(4000, 5000),
+                UpperRadiometricThreshold = rand.Next(4000, 5000),
                 ObjectMinPixels = rand.Next(1, 1000),
                 ObjectMaxPixels = rand.Next(1, 10000),
                 ObjectMinMaxHeatPixels = rand.Next(0, 1000),
@@ -301,7 +315,8 @@ namespace SkyCombImage.ProcessModel
             obj2.LoadModelSettings(settings);
             // Compare all relevant properties
             Assert(obj.HeatThresholdValue == obj2.HeatThresholdValue, "HeatThresholdValue mismatch");
-            Assert(obj.LowerRadiometricThreshold == obj2.LowerRadiometricThreshold, "RadiometricThreshold mismatch");
+            Assert(obj.LowerRadiometricThreshold == obj2.LowerRadiometricThreshold, "LowerRadiometricThreshold mismatch");
+            Assert(obj.UpperRadiometricThreshold == obj2.UpperRadiometricThreshold, "UpperRadiometricThreshold mismatch");
             Assert(obj.ObjectMinPixels == obj2.ObjectMinPixels, "ObjectMinPixels mismatch");
             Assert(obj.ObjectMaxPixels == obj2.ObjectMaxPixels, "ObjectMaxPixels mismatch");
             Assert(obj.ObjectMinMaxHeatPixels == obj2.ObjectMinMaxHeatPixels, "ObjectMinMaxHeatPixels mismatch");

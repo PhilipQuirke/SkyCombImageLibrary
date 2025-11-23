@@ -455,22 +455,13 @@ namespace SkyCombImage.RunSpace
                 // If image contains DJI Radiometric Data use that
                 var imageFileName = Drone.GetCurrImage_InputIsImages_FileName(inputDirectory, frameId);
 
-                // Normalize raw radiometric data to 0-255 grayscale image
+                // Normalize raw radiometric data to 0-255 grayscale image using Upper/LowerRadiometricThreshold cutoffs
                 var currInputRadiometric_gray =
                     DirpApiWrapper.GetRawRadiometricNormalised(
                         imageFileName,
-
-                        // Using "all images" min/max raw heat values is not good. Refer 5Nov25Bitten data & comments in Worklog.
-                        //Drone.FlightSections.MinRawHeat,
-                        //Drone.FlightSections.MaxRawHeat);
-
                         // Using a fixed threshold is better for consistency between images. Refer Nov25TempRefs data & comments in Worklog.
-                        // CurrRunFlightStep.FlightSection.MinRawHeat,
-                        RunConfig.ProcessConfig.LowerRadiometricThreshold, // Defaults to 4575
-
-                        // PQR TODO. This is not great. For images with a small temp range we get poor contrast.
-                        // CurrRunFlightStep.FlightSection.MaxRawHeat);
-                        4620);
+                        RunConfig.ProcessConfig.LowerRadiometricThreshold, 
+                        RunConfig.ProcessConfig.UpperRadiometricThreshold);
 
                 if (currInputRadiometric_gray != null)
                 {
