@@ -9,7 +9,7 @@ namespace SkyCombImage.CategorySpace
     // The annotation is specific to one object but is deliberately NOT incorporated into ProcessObjectModel.
     // The annotations must survive the video being re-processed in part or in full, multiple times.
     // The annotations are persisted to a annotations-specific tab.
-    public class ObjectCategoryModel : SkyCombGround.CommonSpace.CategoryModelJ
+    public class ObjectCategoryModel : CategoryModelJ
     {
         // Object name
         public string ObjectName { get; set; }

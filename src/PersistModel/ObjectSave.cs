@@ -341,6 +341,8 @@ namespace SkyCombImage.PersistModel
             var processScope = runWorker;
             var processDrawScope = runWorker.ProcessDrawScope;
             var processObjects = processAll.ProcessObjects;
+            var processObjCats = runWorker.CategoryAll.ObjectCategories;
+            var processSpans = processAll.ProcessSpans;
 
             Data.SelectOrAddWorksheet(AnimalReportTabName);
             var ws = Data.Worksheet;
@@ -378,7 +380,7 @@ namespace SkyCombImage.PersistModel
                     row = 3;
                     col = 15;
                     AnimalModelList animals = new();
-                    animals.AddProcessObjects(0, processAll.Drone, processObjects, processAll.ProcessSpans);
+                    animals.AddProcessObjects(0, processAll.Drone, processObjects, processObjCats, processSpans);
                     (var message, var matrixBitmap) = AnimalMatrixDrawer.DrawAnimalMatrix(animals, runWorker.SizeImages, true);
                     Data.SetTitle(ref row, col, "Animal Size Height Matrix: " + message);
                     Data.SaveBitmap(matrixBitmap, "AnimalMatrix", row - 1, col - 1, 67);

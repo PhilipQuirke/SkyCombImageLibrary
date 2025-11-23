@@ -1,6 +1,8 @@
 ﻿using SkyCombDrone.PersistModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.CategorySpace;
+using SkyCombImage.ProcessModel;
+using SkyCombImage.RunSpace;
 
 
 namespace SkyCombImage.PersistModel
@@ -62,7 +64,6 @@ namespace SkyCombImage.PersistModel
             {
                 Data.Open();
 
-                //               SaveMasterCategories(categoryAll.MasterCategories);
                 SaveObjectCategories(categoryAll.ObjectCategories);
 
                 Save();
@@ -70,6 +71,58 @@ namespace SkyCombImage.PersistModel
             catch (Exception ex)
             {
                 throw ThrowException("CategorySave.SaveAll", ex);
+            }
+        }
+
+
+
+        // Save animal waypoint data to CSV and JSON files
+        public static void SaveAnimalWaypoints(RunWorker runWorker)
+        {
+            try
+            {
+                var runConfig = runWorker.RunConfig;
+                var processAll = runWorker.ProcessAll;
+                var processObjects = processAll.ProcessObjects;
+                var processObjCats = runWorker.CategoryAll.ObjectCategories;
+                var processSpans = runWorker.ProcessAll.ProcessSpans;
+
+                if (processObjects == null)
+                    return;
+
+                var animals = new AnimalModelList();
+                animals.AddProcessObjects(1, runWorker.Drone, processObjects, processObjCats, processSpans);
+                if (animals.Count > 0)
+                {
+                    var all_waypoints = AnimalSave.GetWaypoints(animals, true);
+
+                    var filePath = DataStoreFactory.OutputFileName(
+                        runConfig.InputDirectory, runConfig.InputFileName,
+                        runConfig.OutputElseInputDirectory, DataStoreFactory.AllWaypointCsvSuffix);
+                    UgcsWaypointExporter.ExportToCsvWithHeaders(all_waypoints, filePath);
+
+                    filePath = DataStoreFactory.OutputFileName(
+                        runConfig.InputDirectory, runConfig.InputFileName,
+                        runConfig.OutputElseInputDirectory, DataStoreFactory.AllWaypointJsonSuffix);
+                    UgcsWaypointExporter.ExportToJson(all_waypoints, filePath);
+
+
+                    var some_waypoints = AnimalSave.GetWaypoints(animals, false);
+
+                    filePath = DataStoreFactory.OutputFileName(
+                        runConfig.InputDirectory, runConfig.InputFileName,
+                        runConfig.OutputElseInputDirectory, DataStoreFactory.SomeWaypointCsvSuffix);
+                    UgcsWaypointExporter.ExportToCsvWithHeaders(some_waypoints, filePath);
+
+                    filePath = DataStoreFactory.OutputFileName(
+                        runConfig.InputDirectory, runConfig.InputFileName,
+                        runConfig.OutputElseInputDirectory, DataStoreFactory.SomeWaypointJsonSuffix);
+                    UgcsWaypointExporter.ExportToJson(some_waypoints, filePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ThrowException("StandardSave.SaveAnimalWaypoints", ex);
             }
         }
     }

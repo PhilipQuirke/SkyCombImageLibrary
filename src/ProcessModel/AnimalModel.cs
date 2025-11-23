@@ -20,11 +20,10 @@ namespace SkyCombImage.ProcessModel
         public string HeightClass { get; }
         public float SpineM { get; }
         public float GirthM { get; }
-
-        // Debugging information
         public int CameraDownDegs { get; }
         public float AvgRangeM { get; }
         public float MaxHeat { get; }
+        public string Category { get; set; }
 
 
         public AnimalModel(int flightNum, Drone drone, ProcessSpanList? processSpans, ProcessObject theObj)
@@ -57,6 +56,8 @@ namespace SkyCombImage.ProcessModel
 
                 MaxHeat = theObj.MaxHeat; // This is the maximum heat value for this object, used for debugging
 
+                Category = "";
+
                 // Convert -999 to -2
                 if (LocationErrM == BaseConstants.UnknownValue) LocationErrM = -2;
                 if (HeightM == BaseConstants.UnknownValue) HeightM = -2;
@@ -85,6 +86,7 @@ namespace SkyCombImage.ProcessModel
         public const int ColCameraDownDegs = 11;
         public const int ColAvgRangeM = 12;
         public const int ColMaxHeat = 13;
+        public const int ColCategory = 14;
 
 
         public DataPairList GetSettings()
@@ -105,6 +107,7 @@ namespace SkyCombImage.ProcessModel
                 { "Camera Down Degs", CameraDownDegs },
                 { "Avg Range M", AvgRangeM, 0 },
                 { "Max Heat", MaxHeat, 1 },
+                { "Category", Category },
             };
         }
     }
@@ -112,12 +115,22 @@ namespace SkyCombImage.ProcessModel
 
     public class AnimalModelList : List<AnimalModel>
     {
-        public void AddProcessObjects(int flightNum, Drone drone, ProcessObjList objects, ProcessSpanList? processSpans = null, bool significantObjectsOnly = true)
+        public void AddProcessObjects(int flightNum, Drone drone, ProcessObjList objects, ObjectCategoryList? categories, ProcessSpanList? processSpans = null, bool significantObjectsOnly = true)
         {
             if (objects != null)
                 foreach (var obj in objects)
                     if (obj.Value.Significant || !significantObjectsOnly)
-                        Add(new AnimalModel(flightNum, drone, processSpans, obj.Value));
+                    {
+                        var theAnimal = new AnimalModel(flightNum, drone, processSpans, obj.Value);
+                        Add(theAnimal);
+
+                        if (categories != null)
+                        {
+                            var objectCategoryModel = categories.GetData(theAnimal.Name);
+                            if (objectCategoryModel != null)
+                                theAnimal.Category = objectCategoryModel.Category;
+                        }
+                    }
         }
     }
 }

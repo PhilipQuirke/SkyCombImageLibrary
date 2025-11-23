@@ -1,6 +1,7 @@
 ﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 
 using SkyCombDrone.PersistModel;
+using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
 using System.Text;
 using System.Text.Json;
@@ -192,13 +193,18 @@ namespace SkyCombImage.PersistModel
             }
         }
 
-        public static List<Waypoint> GetWaypoints(AnimalModelList animals, double altitudeAgl = 100, double speed = 5, double waitTime = 2)
+
+        // Generates a list of waypoints based on all/categorised animals.  
+        public static List<Waypoint> GetWaypoints(AnimalModelList animals, bool all, double altitudeAgl = 100, double speed = 5, double waitTime = 2)
         {
             List<Waypoint> waypoints = new();
 
             foreach (var animal in animals)
                 if (animal.GlobalLocation != null)
                 {
+                    if (!all && (animal.Category == "" || animal.Category == CategoryModelJ.IgnoreCategory))
+                        continue;
+
                     waypoints.Add(new Waypoint
                     {
                         Latitude = animal.GlobalLocation.Latitude,

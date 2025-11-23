@@ -1,6 +1,5 @@
 ﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 using Emgu.CV;
-using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
 using SkyCombDrone.DrawSpace;
 using SkyCombDrone.DroneLogic;
@@ -243,6 +242,8 @@ namespace SkyCombImage.RunSpace
         // Do any final activity at the end processing (aka running) of images / flight data
         public virtual void RunEnd()
         {
+            // Save animal waypoint data to CSV and JSON files
+            CategorySave.SaveAnimalWaypoints(this);
         }
 
 
@@ -322,27 +323,6 @@ namespace SkyCombImage.RunSpace
                 DataStore.Open();
                 RunEnd();
                 DataStore.FreeResources();
-
-                // Save animal waypoint data to CSV and JSON files
-                if (ProcessAll.ProcessObjects != null)
-                {
-                    var animals = new AnimalModelList();
-                    animals.AddProcessObjects(1, Drone, ProcessAll.ProcessObjects, ProcessAll.ProcessSpans);
-                    if(animals.Count > 0)
-                    {
-                        var waypoints = AnimalSave.GetWaypoints(animals);
-
-                        var filePathCsv = DataStoreFactory.OutputFileName(
-                            RunConfig.InputDirectory, RunConfig.InputFileName,
-                            RunConfig.OutputElseInputDirectory, DataStoreFactory.WaypointCsvSuffix);
-                        UgcsWaypointExporter.ExportToCsvWithHeaders(waypoints, filePathCsv);
-
-                        var filePathJson = DataStoreFactory.OutputFileName(
-                            RunConfig.InputDirectory, RunConfig.InputFileName,
-                            RunConfig.OutputElseInputDirectory, DataStoreFactory.WaypointJsonSuffix);
-                        UgcsWaypointExporter.ExportToJson(waypoints, filePathJson);
-                    }
-                }
 
                 ProcessAll.OnObservation(ProcessEventEnum.RunEnd);
             }
