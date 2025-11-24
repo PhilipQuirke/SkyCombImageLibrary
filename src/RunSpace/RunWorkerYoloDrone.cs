@@ -61,7 +61,7 @@ namespace SkyCombImage.RunSpace
 
                 {
                     int blockID = CurrBlock.BlockId;
-                    var currThreshold = CurrInputImage.Clone();
+                    var currThreshold = InputThermalImage.Clone();
                     var currBmp = currThreshold.ToBitmap();
 
                     DrawImage.Threshold(RunConfig.ProcessConfig, ref currThreshold);
@@ -75,7 +75,7 @@ namespace SkyCombImage.RunSpace
                             // The Yolo bounding box is not tight around the hotspot. For Comb process it is.
                             // Shrink PixelBox to a smaller bounding box tight around the hot pixels.
 
-                            thisFeature.CalculateHeat_ShrinkBox(CurrInputImage, currThreshold);
+                            thisFeature.CalculateHeat_ShrinkBox(InputThermalImage, currThreshold);
 
                             featuresInBlock.AddFeature(thisFeature);
                             YoloProcess.LegFrameFeatures.Add(new YoloFeatureSeen { BlockId = blockID, Box = thisFeature.PixelBox, FeatureId = thisFeature.FeatureId });

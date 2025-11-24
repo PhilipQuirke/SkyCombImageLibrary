@@ -213,22 +213,19 @@ namespace SkyCombImage.RunSpace
         // Process a single input frame/image for the specified block, returning the modified input frame to show 
         public void DrawFrameImage(ProcessBlockModel? block = null)
         {
-            ResetModifiedImage();
+            ResetOutputThermal();
 
-            if (CurrInputImage == null)
+            if (InputThermalImage == null)
                 return;
 
-            ModifiedInputImage =
+            // Convert the input thermal image to the output image by overlaying process information.
+            OutputThermalImage =
                 DrawSpace.DrawFrameImage.Draw(
-                    RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, Drone, CurrInputImage.Convert<Bgr,byte>(),
-                    null, block, ProcessAll).Convert<Gray, byte>();
+                    RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, Drone, OriginalThermalImage.Convert<Bgr,byte>(),
+                    null, block, ProcessAll);
 
-            if (ModifiedInputImage != null)
-            {
-                var bgrImage = ModifiedInputImage.Convert<Bgr, byte>();
-                DrawYawPitchZoom.Draw(ref bgrImage, Drone, CurrRunFlightStep);
-                ModifiedInputImage = bgrImage.Convert<Gray, byte>();
-            }
+            if (OutputThermalImage != null)
+                DrawYawPitchZoom.Draw(ref OutputThermalImage, Drone, CurrRunFlightStep);
         }
 
 
@@ -268,8 +265,8 @@ namespace SkyCombImage.RunSpace
         }
         public void RunStart_Interval()
         {
-            ResetCurrImage();
-            ResetModifiedImage();
+            ResetInputThermal();
+            ResetOutputThermal();
             ConfigureModelScope();
             ProcessDrawScope.Reset(this, Drone);
             ProcessDrawPath.Reset(ProcessDrawScope);
@@ -424,11 +421,11 @@ namespace SkyCombImage.RunSpace
 
 
         // Given PSM.CurrInputFrameId, get the file name from the corresponding FlightStep, load the image and convert to 
-        public Image<Gray, byte>? GetCurrImage_InputIsImages(string inputDirectory, int frameId)
+        public void GetCurrImage_InputIsImages(string inputDirectory, int frameId)
         {
-            // Read the image from the input directory into memory
-            ResetCurrImage();
-            CurrInputImage = Drone.GetCurrImage_InputIsImages(inputDirectory, frameId);
+            ResetInputThermal();
+
+            OriginalThermalImage = Drone.GetCurrImage_InputIsImages(inputDirectory, frameId);
 
             try
             {
@@ -445,16 +442,14 @@ namespace SkyCombImage.RunSpace
 
                 if (currInputRadiometric_gray != null)
                 {
-                    ResetCurrImage();
-
                     // WARNING: CurrInputImage changes dimension in the new line of code.
                     // currInputRadiometric_gray is often half the size of the greyscale JPG! Despite these two coming from the same file!
-                    CurrInputImage = currInputRadiometric_gray;
+                    OriginalThermalImage = currInputRadiometric_gray;
                 }
             }
             catch { }
-
-            return CurrInputImage;
+            
+            InputThermalImage = OriginalThermalImage.Clone();
         }
 
 
@@ -472,7 +467,7 @@ namespace SkyCombImage.RunSpace
             // Read the image from the input directory into memory, ProcessScope
             GetCurrImage_InputIsImages(RunConfig.InputDirectory, frameId);
             if (Drone.HasOptical)
-                CurrInputImageC = Drone.GetOpticalImage(RunConfig.InputDirectory, frameId);
+                InputOpticalImage = Drone.GetOpticalImage(RunConfig.InputDirectory, frameId);
 
             return true;
         }
@@ -621,8 +616,8 @@ namespace SkyCombImage.RunSpace
                             DrawFrameImage(CurrBlock);
 
                         // Save the output frame to disk. 
-                        if ((videoWriter != null) && (ModifiedInputImage != null))
-                            videoWriter.Write(ModifiedInputImage.Mat);
+                        if ((videoWriter != null) && (OutputThermalImage != null))
+                            videoWriter.Write(OutputThermalImage.Mat);
 
                         // Calc effort excludes UI updates
                         ProcessDurationMs += (int)calcWatch.Elapsed.TotalMilliseconds;
@@ -675,8 +670,8 @@ namespace SkyCombImage.RunSpace
                 SafeRunEnd();
 
                 DrawUI();
-                ResetModifiedImage();
-                ResetCurrImage();
+                ResetOutputThermal();
+                ResetInputThermal();
                 RunUI.DrawObjectGrid(this, true);
                 RefreshAll();
 
@@ -727,10 +722,10 @@ namespace SkyCombImage.RunSpace
                 if (disposing)
                 {
                     // Dispose managed resources
-                    CurrInputImage?.Dispose();
-                    ModifiedInputImage?.Dispose();
-                    CurrInputImageC?.Dispose();
-                    ModifiedInputImageC?.Dispose();
+                    InputThermalImage?.Dispose();
+                    OutputThermalImage?.Dispose();
+                    InputOpticalImage?.Dispose();
+                    OutputOpticalImage?.Dispose();
                     DataStore?.Dispose();
                 }
 
@@ -767,9 +762,8 @@ namespace SkyCombImage.RunSpace
                 ProcessAll.Blocks.AddBlock(CurrBlock, this, Drone);
 
                 // Process (analyse) a single image (using any one ProcessName) and returns an image.
-                // PQR TODO
-                CurrInputImage = 
-                    DrawImage.Draw(RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, CurrInputImage).Convert<Gray,byte>();
+                OutputThermalImage =
+                    DrawImage.Draw(RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, OriginalThermalImage);
             }
             catch (Exception ex)
             {

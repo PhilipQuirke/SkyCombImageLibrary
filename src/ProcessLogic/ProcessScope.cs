@@ -24,11 +24,13 @@ namespace SkyCombImage.ProcessLogic
         // Last step of flight data to process
         public int LastRunStepId { get { return MaxStepId; } }
 
-        // Transient image data storage used while processing a Block and Objects.
-        public Image<Gray, byte>? CurrInputImage = null;
-        public Image<Gray, byte>? ModifiedInputImage = null;
-        public Image<Bgr, byte>? CurrInputImageC = null;
-        public Image<Bgr, byte>? ModifiedInputImageC = null;
+        // Current (transient) thermal image data storage used while processing a Block and Objects.
+        public Image<Gray, byte>? OriginalThermalImage = null; // unaltered as loaded from file
+        public Image<Gray, byte>? InputThermalImage = null; // after applying lower and higher cutoffs, etc.
+        public Image<Bgr, byte>? OutputThermalImage = null; // after applying image processing, coloring hotspots.
+        // Current (transient) optical image data (if any) storage used while processing a Block and Objects.
+        public Image<Bgr, byte>? InputOpticalImage = null;
+        public Image<Bgr, byte>? OutputOpticalImage = null; // e.g., after applying image processing, coloring hotspots.
         // Transient values used while processing a Block and Objects.
         public ProcessBlock? CurrBlock = null;
 
@@ -73,19 +75,22 @@ namespace SkyCombImage.ProcessLogic
             else
                 this.ResetSteps();
 
-            ResetCurrImage();
+            ResetInputThermal();
         }
 
 
-        public void ResetCurrImage()
+        public void ResetInputThermal()
         {
-            CurrInputImage?.Dispose();
-            CurrInputImage = null;
+            OriginalThermalImage?.Dispose();
+            OriginalThermalImage = null;
+
+            InputThermalImage?.Dispose();
+            InputThermalImage = null;
         }
-        public void ResetModifiedImage()
+        public void ResetOutputThermal()
         {
-            ModifiedInputImage?.Dispose();
-            ModifiedInputImage = null;
+            OutputThermalImage?.Dispose();
+            OutputThermalImage = null;
         }
 
 
@@ -188,7 +193,7 @@ namespace SkyCombImage.ProcessLogic
         // Return current input video frame and corresponding display video frame (if any)
         public void ConvertCurrImage_InputIsVideo()
         {
-            ResetCurrImage();
+            ResetInputThermal();
 
             if (Drone.HaveFrame())
             {
@@ -196,7 +201,8 @@ namespace SkyCombImage.ProcessLogic
 
                 CalculateSettings();
 
-                CurrInputImage = inputMat.ToImage<Gray, byte>();
+                OriginalThermalImage = inputMat.ToImage<Gray, byte>();
+                InputThermalImage = OriginalThermalImage.Clone();
             }
         }
     }

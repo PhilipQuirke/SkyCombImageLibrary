@@ -198,7 +198,7 @@ namespace SkyCombImage.ProcessLogic
 
                 // Save the image of the object with the most hot pixels.
                 if ((theFeature.Type == FeatureTypeEnum.Real) &&
-                    (ProcessScope?.CurrInputImage != null) &&
+                    (ProcessScope?.InputThermalImage != null) &&
                     ((LastImage == null) || increasedMaxSumRealHotPixels))
                 {
                     DrawImageConfig drawImageConfig = new DrawImageConfig();
@@ -211,13 +211,13 @@ namespace SkyCombImage.ProcessLogic
                             ProcessAll.ProcessConfig,
                             drawImageConfig,
                             ProcessAll.Drone,
-                            ProcessScope.CurrInputImage.Convert<Bgr,byte>(), // May need to scale by 2.
+                            ProcessScope.InputThermalImage.Convert<Bgr,byte>(), // May need to scale by 2.
                             this,
                             theFeature.Block, ProcessAll,
                             false);
 
                     var showInputBox = Transform.GetInflatedSquareBox(theFeature.PixelBox, 50);
-                    var safeShowInputBox = DrawFrameImage.MoveVisibleBoxInsideImageSize(showInputBox, ProcessScope.CurrInputImage.Size);
+                    var safeShowInputBox = DrawFrameImage.MoveVisibleBoxInsideImageSize(showInputBox, ProcessScope.InputThermalImage.Size);
                     closeupInputImage = closeupInputImage.Copy(safeShowInputBox);
                     SetLastImage(closeupInputImage);
                 }

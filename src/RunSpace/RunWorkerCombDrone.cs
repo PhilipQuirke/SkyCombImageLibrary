@@ -57,14 +57,14 @@ namespace SkyCombImage.RunSpace
                     // Don't create features. Don't update objects.
                     return;
 
-                Image<Gray, byte> currThreshold = CurrInputImage.Clone();
+                Image<Gray, byte> currThreshold = InputThermalImage.Clone();
                 DrawImage.Threshold(RunConfig.ProcessConfig, ref currThreshold);
 
                 ProcessFeatureList featuresInBlock = ProcessFactory.NewProcessFeatureList(CombProcess.ProcessConfig);
                 if (RunConfig.RunProcess == RunProcessEnum.Threshold)
-                    ThresholdFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, CurrBlock, CurrInputImage, currThreshold);
+                    ThresholdFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, CurrBlock, InputThermalImage, currThreshold);
                 else
-                    CombFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, CurrBlock, CurrInputImage, currThreshold);
+                    CombFeatureLogic.CreateFeaturesFromImage(CombProcess, featuresInBlock, CurrBlock, InputThermalImage, currThreshold);
 
                 foreach (var feature in featuresInBlock)
                     feature.Value.CalculateSettings_LocationM_HeightM_LOS(ProcessAll.GroundData);
