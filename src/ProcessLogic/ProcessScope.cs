@@ -25,12 +25,12 @@ namespace SkyCombImage.ProcessLogic
         public int LastRunStepId { get { return MaxStepId; } }
 
         // Current (transient) thermal image data storage used while processing a Block and Objects.
-        public Image<Gray, byte>? OriginalThermalImage = null; // unaltered as loaded from file
-        public Image<Gray, byte>? InputThermalImage = null; // after applying lower and higher cutoffs, etc.
-        public Image<Bgr, byte>? OutputThermalImage = null; // after applying image processing, coloring hotspots.
+        public Image<Gray, byte>? OriginalThermalImage = null; // Original is "best" raw thermal image from input video/image for human viewing.
+        public Image<Gray, byte>? InputThermalImage = null; // Original after lower / higher cutoffs, etc for improved hotspot detection
+        public Image<Bgr, byte>? OutputThermalImage = null; // Original overlaid with colored hotspots, etc for human viewing.
         // Current (transient) optical image data (if any) storage used while processing a Block and Objects.
         public Image<Bgr, byte>? InputOpticalImage = null;
-        public Image<Bgr, byte>? OutputOpticalImage = null; // e.g., after applying image processing, coloring hotspots.
+        public Image<Bgr, byte>? OutputOpticalImage = null; // Input optical overlaid with colored hotspots, etc for human viewing.
         // Transient values used while processing a Block and Objects.
         public ProcessBlock? CurrBlock = null;
 

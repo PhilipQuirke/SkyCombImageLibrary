@@ -215,10 +215,10 @@ namespace SkyCombImage.RunSpace
         {
             ResetOutputThermal();
 
-            if (InputThermalImage == null)
+            if (OriginalThermalImage == null)
                 return;
 
-            // Convert the input thermal image to the output image by overlaying process information.
+            // Convert the input thermal image to the output image by overlaying (colored) process information.
             OutputThermalImage =
                 DrawSpace.DrawFrameImage.Draw(
                     RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, Drone, OriginalThermalImage.Convert<Bgr,byte>(),
@@ -425,31 +425,30 @@ namespace SkyCombImage.RunSpace
         {
             ResetInputThermal();
 
+            // These are the JPG greyscale images from the file
             OriginalThermalImage = Drone.GetCurrImage_InputIsImages(inputDirectory, frameId);
+            InputThermalImage = OriginalThermalImage.Clone();
 
             try
             {
-                // If image contains DJI Radiometric Data use that
+                // The file may also contains DJI Radiometric Data. If it does we use that as it is more "raw" data.
+                // WARNING: The DJI Radiometric Data image is often half the size of the greyscale JPG! Despite these two coming from the same file!
                 var imageFileName = Drone.GetCurrImage_InputIsImages_FileName(inputDirectory, frameId);
 
-                // Normalize raw radiometric data to 0-255 grayscale image using Upper/LowerRadiometricThreshold cutoffs
-                var currInputRadiometric_gray =
-                    DirpApiWrapper.GetRawRadiometricNormalised(
-                        imageFileName,
-                        // Using a fixed threshold is better for consistency between images. Refer Nov25TempRefs data & comments in Worklog.
+                // Normalize raw radiometric data to grayscale image using image-specific cutoffs
+                // This is maximises the thermal detail in the image for human viewing.   
+                var originalThermalImage = DirpApiWrapper.GetRawRadiometricNormalised( imageFileName);
+                if (originalThermalImage != null)
+                    OriginalThermalImage = originalThermalImage;
+
+                // Normalize raw radiometric data to grayscale image using user-manually-defined cutoffs. Refer 5Nov25TempRefs data & comments in Worklog.
+                var inputThermalImage = DirpApiWrapper.GetRawRadiometricNormalised( imageFileName,
                         RunConfig.ProcessConfig.LowerRadiometricThreshold, 
                         RunConfig.ProcessConfig.UpperRadiometricThreshold);
-
-                if (currInputRadiometric_gray != null)
-                {
-                    // WARNING: CurrInputImage changes dimension in the new line of code.
-                    // currInputRadiometric_gray is often half the size of the greyscale JPG! Despite these two coming from the same file!
-                    OriginalThermalImage = currInputRadiometric_gray;
-                }
+                if (inputThermalImage != null)
+                    InputThermalImage = inputThermalImage;
             }
             catch { }
-            
-            InputThermalImage = OriginalThermalImage.Clone();
         }
 
 
