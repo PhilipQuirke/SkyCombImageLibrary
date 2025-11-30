@@ -433,16 +433,16 @@ namespace SkyCombImage.RunSpace
             {
                 // The file may also contains DJI Radiometric Data. If it does we use that as it is more "raw" data.
                 // WARNING: The DJI Radiometric Data image is often half the size of the greyscale JPG! Despite these two coming from the same file!
-                var imageFileName = Drone.GetCurrImage_InputIsImages_FileName(inputDirectory, frameId);
+                var thermalImagePath = Drone.GetCurrImage_InputIsImages_Path(inputDirectory, frameId);
 
                 // Normalize raw radiometric data to grayscale image using image-specific cutoffs
                 // This is maximises the thermal detail in the image for human viewing.   
-                var originalThermalImage = DirpApiWrapper.GetRawRadiometricNormalised( imageFileName);
+                var originalThermalImage = DirpApiWrapper.GetRawRadiometricNormalised( thermalImagePath);
                 if (originalThermalImage != null)
                     OriginalThermalImage = originalThermalImage;
 
                 // Normalize raw radiometric data to grayscale image using user-manually-defined cutoffs. Refer 5Nov25TempRefs data & comments in Worklog.
-                var inputThermalImage = DirpApiWrapper.GetRawRadiometricNormalised( imageFileName,
+                var inputThermalImage = DirpApiWrapper.GetRawRadiometricNormalised( thermalImagePath,
                         RunConfig.ProcessConfig.LowerRadiometricThreshold, 
                         RunConfig.ProcessConfig.UpperRadiometricThreshold);
                 if (inputThermalImage != null)
@@ -466,7 +466,7 @@ namespace SkyCombImage.RunSpace
             // Read the image from the input directory into memory, ProcessScope
             GetCurrImage_InputIsImages(RunConfig.InputDirectory, frameId);
             if (Drone.HasOptical)
-                InputOpticalImage = Drone.GetOpticalImage(RunConfig.InputDirectory, frameId);
+                (InputOpticalImagePath, InputOpticalImage) = Drone.GetOpticalImage(RunConfig.InputDirectory, frameId);
 
             return true;
         }

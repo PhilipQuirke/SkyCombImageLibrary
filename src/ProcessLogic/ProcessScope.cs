@@ -29,6 +29,7 @@ namespace SkyCombImage.ProcessLogic
         public Image<Gray, byte>? InputThermalImage = null; // Original after lower / higher cutoffs, etc for improved hotspot detection
         public Image<Bgr, byte>? OutputThermalImage = null; // Original overlaid with colored hotspots, etc for human viewing.
         // Current (transient) optical image data (if any) storage used while processing a Block and Objects.
+        public string InputOpticalImagePath = "";
         public Image<Bgr, byte>? InputOpticalImage = null;
         public Image<Bgr, byte>? OutputOpticalImage = null; // Input optical overlaid with colored hotspots, etc for human viewing.
         // Transient values used while processing a Block and Objects.
@@ -81,6 +82,8 @@ namespace SkyCombImage.ProcessLogic
 
         public void ResetInputThermal()
         {
+            InputOpticalImagePath = "";
+            
             OriginalThermalImage?.Dispose();
             OriginalThermalImage = null;
 
