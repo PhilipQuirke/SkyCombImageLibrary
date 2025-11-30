@@ -1,9 +1,8 @@
-﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
-using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessModel;
 
 
@@ -120,38 +119,36 @@ namespace SkyCombImage.ProcessLogic
             PSM.LastInputFrameId = lastBlock.InputFrameId;
             PSM.LastVideoFrameMs = lastBlock.InputFrameMs;
 
-            BaseConstants.Assert(PSM.FirstInputFrameId <= PSM.LastInputFrameId, "SetInputScope");
-            BaseConstants.Assert(PSM.FirstVideoFrameMs <= PSM.LastVideoFrameMs, "SetInputScope");
+            Assert(PSM.FirstInputFrameId <= PSM.LastInputFrameId, "SetInputScope");
+            Assert(PSM.FirstVideoFrameMs <= PSM.LastVideoFrameMs, "SetInputScope");
         }
 
 
         // Given Config.RunVideoFromS and Config.RunVideoToS, which input video frames will we process?
-        public void CalculateInputScope(float inputVideoFromS, float inputVideoToS)
+        public void CalculateInputScope(DroneIntervalModel interval)
         {
             if (Drone.InputIsVideo)
             {
                 (PSM.FirstInputFrameId, PSM.LastInputFrameId, PSM.FirstVideoFrameMs, PSM.LastVideoFrameMs) =
-                    Drone.InputVideo.CalculateFromToS(inputVideoFromS, inputVideoToS);
+                    Drone.InputVideo.CalculateFromToS(interval.RunVideoFromS, interval.RunVideoToS);
                 PSM.FirstInputFrameId = Math.Max(1, PSM.FirstInputFrameId);
                 PSM.LastInputFrameId = Math.Max(1, PSM.LastInputFrameId);
             }
             else
             {
-                var fromSection = Drone.FlightSections.SecondToFlightSection(inputVideoFromS);
-                var toSection = Drone.FlightSections.SecondToFlightSection(inputVideoToS);
-                PSM.FirstInputFrameId = fromSection.SectionId;
-                PSM.LastInputFrameId = toSection.SectionId;
-                PSM.FirstVideoFrameMs = fromSection.SumTimeMs;
-                PSM.LastVideoFrameMs = toSection.SumTimeMs;
+                PSM.FirstInputFrameId = (interval.RunImagesFromStepId >= 0 ? interval.RunImagesFromStepId : 0);
+                PSM.LastInputFrameId = (interval.RunImagesFromStepId >= 0 ? interval.RunImagesToStepId : Drone.FlightSections.Sections.Count - 1);
+                PSM.FirstVideoFrameMs = Drone.FlightSections.Sections[PSM.FirstInputFrameId].SumTimeMs;
+                PSM.LastVideoFrameMs = Drone.FlightSections.Sections[PSM.LastInputFrameId].SumTimeMs;
             }
         }
 
 
-        public void ConfigureScope_SetFramePos(float inputVideoFromS, float inputVideoToS)
+        public void ConfigureScope_SetFramePos(DroneIntervalModel interval)
         {
             Drone.ResetCurrFrame();
 
-            CalculateInputScope(inputVideoFromS, inputVideoToS);
+            CalculateInputScope(interval);
 
             Drone.SetAndGetCurrFrame(PSM.FirstInputFrameId);
 

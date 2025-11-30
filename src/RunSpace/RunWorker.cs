@@ -144,9 +144,7 @@ namespace SkyCombImage.RunSpace
         // Configure the model scope for the current run. Set videos start frames etc
         public void ConfigureModelScope()
         {
-            ConfigureScope_SetFramePos(
-                RunConfig.DroneConfig.RunVideoFromS,
-                RunConfig.DroneConfig.RunVideoToS);
+            ConfigureScope_SetFramePos(RunConfig.DroneConfig);
 
             StopRunning = false;
         }
