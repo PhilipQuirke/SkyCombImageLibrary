@@ -137,7 +137,7 @@ namespace SkyCombImage.ProcessLogic
             else
             {
                 PSM.FirstInputFrameId = (interval.RunImagesFromStepId >= 0 ? interval.RunImagesFromStepId : 0);
-                PSM.LastInputFrameId = (interval.RunImagesFromStepId >= 0 ? interval.RunImagesToStepId : Drone.FlightSections.Sections.Count - 1);
+                PSM.LastInputFrameId = (interval.RunImagesToStepId >= 0 ? interval.RunImagesToStepId : Drone.FlightSections.Sections.Count - 1);
                 PSM.FirstVideoFrameMs = Drone.FlightSections.Sections[PSM.FirstInputFrameId].SumTimeMs;
                 PSM.LastVideoFrameMs = Drone.FlightSections.Sections[PSM.LastInputFrameId].SumTimeMs;
             }
