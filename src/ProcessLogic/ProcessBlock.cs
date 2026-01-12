@@ -192,7 +192,7 @@ namespace SkyCombImage.ProcessLogic
                 int advanceMS = blockMs - beforeStepMs;
                 Assert(advanceMS >= 0, "CalculateSettings_FromSteps: Logic 11");
             }
-            LinealM = travelM.DiagonalM;
+            LinealM = (float) travelM.DiagonalM;
 
             if (prevBlock != null)
                 SumLinealM = prevBlock.SumLinealM + LinealM;

@@ -117,7 +117,7 @@ namespace SkyCombImage.ProcessLogic
         // Z-component(origin.Z) → Northing(Meters) : This represents the drone's position in the north-south direction.
         public Vector3 DroneWorldPosition()
         {
-            return new Vector3(DroneState.LocationNE.EastingM, DroneState.Altitude, DroneState.LocationNE.NorthingM);
+            return new Vector3((float)DroneState.LocationNE.EastingM, DroneState.Altitude, (float)DroneState.LocationNE.NorthingM);
         }
 
 
