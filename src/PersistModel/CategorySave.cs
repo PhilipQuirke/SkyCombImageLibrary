@@ -106,6 +106,10 @@ namespace SkyCombImage.PersistModel
                         runConfig.OutputElseInputDirectory, DataStoreFactory.AllWaypointJsonSuffix);
                     UgcsWaypointExporter.ExportToJson(all_waypoints, filePath);
 
+                    filePath = DataStoreFactory.OutputFileName(
+                        runConfig.InputDirectory, runConfig.InputFileName,
+                        runConfig.OutputElseInputDirectory, DataStoreFactory.AllWaypointKmlSuffix);
+                    UgcsWaypointExporter.ExportToKml(all_waypoints, filePath, "SkyComb - All Hotspots");
 
                     var some_waypoints = AnimalSave.GetWaypoints(animals, false);
 
@@ -118,6 +122,11 @@ namespace SkyCombImage.PersistModel
                         runConfig.InputDirectory, runConfig.InputFileName,
                         runConfig.OutputElseInputDirectory, DataStoreFactory.SomeWaypointJsonSuffix);
                     UgcsWaypointExporter.ExportToJson(some_waypoints, filePath);
+
+                    filePath = DataStoreFactory.OutputFileName(
+                        runConfig.InputDirectory, runConfig.InputFileName,
+                        runConfig.OutputElseInputDirectory, DataStoreFactory.SomeWaypointKmlSuffix);
+                    UgcsWaypointExporter.ExportToKml(all_waypoints, filePath, "SkyComb - Selected Hotspots");
                 }
             }
             catch (Exception ex)

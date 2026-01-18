@@ -17,7 +17,7 @@ namespace SkyCombImage.PersistModel
     {
         public double Latitude { get; set; }
         public double Longitude { get; set; }
-        public double AltitudeAgl { get; set; } // Altitude Above Ground Level in meters
+        public double DroneAltitudeAgl { get; set; } // Drone altitude Above Ground Level in meters
         public double Speed { get; set; } = 5.0; // m/s
         public bool TakePicture { get; set; } = false;
         public double? CameraTilt { get; set; } = null; // degrees
@@ -41,7 +41,7 @@ namespace SkyCombImage.PersistModel
             {
                 foreach (var wp in waypoints)
                 {
-                    writer.WriteLine($"{wp.Latitude},{wp.Longitude},{wp.AltitudeAgl},{wp.Speed}");
+                    writer.WriteLine($"{wp.Latitude},{wp.Longitude},{wp.DroneAltitudeAgl},{wp.Speed}");
                 }
             }
         }
@@ -63,7 +63,7 @@ namespace SkyCombImage.PersistModel
                     var line = new StringBuilder();
                     line.Append($"{wp.Latitude},");
                     line.Append($"{wp.Longitude},");
-                    line.Append($"{wp.AltitudeAgl},");
+                    line.Append($"{wp.DroneAltitudeAgl},");
                     line.Append($"{wp.Speed},");
                     line.Append($"{(wp.TakePicture ? "TRUE" : "FALSE")},");
                     line.Append($"{wp.WaypointNumber?.ToString() ?? ""},");
@@ -104,7 +104,7 @@ namespace SkyCombImage.PersistModel
                     {
                         Latitude = wp.Latitude,
                         Longitude = wp.Longitude,
-                        Altitude = wp.AltitudeAgl,
+                        Altitude = wp.DroneAltitudeAgl,
                         AltitudeType = "AGL"
                     },
                     Parameters = new SegmentParameters
@@ -126,7 +126,57 @@ namespace SkyCombImage.PersistModel
             var json = JsonSerializer.Serialize(route, options);
             File.WriteAllText(filePath, json, Encoding.UTF8);
         }
+
+
+        /// <summary>
+        /// Exports waypoints to a KML file compatible with Google Earth and DJI.
+        /// </summary>
+        public static void ExportToKml(
+                List<Waypoint> waypoints,
+                string filePath,
+                string documentName,
+                string iconHref = "http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png")
+        {
+
+            // wp.DroneAltitudeAgl
+            float animalAltitudeAgl = 0;
+
+            var sb = new StringBuilder();
+            sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+            sb.AppendLine("<kml xmlns=\"http://www.opengis.net/kml/2.2\">");
+            sb.AppendLine("  <Document>");
+            sb.AppendLine($"    <name>{documentName}</name>");
+
+            // Define a default style similar to Google Earth's yellow pushpin
+            sb.AppendLine("    <Style id=\"defaultStyle\">");
+            sb.AppendLine("      <IconStyle>");
+            sb.AppendLine("        <scale>1.1</scale>");
+            sb.AppendLine("        <Icon>");
+            sb.AppendLine($"          <href>{iconHref}</href>");
+            sb.AppendLine("        </Icon>");
+            sb.AppendLine("      </IconStyle>");
+            sb.AppendLine("    </Style>");
+
+            foreach (var wp in waypoints)
+            {
+                sb.AppendLine("    <Placemark>");
+                sb.AppendLine($"      <name>WP {wp.WaypointNumber?.ToString() ?? "Point"}</name>");
+                sb.AppendLine("      <description></description>");
+                sb.AppendLine("      <styleUrl>#defaultStyle</styleUrl>");
+                sb.AppendLine("      <Point>");
+                sb.AppendLine($"        <coordinates>{wp.Longitude},{wp.Latitude},{animalAltitudeAgl}</coordinates>");
+                sb.AppendLine("      </Point>");
+                sb.AppendLine("    </Placemark>");
+            }
+
+            sb.AppendLine("  </Document>");
+            sb.AppendLine("</kml>");
+
+            File.WriteAllText(filePath, sb.ToString(), Encoding.UTF8);
+        }
+
     }
+
 
     public class MinimalUgcsRoute
     {
@@ -195,7 +245,7 @@ namespace SkyCombImage.PersistModel
 
 
         // Generates a list of waypoints based on all/categorised animals.  
-        public static List<Waypoint> GetWaypoints(AnimalModelList animals, bool all, double altitudeAgl = 100, double speed = 5, double waitTime = 2)
+        public static List<Waypoint> GetWaypoints(AnimalModelList animals, bool all, double droneAltitudeAgl = 100, double speed = 5, double waitTime = 2)
         {
             List<Waypoint> waypoints = new();
 
@@ -209,7 +259,7 @@ namespace SkyCombImage.PersistModel
                     {
                         Latitude = animal.GlobalLocation.Latitude,
                         Longitude = animal.GlobalLocation.Longitude,
-                        AltitudeAgl = altitudeAgl, // Default altitude above ground level in meters
+                        DroneAltitudeAgl = droneAltitudeAgl, // Default altitude above ground level in meters
                         Speed = speed, // Default speed in m/s
                         TakePicture = true,
                         CameraTilt = 90.0, // Point camera straight down
