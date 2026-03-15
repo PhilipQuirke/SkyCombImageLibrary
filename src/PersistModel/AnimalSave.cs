@@ -157,7 +157,14 @@ namespace SkyCombImage.PersistModel
             sb.AppendLine("      </IconStyle>");
             sb.AppendLine("    </Style>");
 
-            foreach (var wp in waypoints)
+            // Duplicate the waypoint if there is exactly one (for DJI Flight app import compatibility)
+            List<Waypoint> exportWaypoints = waypoints;
+            if (waypoints != null && waypoints.Count == 1)
+            {
+                exportWaypoints = new List<Waypoint> { waypoints[0], waypoints[0] };
+            }
+
+            foreach (var wp in exportWaypoints)
             {
                 sb.AppendLine("    <Placemark>");
                 sb.AppendLine($"      <name>WP {wp.WaypointNumber?.ToString() ?? "Point"}</name>");
