@@ -289,9 +289,9 @@ namespace SkyCombImage.RunSpace
         // Convert double duration (in seconds or ms) to string with 0 dp.
         public static string DurationToString(double secs)
         {
-            var secsStr = VideoModel.DurationSecToString(secs, 0);
+            var secsStr = VideoModel.DurationSecToString(secs, 0) + "s";
 
-            return (secsStr == "0" ? "<1" : secsStr);
+            return (secsStr == "0" ? "<1s" : secsStr);
         }
 
 
