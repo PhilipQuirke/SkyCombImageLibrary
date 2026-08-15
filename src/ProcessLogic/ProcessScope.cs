@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2025. All rights reserved. 
+﻿// Copyright SkyComb Limited 2026. All rights reserved. 
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
@@ -27,6 +27,11 @@ namespace SkyCombImage.ProcessLogic
         public Image<Gray, byte>? OriginalThermalImage = null; // Original is "best" raw thermal image from input video/image for human viewing.
         public Image<Gray, byte>? InputThermalImage = null; // Original after lower / higher cutoffs, etc for improved hotspot detection
         public Image<Bgr, byte>? OutputThermalImage = null; // Original overlaid with colored hotspots, etc for human viewing.
+        public ushort[]? InputThermalRawData = null;
+        public int InputThermalRawWidth = UnknownValue;
+        public int InputThermalRawHeight = UnknownValue;
+        public int InputThermalRawMin = UnknownValue;
+        public int InputThermalRawMax = UnknownValue;
         // Current (transient) optical image data (if any) storage used while processing a Block and Objects.
         public string InputOpticalImagePath = "";
         public Image<Bgr, byte>? InputOpticalImage = null;
@@ -82,6 +87,11 @@ namespace SkyCombImage.ProcessLogic
         public void ResetInputThermal()
         {
             InputOpticalImagePath = "";
+            InputThermalRawData = null;
+            InputThermalRawWidth = UnknownValue;
+            InputThermalRawHeight = UnknownValue;
+            InputThermalRawMin = UnknownValue;
+            InputThermalRawMax = UnknownValue;
             
             OriginalThermalImage?.Dispose();
             OriginalThermalImage = null;

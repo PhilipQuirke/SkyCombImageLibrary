@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2025. All rights reserved. 
+﻿// Copyright SkyComb Limited 2026. All rights reserved. 
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.DrawSpace;
@@ -433,16 +433,27 @@ namespace SkyCombImage.RunSpace
                 // WARNING: The DJI Radiometric Data image is often half the size of the greyscale JPG! Despite these two coming from the same file!
                 var thermalImagePath = Drone.GetCurrImage_InputIsImages_Path(inputDirectory, frameId);
 
+                (ushort[] rawData, int width, int height, ushort minRawHeat, ushort maxRawHeat) =
+                    DirpApiWrapper.GetRawRadiometricDataMinMaxData(thermalImagePath);
+
+                InputThermalRawData = rawData;
+                InputThermalRawWidth = width;
+                InputThermalRawHeight = height;
+                InputThermalRawMin = minRawHeat;
+                InputThermalRawMax = maxRawHeat;
+
                 // Normalize raw radiometric data to grayscale image using image-specific cutoffs
-                // This is maximises the thermal detail in the image for human viewing.   
-                var originalThermalImage = DirpApiWrapper.GetRawRadiometricNormalised( thermalImagePath);
+                // This maximizes the thermal detail in the image for human viewing.
+                var originalThermalImage = DirpApiWrapper.NormaliseRawRadiometricData(rawData, width, height, imageMinRadioHeat: minRawHeat, imageMaxRadioHeat: maxRawHeat);
                 if (originalThermalImage != null)
                     OriginalThermalImage = originalThermalImage;
 
                 // Normalize raw radiometric data to grayscale image using user-manually-defined cutoffs. Refer 5Nov25TempRefs data & comments in Worklog.
-                var inputThermalImage = DirpApiWrapper.GetRawRadiometricNormalised( thermalImagePath,
-                        RunConfig.ProcessConfig.LowerRadiometricThreshold, 
-                        RunConfig.ProcessConfig.UpperRadiometricThreshold);
+                var inputThermalImage = DirpApiWrapper.NormaliseRawRadiometricData(rawData, width, height,
+                        RunConfig.ProcessConfig.LowerRadiometricThreshold,
+                        RunConfig.ProcessConfig.UpperRadiometricThreshold,
+                        minRawHeat,
+                        maxRawHeat);
                 if (inputThermalImage != null)
                     InputThermalImage = inputThermalImage;
             }
@@ -668,7 +679,6 @@ namespace SkyCombImage.RunSpace
 
                 DrawUI();
                 ResetOutputThermal();
-                ResetInputThermal();
                 RunUI.DrawObjectGrid(this, true);
                 RefreshAll();
 
