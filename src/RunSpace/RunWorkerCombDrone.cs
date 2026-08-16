@@ -58,7 +58,12 @@ namespace SkyCombImage.RunSpace
                     return;
 
                 Image<Gray, byte> currThreshold = InputThermalImage.Clone();
-                DrawImage.Threshold(RunConfig.ProcessConfig, ref currThreshold);
+                DrawImage.Threshold(
+                    RunConfig.ProcessConfig,
+                    ref currThreshold,
+                    InputThermalRawData,
+                    InputThermalRawWidth,
+                    InputThermalRawHeight);
 
                 ProcessFeatureList featuresInBlock = ProcessFactory.NewProcessFeatureList(CombProcess.ProcessConfig);
                 if (RunConfig.RunProcess == RunProcessEnum.Threshold)

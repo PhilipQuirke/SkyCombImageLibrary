@@ -222,11 +222,24 @@ namespace SkyCombImage.RunSpace
                     ? InputThermalImage
                     : null;
 
+            int globalMinRadioHeat = BaseConstants.UnknownValue;
+            int globalMaxRadioHeat = BaseConstants.UnknownValue;
+            if (Drone?.FlightSections != null)
+            {
+                globalMinRadioHeat = (int)Drone.FlightSections.MinRadioHeat;
+                globalMaxRadioHeat = (int)Drone.FlightSections.MaxRadioHeat;
+            }
+
             OutputThermalImage =
                 DrawSpace.DrawFrameImage.Draw(
                     RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, Drone, OriginalThermalImage.Convert<Bgr,byte>(),
                     null, block, ProcessAll,
-                    thresholdSource: thresholdSource);
+                    thresholdSource: thresholdSource,
+                    rawData: InputThermalRawData,
+                    rawWidth: InputThermalRawWidth,
+                    rawHeight: InputThermalRawHeight,
+                    globalMinRadioHeat: globalMinRadioHeat,
+                    globalMaxRadioHeat: globalMaxRadioHeat);
 
             if (OutputThermalImage != null)
                 DrawYawPitchZoom.Draw(ref OutputThermalImage, Drone, CurrRunFlightStep);
@@ -439,27 +452,27 @@ namespace SkyCombImage.RunSpace
                 // WARNING: The DJI Radiometric Data image is often half the size of the greyscale JPG! Despite these two coming from the same file!
                 var thermalImagePath = Drone.GetCurrImage_InputIsImages_Path(inputDirectory, frameId);
 
-                (ushort[] rawData, int width, int height, ushort minRawHeat, ushort maxRawHeat) =
+                (ushort[] rawData, int width, int height, ushort minImageRawHeat, ushort maxImageRawHeat) =
                     DirpApiWrapper.GetRawRadiometricDataMinMaxData(thermalImagePath);
 
                 InputThermalRawData = rawData;
                 InputThermalRawWidth = width;
                 InputThermalRawHeight = height;
-                InputThermalRawMin = minRawHeat;
-                InputThermalRawMax = maxRawHeat;
+                InputThermalRawMin = minImageRawHeat;
+                InputThermalRawMax = maxImageRawHeat;
 
                 // Normalize raw radiometric data to grayscale image using image-specific cutoffs
                 // This maximizes the thermal detail in the image for human viewing.
-                var originalThermalImage = DirpApiWrapper.NormaliseRawRadiometricData(rawData, width, height, imageMinRadioHeat: minRawHeat, imageMaxRadioHeat: maxRawHeat);
+                var originalThermalImage = DirpApiWrapper.NormaliseRawRadiometricData(rawData, width, height, imageMinRadioHeat: minImageRawHeat, imageMaxRadioHeat: maxImageRawHeat);
                 if (originalThermalImage != null)
                     OriginalThermalImage = originalThermalImage;
 
                 // Normalize raw radiometric data to grayscale image using user-manually-defined cutoffs. Refer 5Nov25TempRefs data & comments in Worklog.
                 var inputThermalImage = DirpApiWrapper.NormaliseRawRadiometricData(rawData, width, height,
-                        RunConfig.ProcessConfig.LowerRadiometricThreshold,
-                        RunConfig.ProcessConfig.UpperRadiometricThreshold,
-                        minRawHeat,
-                        maxRawHeat);
+                        RunConfig.ProcessConfig.LowerRadiometricThreshold, // All frames
+                        RunConfig.ProcessConfig.UpperRadiometricThreshold, // All frames
+                        minImageRawHeat,
+                        maxImageRawHeat);
                 if (inputThermalImage != null)
                     InputThermalImage = inputThermalImage;
             }

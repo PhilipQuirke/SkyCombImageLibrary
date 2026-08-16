@@ -64,7 +64,12 @@ namespace SkyCombImage.RunSpace
                     var currThreshold = InputThermalImage.Clone();
                     var currBmp = currThreshold.ToBitmap();
 
-                    DrawImage.Threshold(RunConfig.ProcessConfig, ref currThreshold);
+                DrawImage.Threshold(
+                    RunConfig.ProcessConfig,
+                    ref currThreshold,
+                    InputThermalRawData,
+                    InputThermalRawWidth,
+                    InputThermalRawHeight);
 
                     results = YoloProcess.YoloDetectImage(currBmp, CurrBlock);
                     if (results != null)

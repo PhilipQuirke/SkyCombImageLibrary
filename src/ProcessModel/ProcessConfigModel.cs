@@ -1,5 +1,6 @@
 ﻿// Copyright SkyComb Limited 2025. All rights reserved. 
 using OpenCvSharp;
+using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 
@@ -46,20 +47,17 @@ namespace SkyCombImage.ProcessModel
         // Minimum overlap percentage between two features that is considered significant
         public const int FeatureMinOverlapPerc = 5;
 
-        // Thermal radiometric data appears to be in range 4000 to 5000. Often in range 4500 to 4600.  
+        // Thermal radiometric data appears to often be in range 4500 to 4600.  
         // NOTE: For images with a small radiometric range (say 4620 - 4575 = 45) we get poorer contrast when mapping to 0-255 for display purposes.
-        public const int LowerRadiometricLimit = 4000;
-        public const int UpperRadiometricLimit = 5000;
-
-        // Lower heat threshold value for radiometric data. Any image pixel value under this threshold is uninteresting.
+        // Lower heat threshold value for radiometric data (if any). Any image pixel value under this threshold is uninteresting.
         // When thermal radiometric data is available this is the key "coloring" cutoff - not HeatThresholdValue
-        public int LowerRadiometricThreshold { get; set; } = LowerRadiometricLimit;
+        public int LowerRadiometricThreshold { get; set; } = UnknownValue;
         // Upper heat threshold value for radiometric data.
-        public int UpperRadiometricThreshold { get; set; } = UpperRadiometricLimit;
+        public int UpperRadiometricThreshold { get; set; } = UnknownValue;
 
         // Pixel gray-scale value for hot pixel thresholding. Takes values from 50 to 255
         // When thermal radiometric data is NOT available this is the key "coloring" cutoff - not LowerRadiometricThreshold
-        public int HeatThresholdValue { get; set; } = 200;
+        public int HeatThresholdValue { get; set; } = UnknownValue;
         
         // Duration (in milliseconds) that object must be tracked for before it is highlighted
         public const int ObjectMinDurationMs = 500;
@@ -133,6 +131,7 @@ namespace SkyCombImage.ProcessModel
             return (rightBoundary, bottomBoundary);
         }
 
+
         // Check if a pixel coordinate should be processed (not in exclusion zone)
         public bool ShouldProcessPixel(int x, int y, int imageWidth, int imageHeight)
         {
@@ -153,13 +152,6 @@ namespace SkyCombImage.ProcessModel
 
         public void ValidateHeatSettings()
         {
-            // The ThresholdValue should be in range 50 to 255.
-            // A user may mistake the range for 0.0 to 1.0, so we set the min value to 50
-            if (HeatThresholdValue < 50)
-                HeatThresholdValue = 50;
-            if (HeatThresholdValue > 255)
-                HeatThresholdValue = 255;
-
             if (ObjectMinPixels < 1)
                 ObjectMinPixels = 1;
             if (ObjectMinPixels > 1000)
@@ -174,16 +166,31 @@ namespace SkyCombImage.ProcessModel
                 ObjectMinMaxHeatPixels = 0;
             if (ObjectMinMaxHeatPixels > 100)
                 ObjectMinMaxHeatPixels = 100;
+        }
 
-            if(LowerRadiometricThreshold < ProcessConfigModel.LowerRadiometricLimit)
-                LowerRadiometricThreshold = ProcessConfigModel.LowerRadiometricLimit;
-            if (LowerRadiometricThreshold > ProcessConfigModel.UpperRadiometricLimit)
-                LowerRadiometricThreshold = ProcessConfigModel.UpperRadiometricLimit;
 
-            if (UpperRadiometricThreshold < ProcessConfigModel.LowerRadiometricLimit)
-                UpperRadiometricThreshold = ProcessConfigModel.LowerRadiometricLimit;
-            if (UpperRadiometricThreshold > ProcessConfigModel.UpperRadiometricLimit)
-                UpperRadiometricThreshold = ProcessConfigModel.UpperRadiometricLimit;
+        public void DefaultHeatSettings(Drone? drone = null)
+        {
+            const int defaultHeatThresholdValue = 200;
+
+            LowerRadiometricThreshold = BaseConstants.UnknownValue;
+            UpperRadiometricThreshold = BaseConstants.UnknownValue;
+            HeatThresholdValue = BaseConstants.UnknownValue;
+
+            // Do drone inputs provide radiometric data?
+            if (drone != null)
+            {
+                int min = drone.FlightSections.MinRadioHeat;
+                int max = drone.FlightSections.MaxRadioHeat;
+                if ((min > 0) && (max > 0) && (min < max))
+                {
+                    LowerRadiometricThreshold = (int)(min + (max-min) * (1.0 * defaultHeatThresholdValue / 255));
+                    UpperRadiometricThreshold = max;
+                    return;
+                }
+            }
+
+            HeatThresholdValue = defaultHeatThresholdValue;
         }
 
 

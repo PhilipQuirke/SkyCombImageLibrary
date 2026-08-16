@@ -40,10 +40,12 @@ namespace SkyCombImage.DrawSpace
                     Color.FromArgb(255, 255, 255, 0),
                     Color.FromArgb(255, 255, 0, 0), numColors);
 
-                // Use a linear threshold from the processConfig.ThresholdValue to 255
-                thresholdStep = (255 - processConfig.HeatThresholdValue) / numColors;
+                // Use a linear threshold from the processConfig threshold to 255.
+                // If HeatThresholdValue is UnknownValue, avoid using it in calculations.
+                int thresholdFloor = processConfig.HeatThresholdValue > 0 ? processConfig.HeatThresholdValue : 1;
+                thresholdStep = (255 - thresholdFloor) / numColors;
                 for (int i = 0; i < numColors; i++)
-                    threshold[i] = processConfig.HeatThresholdValue + i * thresholdStep;
+                    threshold[i] = thresholdFloor + i * thresholdStep;
 
                 var maxY = image.Data.GetLength(0);
                 var maxX = image.Data.GetLength(1);
@@ -117,9 +119,10 @@ namespace SkyCombImage.DrawSpace
                     if (theColor != Color.White)
                     {
                         int thickness = (int)transform.Scale * config.TextExtraScale / 2;
+                        int boxThickness = (optical && isFocusObject) ? thickness * 2 : thickness;
                         var scaledRect = transform.CalcRect(drawFeature.PixelBox);
 
-                        BoundingRectangle(config, ref image, scaledRect, theColor, thickness, config.AreaPadding * config.BoxExtraScale);
+                        BoundingRectangle(config, ref image, scaledRect, theColor, boxThickness, config.AreaPadding * config.BoxExtraScale);
 
                         if (drawObjectName != "")
                             // Helps identify points visually on image to facilitate mapping to xls data.
@@ -151,7 +154,8 @@ namespace SkyCombImage.DrawSpace
             ProcessBlockModel? block,
             ProcessAll processAll,
             bool drawObjectNames,
-            bool optical = false)
+            bool optical = false,
+            bool drawHotPixels = true)
         {
             try
             {
@@ -179,8 +183,11 @@ namespace SkyCombImage.DrawSpace
                         var drawFeature = processAll.ProcessFeatures[featureId];
                         Assert(drawFeature.BlockId == block.BlockId, "ProcessedImage: Bad logic");
 
-                        // Draw all hot pixels for the current block 
-                        HotPixels(drawConfig, processConfig, ref outputImg, drawFeature, transform);
+                        // Draw all hot pixels for the current block
+                        // In Threshold mode we already colored pixels directly from threshold visualization.
+                        // Re-drawing feature pixels can reintroduce mismatches against strict radiometric thresholding.
+                        if (drawHotPixels)
+                            HotPixels(drawConfig, processConfig, ref outputImg, drawFeature, transform);
 
                         // Draw the bounding rectangle of the owned feature & object name
                         var drawObjectName = "";
@@ -213,7 +220,12 @@ namespace SkyCombImage.DrawSpace
             ProcessAll processAll,
             bool drawObjectNames = true,
             bool optical = false,
-            Image<Gray, byte>? thresholdSource = null)
+            Image<Gray, byte>? thresholdSource = null,
+            ushort[]? rawData = null,
+            int rawWidth = 0,
+            int rawHeight = 0,
+            int globalMinRadioHeat = BaseConstants.UnknownValue,
+            int globalMaxRadioHeat = BaseConstants.UnknownValue)
         {
             try
             {
@@ -227,12 +239,25 @@ namespace SkyCombImage.DrawSpace
                     {
                         // For Threshold, first apply the thermal coloring
                         if (runProcess == RunProcessEnum.Threshold && !optical)
-                            modifiedInputFrame = DrawImage.Draw(runProcess, processConfig, drawConfig, modifiedInputFrame.Convert<Gray, byte>(), thresholdSource);
+                            modifiedInputFrame = DrawImage.Draw(
+                                runProcess,
+                                processConfig,
+                                drawConfig,
+                                modifiedInputFrame.Convert<Gray, byte>(),
+                                thresholdSource,
+                                rawData,
+                                rawWidth,
+                                rawHeight,
+                                globalMinRadioHeat,
+                                globalMaxRadioHeat);
 
                         // Then draw bounding rectangles and object names for all three methods
                         DrawRunProcess(
                             drawConfig, processConfig, ref modifiedInputFrame, new(),
-                            focusObject, block, processAll, drawObjectNames, optical);
+                            focusObject, block, processAll,
+                            drawObjectNames: drawObjectNames,
+                            optical: optical,
+                            drawHotPixels: runProcess != RunProcessEnum.Threshold);
                     }
                     else
                         // Draw None - no processing
