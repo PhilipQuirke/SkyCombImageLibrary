@@ -33,7 +33,7 @@ namespace SkyCombImage.RunSpace
         public string InputFileName { get; set; } = "";
 
         // Name of main process to run: yolo, comb, threshold, none.
-        public RunProcessEnum RunProcess { get; set; } = RunProcessEnum.Threshold;
+        public RunProcessEnum RunProcess { get; set; } = RunProcessEnum.Comb;
 
         // Between processing blocks, do we pause (slows down processing). That values max, fast, medium, slow. 
         public RunSpeedEnum RunSpeed { get; set; } = RunSpeedEnum.Fast;
