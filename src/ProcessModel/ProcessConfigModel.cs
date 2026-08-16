@@ -46,18 +46,21 @@ namespace SkyCombImage.ProcessModel
         // Minimum overlap percentage between two features that is considered significant
         public const int FeatureMinOverlapPerc = 5;
 
-        // Lower heat threshold value for radiometric data. Any value under this is uninteresting.
-        // Takes values from 4000 to 5000. Default from HK\5Nov25TempRefs data.
+        // Thermal radiometric data appears to be in range 4000 to 5000. Often in range 4500 to 4600.  
+        // NOTE: For images with a small radiometric range (say 4620 - 4575 = 45) we get poorer contrast when mapping to 0-255 for display purposes.
         public const int LowerRadiometricLimit = 4000;
+        public const int UpperRadiometricLimit = 5000;
+
+        // Lower heat threshold value for radiometric data. Any value under this is uninteresting.
+        // When thermal radiometric data is available this is the key "coloring" cutoff - not HeatThresholdValue
         public int LowerRadiometricThreshold { get; set; } = LowerRadiometricLimit;
         // Upper heat threshold value for radiometric data. Any value over this is 1) definitely interesting and 2) set to this value. 
-        // Takes values from 4000 to 5000. Default from HK\5Nov25TempRefs data.
-        public const int UpperRadiometricLimit = 5000;
         public int UpperRadiometricThreshold { get; set; } = UpperRadiometricLimit;
-        // NOTE: For images with a small radiometric range (say 4620 - 4575 = 45) we get poorer contrast when mapping to 0-255 for display purposes.
 
         // Pixel gray-scale value for hot pixel thresholding. Takes values from 50 to 255
+        // When thermal radiometric data is NOT available this is the key "coloring" cutoff - not LowerRadiometricThreshold
         public int HeatThresholdValue { get; set; } = 200;
+        
         // Duration (in milliseconds) that object must be tracked for before it is highlighted
         public const int ObjectMinDurationMs = 500;
         // Maximum number of "unreal" features after a real feature. Applies to videos only.

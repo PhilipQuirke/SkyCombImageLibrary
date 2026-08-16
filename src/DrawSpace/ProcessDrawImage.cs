@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2025. All rights reserved.
+﻿// Copyright SkyComb Limited 2026. All rights reserved.
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
@@ -212,7 +212,8 @@ namespace SkyCombImage.DrawSpace
             ProcessBlockModel? block,
             ProcessAll processAll,
             bool drawObjectNames = true,
-            bool optical = false)
+            bool optical = false,
+            Image<Gray, byte>? thresholdSource = null)
         {
             try
             {
@@ -226,7 +227,7 @@ namespace SkyCombImage.DrawSpace
                     {
                         // For Threshold, first apply the thermal coloring
                         if (runProcess == RunProcessEnum.Threshold && !optical)
-                            modifiedInputFrame = DrawImage.Draw(runProcess, processConfig, drawConfig, modifiedInputFrame.Convert<Gray, byte>());
+                            modifiedInputFrame = DrawImage.Draw(runProcess, processConfig, drawConfig, modifiedInputFrame.Convert<Gray, byte>(), thresholdSource);
 
                         // Then draw bounding rectangles and object names for all three methods
                         DrawRunProcess(

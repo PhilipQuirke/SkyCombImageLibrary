@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2025. All rights reserved.
+﻿// Copyright SkyComb Limited 2026. All rights reserved.
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
@@ -179,23 +179,33 @@ namespace SkyCombImage.DrawSpace
         // Process a single image and returns an image.
         public static Image<Bgr, byte> Draw(
             RunProcessEnum runProcess, ProcessConfigModel config, DrawImageConfig drawConfig,
-            Image<Gray, byte> imgInput)
+            Image<Gray, byte> imgInput,
+            Image<Gray, byte>? thresholdSource = null)
         {
             if (runProcess == RunProcessEnum.Threshold)
                 // For Threshold processing, we want to show the original thermal image 
                 // with hot pixels highlighted in thermal colors (orange/red)
                 // This should NOT show bounding rectangles - those are handled by DrawRunProcess in ProcessDrawImage
-                return ApplyThresholdVisualization(config, imgInput);
+                return ApplyThresholdVisualization(config, imgInput, thresholdSource);
 
             return imgInput.Convert<Bgr, byte>();
         }
 
         
         // Apply threshold visualization while preserving the original thermal image
-        public static Image<Bgr, byte> ApplyThresholdVisualization(ProcessConfigModel config, Image<Gray, byte> impInput)
+        public static Image<Bgr, byte> ApplyThresholdVisualization(
+            ProcessConfigModel config,
+            Image<Gray, byte> impInput,
+            Image<Gray, byte>? thresholdSource = null)
         {
-            // Apply threshold to identify hot pixels
-            var thresholdImage = impInput.ThresholdBinary(new Gray(config.HeatThresholdValue), new Gray(255));
+            // If a threshold source is provided (e.g. radiometric image normalized with lower/upper cutoffs),
+            // use strict lower-radiometric-threshold behavior: any value above 0 is considered hot.
+            // Otherwise retain the existing HeatThresholdValue behavior.
+            var thresholdInput = thresholdSource ?? impInput;
+            bool strictLowerThreshold = (thresholdSource != null);
+            var thresholdImage = strictLowerThreshold
+                ? thresholdInput.ThresholdBinary(new Gray(0), new Gray(255))
+                : thresholdInput.ThresholdBinary(new Gray(config.HeatThresholdValue), new Gray(255));
 
             int imageWidth = impInput.Width;
             int imageHeight = impInput.Height;
@@ -227,8 +237,8 @@ namespace SkyCombImage.DrawSpace
                     // If this pixel is above threshold (hot)
                     if (thresholdImage.Data[y, x, 0] > 0)
                     {
-                        // Get the original pixel heat value
-                        byte originalHeat = impInput.Data[y, x, 0];
+                        // Get the original pixel heat value from the image used for thresholding
+                        byte originalHeat = thresholdInput.Data[y, x, 0];
                         
                         // Determine which thermal color to use based on heat intensity
                         int colorIndex = 0;

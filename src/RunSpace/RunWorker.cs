@@ -217,10 +217,16 @@ namespace SkyCombImage.RunSpace
                 return;
 
             // Convert the input thermal image to the output image by overlaying (colored) process information.
+            var thresholdSource =
+                (InputThermalRawData != null) && (InputThermalRawData.Length > 0) && (InputThermalImage != null)
+                    ? InputThermalImage
+                    : null;
+
             OutputThermalImage =
                 DrawSpace.DrawFrameImage.Draw(
                     RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, Drone, OriginalThermalImage.Convert<Bgr,byte>(),
-                    null, block, ProcessAll);
+                    null, block, ProcessAll,
+                    thresholdSource: thresholdSource);
 
             if (OutputThermalImage != null)
                 DrawYawPitchZoom.Draw(ref OutputThermalImage, Drone, CurrRunFlightStep);
