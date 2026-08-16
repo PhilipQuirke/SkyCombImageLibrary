@@ -48,10 +48,12 @@ namespace SkyCombImage.ProcessModel
 
         // Lower heat threshold value for radiometric data. Any value under this is uninteresting.
         // Takes values from 4000 to 5000. Default from HK\5Nov25TempRefs data.
-        public int LowerRadiometricThreshold { get; set; } = 4575;
+        public const int LowerRadiometricLimit = 4000;
+        public int LowerRadiometricThreshold { get; set; } = LowerRadiometricLimit;
         // Upper heat threshold value for radiometric data. Any value over this is 1) definitely interesting and 2) set to this value. 
         // Takes values from 4000 to 5000. Default from HK\5Nov25TempRefs data.
-        public int UpperRadiometricThreshold { get; set; } = 4620;
+        public const int UpperRadiometricLimit = 5000;
+        public int UpperRadiometricThreshold { get; set; } = UpperRadiometricLimit;
         // NOTE: For images with a small radiometric range (say 4620 - 4575 = 45) we get poorer contrast when mapping to 0-255 for display purposes.
 
         // Pixel gray-scale value for hot pixel thresholding. Takes values from 50 to 255
@@ -170,15 +172,15 @@ namespace SkyCombImage.ProcessModel
             if (ObjectMinMaxHeatPixels > 100)
                 ObjectMinMaxHeatPixels = 100;
 
-            if(LowerRadiometricThreshold < 4000)
-                LowerRadiometricThreshold = 4000;
-            if (LowerRadiometricThreshold > 5000)
-                LowerRadiometricThreshold = 5000;
+            if(LowerRadiometricThreshold < ProcessConfigModel.LowerRadiometricLimit)
+                LowerRadiometricThreshold = ProcessConfigModel.LowerRadiometricLimit;
+            if (LowerRadiometricThreshold > ProcessConfigModel.UpperRadiometricLimit)
+                LowerRadiometricThreshold = ProcessConfigModel.UpperRadiometricLimit;
 
-            if (UpperRadiometricThreshold < 4000)
-                UpperRadiometricThreshold = 4000;
-            if (UpperRadiometricThreshold > 5000)
-                UpperRadiometricThreshold = 5000;
+            if (UpperRadiometricThreshold < ProcessConfigModel.LowerRadiometricLimit)
+                UpperRadiometricThreshold = ProcessConfigModel.LowerRadiometricLimit;
+            if (UpperRadiometricThreshold > ProcessConfigModel.UpperRadiometricLimit)
+                UpperRadiometricThreshold = ProcessConfigModel.UpperRadiometricLimit;
         }
 
 
