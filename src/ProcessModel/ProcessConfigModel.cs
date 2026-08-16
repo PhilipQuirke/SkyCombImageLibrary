@@ -51,10 +51,10 @@ namespace SkyCombImage.ProcessModel
         public const int LowerRadiometricLimit = 4000;
         public const int UpperRadiometricLimit = 5000;
 
-        // Lower heat threshold value for radiometric data. Any value under this is uninteresting.
+        // Lower heat threshold value for radiometric data. Any image pixel value under this threshold is uninteresting.
         // When thermal radiometric data is available this is the key "coloring" cutoff - not HeatThresholdValue
         public int LowerRadiometricThreshold { get; set; } = LowerRadiometricLimit;
-        // Upper heat threshold value for radiometric data. Any value over this is 1) definitely interesting and 2) set to this value. 
+        // Upper heat threshold value for radiometric data.
         public int UpperRadiometricThreshold { get; set; } = UpperRadiometricLimit;
 
         // Pixel gray-scale value for hot pixel thresholding. Takes values from 50 to 255
@@ -66,7 +66,7 @@ namespace SkyCombImage.ProcessModel
         // Maximum number of "unreal" features after a real feature. Applies to videos only.
         public const int ObjectMaxUnrealBlocks = 5;
         // To be significant, an object must have this many hot pixels in at least one real step
-        public int ObjectMinPixels { get; set; } = 2;
+        public int ObjectMinPixels { get; set; } = 1;
         // Maximum number of hot pixels in an object
         public int ObjectMaxPixels { get; set; } = 1000;
         // Minimum number of max-heat pixels in an object
@@ -98,7 +98,7 @@ namespace SkyCombImage.ProcessModel
         // Create annotated video file as output MP4
         public bool SaveAnnotatedVideo { get; set; } = false;
         // Save the objects and features to the datastore. Takes values all, significant, none.
-        public SaveObjectDataEnum SaveObjectData { get; set; } = SaveObjectDataEnum.Significant;
+        public SaveObjectDataEnum SaveObjectData { get; set; } = SaveObjectDataEnum.All;
 
 
         // --------------------- Error Thresholds --------------------- 
