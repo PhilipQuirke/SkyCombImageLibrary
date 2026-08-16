@@ -104,7 +104,9 @@ namespace SkyCombImage.RunSpace
 
                 if (ProcessConfig != null)
                 {
-                    answer += "Heat threshold: " + ProcessConfig.HeatThresholdValue + "\r\n";
+                    if(ProcessConfig.HeatThresholdValue > 0 )
+                        answer += "Heat threshold: " + ProcessConfig.HeatThresholdValue + "\r\n";
+
                     if (RunProcess == RunProcessEnum.Yolo)
                         answer += "Confidence: " +
                             ProcessConfig.YoloDetectConfidence.ToString() + ", IoU: " +
