@@ -17,6 +17,44 @@ namespace SkyCombImage.DrawSpace
     // Code to draw object etc images on a frame image based on hot spot data
     public class DrawFrameImage : Draw
     {
+        private static Rectangle CalibrateOpticalRect(Rectangle mappedRect, DrawImageConfig config, Size outputImageSize)
+        {
+            float cx = outputImageSize.Width * 0.5f;
+            float cy = outputImageSize.Height * 0.5f;
+
+            float rectCx = mappedRect.X + mappedRect.Width * 0.5f;
+            float rectCy = mappedRect.Y + mappedRect.Height * 0.5f;
+
+            rectCx = cx + (rectCx - cx) * config.OpticalCenterScaleX + outputImageSize.Width * config.OpticalOffsetXPct;
+            rectCy = cy + (rectCy - cy) * config.OpticalCenterScaleY + outputImageSize.Height * config.OpticalOffsetYPct;
+
+            float sizeScale = Math.Max(0.1f, config.OpticalBoxSizeScale);
+            int newWidth = Math.Max(1, (int)Math.Round(mappedRect.Width * sizeScale));
+            int newHeight = Math.Max(1, (int)Math.Round(mappedRect.Height * sizeScale));
+
+            int x = (int)Math.Round(rectCx - newWidth * 0.5f);
+            int y = (int)Math.Round(rectCy - newHeight * 0.5f);
+
+            return new Rectangle(x, y, newWidth, newHeight);
+        }
+
+
+        public static Rectangle MapFeatureRect(
+            Rectangle thermalRect,
+            Transform transform,
+            DrawImageConfig config,
+            Size outputImageSize,
+            bool optical)
+        {
+            var mappedRect = transform.CalcRect(thermalRect);
+
+            if (optical)
+                mappedRect = CalibrateOpticalRect(mappedRect, config, outputImageSize);
+
+            return mappedRect;
+        }
+
+
         // Draw the hot pixels
         public static void HotPixels(
             DrawImageConfig config, ProcessConfigModel processConfig,
@@ -120,9 +158,12 @@ namespace SkyCombImage.DrawSpace
                     {
                         int thickness = (int)transform.Scale * config.TextExtraScale / 2;
                         int boxThickness = (optical && isFocusObject) ? thickness * 2 : thickness;
-                        var scaledRect = transform.CalcRect(drawFeature.PixelBox);
+                        var scaledRect = MapFeatureRect(drawFeature.PixelBox, transform, config, image.Size, optical);
+                        int inflate = config.AreaPadding * config.BoxExtraScale;
+                        if (optical)
+                            inflate = (int)Math.Round(inflate * Math.Max(0.1f, config.OpticalBoxSizeScale));
 
-                        BoundingRectangle(config, ref image, scaledRect, theColor, boxThickness, config.AreaPadding * config.BoxExtraScale);
+                        BoundingRectangle(config, ref image, scaledRect, theColor, boxThickness, inflate);
 
                         if (drawObjectName != "")
                             // Helps identify points visually on image to facilitate mapping to xls data.
