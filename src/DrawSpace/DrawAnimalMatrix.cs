@@ -7,6 +7,12 @@ namespace SkyCombImage.DrawSpace
 
     public class AnimalMatrixDrawer
     {
+        private static readonly StringFormat CenterTextFormat = new()
+        {
+            Alignment = StringAlignment.Center,
+            LineAlignment = StringAlignment.Center
+        };
+
         private static Dictionary<string, int> CreateIndexMap(string[] classes)
         {
             var indexMap = new Dictionary<string, int>();
@@ -76,7 +82,7 @@ namespace SkyCombImage.DrawSpace
                 {
                     x = labelWidth + s * cellWidth;
                     // Draw SizeClass label
-                    g.DrawString(sizeClasses[s], smallfont, brush, x + cellWidth / 2 - 15, 10);
+                    g.DrawString(sizeClasses[s], smallfont, brush, new RectangleF(x, 0, cellWidth, labelHeight / 2f), CenterTextFormat);
 
                     // Draw image under SizeClass label. Note: removed "?".
                     Image img = sizeImages[s];
@@ -103,7 +109,7 @@ namespace SkyCombImage.DrawSpace
                             x = labelWidth + s * cellWidth;
                             y = labelHeight + h * cellHeight;
                             g.FillRectangle(percentIndicator(100 * count / categorised), x, y, cellWidth, cellHeight);
-                            g.DrawString(count.ToString(), font, brush, x + cellWidth / 2 - 10, y + cellHeight / 2 - 10);
+                            g.DrawString(count.ToString(), font, brush, new RectangleF(x, y, cellWidth, cellHeight), CenterTextFormat);
                         }
                     }
                 }
@@ -118,7 +124,7 @@ namespace SkyCombImage.DrawSpace
                     total = sizeClassTotals[s].ToString();
                     x = labelWidth + s * cellWidth;
                     y = labelHeight + cellHeight * heightClasses.Length + cellHeight / 2 - 10;
-                    g.DrawString(total, font, brush, x + cellWidth / 2 - 10, y);
+                    g.DrawString(total, font, brush, new RectangleF(x, y, cellWidth, cellHeight), CenterTextFormat);
                 }
 
                 // Draw totals for HeightClasses
@@ -127,7 +133,7 @@ namespace SkyCombImage.DrawSpace
                     total = heightClassTotals[h].ToString();
                     x = labelWidth + cellWidth * sizeClasses.Length + 20;
                     y = labelHeight + h * cellHeight;
-                    g.DrawString(total, font, brush, x, y + cellHeight / 2 - 10);
+                    g.DrawString(total, font, brush, new RectangleF(x, y, 50, cellHeight), CenterTextFormat);
                 }
 
                 // Get overall total categorised
