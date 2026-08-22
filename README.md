@@ -1,6 +1,13 @@
 # SkyCombImageLibrary
 
-SkyComb Image Library is a modern .NET library for processing drone thermal video to detect and track objects of interest. It provides a clean, user-friendly API for integrating computer vision capabilities into drone analysis applications.
+SkyComb Image Library is a .NET class library that provides image processing and object-detection logic for SkyComb drone analysis workflows. It is focused on thermal-video processing, object detection, tracking, and run outputs that can be consumed by SkyComb applications.
+
+## What this repository contains
+
+- Thermal image/video processing pipelines
+- Object detection and tracking algorithms (Comb, YOLO, and threshold)
+- Drawing and visualization helpers for annotated output
+- Shared processing models and services used by SkyComb tools
 
 ## Features
 
@@ -264,12 +271,12 @@ SkyCombImageLibrary/
 - **GPU Requirements**: YOLO requires CUDA-compatible GPU for optimal performance
 - **Storage**: Annotated videos and Excel data files are generated during processing
 
-## Related Projects
+## Related Repositories
 
 Part of the SkyComb ecosystem:
 
-- **[SkyComb Analyst](../../SkyCombAnalyst/)** - Complete drone thermal analysis application
-- **[SkyComb Flights](../../SkyCombFlights/)** - Batch drone data processing  
+- **[SkyComb Analyst](https://github.com/PhilipQuirke/SkyCombAnalyst/)** - Complete drone thermal analysis application
+- **[SkyComb Analyst Help](https://github.com/PhilipQuirke/SkyCombAnalystHelp/)** - End-user and workflow documentation
 - **[SkyComb Drone Library](../../SkyCombDroneLibrary/)** - Drone flight data processing
 - **[SkyComb Ground Library](../../SkyCombGroundLibrary/)** - Ground elevation data processing
 
