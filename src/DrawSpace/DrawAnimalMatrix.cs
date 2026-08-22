@@ -57,7 +57,9 @@ namespace SkyCombImage.DrawSpace
             int labelWidth = 100;
             int labelHeight = 60;
             int imageHeight = 40;
-            int totalWidth = labelWidth + cellWidth * sizeClasses.Length + 80;
+            int rightTotalsX = labelWidth + cellWidth * sizeClasses.Length + 20;
+            int rightTotalsWidth = 90;
+            int totalWidth = rightTotalsX + rightTotalsWidth + 10;
             int totalHeight = labelHeight + cellHeight * heightClasses.Length + imageHeight + 20;
             string total;
 
@@ -131,9 +133,8 @@ namespace SkyCombImage.DrawSpace
                 for (h = 0; h < heightClasses.Length; h++)
                 {
                     total = heightClassTotals[h].ToString();
-                    x = labelWidth + cellWidth * sizeClasses.Length + 20;
                     y = labelHeight + h * cellHeight;
-                    g.DrawString(total, font, brush, new RectangleF(x, y, 50, cellHeight), CenterTextFormat);
+                    DrawCenteredText(g, total, font, brush, new RectangleF(rightTotalsX, y, rightTotalsWidth, cellHeight));
                 }
 
                 // Get overall total categorised
@@ -143,6 +144,15 @@ namespace SkyCombImage.DrawSpace
             }
 
             return (total, bmp);
+        }
+
+
+        private static void DrawCenteredText(Graphics g, string text, Font font, Brush brush, RectangleF bounds)
+        {
+            var textSize = g.MeasureString(text, font);
+            float textX = bounds.X + (bounds.Width - textSize.Width) / 2f;
+            float textY = bounds.Y + (bounds.Height - textSize.Height) / 2f;
+            g.DrawString(text, font, brush, textX, textY);
         }
 
         // Returns the background colour of the rectangle by percent of animals found in it
