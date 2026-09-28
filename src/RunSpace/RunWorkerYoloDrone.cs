@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+﻿// Copyright SkyComb Limited 2026. All rights reserved.
 using Emgu.CV;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
@@ -64,12 +64,10 @@ namespace SkyCombImage.RunSpace
                     var currThreshold = InputThermalImage.Clone();
                     var currBmp = currThreshold.ToBitmap();
 
-                DrawImage.Threshold(
-                    RunConfig.ProcessConfig,
-                    ref currThreshold,
-                    InputThermalRawData,
-                    InputThermalRawWidth,
-                    InputThermalRawHeight);
+                    DrawImage.Threshold(
+                        RunConfig.ProcessConfig,
+                        ref currThreshold,
+                        CurrBlock.ThermalData);
 
                     results = YoloProcess.YoloDetectImage(currBmp, CurrBlock);
                     if (results != null)

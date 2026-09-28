@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+﻿// Copyright SkyComb Limited 2026. All rights reserved.
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.PersistModel;
 using SkyCombGround.CommonSpace;
@@ -43,6 +43,8 @@ namespace SkyCombImage.RunSpace
             answer.SizeImages = parent.GetSizeImages();
             answer.RunIntervals = intervals;
 
+            // Initialize defaults before loading saved settings, never after them.
+            runConfig.ProcessConfig.DefaultHeatSettings(drone);
             answer.LoadDataStoreConfigSettings();
 
             // Reload the Category and Object Category data (if any) from the Datastore.

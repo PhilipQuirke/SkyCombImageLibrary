@@ -1,7 +1,8 @@
-﻿// Copyright SkyComb Limited 2025. All rights reserved. 
+﻿// Copyright SkyComb Limited 2026. All rights reserved.
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
 using SkyCombImage.ProcessLogic;
+using System.Text.Json.Serialization;
 
 
 // Models are used in-memory and to persist/load data to/from the datastore
@@ -30,6 +31,10 @@ namespace SkyCombImage.ProcessModel
         public int InputFrameId { get; set; }
         // Position in the input video in milliseconds, corresponding to this block. No offsets applied - straight from input video.
         public int InputFrameMs { get; set; }
+
+        // Shared radiometric input for this block; reloaded from the source image rather than persisted.
+        [JsonIgnore]
+        public BlockThermalData? ThermalData { get; set; }
 
 
         // ------ Min / Max Features associated with this block -----

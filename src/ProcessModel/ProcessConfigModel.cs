@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2025. All rights reserved. 
+﻿// Copyright SkyComb Limited 2026. All rights reserved.
 using OpenCvSharp;
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
@@ -178,7 +178,7 @@ namespace SkyCombImage.ProcessModel
             HeatThresholdValue = BaseConstants.UnknownValue;
 
             // Do drone inputs provide radiometric data?
-            if (drone != null)
+            if (drone?.FlightSections != null)
             {
                 int min = drone.FlightSections.MinRadioHeat;
                 int max = drone.FlightSections.MaxRadioHeat;
@@ -304,11 +304,14 @@ namespace SkyCombImage.ProcessModel
         public static void TestSettingsPair()
         {
             var rand = new Random();
+            var lowerRadio = rand.Next(4000, 4700);
+            var upperRadio = rand.Next(lowerRadio, 5000);
+
             var obj = new ProcessConfigModel
             {
                 HeatThresholdValue = rand.Next(50, 255),
-                LowerRadiometricThreshold = rand.Next(4000, 5000),
-                UpperRadiometricThreshold = rand.Next(4000, 5000),
+                LowerRadiometricThreshold = lowerRadio,
+                UpperRadiometricThreshold = upperRadio,
                 ObjectMinPixels = rand.Next(1, 1000),
                 ObjectMaxPixels = rand.Next(1, 10000),
                 ObjectMinMaxHeatPixels = rand.Next(0, 1000),

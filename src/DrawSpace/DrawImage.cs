@@ -168,30 +168,45 @@ namespace SkyCombImage.DrawSpace
         }
 
 
+        private static bool UseRawThreshold(
+            ProcessConfigModel config, Image<Gray, byte> image, BlockThermalData? thermalData)
+        {
+            if (thermalData == null)
+            {
+                if (config.LowerRadiometricThreshold > 0)
+                    throw new InvalidOperationException("Radiometric thresholds require the block's thermal data.");
+                return false;
+            }
+
+            if (thermalData.RawWidth != image.Width || thermalData.RawHeight != image.Height)
+                throw new ArgumentException("Thermal image dimensions do not match the block's radiometric data.", nameof(thermalData));
+
+            return true;
+        }
+
+
         // Threshold
         // Can generate new pixel colors not in original image.
         public static void Threshold(
             ProcessConfigModel config,
             ref Image<Gray, byte> imgInput,
-            ushort[]? rawData = null,
-            int rawWidth = 0,
-            int rawHeight = 0)
+            BlockThermalData? thermalData)
         {
-            bool useRawThreshold =
-                (rawData != null) &&
-                (rawWidth > 0) &&
-                (rawHeight > 0) &&
-                (rawData.Length == rawWidth * rawHeight) &&
-                (rawWidth == imgInput.Width) &&
-                (rawHeight == imgInput.Height);
+            bool useRawThreshold = UseRawThreshold(config, imgInput, thermalData);
 
             if (useRawThreshold)
             {
                 int idx = 0;
                 int lower = config.LowerRadiometricThreshold;
-                for (int y = 0; y < rawHeight; y++)
-                    for (int x = 0; x < rawWidth; x++, idx++)
-                        imgInput.Data[y, x, 0] = (byte)(rawData[idx] > lower ? 255 : 0);
+                int upper = config.UpperRadiometricThreshold;
+                bool useUpper = upper > lower;
+                for (int y = 0; y < thermalData!.RawHeight; y++)
+                    for (int x = 0; x < thermalData.RawWidth; x++, idx++)
+                    {
+                        int rawHeat = thermalData.RawData[idx];
+                        bool isHot = rawHeat >= lower && (!useUpper || rawHeat <= upper);
+                        imgInput.Data[y, x, 0] = (byte)(isHot ? 255 : 0);
+                    }
             }
             else
                 imgInput = imgInput.ThresholdBinary(new Gray(config.HeatThresholdValue), new Gray(255));
@@ -202,12 +217,7 @@ namespace SkyCombImage.DrawSpace
         public static Image<Bgr, byte> Draw(
             RunProcessEnum runProcess, ProcessConfigModel config, DrawImageConfig drawConfig,
             Image<Gray, byte> imgInput,
-            Image<Gray, byte>? thresholdSource = null,
-            ushort[]? rawData = null,
-            int rawWidth = 0,
-            int rawHeight = 0,
-            int globalMinRadioHeat = ProcessConfigModel.UnknownValue,
-            int globalMaxRadioHeat = ProcessConfigModel.UnknownValue)
+            BlockThermalData? thermalData)
         {
             if (runProcess == RunProcessEnum.Threshold)
                 // For Threshold processing, we want to show the original thermal image 
@@ -216,12 +226,7 @@ namespace SkyCombImage.DrawSpace
                 return ApplyThresholdVisualization(
                     config,
                     imgInput,
-                    thresholdSource,
-                    rawData,
-                    rawWidth,
-                    rawHeight,
-                    globalMinRadioHeat,
-                    globalMaxRadioHeat);
+                    thermalData);
 
             return imgInput.Convert<Bgr, byte>();
         }
@@ -231,22 +236,14 @@ namespace SkyCombImage.DrawSpace
         public static Image<Bgr, byte> ApplyThresholdVisualization(
             ProcessConfigModel config,
             Image<Gray, byte> impInput,
-            Image<Gray, byte>? thresholdSource = null,
-            ushort[]? rawData = null,
-            int rawWidth = 0,
-            int rawHeight = 0,
-            int globalMinRadioHeat = ProcessConfigModel.UnknownValue,
-            int globalMaxRadioHeat = ProcessConfigModel.UnknownValue)
+            BlockThermalData? thermalData)
         {
             // Prefer strict radiometric gating from raw values when available and dimensionally aligned.
-            bool useRawThreshold =
-                (rawData != null) &&
-                (rawWidth > 0) &&
-                (rawHeight > 0) &&
-                (rawData.Length == rawWidth * rawHeight) &&
-                (rawWidth == impInput.Width) &&
-                (rawHeight == impInput.Height);
+            bool useRawThreshold = UseRawThreshold(config, impInput, thermalData);
+            using var thresholdSource = thermalData?.CreateThresholdSource();
 
+            int globalMinRadioHeat = thermalData?.GlobalMinRadioHeat ?? ProcessConfigModel.UnknownValue;
+            int globalMaxRadioHeat = thermalData?.GlobalMaxRadioHeat ?? ProcessConfigModel.UnknownValue;
             bool useGlobalRadioRange =
                 useRawThreshold &&
                 (globalMinRadioHeat > ProcessConfigModel.UnknownValue) &&
@@ -283,6 +280,10 @@ namespace SkyCombImage.DrawSpace
             for (int i = 0; i < numColors; i++)
                 thresholds[i] = thresholdFloor + i * thresholdStep;
 
+            int lower = config.LowerRadiometricThreshold;
+            int upper = config.UpperRadiometricThreshold;
+            bool useUpper = upper > lower;
+
             // Apply thermal coloring to hot pixels
             for (int y = 0; y < imageHeight; y++)
             {
@@ -292,12 +293,13 @@ namespace SkyCombImage.DrawSpace
                     if (!config.ShouldProcessPixel(x, y, imageWidth, imageHeight))
                         continue; // Skip pixels in exclusion zone
 
-                    // If this pixel is above threshold (hot)
+                    // If this pixel is within the configured hot range
                     bool isHot;
                     if (useRawThreshold)
                     {
-                        int idx = y * rawWidth + x;
-                        isHot = rawData[idx] > config.LowerRadiometricThreshold;
+                        int idx = y * thermalData!.RawWidth + x;
+                        int rawHeat = thermalData.RawData[idx];
+                        isHot = rawHeat >= lower && (!useUpper || rawHeat <= upper);
                     }
                     else
                         isHot = thresholdImage.Data[y, x, 0] > 0;
@@ -308,8 +310,8 @@ namespace SkyCombImage.DrawSpace
                         byte originalHeat;
                         if (useGlobalRadioRange)
                         {
-                            int idx = y * rawWidth + x;
-                            int rawHeat = rawData[idx];
+                            int idx = y * thermalData!.RawWidth + x;
+                            int rawHeat = thermalData.RawData[idx];
                             originalHeat = (byte)(
                                 rawHeat <= globalMinRadioHeat ? 0 :
                                 rawHeat >= globalMaxRadioHeat ? 255 :

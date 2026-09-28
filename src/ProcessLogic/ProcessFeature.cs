@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2025. All rights reserved. 
+﻿// Copyright SkyComb Limited 2026. All rights reserved. 
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombGround.CommonSpace;
@@ -77,7 +77,7 @@ namespace SkyCombImage.ProcessLogic
 
         public void AddHotPixel(int currY, int currX, Gray currHeat)
         {
-            Pixels.Add(new PixelHeat(BlockId, FeatureId, currY, currX, currHeat.GetHashCode()));
+            Pixels.Add(new PixelHeat(BlockId, FeatureId, currY, currX, (int)currHeat.Intensity));
         }
 
         public void Calculate_HotPixelData()

@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2024. All rights reserved. 
+﻿// Copyright SkyComb Limited 2026. All rights reserved.
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombImage.ProcessModel;
@@ -21,15 +21,15 @@ namespace SkyCombImage.ProcessLogic
 
     public static class ThresholdFeatureLogic
     {
-        static byte HeatThresholdValue = 180;
+        const byte HeatThresholdValue = 180;
         static int MinPixels = 3;
 
 
         // Enhanced threshold method that also performs clustering analysis
-        public static List<ClusterInfoC> AnalyzeWithClustering(Image<Gray, byte> imgInput, ProcessConfigModel config)
+        public static List<ClusterInfoC> AnalyzeWithClustering(Image<Gray, byte> imgInput, ProcessConfigModel config, bool isThresholdMask = false)
         {
             // First, find all hot pixels (excluding those in exclusion zones)
-            var hotPixels = FindHotPixels(imgInput, config);
+            var hotPixels = FindHotPixels(imgInput, config, isThresholdMask);
 
             // Cluster adjacent hot pixels
             var clusters = ClusterAdjacentPixels(hotPixels, imgInput);
@@ -44,7 +44,7 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
-        private static HashSet<Point> FindHotPixels(Image<Gray, byte> image, ProcessConfigModel config)
+        private static HashSet<Point> FindHotPixels(Image<Gray, byte> image, ProcessConfigModel config, bool isThresholdMask)
         {
             var hotPixels = new HashSet<Point>();
             var data = image.Data;
@@ -59,7 +59,7 @@ namespace SkyCombImage.ProcessLogic
                     if (!config.ShouldProcessPixel(x, y, imageWidth, imageHeight))
                         continue;
 
-                    if (data[y, x, 0] >= HeatThresholdValue)
+                    if (isThresholdMask ? data[y, x, 0] != 0 : data[y, x, 0] >= HeatThresholdValue)
                     {
                         hotPixels.Add(new Point(x, y));
                     }
@@ -237,10 +237,9 @@ namespace SkyCombImage.ProcessLogic
             in Image<Gray, byte> imgOriginal,    // read-only
             in Image<Gray, byte> imgThreshold)  // read-only
         {
-            HeatThresholdValue = (byte) theProcess.ProcessConfig.HeatThresholdValue;
             MinPixels = theProcess.ProcessConfig.FeatureMinPixels;
 
-            var clusters = AnalyzeWithClustering(imgThreshold, theProcess.ProcessConfig);
+            var clusters = AnalyzeWithClustering(imgThreshold, theProcess.ProcessConfig, isThresholdMask: true);
 
             foreach (var cluster in clusters)
             {

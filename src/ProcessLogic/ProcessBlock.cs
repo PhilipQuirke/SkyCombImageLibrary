@@ -1,4 +1,4 @@
-// Copyright SkyComb Limited 2024. All rights reserved. 
+// Copyright SkyComb Limited 2026. All rights reserved.
 using SkyCombDrone.DroneLogic;
 using SkyCombDrone.DroneModel;
 using SkyCombGround.CommonSpace;
@@ -16,6 +16,7 @@ namespace SkyCombImage.ProcessLogic
 
         public ProcessBlock(ProcessScope scope) : base(scope.PSM)
         {
+            ThermalData = scope.GetThermalData();
         }
 
 

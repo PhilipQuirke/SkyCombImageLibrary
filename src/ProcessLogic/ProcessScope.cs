@@ -32,6 +32,7 @@ namespace SkyCombImage.ProcessLogic
         public int InputThermalRawHeight = UnknownValue;
         public int InputThermalRawMin = UnknownValue;
         public int InputThermalRawMax = UnknownValue;
+        private BlockThermalData? thermalData;
         // Current (transient) optical image data (if any) storage used while processing a Block and Objects.
         public string InputOpticalImagePath = "";
         public Image<Bgr, byte>? InputOpticalImage = null;
@@ -84,8 +85,21 @@ namespace SkyCombImage.ProcessLogic
         }
 
 
+        public BlockThermalData? GetThermalData()
+        {
+            if (InputThermalRawData == null)
+                return null;
+
+            return thermalData ??= new BlockThermalData(
+                InputThermalImage, InputThermalRawData, InputThermalRawWidth, InputThermalRawHeight,
+                Drone?.FlightSections?.MinRadioHeat ?? UnknownValue,
+                Drone?.FlightSections?.MaxRadioHeat ?? UnknownValue);
+        }
+
+
         public void ResetInputThermal()
         {
+            thermalData = null;
             InputOpticalImagePath = "";
             InputThermalRawData = null;
             InputThermalRawWidth = UnknownValue;

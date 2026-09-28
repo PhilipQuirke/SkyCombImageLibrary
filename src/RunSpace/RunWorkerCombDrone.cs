@@ -1,4 +1,4 @@
-﻿// Copyright SkyComb Limited 2025. All rights reserved. 
+﻿// Copyright SkyComb Limited 2026. All rights reserved.
 using Emgu.CV;
 using Emgu.CV.Structure;
 using SkyCombDrone.DroneLogic;
@@ -61,9 +61,7 @@ namespace SkyCombImage.RunSpace
                 DrawImage.Threshold(
                     RunConfig.ProcessConfig,
                     ref currThreshold,
-                    InputThermalRawData,
-                    InputThermalRawWidth,
-                    InputThermalRawHeight);
+                    CurrBlock.ThermalData);
 
                 ProcessFeatureList featuresInBlock = ProcessFactory.NewProcessFeatureList(CombProcess.ProcessConfig);
                 if (RunConfig.RunProcess == RunProcessEnum.Threshold)

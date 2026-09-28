@@ -58,7 +58,8 @@ namespace SkyCombImage.DrawSpace
         // Draw the hot pixels
         public static void HotPixels(
             DrawImageConfig config, ProcessConfigModel processConfig,
-            ref Image<Bgr, byte> image, ProcessFeature feature, Transform transform)
+            ref Image<Bgr, byte> image, ProcessFeature feature, Transform transform,
+            BlockThermalData? thermalData)
         {
             if (config.DrawPixelColor == Color.White)
                 return;
@@ -78,10 +79,27 @@ namespace SkyCombImage.DrawSpace
                     Color.FromArgb(255, 255, 255, 0),
                     Color.FromArgb(255, 255, 0, 0), numColors);
 
-                // Use a linear threshold from the processConfig threshold to 255.
-                // If HeatThresholdValue is UnknownValue, avoid using it in calculations.
-                int thresholdFloor = processConfig.HeatThresholdValue > 0 ? processConfig.HeatThresholdValue : 1;
-                thresholdStep = (255 - thresholdFloor) / numColors;
+                // Use radiometric thresholds when available; otherwise fall back to grayscale thresholds.
+                int thresholdFloor = processConfig.LowerRadiometricThreshold;
+                int thresholdCeiling = processConfig.UpperRadiometricThreshold;
+                bool useRadioValues = thresholdFloor > 0;
+                if (useRadioValues)
+                {
+                    if (thermalData == null)
+                        throw new InvalidOperationException("HotPixels: radiometric thresholds require the block's thermal data.");
+                    if (thresholdCeiling <= thresholdFloor)
+                    {
+                        thresholdCeiling = thermalData.GlobalMaxRadioHeat;
+                        if (thresholdCeiling < thresholdFloor)
+                            throw new InvalidOperationException("HotPixels: global radiometric maximum is unavailable or below the lower threshold.");
+                    }
+                }
+                else
+                {
+                    thresholdFloor = processConfig.HeatThresholdValue > 0 ? processConfig.HeatThresholdValue : 1;
+                    thresholdCeiling = 255;
+                }
+                thresholdStep = Math.Max(1, (thresholdCeiling - thresholdFloor + 1) / numColors);
                 for (int i = 0; i < numColors; i++)
                     threshold[i] = thresholdFloor + i * thresholdStep;
 
@@ -90,9 +108,24 @@ namespace SkyCombImage.DrawSpace
 
                 foreach (var pixel in feature.Pixels)
                 {
+                    int heat;
+                    if (useRadioValues)
+                    {
+                        if (pixel.X < 0 || pixel.X >= thermalData!.RawWidth || pixel.Y < 0 || pixel.Y >= thermalData.RawHeight)
+                            throw new InvalidOperationException("HotPixels: pixel coordinates are outside the raw radiometric image.");
+
+                        // PixelHeat.Heat stores grayscale intensity, not raw radiometric heat.
+                        heat = thermalData.RawData[pixel.Y * thermalData.RawWidth + pixel.X];
+                    }
+                    else
+                        heat = pixel.Heat;
+
+                    if (heat < thresholdFloor || heat > thresholdCeiling)
+                        continue;
+
                     int num = 0;
                     for (int i = 0; i < numColors; i++)
-                        if (pixel.Heat >= threshold[i])
+                        if (heat >= threshold[i])
                             num = i;
 
                     var y = transform.CalcY(pixel.Y);
@@ -200,7 +233,7 @@ namespace SkyCombImage.DrawSpace
         {
             try
             {
-                if (block == null)
+                if (block == null || processAll == null)
                     return;
 
                 // Draw the leg name on the image (if any) 
@@ -228,7 +261,7 @@ namespace SkyCombImage.DrawSpace
                         // In Threshold mode we already colored pixels directly from threshold visualization.
                         // Re-drawing feature pixels can reintroduce mismatches against strict radiometric thresholding.
                         if (drawHotPixels)
-                            HotPixels(drawConfig, processConfig, ref outputImg, drawFeature, transform);
+                            HotPixels(drawConfig, processConfig, ref outputImg, drawFeature, transform, block.ThermalData);
 
                         // Draw the bounding rectangle of the owned feature & object name
                         var drawObjectName = "";
@@ -260,13 +293,7 @@ namespace SkyCombImage.DrawSpace
             ProcessBlockModel? block,
             ProcessAll processAll,
             bool drawObjectNames = true,
-            bool optical = false,
-            Image<Gray, byte>? thresholdSource = null,
-            ushort[]? rawData = null,
-            int rawWidth = 0,
-            int rawHeight = 0,
-            int globalMinRadioHeat = BaseConstants.UnknownValue,
-            int globalMaxRadioHeat = BaseConstants.UnknownValue)
+            bool optical = false)
         {
             try
             {
@@ -278,19 +305,25 @@ namespace SkyCombImage.DrawSpace
 
                     if ((runProcess == RunProcessEnum.Comb) || (runProcess == RunProcessEnum.Yolo) || (runProcess == RunProcessEnum.Threshold))
                     {
+                        var thermalData = block?.ThermalData;
+                        if (processConfig.LowerRadiometricThreshold > 0 && thermalData == null)
+                            throw new InvalidOperationException("DrawFrameImage.Draw: radiometric thresholds require the block's thermal data. Reload the block's source image.");
+                        if (!optical && thermalData != null &&
+                            (thermalData.RawWidth != inputFrame.Width || thermalData.RawHeight != inputFrame.Height))
+                            throw new InvalidOperationException("DrawFrameImage.Draw: thermal image dimensions do not match the block's radiometric data.");
+
                         // For Threshold, first apply the thermal coloring
                         if (runProcess == RunProcessEnum.Threshold && !optical)
+                        {
+                            using var grayInput = inputFrame.Convert<Gray, byte>();
+                            modifiedInputFrame.Dispose();
                             modifiedInputFrame = DrawImage.Draw(
                                 runProcess,
                                 processConfig,
                                 drawConfig,
-                                modifiedInputFrame.Convert<Gray, byte>(),
-                                thresholdSource,
-                                rawData,
-                                rawWidth,
-                                rawHeight,
-                                globalMinRadioHeat,
-                                globalMaxRadioHeat);
+                                grayInput,
+                                thermalData);
+                        }
 
                         // Then draw bounding rectangles and object names for all three methods
                         DrawRunProcess(

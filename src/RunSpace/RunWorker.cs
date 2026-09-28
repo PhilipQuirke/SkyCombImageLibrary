@@ -216,30 +216,16 @@ namespace SkyCombImage.RunSpace
             if (OriginalThermalImage == null)
                 return;
 
-            // Convert the input thermal image to the output image by overlaying (colored) process information.
-            var thresholdSource =
-                (InputThermalRawData != null) && (InputThermalRawData.Length > 0) && (InputThermalImage != null)
-                    ? InputThermalImage
-                    : null;
-
-            int globalMinRadioHeat = BaseConstants.UnknownValue;
-            int globalMaxRadioHeat = BaseConstants.UnknownValue;
-            if (Drone?.FlightSections != null)
-            {
-                globalMinRadioHeat = (int)Drone.FlightSections.MinRadioHeat;
-                globalMaxRadioHeat = (int)Drone.FlightSections.MaxRadioHeat;
-            }
+            // Previews and reloaded blocks also need the current image's shared radiometric input.
+            block ??= new ProcessBlockModel(PSM);
+            if (block.InputFrameId != PSM.CurrInputFrameId)
+                throw new InvalidOperationException("Cannot draw a block using a different input frame.");
+            block.ThermalData ??= GetThermalData();
 
             OutputThermalImage =
                 DrawSpace.DrawFrameImage.Draw(
                     RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, Drone, OriginalThermalImage.Convert<Bgr,byte>(),
-                    null, block, ProcessAll,
-                    thresholdSource: thresholdSource,
-                    rawData: InputThermalRawData,
-                    rawWidth: InputThermalRawWidth,
-                    rawHeight: InputThermalRawHeight,
-                    globalMinRadioHeat: globalMinRadioHeat,
-                    globalMaxRadioHeat: globalMaxRadioHeat);
+                    null, block, ProcessAll);
 
             if (OutputThermalImage != null)
                 DrawYawPitchZoom.Draw(ref OutputThermalImage, Drone, CurrRunFlightStep);
@@ -789,7 +775,7 @@ namespace SkyCombImage.RunSpace
 
                 // Process (analyse) a single image (using any one ProcessName) and returns an image.
                 OutputThermalImage =
-                    DrawImage.Draw(RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, OriginalThermalImage);
+                    DrawImage.Draw(RunConfig.RunProcess, RunConfig.ProcessConfig, RunConfig.ImageConfig, OriginalThermalImage, CurrBlock.ThermalData);
             }
             catch (Exception ex)
             {

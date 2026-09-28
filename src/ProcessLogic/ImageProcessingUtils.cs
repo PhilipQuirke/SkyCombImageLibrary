@@ -1,7 +1,8 @@
-// Copyright SkyComb Limited 2025. All rights reserved.
+// Copyright SkyComb Limited 2026. All rights reserved.
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
+using SkyCombImage.DrawSpace;
 using SkyCombImage.ProcessModel;
 using System.Drawing;
 
@@ -13,16 +14,32 @@ namespace SkyCombImage.ProcessLogic
     public static class ImageProcessingUtils
     {
         /// <summary>
-        /// Creates a threshold image from the original image using the standard processing pipeline:
+        /// Creates a threshold image from raw radiometric data when available. For grayscale input:
         /// 1. Convert to grayscale
         /// 2. Apply Gaussian blur for smoothing
         /// 3. Apply binary threshold
         /// </summary>
         /// <param name="originalImage">The original color image</param>
         /// <param name="processConfig">Configuration containing threshold value</param>
+        /// <param name="thermalData">The block's raw radiometric input, when available</param>
         /// <returns>A binary threshold image where hot pixels are white (255) and others are black (0)</returns>
-        public static Image<Gray, byte> CreateThresholdImage(in Image<Gray, byte> originalImage, ProcessConfigModel processConfig)
+        public static Image<Gray, byte> CreateThresholdImage(in Image<Gray, byte> originalImage, ProcessConfigModel processConfig, BlockThermalData? thermalData)
         {
+            if (thermalData != null || processConfig.LowerRadiometricThreshold > 0)
+            {
+                var rawThresholdImage = originalImage.Clone();
+                try
+                {
+                    DrawImage.Threshold(processConfig, ref rawThresholdImage, thermalData);
+                    return rawThresholdImage;
+                }
+                catch
+                {
+                    rawThresholdImage.Dispose();
+                    throw;
+                }
+            }
+
             // Create a threshold image from the current frame using the same process as during detection
             using var smoothedImage = new Image<Gray, byte>(originalImage.Size);
             
@@ -51,7 +68,7 @@ namespace SkyCombImage.ProcessLogic
                 return;
 
             // Create threshold image using the standard processing pipeline
-            using var thresholdImage = CreateThresholdImage(originalImage, processConfig);
+            using var thresholdImage = CreateThresholdImage(originalImage, processConfig, block.ThermalData);
 
             // Check all features in this block and regenerate pixel data if needed
             for (int featureId = block.MinFeatureId; featureId <= block.MaxFeatureId; featureId++)
@@ -100,7 +117,7 @@ namespace SkyCombImage.ProcessLogic
                         continue;
 
                     // Check if this pixel is hot (above threshold)
-                    if (imgThreshold.Data[y, x, 0] >= processConfig.HeatThresholdValue)
+                    if (imgThreshold.Data[y, x, 0] != 0)
                     {
                         // Add this hot pixel back to our collection
                         var orgColor = imgOriginal[y, x];
